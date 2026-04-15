@@ -480,3 +480,5 @@ key={`${r}-${c}`}
 - **Client `tsconfig.json` includes `../../games`** — if you add a new game, ensure its transpile path is covered by `paths` aliases.
 - **Design Token** — 不要在组件中硬编码颜色（如 `bg-gray-800`），使用 token class（如 `bg-card`）。
 - **`@source` in index.css** — `games/` 目录通过 `@source "../../../games"` 被 Tailwind 扫描，新游戏目录自动覆盖。
+- **禁止使用 emoji** — 代码、UI、文档中一律不得使用 emoji 字符。UI 中需要图标时使用 `lucide-react` 图标库（已安装在 `@repo/client` 和 `@repo/game-ui` 中）。日志和文档使用纯文本。
+- **PC + 移动端** — 所有页面和游戏必须同时支持 PC 和手机端，开发时缩放浏览器到 375px 宽度验证。

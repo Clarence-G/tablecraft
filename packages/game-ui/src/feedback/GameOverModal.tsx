@@ -1,3 +1,5 @@
+import { Frown, Trophy } from 'lucide-react';
+
 interface GameOverModalProps {
   rankings: string[];
   playerNames: Record<string, string>;
@@ -15,7 +17,13 @@ export function GameOverModal({ rankings, playerNames, myId, onRestart }: GameOv
       data-testid="game-over-modal"
     >
       <div className="bg-card ring-1 ring-foreground/10 rounded-xl p-8 max-w-sm w-full mx-4 text-center">
-        <div className="text-4xl mb-2">{won ? '🎉' : '😢'}</div>
+        <div className="flex justify-center mb-2">
+          {won ? (
+            <Trophy className="size-10 text-warning" />
+          ) : (
+            <Frown className="size-10 text-muted-foreground" />
+          )}
+        </div>
         <h2 className="text-2xl font-bold mb-1">{won ? '你赢了！' : `第 ${myRank} 名`}</h2>
 
         <div className="my-4 space-y-2">

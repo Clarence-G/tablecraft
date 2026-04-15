@@ -63,3 +63,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+## 5. Project-Specific Rules
+
+- **No emoji in code or docs.** Use lucide-react icons for UI, plain text for logs and documentation.
+- **Must support PC and mobile.** All pages and game boards must be tested at 375px width.
+- **Use Design Tokens.** Never hardcode colors (e.g. `bg-gray-800`). Use token classes (`bg-card`, `text-muted-foreground`).
+- **Reuse before building.** Check `@repo/game-ui` and `shadcn/ui` for existing components before creating new ones.

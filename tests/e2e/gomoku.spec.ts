@@ -41,7 +41,7 @@ test.describe('Gomoku E2E — full game', () => {
     // Both see each other
     await alice.waitForSelector('text=Bob', { timeout: 10000 });
     await bob.waitForSelector('text=Alice', { timeout: 10000 });
-    console.log('Both players in room ✓');
+    console.log('Both players in room [OK]');
 
     // ── Step 3: Both ready ────────────────────────────────────────────
     await alice.click('button:has-text("准备")');
@@ -54,7 +54,7 @@ test.describe('Gomoku E2E — full game', () => {
 
     await alice.waitForSelector('[data-row="0"][data-col="0"]', { timeout: 8000 });
     await bob.waitForSelector('[data-row="0"][data-col="0"]', { timeout: 8000 });
-    console.log('Game started ✓');
+    console.log('Game started [OK]');
 
     // ── Step 5: Play moves ────────────────────────────────────────────
     // Alice = black (moves first), Bob = white
@@ -84,7 +84,7 @@ test.describe('Gomoku E2E — full game', () => {
     await alice.waitForSelector('text=你赢了', { timeout: 8000 });
     await bob.waitForSelector('text=第 2 名', { timeout: 8000 });
 
-    console.log('🎉 E2E passed: Alice won!');
+    console.log('E2E passed: Alice won!');
 
     await ctx1.close();
     await ctx2.close();
