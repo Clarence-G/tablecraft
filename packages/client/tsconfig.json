@@ -12,6 +12,8 @@
       "@repo/game-ui/*": ["../game-ui/src/*"],
       "@games/gomoku/shared": ["../../games/gomoku/shared.ts"],
       "@games/gomoku/board": ["../../games/gomoku/Board.tsx"],
+      "@games/connect-four/shared": ["../../games/connect-four/shared.ts"],
+      "@games/connect-four/board": ["../../games/connect-four/Board.tsx"],
       "@games/love-letter/shared": ["../../games/love-letter/shared.ts"],
       "@games/love-letter/board": ["../../games/love-letter/Board.tsx"]
     }
