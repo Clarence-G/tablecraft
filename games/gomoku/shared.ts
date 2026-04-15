@@ -7,7 +7,9 @@ export const meta: GameMeta = {
   description: '经典五子棋，先连成五子者胜',
   minPlayers: 2,
   maxPlayers: 2,
-  tags: ['board'],
+  tags: ['策略', '棋类'],
+  icon: 'Target',
+  estimatedMinutes: 10,
 };
 
 export const BOARD_SIZE = 15;

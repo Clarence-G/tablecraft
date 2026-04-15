@@ -8,6 +8,10 @@ export interface GameMeta {
   minPlayers: number;
   maxPlayers: number;
   tags?: string[];
+  /** Lucide icon name, e.g. 'Target', 'Heart' */
+  icon?: string;
+  /** Estimated play time in minutes */
+  estimatedMinutes?: number;
   actionThrottleMs?: number;
   configSchema?: z.ZodType;
   defaultConfig?: unknown;
@@ -63,6 +67,16 @@ export interface ServerGamePlugin {
 
 /** 客户端注册表条目 */
 export interface ClientGamePlugin {
-  meta: Pick<GameMeta, 'id' | 'name' | 'description' | 'minPlayers' | 'maxPlayers' | 'tags'>;
+  meta: Pick<
+    GameMeta,
+    | 'id'
+    | 'name'
+    | 'description'
+    | 'minPlayers'
+    | 'maxPlayers'
+    | 'tags'
+    | 'icon'
+    | 'estimatedMinutes'
+  >;
   Board: React.LazyExoticComponent<React.ComponentType<any>> | React.ComponentType<any>;
 }
