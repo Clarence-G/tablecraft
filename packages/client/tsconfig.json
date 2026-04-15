@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "typeRoots": ["./node_modules/@types"],
+    "paths": {
+      "@repo/shared": ["../shared/src"],
+      "@repo/shared/*": ["../shared/src/*"],
+      "@repo/game-ui": ["../game-ui/src"],
+      "@repo/game-ui/*": ["../game-ui/src/*"],
+      "@games/gomoku/shared": ["../../games/gomoku/shared.ts"],
+      "@games/gomoku/board": ["../../games/gomoku/Board.tsx"]
+    }
+  },
+  "include": ["src", "../../games"]
+}

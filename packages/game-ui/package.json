@@ -1,0 +1,23 @@
+{
+  "name": "@repo/game-ui",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./board": "./src/board/index.ts",
+    "./player": "./src/player/index.ts",
+    "./feedback": "./src/feedback/index.ts"
+  },
+  "dependencies": {
+    "@repo/shared": "workspace:*",
+    "react": "^18.3.0",
+    "framer-motion": "^11.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "typescript": "^5.4.0"
+  },
+  "peerDependencies": {
+    "react": "^18.3.0"
+  }
+}

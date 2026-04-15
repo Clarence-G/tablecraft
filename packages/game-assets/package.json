@@ -1,0 +1,8 @@
+{
+  "name": "@repo/game-assets",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}
