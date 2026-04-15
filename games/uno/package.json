@@ -1,0 +1,14 @@
+{
+  "name": "@games/uno",
+  "private": true,
+  "exports": {
+    "./shared": "./shared.ts",
+    "./logic": "./logic.ts",
+    "./board": "./Board.tsx"
+  },
+  "dependencies": {
+    "@repo/shared": "workspace:*",
+    "@repo/game-ui": "workspace:*"
+  },
+  "type": "module"
+}

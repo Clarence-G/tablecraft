@@ -14,6 +14,10 @@ export default defineConfig({
       { find: '@repo/game-ui', replacement: path.resolve(__dirname, '../game-ui/src') },
       { find: '@games/gomoku/shared', replacement: path.resolve(root, 'games/gomoku/shared.ts') },
       { find: '@games/gomoku/board', replacement: path.resolve(root, 'games/gomoku/Board.tsx') },
+      {
+        find: '@games/love-letter/shared',
+        replacement: path.resolve(root, 'games/love-letter/shared.ts'),
+      },
       { find: /^@games\/(.+)\/board$/, replacement: path.resolve(root, 'games/$1/Board.tsx') },
     ],
   },

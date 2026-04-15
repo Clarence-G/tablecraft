@@ -4,5 +4,6 @@ export default defineWorkspace([
   'packages/shared/vitest.config.ts',
   'packages/server/vitest.config.ts',
   'games/gomoku/vitest.config.ts',
+  'games/love-letter/vitest.config.ts',
   'games/_template/vitest.config.ts',
 ]);
