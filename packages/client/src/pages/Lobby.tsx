@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { ClientEvents, RoomSummary, ServerEvents } from '@repo/shared';
+import Avatar from 'boring-avatars';
 import { Clock, Dices, Heart, Pencil, Plus, RefreshCw, Sofa, Target, Users } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import type { Socket } from 'socket.io-client';
@@ -63,7 +64,9 @@ export function Lobby({
   }
 
   async function fetchRooms(gameId?: string) {
-    setLoadingRooms(true);
+    // Only show loading spinner on initial load, not on game filter switch
+    const isInitial = rooms.length === 0;
+    if (isInitial) setLoadingRooms(true);
     try {
       const result = await listRooms(gameId ?? '');
       setRooms(result);
@@ -130,9 +133,7 @@ export function Lobby({
           </div>
           {/* User avatar + name */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#f0e8d8] border-2 border-foreground flex items-center justify-center text-sm font-bold">
-              {userName[0]}
-            </div>
+            <Avatar name={userName} size={32} variant="beam" colors={['#d94040', '#2563eb', '#16a34a', '#d97706', '#7c3aed']} />
             {editingName ? (
               <input
                 className="border-2 border-foreground bg-card shadow-inset rounded-[8px] px-2 py-0.5 text-foreground font-semibold w-28 text-center outline-none text-sm"
