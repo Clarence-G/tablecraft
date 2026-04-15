@@ -11,5 +11,7 @@ export default defineWorkspace([
   'games/hive/vitest.config.ts',
   'games/blackjack/vitest.config.ts',
   'games/uno/vitest.config.ts',
+  'games/battleship/vitest.config.ts',
+  'games/texas-holdem/vitest.config.ts',
   'games/_template/vitest.config.ts',
 ]);

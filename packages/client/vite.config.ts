@@ -14,6 +14,10 @@ export default defineConfig({
       { find: '@repo/game-ui', replacement: path.resolve(__dirname, '../game-ui/src') },
       { find: '@games/gomoku/shared', replacement: path.resolve(root, 'games/gomoku/shared.ts') },
       {
+        find: '@games/battleship/shared',
+        replacement: path.resolve(root, 'games/battleship/shared.ts'),
+      },
+      {
         find: '@games/connect-four/shared',
         replacement: path.resolve(root, 'games/connect-four/shared.ts'),
       },
@@ -41,6 +45,10 @@ export default defineConfig({
       {
         find: '@games/uno/shared',
         replacement: path.resolve(root, 'games/uno/shared.ts'),
+      },
+      {
+        find: '@games/texas-holdem/shared',
+        replacement: path.resolve(root, 'games/texas-holdem/shared.ts'),
       },
       { find: /^@games\/(.+)\/board$/, replacement: path.resolve(root, 'games/$1/Board.tsx') },
     ],

@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@games/battleship':
+        specifier: workspace:*
+        version: link:games/battleship
       '@games/blackjack':
         specifier: workspace:*
         version: link:games/blackjack
@@ -65,6 +68,22 @@ importers:
         version: 3.25.76
 
   games/_template:
+    dependencies:
+      '@repo/game-ui':
+        specifier: workspace:*
+        version: link:../../packages/game-ui
+      '@repo/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+    devDependencies:
+      vite:
+        specifier: ^5.2.0
+        version: 5.4.21(@types/node@20.19.39)(lightningcss@1.32.0)
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  games/battleship:
     dependencies:
       '@repo/game-ui':
         specifier: workspace:*
@@ -167,6 +186,22 @@ importers:
         version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
 
   games/love-letter:
+    dependencies:
+      '@repo/game-ui':
+        specifier: workspace:*
+        version: link:../../packages/game-ui
+      '@repo/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+    devDependencies:
+      vite:
+        specifier: ^5.2.0
+        version: 5.4.21(@types/node@20.19.39)(lightningcss@1.32.0)
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  games/texas-holdem:
     dependencies:
       '@repo/game-ui':
         specifier: workspace:*

@@ -16,6 +16,7 @@
     "onlyBuiltDependencies": ["@biomejs/biome", "better-sqlite3", "esbuild"]
   },
   "dependencies": {
+    "@games/battleship": "workspace:*",
     "@games/gomoku": "workspace:*",
     "@games/love-letter": "workspace:*",
     "@games/connect-four": "workspace:*",
@@ -24,6 +25,7 @@
     "@games/hive": "workspace:*",
     "@games/blackjack": "workspace:*",
     "@games/uno": "workspace:*",
+    "@games/texas-holdem": "workspace:*",
     "@repo/server": "workspace:*",
     "@repo/client": "workspace:*"
   },

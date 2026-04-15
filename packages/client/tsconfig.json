@@ -12,6 +12,8 @@
       "@repo/game-ui/*": ["../game-ui/src/*"],
       "@games/gomoku/shared": ["../../games/gomoku/shared.ts"],
       "@games/gomoku/board": ["../../games/gomoku/Board.tsx"],
+      "@games/battleship/shared": ["../../games/battleship/shared.ts"],
+      "@games/battleship/board": ["../../games/battleship/Board.tsx"],
       "@games/connect-four/shared": ["../../games/connect-four/shared.ts"],
       "@games/connect-four/board": ["../../games/connect-four/Board.tsx"],
       "@games/love-letter/shared": ["../../games/love-letter/shared.ts"],
@@ -25,7 +27,9 @@
       "@games/blackjack/shared": ["../../games/blackjack/shared.ts"],
       "@games/blackjack/board": ["../../games/blackjack/Board.tsx"],
       "@games/uno/shared": ["../../games/uno/shared.ts"],
-      "@games/uno/board": ["../../games/uno/Board.tsx"]
+      "@games/uno/board": ["../../games/uno/Board.tsx"],
+      "@games/texas-holdem/shared": ["../../games/texas-holdem/shared.ts"],
+      "@games/texas-holdem/board": ["../../games/texas-holdem/Board.tsx"]
     }
   },
   "include": ["src", "../../games"]

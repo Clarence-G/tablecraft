@@ -1,15 +1,21 @@
+import { meta as battleshipMeta } from '@games/battleship/shared';
 import { meta as blackjackMeta } from '@games/blackjack/shared';
 import { meta as connectFourMeta } from '@games/connect-four/shared';
 import { meta as gomokuMeta } from '@games/gomoku/shared';
 import { meta as hiveMeta } from '@games/hive/shared';
 import { meta as liarBarMeta } from '@games/liar-bar/shared';
 import { meta as loveLetterMeta } from '@games/love-letter/shared';
+import { meta as texasHoldemMeta } from '@games/texas-holdem/shared';
 import { meta as unoMeta } from '@games/uno/shared';
 import { meta as yahtzeeMeta } from '@games/yahtzee/shared';
 import type { ClientGamePlugin } from '@repo/shared';
 import { lazy } from 'react';
 
 export const clientRegistry: Record<string, ClientGamePlugin> = {
+  [battleshipMeta.id]: {
+    meta: battleshipMeta,
+    Board: lazy(() => import('@games/battleship/board').then((m) => ({ default: m.Board }))),
+  },
   [gomokuMeta.id]: {
     meta: gomokuMeta,
     Board: lazy(() => import('@games/gomoku/board').then((m) => ({ default: m.Board }))),
@@ -41,5 +47,9 @@ export const clientRegistry: Record<string, ClientGamePlugin> = {
   [unoMeta.id]: {
     meta: unoMeta,
     Board: lazy(() => import('@games/uno/board').then((m) => ({ default: m.Board }))),
+  },
+  [texasHoldemMeta.id]: {
+    meta: texasHoldemMeta,
+    Board: lazy(() => import('@games/texas-holdem/board').then((m) => ({ default: m.Board }))),
   },
 };
