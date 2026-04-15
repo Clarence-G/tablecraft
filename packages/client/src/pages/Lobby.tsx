@@ -49,10 +49,10 @@ export function Lobby({
     setEditingName(false);
   }
 
-  async function fetchRooms(gameId: string) {
+  async function fetchRooms(gameId?: string) {
     setLoadingRooms(true);
     try {
-      const result = await listRooms(gameId);
+      const result = await listRooms(gameId ?? '');
       setRooms(result);
     } finally {
       setLoadingRooms(false);
@@ -60,10 +60,16 @@ export function Lobby({
   }
 
   function selectGame(gameId: string) {
-    setSelectedGameId(gameId);
+    const next = selectedGameId === gameId ? null : gameId;
+    setSelectedGameId(next);
     setError(null);
-    fetchRooms(gameId);
+    fetchRooms(next ?? undefined);
   }
+
+  // Fetch all rooms on mount
+  useState(() => {
+    fetchRooms();
+  });
 
   async function handleCreate(gameId: string) {
     setError(null);
@@ -157,23 +163,44 @@ export function Lobby({
           ))}
         </div>
 
-        {/* Room list for selected game */}
-        {selectedGameId && (
-          <div className="bg-card border-thick border-foreground rounded-[16px] p-6 shadow-card mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">
-                {clientRegistry[selectedGameId]?.meta.name} - 房间
-              </h2>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => fetchRooms(selectedGameId)}
-                  disabled={loadingRooms}
-                  className="p-2 rounded-[8px] border-2 border-border hover:border-foreground transition-colors"
-                  aria-label="刷新"
-                >
-                  <RefreshCw className={`size-4 ${loadingRooms ? 'animate-spin' : ''}`} />
-                </button>
+        {/* Room list */}
+        <div className="bg-card border-thick border-foreground rounded-[16px] p-6 shadow-card mb-6">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <h2 className="text-lg font-semibold">
+              {selectedGameId ? `${clientRegistry[selectedGameId]?.meta.name} - 房间` : '所有房间'}
+            </h2>
+            <div className="flex items-center gap-2">
+              {/* Inline room code join */}
+              <Input
+                type="text"
+                placeholder="房间码"
+                value={joinCode}
+                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                maxLength={6}
+                data-testid="room-code-input"
+                className="w-24 uppercase tracking-widest border-2 border-border bg-card shadow-inset rounded-[8px] text-center text-sm h-8 focus-visible:border-foreground"
+                onKeyDown={(e) => e.key === 'Enter' && handleJoinByCode()}
+              />
+              <Button
+                onClick={handleJoinByCode}
+                disabled={loading || !joinCode.trim()}
+                data-testid="join-room-btn"
+                size="sm"
+                className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[8px] px-3 font-semibold text-sm h-8"
+              >
+                加入
+              </Button>
+              <div className="w-px h-6 bg-border mx-1" />
+              <button
+                type="button"
+                onClick={() => fetchRooms(selectedGameId ?? undefined)}
+                disabled={loadingRooms}
+                className="p-2 rounded-[8px] border-2 border-border hover:border-foreground transition-colors"
+                aria-label="刷新"
+              >
+                <RefreshCw className={`size-4 ${loadingRooms ? 'animate-spin' : ''}`} />
+              </button>
+              {selectedGameId && (
                 <Button
                   onClick={() => handleCreate(selectedGameId)}
                   disabled={loading}
@@ -181,68 +208,50 @@ export function Lobby({
                 >
                   创建新房间
                 </Button>
-              </div>
+              )}
             </div>
+          </div>
 
-            {loadingRooms ? (
-              <div className="text-center text-muted-foreground py-6">加载中...</div>
-            ) : rooms.length === 0 ? (
-              <div className="text-center text-muted-foreground py-6">暂无房间，创建一个吧</div>
-            ) : (
-              <div className="space-y-3">
-                {rooms.map((r) => (
-                  <div
-                    key={r.roomId}
-                    className="flex items-center justify-between bg-secondary border-2 border-border rounded-[12px] px-4 py-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono tracking-wider font-semibold">{r.roomId}</span>
-                      <span className="text-sm text-muted-foreground">{r.hostName}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Users className="size-3.5" />
-                        {r.playerCount}/{r.maxPlayers}
+          {loadingRooms ? (
+            <div className="text-center text-muted-foreground py-6">加载中...</div>
+          ) : rooms.length === 0 ? (
+            <div className="text-center text-muted-foreground py-6">
+              {selectedGameId ? '暂无房间，创建一个吧' : '暂无房间'}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {rooms.map((r) => (
+                <div
+                  key={r.roomId}
+                  className="flex items-center justify-between bg-secondary border-2 border-border rounded-[12px] px-4 py-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono tracking-wider font-semibold">{r.roomId}</span>
+                    {!selectedGameId && (
+                      <span className="text-xs font-semibold bg-[#fef3e0] text-[#7a4006] border border-warning rounded-full px-2 py-0.5">
+                        {r.gameName}
                       </span>
-                      <Button
-                        onClick={() => handleJoinRoom(r.roomId)}
-                        disabled={loading}
-                        className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[12px] px-3 font-semibold text-sm"
-                        size="sm"
-                      >
-                        加入
-                      </Button>
-                    </div>
+                    )}
+                    <span className="text-sm text-muted-foreground">{r.hostName}</span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Manual room code join */}
-        <div className="bg-card border-thick border-foreground rounded-[16px] p-6 shadow-card">
-          <h2 className="text-lg font-semibold mb-4">输入房间号加入</h2>
-          <div className="flex gap-3">
-            <Input
-              type="text"
-              placeholder="输入 6 位房间码"
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-              maxLength={6}
-              data-testid="room-code-input"
-              className="flex-1 uppercase tracking-widest border-2 border-border bg-card shadow-inset rounded-[12px] focus-visible:border-foreground"
-              onKeyDown={(e) => e.key === 'Enter' && handleJoinByCode()}
-            />
-            <Button
-              onClick={handleJoinByCode}
-              disabled={loading || !joinCode.trim()}
-              data-testid="join-room-btn"
-              className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[12px] px-6 font-semibold"
-            >
-              加入
-            </Button>
-          </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Users className="size-3.5" />
+                      {r.playerCount}/{r.maxPlayers}
+                    </span>
+                    <Button
+                      onClick={() => handleJoinRoom(r.roomId)}
+                      disabled={loading}
+                      className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[12px] px-3 font-semibold text-sm"
+                      size="sm"
+                    >
+                      加入
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {error && (
