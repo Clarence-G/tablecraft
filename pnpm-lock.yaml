@@ -14,6 +14,9 @@ importers:
       '@games/gomoku':
         specifier: workspace:*
         version: link:games/gomoku
+      '@games/hive':
+        specifier: workspace:*
+        version: link:games/hive
       '@games/liar-bar':
         specifier: workspace:*
         version: link:games/liar-bar
@@ -101,6 +104,22 @@ importers:
       react:
         specifier: ^18.3.0
         version: 18.3.1
+    devDependencies:
+      vite:
+        specifier: ^5.2.0
+        version: 5.4.21(@types/node@20.19.39)(lightningcss@1.32.0)
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  games/hive:
+    dependencies:
+      '@repo/game-ui':
+        specifier: workspace:*
+        version: link:../../packages/game-ui
+      '@repo/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
     devDependencies:
       vite:
         specifier: ^5.2.0

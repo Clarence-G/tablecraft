@@ -19,7 +19,9 @@
       "@games/liar-bar/shared": ["../../games/liar-bar/shared.ts"],
       "@games/liar-bar/board": ["../../games/liar-bar/Board.tsx"],
       "@games/yahtzee/shared": ["../../games/yahtzee/shared.ts"],
-      "@games/yahtzee/board": ["../../games/yahtzee/Board.tsx"]
+      "@games/yahtzee/board": ["../../games/yahtzee/Board.tsx"],
+      "@games/hive/shared": ["../../games/hive/shared.ts"],
+      "@games/hive/board": ["../../games/hive/Board.tsx"]
     }
   },
   "include": ["src", "../../games"]

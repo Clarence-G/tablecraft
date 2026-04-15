@@ -1,0 +1,21 @@
+{
+  "name": "@games/hive",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./shared": "./shared.ts",
+    "./logic": "./logic.ts",
+    "./board": "./Board.tsx"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@repo/shared": "workspace:*",
+    "@repo/game-ui": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.0",
+    "vite": "^5.2.0"
+  }
+}

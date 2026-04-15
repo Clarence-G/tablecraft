@@ -30,6 +30,10 @@ export default defineConfig({
         find: '@games/yahtzee/shared',
         replacement: path.resolve(root, 'games/yahtzee/shared.ts'),
       },
+      {
+        find: '@games/hive/shared',
+        replacement: path.resolve(root, 'games/hive/shared.ts'),
+      },
       { find: /^@games\/(.+)\/board$/, replacement: path.resolve(root, 'games/$1/Board.tsx') },
     ],
   },
