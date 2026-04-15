@@ -123,17 +123,17 @@ describe('Connect Four Logic', () => {
       // Strictly alternating turns, using dummy moves to set up column heights
       playSequence(h, [
         ['Alice', 0], // (5,0) Alice diagonal piece 1
-        ['Bob', 1],   // (5,1) filler
+        ['Bob', 1], // (5,1) filler
         ['Alice', 1], // (4,1) Alice diagonal piece 2
-        ['Bob', 2],   // (5,2) filler
+        ['Bob', 2], // (5,2) filler
         ['Alice', 5], // dummy
-        ['Bob', 2],   // (4,2) filler
+        ['Bob', 2], // (4,2) filler
         ['Alice', 2], // (3,2) Alice diagonal piece 3
-        ['Bob', 3],   // (5,3) filler
+        ['Bob', 3], // (5,3) filler
         ['Alice', 6], // dummy
-        ['Bob', 3],   // (4,3) filler
+        ['Bob', 3], // (4,3) filler
         ['Alice', 6], // dummy
-        ['Bob', 3],   // (3,3) filler
+        ['Bob', 3], // (3,3) filler
         ['Alice', 3], // (2,3) Alice diagonal piece 4 -> WIN
       ]);
       expect(h.isFinished).toBe(true);
@@ -169,12 +169,48 @@ describe('Connect Four Logic', () => {
       // Row 4: B A B A B A B
       // etc. — checkerboard, no 4-in-a-row possible.
       const sequence: [string, number][] = [
-        ['Alice', 0], ['Bob', 1], ['Alice', 2], ['Bob', 3], ['Alice', 4], ['Bob', 5], ['Alice', 6],
-        ['Bob', 6], ['Alice', 5], ['Bob', 4], ['Alice', 3], ['Bob', 2], ['Alice', 1], ['Bob', 0],
-        ['Alice', 0], ['Bob', 1], ['Alice', 2], ['Bob', 3], ['Alice', 4], ['Bob', 5], ['Alice', 6],
-        ['Bob', 6], ['Alice', 5], ['Bob', 4], ['Alice', 3], ['Bob', 2], ['Alice', 1], ['Bob', 0],
-        ['Alice', 0], ['Bob', 1], ['Alice', 2], ['Bob', 3], ['Alice', 4], ['Bob', 5], ['Alice', 6],
-        ['Bob', 6], ['Alice', 5], ['Bob', 4], ['Alice', 3], ['Bob', 2], ['Alice', 1], ['Bob', 0],
+        ['Alice', 0],
+        ['Bob', 1],
+        ['Alice', 2],
+        ['Bob', 3],
+        ['Alice', 4],
+        ['Bob', 5],
+        ['Alice', 6],
+        ['Bob', 6],
+        ['Alice', 5],
+        ['Bob', 4],
+        ['Alice', 3],
+        ['Bob', 2],
+        ['Alice', 1],
+        ['Bob', 0],
+        ['Alice', 0],
+        ['Bob', 1],
+        ['Alice', 2],
+        ['Bob', 3],
+        ['Alice', 4],
+        ['Bob', 5],
+        ['Alice', 6],
+        ['Bob', 6],
+        ['Alice', 5],
+        ['Bob', 4],
+        ['Alice', 3],
+        ['Bob', 2],
+        ['Alice', 1],
+        ['Bob', 0],
+        ['Alice', 0],
+        ['Bob', 1],
+        ['Alice', 2],
+        ['Bob', 3],
+        ['Alice', 4],
+        ['Bob', 5],
+        ['Alice', 6],
+        ['Bob', 6],
+        ['Alice', 5],
+        ['Bob', 4],
+        ['Alice', 3],
+        ['Bob', 2],
+        ['Alice', 1],
+        ['Bob', 0],
       ];
 
       for (const [player, col] of sequence) {

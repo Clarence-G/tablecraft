@@ -2,7 +2,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { ClientEvents, RoomSummary, ServerEvents } from '@repo/shared';
 import Avatar from 'boring-avatars';
-import { Clock, Dices, Heart, Pencil, Plus, RefreshCw, Sofa, Target, Users } from 'lucide-react';
+import {
+  Bug,
+  Circle,
+  Clock,
+  Dices,
+  Heart,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Skull,
+  Sofa,
+  Target,
+  Users,
+} from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import type { Socket } from 'socket.io-client';
 import { clientRegistry } from '../../../../games/client-registry';
@@ -21,9 +34,13 @@ interface LobbyProps {
 }
 
 const ICON_MAP: Record<string, ReactNode> = {
-  Target: <Target className="size-6" />,
-  Heart: <Heart className="size-6" />,
-  Dices: <Dices className="size-6" />,
+  Target: <Target className="size-5" />,
+  Heart: <Heart className="size-5" />,
+  Dices: <Dices className="size-5" />,
+  Skull: <Skull className="size-5" />,
+  Bug: <Bug className="size-5" />,
+  Circle: <Circle className="size-5" />,
+  Dice5: <Dices className="size-5" />,
 };
 
 const TAG_COLORS: Record<string, string> = {
@@ -33,6 +50,7 @@ const TAG_COLORS: Record<string, string> = {
   卡牌: 'bg-[#fef3e0] text-[#7a4006] border-[#d97706]',
   派对: 'bg-[#fde8ec] text-[#8a1a30] border-[#e8556d]',
   休闲: 'bg-[#fde8e8] text-[#7a1a1a] border-[#d94040]',
+  骰子: 'bg-[#fde8e8] text-[#7a1a1a] border-[#d94040]',
 };
 
 export function Lobby({
@@ -52,11 +70,18 @@ export function Lobby({
   const [nameDraft, setNameDraft] = useState(userName);
 
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
   const [rooms, setRooms] = useState<RoomSummary[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const games = Object.values(clientRegistry);
+
+  // Collect all unique tags across all games
+  const allTags = Array.from(new Set(games.flatMap((g) => g.meta.tags ?? [])));
+
+  // Filter games by active tag
+  const visibleGames = activeTag ? games.filter((g) => g.meta.tags?.includes(activeTag)) : games;
 
   function confirmRename() {
     const trimmed = nameDraft.trim();
@@ -135,7 +160,12 @@ export function Lobby({
           </div>
           {/* User avatar + name */}
           <div className="flex items-center gap-2">
-            <Avatar name={userName} size={32} variant="beam" colors={['#d94040', '#2563eb', '#16a34a', '#d97706', '#7c3aed']} />
+            <Avatar
+              name={userName}
+              size={32}
+              variant="beam"
+              colors={['#d94040', '#2563eb', '#16a34a', '#d97706', '#7c3aed']}
+            />
             {editingName ? (
               <input
                 className="border-2 border-foreground bg-card shadow-inset rounded-[8px] px-2 py-0.5 text-foreground font-semibold w-28 text-center outline-none text-sm"
@@ -173,10 +203,40 @@ export function Lobby({
         {/* Slogan */}
         <p className="text-center text-muted-foreground mb-6">和朋友一起，随时随地玩桌游</p>
 
-        {/* Game cards — compact 3-col grid */}
-        <h2 className="text-lg font-semibold mb-3">选择游戏</h2>
+        {/* Game selector header + tag filters */}
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h2 className="text-lg font-semibold">选择游戏</h2>
+          <div className="flex gap-1.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setActiveTag(null)}
+              className={`text-xs font-semibold border rounded-full px-2.5 py-0.5 transition-all ${
+                activeTag === null
+                  ? 'bg-foreground text-background border-foreground'
+                  : 'bg-card border-border text-muted-foreground hover:border-foreground'
+              }`}
+            >
+              全部
+            </button>
+            {allTags.map((tag) => (
+              <button
+                type="button"
+                key={tag}
+                onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                className={`text-xs font-semibold border rounded-full px-2.5 py-0.5 transition-all ${
+                  activeTag === tag
+                    ? (TAG_COLORS[tag] ?? 'bg-secondary text-foreground border-foreground') +
+                      ' shadow-[2px_2px_0px_0px_#3d2e1e]'
+                    : 'bg-card border-border text-muted-foreground hover:border-foreground'
+                }`}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-          {games.map((plugin) => {
+          {visibleGames.map((plugin) => {
             const m = plugin.meta;
             const active = selectedGameId === m.id;
             const count = roomCountForGame(m.id);

@@ -1,5 +1,5 @@
 import type { ActionResult, GameContext, GameLogic } from '@repo/shared';
-import { type Action, ActionSchema, COLS, ROWS, type PlayerView } from './shared';
+import { type Action, ActionSchema, COLS, type PlayerView, ROWS } from './shared';
 
 interface ConnectFourState {
   board: number[];
@@ -11,7 +11,11 @@ interface ConnectFourState {
 
 const EMPTY = 0;
 
-function dropPiece(board: number[], col: number, playerValue: 1 | 2): { row: number; board: number[] } | null {
+function dropPiece(
+  board: number[],
+  col: number,
+  playerValue: 1 | 2,
+): { row: number; board: number[] } | null {
   if (col < 0 || col >= COLS) return null;
   const newBoard = [...board];
   for (let row = ROWS - 1; row >= 0; row--) {
@@ -91,9 +95,8 @@ export const logic: GameLogic<ConnectFourState, Action, PlayerView> = {
     const { row, board: newBoard } = result;
     const won = checkWin(newBoard, row, action.col);
     const draw = !won && checkDraw(newBoard);
-    const nextPlayer = won || draw
-      ? state.currentPlayer
-      : state.players.find((p) => p !== playerID)!;
+    const nextPlayer =
+      won || draw ? state.currentPlayer : state.players.find((p) => p !== playerID)!;
 
     const newState: ConnectFourState = {
       ...state,

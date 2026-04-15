@@ -17,7 +17,11 @@ export const COLS = 7;
 
 export const ActionSchema = z.object({
   type: z.literal('drop'),
-  col: z.number().int().min(0).max(COLS - 1),
+  col: z
+    .number()
+    .int()
+    .min(0)
+    .max(COLS - 1),
 });
 export type Action = z.infer<typeof ActionSchema>;
 

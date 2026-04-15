@@ -12,15 +12,9 @@ export const PLAYER_DISC_COLORS: [string, string] = [
   '#d97706', // Amber Gold — player 1
 ];
 
-export const PLAYER_DISC_BG: [string, string] = [
-  'bg-[#d94040]',
-  'bg-[#d97706]',
-];
+export const PLAYER_DISC_BG: [string, string] = ['bg-[#d94040]', 'bg-[#d97706]'];
 
-export const PLAYER_DISC_BG_GHOST: [string, string] = [
-  'bg-[#d94040]/40',
-  'bg-[#d97706]/40',
-];
+export const PLAYER_DISC_BG_GHOST: [string, string] = ['bg-[#d94040]/40', 'bg-[#d97706]/40'];
 
 interface DiscBoardProps {
   rows: number;
@@ -54,8 +48,7 @@ export function DiscBoard({
 }: DiscBoardProps) {
   const [hoverCol, setHoverCol] = useState<number | null>(null);
 
-  const ghostRow =
-    hoverCol !== null && canPlay ? findGhostRow(board, rows, cols, hoverCol) : null;
+  const ghostRow = hoverCol !== null && canPlay ? findGhostRow(board, rows, cols, hoverCol) : null;
 
   return (
     <div
@@ -75,9 +68,7 @@ export function DiscBoard({
             aria-label={`Drop in column ${col + 1}`}
           >
             {hoverCol === col && canPlay && ghostRow !== null && (
-              <div
-                className={`w-2 h-2 rounded-full ${PLAYER_DISC_BG[myPlayerIndex]}`}
-              />
+              <div className={`w-2 h-2 rounded-full ${PLAYER_DISC_BG[myPlayerIndex]}`} />
             )}
           </button>
         ))}
