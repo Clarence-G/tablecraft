@@ -19,6 +19,7 @@
     "@games/gomoku": "workspace:*",
     "@games/love-letter": "workspace:*",
     "@games/connect-four": "workspace:*",
+    "@games/liar-bar": "workspace:*",
     "@repo/server": "workspace:*",
     "@repo/client": "workspace:*"
   },

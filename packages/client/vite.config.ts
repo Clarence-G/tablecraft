@@ -22,6 +22,10 @@ export default defineConfig({
         find: '@games/love-letter/shared',
         replacement: path.resolve(root, 'games/love-letter/shared.ts'),
       },
+      {
+        find: '@games/liar-bar/shared',
+        replacement: path.resolve(root, 'games/liar-bar/shared.ts'),
+      },
       { find: /^@games\/(.+)\/board$/, replacement: path.resolve(root, 'games/$1/Board.tsx') },
     ],
   },
