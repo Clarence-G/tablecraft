@@ -29,6 +29,9 @@ importers:
       '@games/love-letter':
         specifier: workspace:*
         version: link:games/love-letter
+      '@games/texas-holdem':
+        specifier: workspace:*
+        version: link:games/texas-holdem
       '@games/uno':
         specifier: workspace:*
         version: link:games/uno
