@@ -150,6 +150,12 @@ export function setupHandlers(
       room.handleAction(userId, action, seq);
     });
 
+    // room:list
+    socket.on('room:list', (gameId, ack) => {
+      const rooms = roomManager.listWaitingRooms(gameId || undefined);
+      ack(rooms);
+    });
+
     // disconnect
     socket.on('disconnect', () => {
       const room = roomManager.findRoomByUser(userId);

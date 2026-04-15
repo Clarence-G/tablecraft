@@ -1,4 +1,4 @@
-import type { GameLogic, GameMeta } from '@repo/shared';
+import type { GameLogic, GameMeta, RoomSummary } from '@repo/shared';
 import { nanoid } from 'nanoid';
 import { GameRoom } from './GameRoom';
 
@@ -54,6 +54,17 @@ export class RoomManager {
 
   listRooms(): GameRoom[] {
     return [...this.rooms.values()];
+  }
+
+  listWaitingRooms(gameId?: string): RoomSummary[] {
+    const result: RoomSummary[] = [];
+    for (const room of this.rooms.values()) {
+      if (room.status !== 'waiting') continue;
+      if (room.players.size >= room.meta.maxPlayers) continue;
+      if (gameId && room.gameId !== gameId) continue;
+      result.push(room.toRoomSummary());
+    }
+    return result;
   }
 
   destroy(): void {

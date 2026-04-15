@@ -19,7 +19,9 @@ export function PlayerBadge({ player, isCurrentTurn, isMe }: PlayerBadgeProps) {
       />
       <span className="font-semibold">{player.name}</span>
       {isMe && <span className="text-xs text-muted-foreground font-medium">你</span>}
-      {isCurrentTurn && <span className="text-xs text-warning font-semibold">回合中</span>}
+      <span className={`text-xs font-semibold ${isCurrentTurn ? 'text-warning' : 'invisible'}`}>
+        回合中
+      </span>
     </div>
   );
 }

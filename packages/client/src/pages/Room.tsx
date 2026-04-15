@@ -41,7 +41,9 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
         </div>
 
         <div className="bg-card border-thick border-foreground rounded-[16px] p-6 shadow-card mb-6">
-          <h2 className="text-sm text-[#9c8b78] uppercase tracking-wider font-semibold mb-3">玩家列表</h2>
+          <h2 className="text-sm text-[#9c8b78] uppercase tracking-wider font-semibold mb-3">
+            玩家列表
+          </h2>
           <div className="space-y-2" data-testid="player-list">
             {room.players.map((player, index) => (
               <div
@@ -55,10 +57,14 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
                   />
                   <span className="font-medium">{player.name}</span>
                   {player.id === room.hostId && (
-                    <span className="text-xs text-warning font-semibold bg-[#fef3e0] border border-warning rounded-full px-2 py-0.5">房主</span>
+                    <span className="text-xs text-warning font-semibold bg-[#fef3e0] border border-warning rounded-full px-2 py-0.5">
+                      房主
+                    </span>
                   )}
                 </div>
-                <span className={`text-sm font-medium ${player.ready ? 'text-success' : 'text-[#9c8b78]'}`}>
+                <span
+                  className={`text-sm font-medium ${player.ready ? 'text-success' : 'text-[#9c8b78]'}`}
+                >
                   {player.ready ? '已准备' : '未准备'}
                 </span>
               </div>

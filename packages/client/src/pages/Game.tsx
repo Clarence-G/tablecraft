@@ -9,6 +9,8 @@ interface GamePageProps {
   userId: string;
   room: RoomState | null;
   game: GameState;
+  onReturnToRoom?: () => void;
+  onReturnToLobby?: () => void;
 }
 
 function Loading() {
@@ -19,7 +21,7 @@ function Loading() {
   );
 }
 
-export function Game({ userId, room, game }: GamePageProps) {
+export function Game({ userId, room, game, onReturnToRoom, onReturnToLobby }: GamePageProps) {
   const { state, sendAction, lastReject, notifications } = game;
 
   if (!room || !state) return <Loading />;
@@ -44,6 +46,8 @@ export function Game({ userId, room, game }: GamePageProps) {
           sendAction={sendAction}
           lastReject={lastReject}
           notifications={notifications}
+          onReturnToRoom={onReturnToRoom}
+          onReturnToLobby={onReturnToLobby}
         />
       </Suspense>
     </div>

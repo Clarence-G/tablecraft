@@ -8,4 +8,6 @@ export interface BoardProps<TView, TAction = unknown> {
   sendAction: (action: TAction) => void;
   lastReject: string | null;
   notifications: unknown[];
+  onReturnToRoom?: () => void;
+  onReturnToLobby?: () => void;
 }

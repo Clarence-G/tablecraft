@@ -1,6 +1,6 @@
+import { IntersectionBoard } from '@repo/game-ui/board';
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
-import { IntersectionBoard } from '@repo/game-ui/board';
 import type { BoardProps } from '@repo/shared';
 import type { Action, PlayerView } from './shared';
 import { BOARD_SIZE } from './shared';
@@ -13,7 +13,14 @@ const STAR_POINTS: [number, number][] = [
   [11, 11],
 ];
 
-export function Board({ state, myId, players, sendAction }: BoardProps<PlayerView, Action>) {
+export function Board({
+  state,
+  myId,
+  players,
+  sendAction,
+  onReturnToRoom,
+  onReturnToLobby,
+}: BoardProps<PlayerView, Action>) {
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = !!state.winner;
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
@@ -69,6 +76,8 @@ export function Board({ state, myId, players, sendAction }: BoardProps<PlayerVie
           rankings={[state.winner, loserPlayer.id]}
           playerNames={playerNames}
           myId={myId}
+          onReturnToRoom={onReturnToRoom}
+          onReturnToLobby={onReturnToLobby}
         />
       )}
     </div>

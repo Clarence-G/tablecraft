@@ -34,5 +34,12 @@ export function useSocket(userId: string, userName: string) {
     };
   }, [userId, userName]);
 
+  // Keep socket auth in sync with current userName (for reconnections after rename)
+  useEffect(() => {
+    if (socketInstance) {
+      (socketInstance as any).auth = { ...(socketInstance as any).auth, userName };
+    }
+  }, [userName]);
+
   return { socket: socketInstance, connected };
 }

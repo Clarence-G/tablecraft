@@ -8,16 +8,20 @@ import type {
   PlayerInfo,
   RoomState,
   RoomStatus,
+  RoomSummary,
 } from '@repo/shared';
-import { nanoid } from 'nanoid';
+import { customAlphabet, nanoid } from 'nanoid';
 import { RandomProvider } from './RandomProvider';
 import { TimerManager } from './TimerManager';
+
+const roomIdAlphabet = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 6);
 
 type BroadcastFn = (roomId: string, playerViews: Map<string, unknown>) => void;
 
 export class GameRoom {
   roomId: string;
   gameId: string;
+  meta: GameMeta;
   status: RoomStatus;
   players: Map<string, PlayerInfo>;
   state: unknown;
@@ -34,8 +38,9 @@ export class GameRoom {
   private broadcast: BroadcastFn | null = null;
 
   constructor(gameId: string, meta: GameMeta, config?: unknown, logic?: GameLogic) {
-    this.roomId = nanoid(6).toUpperCase();
+    this.roomId = roomIdAlphabet();
     this.gameId = gameId;
+    this.meta = meta;
     this.status = 'waiting';
     this.players = new Map();
     this.state = null;
@@ -93,6 +98,9 @@ export class GameRoom {
   start(): Ack<void> {
     if (this.status !== 'waiting') {
       return { ok: false, error: 'Room not in waiting state' };
+    }
+    if (this.players.size < this.meta.minPlayers) {
+      return { ok: false, error: `Need at least ${this.meta.minPlayers} players` };
     }
     const playerList = [...this.players.values()];
     if (!playerList.every((p) => p.ready)) {
@@ -200,9 +208,22 @@ export class GameRoom {
       status: this.status,
       hostId: this.hostId,
       players: [...this.players.values()],
+      minPlayers: this.meta.minPlayers,
       maxPlayers: this.ctx.players.length || this.players.size,
       config: this.config,
       createdAt: this.createdAt,
+    };
+  }
+
+  toRoomSummary(): RoomSummary {
+    const host = this.players.get(this.hostId);
+    return {
+      roomId: this.roomId,
+      gameId: this.gameId,
+      gameName: this.meta.name,
+      hostName: host?.name ?? '',
+      playerCount: this.players.size,
+      maxPlayers: this.meta.maxPlayers,
     };
   }
 

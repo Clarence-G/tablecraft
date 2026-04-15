@@ -1,4 +1,4 @@
-import type { RoomState } from './room';
+import type { RoomState, RoomSummary } from './room';
 
 /** 通用 ack 回调结果 */
 export type Ack<T = void> = { ok: true; data: T } | { ok: false; error: string };
@@ -24,6 +24,8 @@ export interface ClientEvents {
   'room:restart': () => void;
 
   'game:action': (action: unknown, seq: number) => void;
+
+  'room:list': (gameId: string, ack: (rooms: RoomSummary[]) => void) => void;
 }
 
 /** 服务端 → 客户端 */

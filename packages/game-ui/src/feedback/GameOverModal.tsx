@@ -1,13 +1,22 @@
-import { Frown, Trophy } from 'lucide-react';
+import { ArrowLeft, Frown, Home, Trophy } from 'lucide-react';
 
 interface GameOverModalProps {
   rankings: string[];
   playerNames: Record<string, string>;
   myId: string;
   onRestart?: () => void;
+  onReturnToRoom?: () => void;
+  onReturnToLobby?: () => void;
 }
 
-export function GameOverModal({ rankings, playerNames, myId, onRestart }: GameOverModalProps) {
+export function GameOverModal({
+  rankings,
+  playerNames,
+  myId,
+  onRestart,
+  onReturnToRoom,
+  onReturnToLobby,
+}: GameOverModalProps) {
   const myRank = rankings.indexOf(myId) + 1;
   const won = myRank === 1;
 
@@ -24,7 +33,9 @@ export function GameOverModal({ rankings, playerNames, myId, onRestart }: GameOv
             <Frown className="size-10 text-muted-foreground" />
           )}
         </div>
-        <h2 className="text-2xl font-bold mb-1 text-[#1a1108]">{won ? '你赢了!' : `第 ${myRank} 名`}</h2>
+        <h2 className="text-2xl font-bold mb-1 text-[#1a1108]">
+          {won ? '你赢了!' : `第 ${myRank} 名`}
+        </h2>
 
         <div className="my-4 space-y-2">
           {rankings.map((pid, i) => (
@@ -41,16 +52,38 @@ export function GameOverModal({ rankings, playerNames, myId, onRestart }: GameOv
           ))}
         </div>
 
-        {onRestart && (
-          <button
-            type="button"
-            onClick={onRestart}
-            data-testid="restart-btn"
-            className="w-full bg-primary text-primary-foreground border-2 border-[#1a1108] py-2 rounded-[12px] font-semibold mt-2 shadow-button transition-all hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active"
-          >
-            再来一局
-          </button>
-        )}
+        <div className="flex flex-col gap-2 mt-4">
+          {onRestart && (
+            <button
+              type="button"
+              onClick={onRestart}
+              data-testid="restart-btn"
+              className="w-full bg-primary text-primary-foreground border-2 border-[#1a1108] py-2 rounded-[12px] font-semibold shadow-button transition-all hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active"
+            >
+              再来一局
+            </button>
+          )}
+          {onReturnToRoom && (
+            <button
+              type="button"
+              onClick={onReturnToRoom}
+              className="w-full bg-primary text-primary-foreground border-2 border-[#1a1108] py-2 rounded-[12px] font-semibold shadow-button transition-all hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="size-4" />
+              返回房间
+            </button>
+          )}
+          {onReturnToLobby && (
+            <button
+              type="button"
+              onClick={onReturnToLobby}
+              className="w-full bg-card text-foreground border-2 border-foreground py-2 rounded-[12px] font-semibold shadow-[#3d2e1e_-4px_4px_0px] transition-all hover:-translate-y-0.5 hover:shadow-[#3d2e1e_-5px_6px_0px] active:translate-y-px active:shadow-[#3d2e1e_-2px_2px_0px] flex items-center justify-center gap-2"
+            >
+              <Home className="size-4" />
+              返回大厅
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

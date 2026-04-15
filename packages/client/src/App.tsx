@@ -10,15 +10,13 @@ import { Room } from './pages/Room';
 type Page = 'lobby' | 'room' | 'game';
 
 export function App() {
-  const { userId, userName } = useIdentity();
+  const { userId, userName, rename } = useIdentity();
   const { socket } = useSocket(userId, userName);
   const [page, setPage] = useState<Page>('lobby');
   const [roomId, setRoomId] = useState<string | null>(null);
   const pageRef = useRef(page);
   pageRef.current = page;
 
-  // Hoist both hooks so they always subscribe — avoids race conditions
-  // where game:state / room:state events fire before child components mount.
   const roomCtx = useRoom(socket);
   const game = useGame(socket);
 
@@ -33,11 +31,23 @@ export function App() {
     }
   }, [roomStatus]);
 
+  // Reconnection: if we receive room:state while on lobby, auto-navigate
+  useEffect(() => {
+    if (!roomCtx.room || pageRef.current !== 'lobby') return;
+    setRoomId(roomCtx.room.roomId);
+    if (roomCtx.room.status === 'waiting') {
+      setPage('room');
+    } else {
+      setPage('game');
+    }
+  }, [roomCtx.room]);
+
   if (page === 'lobby') {
     return (
       <Lobby
         socket={socket}
         userName={userName}
+        rename={rename}
         roomCtx={roomCtx}
         onRoomCreated={(id) => {
           setRoomId(id);
@@ -67,7 +77,21 @@ export function App() {
   }
 
   if (page === 'game') {
-    return <Game userId={userId} room={roomCtx.room} game={game} />;
+    return (
+      <Game
+        userId={userId}
+        room={roomCtx.room}
+        game={game}
+        onReturnToRoom={() => {
+          roomCtx.restart();
+        }}
+        onReturnToLobby={() => {
+          roomCtx.leave();
+          setRoomId(null);
+          setPage('lobby');
+        }}
+      />
+    );
   }
 
   return null;

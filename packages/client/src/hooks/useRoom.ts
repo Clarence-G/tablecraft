@@ -1,4 +1,4 @@
-import type { ClientEvents, RoomState, ServerEvents } from '@repo/shared';
+import type { ClientEvents, RoomState, RoomSummary, ServerEvents } from '@repo/shared';
 import { useCallback, useEffect, useState } from 'react';
 import type { Socket } from 'socket.io-client';
 
@@ -55,5 +55,16 @@ export function useRoom(socket: AppSocket | null) {
   const kick = useCallback((playerId: string) => socket?.emit('room:kick', playerId), [socket]);
   const restart = useCallback(() => socket?.emit('room:restart'), [socket]);
 
-  return { room, create, join, leave, ready, start, kick, restart };
+  const listRooms = useCallback(
+    (gameId: string): Promise<RoomSummary[]> => {
+      return new Promise((resolve) => {
+        socket?.emit('room:list', gameId, (rooms) => {
+          resolve(rooms);
+        });
+      });
+    },
+    [socket],
+  );
+
+  return { room, create, join, leave, ready, start, kick, restart, listRooms };
 }

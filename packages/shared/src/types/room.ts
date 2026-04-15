@@ -14,7 +14,17 @@ export interface RoomState {
   status: RoomStatus;
   hostId: string;
   players: PlayerInfo[];
+  minPlayers: number;
   maxPlayers: number;
   config?: unknown;
   createdAt: number;
+}
+
+export interface RoomSummary {
+  roomId: string;
+  gameId: string;
+  gameName: string;
+  hostName: string;
+  playerCount: number;
+  maxPlayers: number;
 }
