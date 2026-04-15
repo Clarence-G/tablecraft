@@ -200,15 +200,13 @@ export function Lobby({
               >
                 <RefreshCw className={`size-4 ${loadingRooms ? 'animate-spin' : ''}`} />
               </button>
-              {selectedGameId && (
-                <Button
-                  onClick={() => handleCreate(selectedGameId)}
-                  disabled={loading}
-                  className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[12px] px-4 font-semibold"
-                >
-                  创建新房间
-                </Button>
-              )}
+              <Button
+                onClick={() => selectedGameId && handleCreate(selectedGameId)}
+                disabled={loading || !selectedGameId}
+                className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[12px] px-4 font-semibold"
+              >
+                创建新房间
+              </Button>
             </div>
           </div>
 
