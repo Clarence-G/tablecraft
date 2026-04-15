@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"pnpm --filter @repo/server dev\" \"pnpm --filter @repo/client dev\"",
+    "dev": "node scripts/kill-prev.js && concurrently --kill-others -n server,client \"pnpm --filter @repo/server dev\" \"pnpm --filter @repo/client dev\"",
+    "postdev": "node scripts/kill-prev.js",
     "build": "pnpm --filter @repo/shared build && pnpm --filter @repo/server build && pnpm --filter @repo/client build",
     "test": "vitest run --workspace vitest.workspace.ts",
     "test:e2e": "playwright test",
@@ -16,6 +17,7 @@
   },
   "dependencies": {
     "@games/gomoku": "workspace:*",
+    "@games/love-letter": "workspace:*",
     "@repo/server": "workspace:*",
     "@repo/client": "workspace:*"
   },
