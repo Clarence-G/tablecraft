@@ -21,7 +21,11 @@
       "@games/yahtzee/shared": ["../../games/yahtzee/shared.ts"],
       "@games/yahtzee/board": ["../../games/yahtzee/Board.tsx"],
       "@games/hive/shared": ["../../games/hive/shared.ts"],
-      "@games/hive/board": ["../../games/hive/Board.tsx"]
+      "@games/hive/board": ["../../games/hive/Board.tsx"],
+      "@games/blackjack/shared": ["../../games/blackjack/shared.ts"],
+      "@games/blackjack/board": ["../../games/blackjack/Board.tsx"],
+      "@games/uno/shared": ["../../games/uno/shared.ts"],
+      "@games/uno/board": ["../../games/uno/Board.tsx"]
     }
   },
   "include": ["src", "../../games"]

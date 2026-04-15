@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@games/blackjack':
+        specifier: workspace:*
+        version: link:games/blackjack
       '@games/connect-four':
         specifier: workspace:*
         version: link:games/connect-four
@@ -23,6 +26,9 @@ importers:
       '@games/love-letter':
         specifier: workspace:*
         version: link:games/love-letter
+      '@games/uno':
+        specifier: workspace:*
+        version: link:games/uno
       '@games/yahtzee':
         specifier: workspace:*
         version: link:games/yahtzee
@@ -59,6 +65,22 @@ importers:
         version: 3.25.76
 
   games/_template:
+    dependencies:
+      '@repo/game-ui':
+        specifier: workspace:*
+        version: link:../../packages/game-ui
+      '@repo/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+    devDependencies:
+      vite:
+        specifier: ^5.2.0
+        version: 5.4.21(@types/node@20.19.39)(lightningcss@1.32.0)
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  games/blackjack:
     dependencies:
       '@repo/game-ui':
         specifier: workspace:*

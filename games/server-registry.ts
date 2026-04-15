@@ -1,3 +1,5 @@
+import { logic as blackjackLogic } from '@games/blackjack/logic';
+import { meta as blackjackMeta } from '@games/blackjack/shared';
 import { logic as connectFourLogic } from '@games/connect-four/logic';
 import { meta as connectFourMeta } from '@games/connect-four/shared';
 import { logic as gomokuLogic } from '@games/gomoku/logic';
@@ -8,6 +10,8 @@ import { logic as liarBarLogic } from '@games/liar-bar/logic';
 import { meta as liarBarMeta } from '@games/liar-bar/shared';
 import { logic as loveLetterLogic } from '@games/love-letter/logic';
 import { meta as loveLetterMeta } from '@games/love-letter/shared';
+import { logic as unoLogic } from '@games/uno/logic';
+import { meta as unoMeta } from '@games/uno/shared';
 import { logic as yahtzeeLogic } from '@games/yahtzee/logic';
 import { meta as yahtzeeMeta } from '@games/yahtzee/shared';
 import type { ServerGamePlugin } from '@repo/shared';
@@ -19,4 +23,6 @@ export const serverRegistry: Record<string, ServerGamePlugin> = {
   [liarBarMeta.id]: { meta: liarBarMeta, logic: liarBarLogic },
   [yahtzeeMeta.id]: { meta: yahtzeeMeta, logic: yahtzeeLogic },
   [hiveMeta.id]: { meta: hiveMeta, logic: hiveLogic },
+  [blackjackMeta.id]: { meta: blackjackMeta, logic: blackjackLogic },
+  [unoMeta.id]: { meta: unoMeta, logic: unoLogic },
 };

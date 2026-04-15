@@ -9,5 +9,7 @@ export default defineWorkspace([
   'games/liar-bar/vitest.config.ts',
   'games/yahtzee/vitest.config.ts',
   'games/hive/vitest.config.ts',
+  'games/blackjack/vitest.config.ts',
+  'games/uno/vitest.config.ts',
   'games/_template/vitest.config.ts',
 ]);

@@ -22,6 +22,8 @@
     "@games/liar-bar": "workspace:*",
     "@games/yahtzee": "workspace:*",
     "@games/hive": "workspace:*",
+    "@games/blackjack": "workspace:*",
+    "@games/uno": "workspace:*",
     "@repo/server": "workspace:*",
     "@repo/client": "workspace:*"
   },
