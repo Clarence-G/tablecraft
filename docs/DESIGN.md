@@ -1,243 +1,368 @@
-# DESIGN.md -- Web 桌游大全
+# DESIGN.md -- Tabletop Games Platform
 
-## 1. 视觉主题与氛围
-
-桌游大全的设计语言是 "数字桌面上的实体游戏"。整个界面模拟一张温暖的木质桌面，UI 元素像真实的卡牌、棋子、骰子散落其上。设计核心是 **厚边框、重阴影、3D 拟物** -- 每一个组件都要有"拿得起来"的物理存在感。
-
-画布底色是暖奶油色 (#faf5eb)，模拟浅色桌布/木桌；卡片用纯白 #ffffff，模拟实体卡牌的纸质感；边框统一 2-3px 实线，颜色为深棕 (#3d2e1e)，模拟卡牌黑色描边。
-
-所有交互都带有物理隐喻：悬浮时卡片"抬起"并加深阴影，点击时卡片"压下"并缩小阴影，页面切换有翻牌感。
-
-核心特征：
-- 暖奶油画布 (#faf5eb) -- 模拟桌布/浅色木桌
-- 深棕厚边框 (2-3px solid #3d2e1e) -- 模拟卡牌描边
-- 硬偏移阴影 (#3d2e1e -6px 6px 0px) -- 拟物投影，像棋子在桌上的影子
-- 多层阴影系统：底层软阴影 + 顶层硬阴影 = 3D 浮起感
-- 六色游戏色板：骰红、宝蓝、翡翠、琥珀、皇紫、珊瑚 -- 像一盒桌游里的彩色配件
-- 大圆角 (16-24px) -- 圆润的卡牌边缘
-- 悬浮微旋转 (rotate(-2deg)) -- 像手拿起一张牌时的自然倾斜
-- 可选纹理叠加：background-image 叠加亚麻/木纹纹理增强触觉感
+Design language: **"Digital objects on a physical table."** Every UI element feels like a real card, token, or board piece resting on a warm wooden surface. The core pillars are **thick borders, hard offset shadows, and tactile interactions**.
 
 ---
 
-## 2. 色彩系统
+## 1. Color System
 
-### 桌面底色
+### Surfaces
 
-- 桌布奶油 #faf5eb -- 页面背景、主画布
-- 桌布深 #f0e8d8 -- 次级区域背景、sidebar
-- 卡牌白 #ffffff -- 卡片/弹窗/输入框背景
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `--background` | `#faf5eb` | Page canvas -- warm cream tabletop |
+| `--secondary` / `--muted` | `#f0e8d8` | Recessed areas, info blocks |
+| `--card` | `#ffffff` | Cards, modals, inputs -- paper-white |
 
-### 墨色系 (文字 & 边框)
+### Ink (Text & Borders)
 
-- 墨棕 #3d2e1e -- 一级标题、厚边框、硬阴影色
-- 深墨 #1a1108 -- 最高强调 (logo、大标题)
-- 中棕 #6b5744 -- 二级文字、说明文字
-- 浅棕 #9c8b78 -- 三级文字、占位符
-- 极浅棕 #c4b8a8 -- 禁用态、分割线
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `--foreground` | `#3d2e1e` | Primary text, thick borders, hard shadows |
+| Deep ink | `#1a1108` | Strongest emphasis (logo, hero titles, button shadow) |
+| `--muted-foreground` | `#6b5744` | Secondary text, descriptions |
+| Tertiary | `#9c8b78` | Placeholders, timestamps |
+| `--border` | `#c4b8a8` | Borders, dividers, disabled states |
 
-### 六色游戏色板
+### Six Game Colors
 
-| 名称 | 主色 | 浅色 (背景) | 深色 (文字) | 隐喻 |
-|------|------|-------------|-------------|------|
-| 骰红 Dice Red | #d94040 | #fde8e8 | #7a1a1a | 经典红色骰子 |
-| 宝蓝 Royal Blue | #2563eb | #e8f0fe | #1a3a8a | 棋盘色、策略类 |
-| 翡翠 Jade Green | #16a34a | #e8f8ee | #0a5c2a | 棋子、自然/冒险类 |
-| 琥珀 Amber Gold | #d97706 | #fef3e0 | #7a4006 | 金币、奖杯、经济类 |
-| 皇紫 Crown Purple | #7c3aed | #f0e8fe | #4a1a8a | 魔法、奇幻类 |
-| 珊瑚 Coral Pink | #e8556d | #fde8ec | #8a1a30 | 派对、社交类 |
+Each game category has its own color from this palette. Used for tags, accent shadows, and status indicators.
 
-### 语义色
+| Name | Primary | Light (bg) | Dark (text) | Usage |
+|------|---------|------------|-------------|-------|
+| Dice Red | `#d94040` | `#fde8e8` | `#7a1a1a` | Error, destructive |
+| Royal Blue | `#2563eb` | `#e8f0fe` | `#1a3a8a` | Strategy tags |
+| Jade Green | `#16a34a` | `#e8f8ee` | `#0a5c2a` | Success, online, ready |
+| Amber Gold | `#d97706` | `#fef3e0` | `#7a4006` | Warning, current turn, selected |
+| Crown Purple | `#7c3aed` | `#f0e8fe` | `#4a1a8a` | Deduction, fantasy tags |
+| Coral Pink | `#e8556d` | `#fde8ec` | `#8a1a30` | Party, social tags |
 
-- 成功 #16a34a (翡翠) -- 在线、可用、评分高
-- 警告 #d97706 (琥珀) -- 库存少、注意
-- 错误 #d94040 (骰红) -- 错误、缺货
-- 信息 #2563eb (宝蓝) -- 提示、新内容
+### Semantic Mapping
 
-### 阴影色
+| Semantic | Color | Example |
+|----------|-------|---------|
+| `--success` | Jade `#16a34a` | Online dot, "ready" text, ready button |
+| `--warning` | Amber `#d97706` | Current turn, host badge, selected card |
+| `--destructive` | Dice Red `#d94040` | Error messages, elimination |
+| Info | Royal Blue `#2563eb` | Tips, help text |
 
-- 硬阴影 #3d2e1e -- 不透明、用于偏移阴影
-- 软阴影 rgba(61, 46, 30, 0.15) -- 用于柔和投影层
-- 内阴影 rgba(61, 46, 30, 0.08) -- 用于 inset 凹陷效果
+### Game-Specific Tokens
 
----
-
-## 3. 排版规则
-
-### 字体
-
-| 角色 | 字体 | 备注 |
-|------|------|------|
-| 展示/标题 | "Noto Sans SC", system-ui | 几何感强，像桌游包装盒上的字 |
-| 正文/UI | "Noto Sans SC", "Inter", system-ui | 清晰可读的中文 + 西文 |
-| 等宽/标签 | "Space Mono", "JetBrains Mono", monospace | 游戏编号、规则参数 |
-
-### 字号层级
-
-| 角色 | 字号 | 字重 | 行高 | 字间距 | 用途 |
-|------|------|------|------|--------|------|
-| 超大展示 | 64px | 700 | 1.05 | -2px | 首页 Hero 标语 |
-| 页面标题 | 40px | 700 | 1.10 | -1.2px | 分类页标题 |
-| 区块标题 | 28px | 600 | 1.15 | -0.56px | 模块/区域标题 |
-| 卡牌标题 | 20px | 600 | 1.25 | -0.3px | 游戏名称 |
-| 副标题 | 16px | 500 | 1.40 | normal | 游戏标签/简述 |
-| 正文 | 16px | 400 | 1.60 | normal | 游戏介绍/规则 |
-| 小字 | 14px | 400 | 1.50 | normal | 元数据、时间 |
-| 标签 (大写) | 12px | 600 | 1.20 | 1.5px | text-transform: uppercase，分类标签 |
-
-### 原则
-
-- 标题字重 600-700，像桌游包装盒上粗壮的字
-- 正文绝不超过 500，保持阅读舒适
-- 中文标题可用 700，西文标题用 600 即够
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `--board` | `#d4a056` | Gomoku/Go board wood surface |
+| `--board-line` | `#6b5744` | Board grid lines and star points |
 
 ---
 
-## 4. 组件样式
+## 2. Typography
 
-### 按钮
+### Font Stack
 
-**主按钮 (Primary)**
+| Role | Font | Notes |
+|------|------|-------|
+| Display / UI | `"Noto Sans SC", "Inter Variable", system-ui` | Chinese + Latin |
+| Monospace | `"Space Mono", "JetBrains Mono", monospace` | Room codes, rankings |
+
+### Scale
+
+Use Tailwind's type scale. Titles use `font-bold` (700) or `font-semibold` (600). Body text stays at 400-500.
+
+| Role | Tailwind | Weight | Usage |
+|------|----------|--------|-------|
+| Page title | `text-4xl` | 700 | "Tabletop Games" in nav |
+| Section title | `text-lg` / `text-xl` | 600 | "Select Game", "Rooms" |
+| Card title | `text-base` | 700 | Game name |
+| Body | `text-sm` | 400 | Descriptions |
+| Small / label | `text-xs` | 600 | Tags, metadata, timestamps |
+| Mono | `font-mono tracking-wider` | 600 | Room codes |
+
+### Rules
+
+- Titles: weight 600-700. Body: never exceed 500.
+- Never use pure black `#000000`. Use `#1a1108` (deep ink) or `#3d2e1e` (foreground).
+
+---
+
+## 3. Shadows & Depth
+
+The shadow system is the heart of the skeuomorphic feel. Hard offset shadows simulate directional light from the upper-right.
+
+### Shadow Utilities (defined in index.css)
+
+| Class | Value | Usage |
+|-------|-------|-------|
+| `shadow-card` | `#3d2e1e -6px 6px 0px, rgba(61,46,30,0.08) 0px 2px 8px` | Cards at rest |
+| `shadow-card-hover` | `#3d2e1e -8px 10px 0px, rgba(61,46,30,0.12) 0px 8px 24px` | Card lifted (hover) |
+| `shadow-card-active` | `#3d2e1e -3px 3px 0px, rgba(61,46,30,0.06) 0px 1px 4px` | Card pressed (active) |
+| `shadow-button` | `#1a1108 -4px 4px 0px` | Button at rest |
+| `shadow-button-hover` | `#1a1108 -5px 6px 0px` | Button lifted |
+| `shadow-button-active` | `#1a1108 -2px 2px 0px` | Button pressed |
+| `shadow-inset` | `inset rgba(61,46,30,0.08) 0px 2px 4px` | Input fields (recessed) |
+
+### Depth Layers
+
+| Layer | Treatment | Usage |
+|-------|-----------|-------|
+| L-1 Recessed | `shadow-inset` | Inputs, search fields |
+| L0 Table | No shadow, `bg-background` | Page canvas |
+| L1 Info | `rgba(61,46,30,0.06) 0px 1px 3px` | Info blocks, param badges |
+| L2 Card | `shadow-card` | Game cards, room list, modals |
+| L3 Lifted | `shadow-card-hover` | Hovered cards, drag state |
+| L4 Overlay | `bg-[#1a1108]/50` backdrop | Modal overlays |
+
+### Interaction Physics
+
+Every card and button responds to hover/press with shadow transitions:
+
 ```
-background: #3d2e1e
-color: #ffffff
-border: 2px solid #1a1108
-border-radius: 12px
-padding: 10px 24px
-box-shadow: #1a1108 -4px 4px 0px
-font-weight: 600
-
-hover: transform: translateY(-2px); box-shadow: #1a1108 -5px 6px 0px
-active: transform: translateY(1px); box-shadow: #1a1108 -2px 2px 0px
+Rest    → shadow-card,   transform: none
+Hover   → shadow-card-hover, translateY(-4px) rotate(-1.5deg)
+Active  → shadow-card-active, translateY(0) rotate(0)
 ```
 
-**次按钮 (Secondary)**
+Transition: `duration-200` with default ease. Cards feel like picking up and putting down a game piece.
+
+---
+
+## 4. Borders & Radius
+
+### Border Widths
+
+| Class | Width | Usage |
+|-------|-------|-------|
+| `border-thick` | 2.5px | Cards, main panels |
+| `border-2` | 2px | Buttons, inputs, badges, status indicators |
+| `border` | 1px | Subtle dividers, tag borders |
+
+All borders use warm colors: `border-foreground` (#3d2e1e) for strong, `border-border` (#c4b8a8) for subtle.
+
+### Radius Scale
+
+| Size | Value | Usage |
+|------|-------|-------|
+| Small | `rounded-[8px]` | Badges, param blocks, room code |
+| Medium | `rounded-[12px]` | Buttons, inputs, room list items |
+| Large | `rounded-[16px]` | Cards, modals, main panels |
+| Pill | `rounded-full` | Tags, status dots |
+
+---
+
+## 5. Icons
+
+Use **lucide-react** exclusively. No emoji anywhere in code, UI, or docs.
+
+### Size Convention
+
+| Context | Size | Example |
+|---------|------|---------|
+| Inline with text | `size-3` to `size-3.5` | Metadata (clock, users count) |
+| Button icon | `size-4` | Plus, ArrowLeft in buttons |
+| Card icon | `size-6` | Game card icons (Target, Heart) |
+| Empty state / modal | `size-10` | Trophy, Frown, Sofa |
+
+### Current Icon Usage
+
+| Icon | Usage |
+|------|-------|
+| `Dices` | Nav logo, default game icon |
+| `Target` | Gomoku game card |
+| `Heart` | Love Letter game card |
+| `Users` | Player count badge |
+| `Clock` | Duration badge |
+| `Pencil` | Editable nickname hint |
+| `RefreshCw` | Room list refresh (animate-spin when loading) |
+| `Plus` | Create room button |
+| `Sofa` | Empty room list state |
+| `Trophy` | Game over -- winner |
+| `Frown` | Game over -- loser |
+| `ArrowLeft` | Return to room |
+| `Home` | Return to lobby |
+
+### Adding Game Icons
+
+Each game defines an `icon` field in its `meta` (in `shared.ts`). The Lobby maps icon names to Lucide components via `ICON_MAP`. When adding a new game, add the icon name to meta and register it in the map.
+
+---
+
+## 6. Avatars
+
+Use **boring-avatars** (`beam` variant) for user avatars. Generated from the user's name, producing unique face-like SVG identicons.
+
+```tsx
+<Avatar name={userName} size={32} variant="beam" colors={['#d94040', '#2563eb', '#16a34a', '#d97706', '#7c3aed']} />
 ```
-background: #ffffff
-color: #3d2e1e
-border: 2px solid #3d2e1e
-border-radius: 12px
-padding: 10px 24px
-box-shadow: #3d2e1e -4px 4px 0px
 
-hover: background: #faf5eb; transform: translateY(-2px); box-shadow: #3d2e1e -5px 6px 0px
-active: transform: translateY(1px); box-shadow: #3d2e1e -2px 2px 0px
+Colors use the six game palette primaries. The avatar appears in the top-right nav bar.
+
+---
+
+## 7. Animation
+
+Use **framer-motion** for meaningful transitions. Animations should reinforce the physical metaphor -- objects appearing, lifting, settling.
+
+### Stone Placement (IntersectionBoard)
+
+```tsx
+initial={{ scale: 0, opacity: 0 }}
+animate={{ scale: 1, opacity: 1 }}
+transition={{ type: 'spring', stiffness: 400, damping: 20 }}
 ```
 
-### 卡片 -- 核心组件，模拟实体卡牌
+Spring physics: the stone "pops" into place with a slight overshoot, like dropping a game piece.
 
-```
-background: #ffffff
-border: 2.5px solid #3d2e1e
-border-radius: 16px
-box-shadow: #3d2e1e -6px 6px 0px, rgba(61,46,30,0.08) 0px 2px 8px
-overflow: hidden
+### Hover Preview
 
-hover:
-  transform: translateY(-4px) rotate(-1.5deg)
-  box-shadow: #3d2e1e -8px 10px 0px, rgba(61,46,30,0.12) 0px 8px 24px
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)
-
-active:
-  transform: translateY(0px) rotate(0deg)
-  box-shadow: #3d2e1e -3px 3px 0px, rgba(61,46,30,0.06) 0px 1px 4px
+```tsx
+initial={{ opacity: 0 }}
+animate={{ opacity: 0.4 }}
+exit={{ opacity: 0 }}
 ```
 
-### 输入框
+Ghost stone fades in at 40% opacity to preview placement.
+
+### CSS Transitions
+
+Cards/buttons use CSS transitions for hover/active states:
 
 ```
-background: #ffffff
-color: #3d2e1e
-border: 2px solid #c4b8a8
-border-radius: 12px
-padding: 10px 14px
-box-shadow: inset rgba(61,46,30,0.06) 0px 2px 4px
-
-focus:
-  border-color: #3d2e1e
-  box-shadow: inset rgba(61,46,30,0.06) 0px 2px 4px, rgba(61,46,30,0.12) 0px 0px 0px 3px
+transition-all duration-200
 ```
 
-### 标签/徽章
+The card hover adds `hover:-translate-y-1 hover:-rotate-[1.5deg]` -- a subtle tilt like picking up a card. Active snaps back to origin.
 
-**分类标签 (彩色药丸)**
+### Loading States
+
+- `RefreshCw` icon: `animate-spin` class while fetching.
+- Room list: stays visible during refresh, data swaps silently. Loading spinner only on first mount.
+
+### Rules
+
+- Every interactive element must respond to hover and active with a physical metaphor (lift/press).
+- Avoid flashy decorative animations. Motion should communicate state change.
+- Use spring physics for game piece placement. Use CSS transitions for UI state changes.
+- No flicker: never clear visible content to show a loading skeleton for in-place refreshes.
+
+---
+
+## 8. Component Patterns
+
+### Game Card (Lobby)
+
 ```
-background: {游戏色板浅色}
-color: {游戏色板深色}
-border: 1.5px solid {游戏色板主色}
-border-radius: 999px
-padding: 4px 12px
-font-size: 12px; font-weight: 600
+┌───────────────────────┐   border-thick border-foreground
+│  [icon]  Game Name    │   rounded-[16px]
+│  Description text...  │   shadow-card
+│  [2人] [10min] [策略] │   hover: lift + rotate + shadow-card-hover
+│  3 rooms active       │   selected: bg-[#fef3e0] border-warning
+└───────────────────────┘
+```
+
+### Room List Entry
+
+```
+┌──────────────────────────────────────┐
+│  ABC123  [Game]  HostName   2/4 [加入]│   bg-secondary border-2 border-border
+└──────────────────────────────────────┘   rounded-[10px]
+```
+
+### Player Badge
+
+```
+┌─────────────────────────────┐
+│  ● PlayerName  你  回合中    │   border-2, shadow variant
+└─────────────────────────────┘   turn: bg-[#fef3e0] border-warning
+```
+
+"回合中" always rendered, `invisible` when not active -- prevents layout shift.
+
+### Game Over Modal
+
+```
+bg-[#1a1108]/50 backdrop
+┌────────────────────┐  border-thick shadow-card
+│    [Trophy/Frown]  │
+│    You Won! / #2   │
+│    1. Alice  (you) │  first place: amber bg
+│    2. Bob          │  others: secondary bg
+│    [Return Room]   │  primary button
+│    [Return Lobby]  │  outline button
+└────────────────────┘
+```
+
+### IntersectionBoard (Go/Gomoku)
+
+```
+bg-board (#d4a056) border-[2.5px] border-[#3d2e1e] shadow-card rounded-[16px]
+SVG grid: stroke var(--board-line), star points r=3
+Responsive: width min(maxPx, calc(100vw - 32px)), aspect-ratio 1
+Grid: 1fr tracks, SVG viewBox auto-scales
+Black stone: bg-[#1a1108] border-2 border-[#3d2e1e]
+White stone: bg-white border-2 border-[#c4b8a8]
 ```
 
 ---
 
-## 5. 布局原则
+## 9. Tags
 
-### 间距系统
+Each tag maps to a unique color from the game palette:
 
-- 基础单位: 8px
-- 常用: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80
-- 卡片内边距: 16-20px
-- 卡片间距: 24px
-- 区块间距: 48-80px
+| Tag | Background | Text | Border |
+|-----|-----------|------|--------|
+| Strategy | `#e8f0fe` | `#1a3a8a` | `#2563eb` |
+| Board | `#e8f8ee` | `#0a5c2a` | `#16a34a` |
+| Deduction | `#f0e8fe` | `#4a1a8a` | `#7c3aed` |
+| Card | `#fef3e0` | `#7a4006` | `#d97706` |
+| Party | `#fde8ec` | `#8a1a30` | `#e8556d` |
+| Casual | `#fde8e8` | `#7a1a1a` | `#d94040` |
 
-### 圆角系统
+Style: `text-xs font-semibold border rounded-full px-2 py-0.5`.
 
-| 层级 | 圆角 | 用途 |
-|------|------|------|
-| 小 | 8px | 骰子形徽章、小参数块 |
-| 中 | 12px | 按钮、输入框、小卡片 |
-| 大 | 16px | 标准游戏卡、弹窗 |
-| 超大 | 24px | Hero 区块、大面板 |
-| 药丸 | 999px | 分类标签、搜索框 |
+When adding a new tag, assign it an unused game color.
 
 ---
 
-## 6. 深度与层级 -- 拟物核心
+## 10. Responsive
 
-| 层级 | 处理方式 | 用途 |
-|------|----------|------|
-| 凹陷 (L-1) | inset rgba(61,46,30,0.08) 0px 2px 4px | 输入框、搜索框 |
-| 桌面 (L0) | 无阴影，奶油色底 #faf5eb | 页面背景 |
-| 铺垫 (L1) | rgba(61,46,30,0.06) 0px 1px 3px | 信息块、参数卡 |
-| 卡牌 (L2) | #3d2e1e -6px 6px 0px + 柔软层 | 游戏卡片 |
-| 抬起 (L3) | #3d2e1e -8px 10px 0px + 柔散层 | 卡片 hover |
-| 弹窗 (L4) | rgba(61,46,30,0.25) 0px 16px 48px | Modal、下拉菜单 |
+### Breakpoints
 
----
+| Name | Width | Key changes |
+|------|-------|-------------|
+| Mobile | <640px | 2-col game cards, compact padding (px-4), stacked controls |
+| Tablet+ | >=640px (sm) | 3-col game cards, wider padding (px-6) |
+| Content max | 768px (max-w-3xl) | Centered, generous side margins |
 
-## 7. 响应式行为
+### Patterns
 
-| 名称 | 宽度 | 关键变化 |
-|------|------|----------|
-| 小屏手机 | <480px | 单列卡片，缩小阴影 (-4px 4px)，侧边距 16px |
-| 手机 | 480-767px | 双列卡片网格 |
-| 平板 | 768-1023px | 三列卡片，导航精简 |
-| 桌面 | 1024-1279px | 四列卡片，完整布局 |
-| 大屏 | 1280px+ | 最大宽度 1200px 居中，两侧大留白 |
-
-触控适配：
-- 按钮最小触控区: 44x44px
-- 移动端阴影适当缩小 (-4px 4px 代替 -6px 6px)
-- 卡片间距移动端缩小到 16px
+- Game cards: `grid-cols-2 sm:grid-cols-3`
+- Page padding: `px-4 sm:px-6`
+- Board: `width: min(maxPx, calc(100vw - 32px))` + `aspect-ratio: 1` -- fluid sizing
+- Board padding: `clamp(8px, 2vw, 18px)`
+- Touch targets: minimum 44x44px for buttons
+- Hard shadows maintained at all sizes -- they are the visual identity
 
 ---
 
-## 8. Do's & Don'ts
+## 11. Do's and Don'ts
 
 ### Do
-- 所有卡片使用 2-3px 实线深棕边框 + 硬偏移阴影
-- 使用暖奶油色 (#faf5eb) 作为页面背景
-- 悬浮时加微旋转 (rotate(-1~-2deg)) 模拟拿起卡牌的手感
-- 按钮必须有硬阴影并响应 hover/active 的"浮起/压下"动画
-- 徽章/标签用药丸形 (999px) 搭配色板浅底 + 实线细边框
-- 评分/数字参数用等宽字体 (Space Mono)
+
+- Use 2-3px solid brown borders on all cards and panels.
+- Use warm cream `#faf5eb` as page background. Never cold white or gray.
+- Add hover micro-rotation `rotate(-1~-2deg)` on cards -- feels like picking up a game piece.
+- Respond to hover/active with shadow depth changes on every interactive element.
+- Use lucide-react for all icons. Match size to context (inline, button, card, empty state).
+- Use the six game palette colors for tags, each tag getting a unique color.
+- Use `font-mono tracking-wider` for room codes and numeric data.
+- Use boring-avatars for user identity display.
 
 ### Don't
-- 不要用无边框卡片
-- 不要用柔和/模糊阴影做主阴影 -- 硬偏移阴影才是拟物
-- 不要用冷灰色 (#ccc, #eee) -- 所有中性色必须偏暖 (棕色调)
-- 不要让卡片悬浮时静止不动 -- 必须有位移 + 阴影变化
-- 不要用纯黑文字 #000000 -- 用深墨 #1a1108 或墨棕 #3d2e1e
-- 不要在正文中用 700 字重 -- 粗壮字体只属于标题和按钮
+
+- No borderless cards or panels.
+- No soft/blurred shadows as the primary shadow -- hard offset shadows are the identity.
+- No cold grays (`#ccc`, `#eee`) -- all neutrals must be warm (brown-tinted).
+- No pure black `#000000` text -- use `#1a1108` or `#3d2e1e`.
+- No static hover states -- every card/button must have physical lift/press feedback.
+- No emoji anywhere in code, UI, logs, or documentation.
+- No `font-bold` (700) on body text -- only titles and buttons.
+- No loading flicker -- keep content visible during in-place refreshes.
