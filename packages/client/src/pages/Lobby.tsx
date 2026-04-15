@@ -53,7 +53,8 @@ export function Lobby({
 
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [rooms, setRooms] = useState<RoomSummary[]>([]);
-  const [loadingRooms, setLoadingRooms] = useState(false);
+  const [loadingRooms, setLoadingRooms] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const games = Object.values(clientRegistry);
 
@@ -64,14 +65,15 @@ export function Lobby({
   }
 
   async function fetchRooms(gameId?: string) {
-    // Only show loading spinner on initial load, not on game filter switch
-    const isInitial = rooms.length === 0;
-    if (isInitial) setLoadingRooms(true);
+    // First load: show skeleton. Subsequent: just spin the refresh icon.
+    const isFirstLoad = loadingRooms;
+    if (!isFirstLoad) setRefreshing(true);
     try {
       const result = await listRooms(gameId ?? '');
       setRooms(result);
     } finally {
-      setLoadingRooms(false);
+      if (isFirstLoad) setLoadingRooms(false);
+      else setRefreshing(false);
     }
   }
 
@@ -247,11 +249,11 @@ export function Lobby({
               <button
                 type="button"
                 onClick={() => fetchRooms(selectedGameId ?? undefined)}
-                disabled={loadingRooms}
+                disabled={refreshing}
                 className="p-1 rounded-[6px] border border-border hover:border-foreground transition-colors"
                 aria-label="刷新"
               >
-                <RefreshCw className={`size-3.5 ${loadingRooms ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`size-3.5 ${refreshing ? 'animate-spin' : ''}`} />
               </button>
             </div>
             <div className="flex items-center gap-2">
