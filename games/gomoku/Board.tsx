@@ -37,9 +37,9 @@ export function Board({ state, myId, players, sendAction }: BoardProps<PlayerVie
       </div>
 
       {/* Turn indicator */}
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-muted-foreground font-medium">
         {state.winner
-          ? `${playerNames[state.winner] ?? state.winner} 获胜！`
+          ? `${playerNames[state.winner] ?? state.winner} 获胜!`
           : isMyTurn
             ? '你的回合'
             : `等待 ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
@@ -56,9 +56,9 @@ export function Board({ state, myId, players, sendAction }: BoardProps<PlayerVie
       />
 
       {/* My stone indicator */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium bg-card border-2 border-border rounded-[8px] px-3 py-1.5">
         <div
-          className={`w-4 h-4 rounded-full ${state.myStone === 'black' ? 'bg-background border border-border' : 'bg-white'}`}
+          className={`w-4 h-4 rounded-full border ${state.myStone === 'black' ? 'bg-[#1a1108] border-[#3d2e1e]' : 'bg-white border-[#c4b8a8]'}`}
         />
         <span>你执{state.myStone === 'black' ? '黑子' : '白子'}</span>
       </div>

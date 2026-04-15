@@ -9,17 +9,17 @@ interface PlayerBadgeProps {
 export function PlayerBadge({ player, isCurrentTurn, isMe }: PlayerBadgeProps) {
   return (
     <div
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm
-      ${isCurrentTurn ? 'bg-warning/15 border border-warning/50' : 'bg-card ring-1 ring-foreground/10'}
-      ${isMe ? 'ring-2 ring-ring' : ''}
+      className={`flex items-center gap-2 px-3 py-1.5 rounded-[12px] text-sm border-2 transition-all
+      ${isCurrentTurn ? 'bg-[#fef3e0] border-warning' : 'bg-card border-foreground'}
+      ${isMe ? 'shadow-button' : 'shadow-[#3d2e1e_-3px_3px_0px]'}
     `}
     >
       <span
-        className={`w-2 h-2 rounded-full ${player.connected ? 'bg-success' : 'bg-muted-foreground/40'}`}
+        className={`w-2.5 h-2.5 rounded-full border ${player.connected ? 'bg-success border-[#0a5c2a]' : 'bg-[#c4b8a8] border-[#9c8b78]'}`}
       />
-      <span className="font-medium">{player.name}</span>
-      {isMe && <span className="text-xs text-muted-foreground">你</span>}
-      {isCurrentTurn && <span className="text-xs text-warning">回合中</span>}
+      <span className="font-semibold">{player.name}</span>
+      {isMe && <span className="text-xs text-muted-foreground font-medium">你</span>}
+      {isCurrentTurn && <span className="text-xs text-warning font-semibold">回合中</span>}
     </div>
   );
 }

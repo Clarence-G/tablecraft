@@ -32,7 +32,7 @@ export function Game({ userId, room, game }: GamePageProps) {
   return (
     <div className="min-h-screen">
       {lastReject && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-destructive/15 border border-destructive/40 rounded-lg px-4 py-2 text-destructive z-50">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-[#fde8e8] border-2 border-destructive rounded-[12px] px-4 py-2 text-destructive font-medium z-50 shadow-card-active">
           {lastReject}
         </div>
       )}

@@ -70,3 +70,4 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - **Must support PC and mobile.** All pages and game boards must be tested at 375px width.
 - **Use Design Tokens.** Never hardcode colors (e.g. `bg-gray-800`). Use token classes (`bg-card`, `text-muted-foreground`).
 - **Reuse before building.** Check `@repo/game-ui` and `shadcn/ui` for existing components before creating new ones.
+- **Follow DESIGN.md.** The UI is warm skeuomorphic (cream background, thick brown borders, hard offset shadows). See `docs/DESIGN.md` for full spec.

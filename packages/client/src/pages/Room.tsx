@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { useRoom } from '../hooks/useRoom';
 
 type RoomCtx = ReturnType<typeof useRoom>;
@@ -29,56 +28,50 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
   const allReady = hasEnoughPlayers && room.players.every((p) => p.ready);
 
   return (
-    <div className="min-h-screen p-8" data-testid="room-page">
+    <div className="min-h-screen p-6 sm:p-8" data-testid="room-page">
       <div className="max-w-lg mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">等待室</h1>
+          <h1 className="text-2xl font-bold text-[#1a1108]">等待室</h1>
           <div
             data-testid="room-code"
-            className="bg-secondary rounded-lg px-4 py-2 font-mono tracking-widest text-lg"
+            className="bg-card border-2 border-foreground rounded-[8px] px-4 py-2 font-mono tracking-widest text-lg shadow-button"
           >
             {roomId}
           </div>
         </div>
 
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-sm text-muted-foreground uppercase">玩家列表</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2" data-testid="player-list">
-              {room.players.map((player, index) => (
-                <div
-                  key={player.id}
-                  className="flex items-center justify-between"
-                  data-testid={`player-${index}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`w-2 h-2 rounded-full ${player.connected ? 'bg-success' : 'bg-muted-foreground/40'}`}
-                    />
-                    <span>{player.name}</span>
-                    {player.id === room.hostId && (
-                      <span className="text-xs text-warning">房主</span>
-                    )}
-                  </div>
+        <div className="bg-card border-thick border-foreground rounded-[16px] p-6 shadow-card mb-6">
+          <h2 className="text-sm text-[#9c8b78] uppercase tracking-wider font-semibold mb-3">玩家列表</h2>
+          <div className="space-y-2" data-testid="player-list">
+            {room.players.map((player, index) => (
+              <div
+                key={player.id}
+                className="flex items-center justify-between py-1"
+                data-testid={`player-${index}`}
+              >
+                <div className="flex items-center gap-2">
                   <span
-                    className={`text-sm ${player.ready ? 'text-success' : 'text-muted-foreground'}`}
-                  >
-                    {player.ready ? '已准备' : '未准备'}
-                  </span>
+                    className={`w-2.5 h-2.5 rounded-full border ${player.connected ? 'bg-success border-[#0a5c2a]' : 'bg-[#c4b8a8] border-[#9c8b78]'}`}
+                  />
+                  <span className="font-medium">{player.name}</span>
+                  {player.id === room.hostId && (
+                    <span className="text-xs text-warning font-semibold bg-[#fef3e0] border border-warning rounded-full px-2 py-0.5">房主</span>
+                  )}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                <span className={`text-sm font-medium ${player.ready ? 'text-success' : 'text-[#9c8b78]'}`}>
+                  {player.ready ? '已准备' : '未准备'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <div className="flex flex-col gap-3">
           {!me?.ready && (
             <Button
               onClick={ready}
               data-testid="ready-btn"
-              className="w-full py-3 bg-success text-success-foreground hover:bg-success/80"
+              className="w-full py-3 bg-jade border-2 border-[#0a5c2a] text-white shadow-[#0a5c2a_-4px_4px_0px] hover:-translate-y-0.5 hover:shadow-[#0a5c2a_-5px_6px_0px] active:translate-y-px active:shadow-[#0a5c2a_-2px_2px_0px] rounded-[12px] font-semibold"
               size="lg"
             >
               准备
@@ -90,7 +83,7 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
               onClick={start}
               disabled={!allReady}
               data-testid="start-btn"
-              className="w-full py-3"
+              className="w-full py-3 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[12px] font-semibold"
               size="lg"
             >
               {!hasEnoughPlayers ? `至少需要 ${room.minPlayers} 名玩家` : '开始游戏'}
@@ -98,18 +91,22 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
           )}
 
           {room.status === 'finished' && (
-            <Button onClick={restart} className="w-full py-3" size="lg">
+            <Button
+              onClick={restart}
+              className="w-full py-3 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[12px] font-semibold"
+              size="lg"
+            >
               再来一局
             </Button>
           )}
 
           <Button
-            variant="secondary"
+            variant="outline"
             onClick={() => {
               leave();
               onLeave();
             }}
-            className="w-full py-3"
+            className="w-full py-3 bg-card border-2 border-foreground shadow-[#3d2e1e_-4px_4px_0px] hover:-translate-y-0.5 hover:shadow-[#3d2e1e_-5px_6px_0px] active:translate-y-px active:shadow-[#3d2e1e_-2px_2px_0px] rounded-[12px] font-semibold"
             size="lg"
           >
             离开

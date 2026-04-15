@@ -30,10 +30,10 @@ function StoneView({ stone }: { stone: Stone }) {
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-      className={`w-[77%] aspect-square rounded-full shadow-sm shadow-black/30 ${
+      className={`w-[77%] aspect-square rounded-full ${
         stone === 'black'
-          ? 'bg-background border border-border'
-          : 'bg-white border border-white/30'
+          ? 'bg-[#1a1108] border-2 border-[#3d2e1e] shadow-[0_2px_4px_rgba(0,0,0,0.3)]'
+          : 'bg-white border-2 border-[#c4b8a8] shadow-[0_2px_4px_rgba(0,0,0,0.15)]'
       }`}
     />
   );
@@ -54,7 +54,7 @@ export function IntersectionBoard({
 
   return (
     <div
-      className={`bg-board rounded-lg shadow-lg shadow-black/20 ${className ?? ''}`}
+      className={`bg-board rounded-[16px] border-[2.5px] border-[#3d2e1e] shadow-card ${className ?? ''}`}
       style={{
         padding: 'clamp(8px, 2vw, 18px)',
         width: `min(${boardPx + 36}px, calc(100vw - 32px))`,
@@ -138,7 +138,7 @@ export function IntersectionBoard({
                         animate={{ opacity: 0.4 }}
                         exit={{ opacity: 0 }}
                         className={`w-[77%] aspect-square rounded-full ${
-                          previewStone === 'black' ? 'bg-background' : 'bg-white'
+                          previewStone === 'black' ? 'bg-[#1a1108]' : 'bg-white'
                         }`}
                       />
                     )}

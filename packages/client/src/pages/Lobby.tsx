@@ -1,5 +1,4 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import type { ClientEvents, ServerEvents } from '@repo/shared';
 import { useState } from 'react';
@@ -54,13 +53,13 @@ export function Lobby({ socket, userName, roomCtx, onRoomCreated, onRoomJoined }
   }
 
   return (
-    <div className="min-h-screen p-8">
-      <h1 className="text-4xl font-bold mb-2 text-center">桌游平台</h1>
+    <div className="min-h-screen p-6 sm:p-8">
+      <h1 className="text-4xl font-bold mb-2 text-center text-[#1a1108]">桌游大全</h1>
       <p className="text-center text-muted-foreground mb-8">你好，{userName}</p>
 
       <div className="max-w-2xl mx-auto">
         <h2 className="text-xl font-semibold mb-4">选择游戏</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
           {games.map((plugin) => (
             <button
               type="button"
@@ -68,46 +67,43 @@ export function Lobby({ socket, userName, roomCtx, onRoomCreated, onRoomJoined }
               onClick={() => handleCreate(plugin.meta.id)}
               disabled={loading}
               data-testid={`game-card-${plugin.meta.id}`}
-              className="bg-card hover:bg-accent rounded-xl p-6 text-left transition ring-1 ring-foreground/10 hover:ring-foreground/20"
+              className="bg-card border-thick border-foreground rounded-[16px] p-6 text-left shadow-card transition-all duration-200 hover:-translate-y-1 hover:-rotate-[1.5deg] hover:shadow-card-hover active:translate-y-0 active:rotate-0 active:shadow-card-active"
             >
               <div className="text-lg font-bold">{plugin.meta.name}</div>
               <div className="text-sm text-muted-foreground mt-1">{plugin.meta.description}</div>
-              <div className="text-xs text-muted-foreground/60 mt-2">
-                {plugin.meta.minPlayers}–{plugin.meta.maxPlayers} 人
+              <div className="text-xs text-[#9c8b78] mt-2">
+                {plugin.meta.minPlayers}--{plugin.meta.maxPlayers} 人
               </div>
             </button>
           ))}
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>加入房间</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                placeholder="输入 6 位房间码"
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                maxLength={6}
-                data-testid="room-code-input"
-                className="flex-1 uppercase tracking-widest"
-                onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
-              />
-              <Button
-                onClick={handleJoin}
-                disabled={loading || !joinCode.trim()}
-                data-testid="join-room-btn"
-              >
-                加入
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="bg-card border-thick border-foreground rounded-[16px] p-6 shadow-card">
+          <h2 className="text-xl font-semibold mb-4">加入房间</h2>
+          <div className="flex gap-3">
+            <Input
+              type="text"
+              placeholder="输入 6 位房间码"
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              maxLength={6}
+              data-testid="room-code-input"
+              className="flex-1 uppercase tracking-widest border-2 border-border bg-card shadow-inset rounded-[12px] focus-visible:border-foreground"
+              onKeyDown={(e) => e.key === 'Enter' && handleJoin()}
+            />
+            <Button
+              onClick={handleJoin}
+              disabled={loading || !joinCode.trim()}
+              data-testid="join-room-btn"
+              className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[12px] px-6 font-semibold"
+            >
+              加入
+            </Button>
+          </div>
+        </div>
 
         {error && (
-          <div className="mt-4 bg-destructive/10 border border-destructive/40 rounded-lg p-3 text-destructive">
+          <div className="mt-4 bg-[#fde8e8] border-2 border-destructive rounded-[12px] p-3 text-destructive font-medium">
             {error}
           </div>
         )}
