@@ -60,6 +60,7 @@ pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e
 │   │   ├── Board.tsx           # Client React component
 │   │   └── logic.test.ts       # Unit tests via GameTestHarness
 │   ├── gomoku/                 # Gomoku (Five-in-a-Row) — reference implementation
+│   ├── love-letter/            # Love Letter (情书) — card game with hidden info
 │   ├── client-registry.ts      # Maps gameId → { meta, Board } (client bundle)
 │   └── server-registry.ts      # Maps gameId → { meta, logic } (server)
 │
@@ -98,7 +99,8 @@ pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e
 │           └── wait-for.ts     # waitForGameBoard, waitForGameOver
 │
 ├── docs/
-│   ├── tech.md                 # Full technical specification
+│   ├── tech.md                 # Full technical specification (initial design, may diverge from code)
+│   ├── DESIGN.md               # Visual design language spec
 │   └── DEVELOPMENT.md          # This file
 │
 ├── biome.json                  # Linter/formatter config
@@ -255,9 +257,13 @@ Each game exports four artifacts:
 | `Board.tsx` | React game UI (`BoardProps`) | Client only |
 | `logic.test.ts` | Unit tests via `GameTestHarness` | Test only |
 
-Registering a new game requires adding **two lines**:
+Registering a new game requires changes in **6 places**:
 1. `games/server-registry.ts` — add `{ meta, logic }`
 2. `games/client-registry.ts` — add `{ meta, Board: lazy(...) }`
+3. `packages/client/vite.config.ts` — add `@games/<id>/shared` alias
+4. `packages/client/tsconfig.json` — add paths for `shared` and `board`
+5. `vitest.workspace.ts` — add vitest config path
+6. `package.json` (root) — add `@games/<id>: workspace:*` dependency
 
 ### 6.4 Game logic contract
 
@@ -270,6 +276,20 @@ interface GameLogic<TState, TAction, TView> {
   onTimer?(state, timerName, ctx): ActionResult<TState>;  // Optional
   onPlayerDisconnect?(state, playerId, ctx): ActionResult<TState>;  // Optional
 }
+
+interface GameMeta {
+  id: string;
+  name: string;
+  description: string;
+  minPlayers: number;
+  maxPlayers: number;
+  tags?: string[];              // e.g. ['策略', '棋类']
+  icon?: string;                // Lucide icon name, e.g. 'Target', 'Heart'
+  estimatedMinutes?: number;    // Estimated play time
+  actionThrottleMs?: number;
+  configSchema?: z.ZodType;
+  defaultConfig?: unknown;
+}
 ```
 
 Action results:
@@ -280,7 +300,7 @@ Engine events in `events[]`:
 - `{ type: 'SET_TIMER', name: string, ms: number }` — start a timer
 - `{ type: 'CLEAR_TIMER', name: string }` — cancel a timer
 - `{ type: 'END_GAME', rankings: string[] }` — end the game with ordered rankings
-- `{ type: 'NOTIFY', playerId: string, payload: unknown }` — send private notification
+- `{ type: 'NOTIFY', to: string, payload: unknown }` — send private notification
 - `{ type: 'NOTIFY_ALL', payload: unknown }` — broadcast to all
 
 ---
@@ -304,18 +324,20 @@ Engine events in `events[]`:
    cp -r games/_template games/<your-game>
    ```
 
-2. **Edit `games/<your-game>/shared.ts`** — set `meta` (id, name, description, minPlayers, maxPlayers) and define `actionSchema`.
+2. **Edit `games/<your-game>/package.json`** — change `name` to `@games/<your-game>`.
 
-3. **Edit `games/<your-game>/logic.ts`** — implement `setup`, `onAction`, `getPlayerView`.
+3. **Edit `games/<your-game>/shared.ts`** — set `meta` (id, name, description, minPlayers, maxPlayers, tags, icon, estimatedMinutes) and define `ActionSchema`.
 
-4. **Edit `games/<your-game>/Board.tsx`** — implement the React UI.
+4. **Edit `games/<your-game>/logic.ts`** — implement `setup`, `onAction`, `getPlayerView`.
+
+5. **Edit `games/<your-game>/Board.tsx`** — implement the React UI.
    - The outer `<div>` must have `data-testid="game-board"`
    - Use Design Token classes (`bg-background`, `text-muted-foreground`, etc.)
    - Use `@repo/game-ui` components (`PlayerBadge`, `GameOverModal`, `IntersectionBoard`, etc.)
    - Use `@/components/ui/*` for buttons, inputs, cards
    - **Must support PC and mobile** — test at 375px width
 
-5. **Register the game:**
+6. **Register the game:**
    ```ts
    // games/server-registry.ts
    import { logic as myLogic } from '@games/my-game/logic';
@@ -337,24 +359,38 @@ Engine events in `events[]`:
    };
    ```
 
-6. **Add Vite alias** (in `packages/client/vite.config.ts`):
+7. **Add Vite alias** (in `packages/client/vite.config.ts`):
    ```ts
    { find: '@games/<your-game>/shared', replacement: path.resolve(root, 'games/<your-game>/shared.ts') },
-   { find: '@games/<your-game>/board', replacement: path.resolve(root, 'games/<your-game>/Board.tsx') },
    ```
-   Note: the generic regex alias `@games/(.+)/board` already handles Board.tsx — you only need to add the `shared` alias.
+   Note: the generic regex alias `@games/(.+)/board` already handles Board.tsx -- you only need to add the `shared` alias.
 
-7. **Add vitest config:**
+8. **Add TypeScript paths** (in `packages/client/tsconfig.json`):
+   ```json
+   "@games/<your-game>/shared": ["../../games/<your-game>/shared.ts"],
+   "@games/<your-game>/board": ["../../games/<your-game>/Board.tsx"]
+   ```
+
+9. **Add workspace dependency** (in root `package.json`):
+   ```json
+   "@games/<your-game>": "workspace:*"
+   ```
+
+10. **Add vitest config:**
    ```ts
-   // games/<your-game>/vitest.config.ts  (copy from _template)
+   // games/<your-game>/vitest.config.ts  (copy from _template, change test name)
    ```
    ```ts
    // vitest.workspace.ts — add the new config path
    ```
 
-8. **Write tests in `logic.test.ts`** using `GameTestHarness`.
+11. **Install + write tests:**
+   ```bash
+   pnpm install
+   ```
+   Write tests in `logic.test.ts` using `GameTestHarness`.
 
-9. **Verify:**
+12. **Verify:**
    ```bash
    pnpm typecheck && pnpm lint && pnpm test
    ```

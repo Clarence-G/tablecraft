@@ -71,3 +71,52 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - **Use Design Tokens.** Never hardcode colors (e.g. `bg-gray-800`). Use token classes (`bg-card`, `text-muted-foreground`).
 - **Reuse before building.** Check `@repo/game-ui` and `shadcn/ui` for existing components before creating new ones.
 - **Follow DESIGN.md.** The UI is warm skeuomorphic (cream background, thick brown borders, hard offset shadows). See `docs/DESIGN.md` for full spec.
+
+## 6. Adding a New Game — Quick Reference
+
+**Do NOT explore the engine layer.** The plugin contract is fixed. Read `games/_template/` and one existing game (e.g. `games/gomoku/`) as reference, then implement directly.
+
+### Files to create (`games/<game-id>/`)
+
+| File | What to do |
+|------|-----------|
+| `shared.ts` | Export `meta: GameMeta` (id, name, description, minPlayers, maxPlayers, tags, icon, estimatedMinutes), `ActionSchema` (Zod), `Action` type, `PlayerView` interface |
+| `logic.ts` | Implement `GameLogic<TState, Action, PlayerView>` — `setup`, `onAction`, `getPlayerView`, optional `getSpectatorView`/`onTimer`/`onPlayerDisconnect` |
+| `Board.tsx` | React component: `export function Board(props: BoardProps<PlayerView, Action>)` |
+| `logic.test.ts` | Tests using `GameTestHarness` from `@repo/shared/testing` |
+| `package.json` | Copy from `_template`, change `name` to `@games/<game-id>` |
+| `vitest.config.ts` | Copy from `_template`, change test `name` |
+
+### Files to modify (registration)
+
+```
+games/server-registry.ts          — import & add to serverRegistry
+games/client-registry.ts          — import meta + lazy(() => import board)
+packages/client/vite.config.ts    — add @games/<id>/shared alias
+packages/client/tsconfig.json     — add paths for shared + board
+vitest.workspace.ts               — add vitest config path
+package.json (root)               — add @games/<id>: workspace:*
+```
+
+### Key interfaces (don't read engine source, just use these)
+
+- `GameLogic<TState, TAction, TView>` — server game rules (`@repo/shared`)
+- `BoardProps<TView, TAction>` — React Board props: `{ state, myId, players, sendAction, lastReject, notifications, onReturnToRoom?, onReturnToLobby? }`
+- `GameContext` — `{ players: string[], random: SeededRandom }` passed to `setup`/`onAction`
+- `ActionResult<S>` — return `{ ok: true, state, events? }` or `{ ok: false, reason }`
+- `EngineEvent` — `SET_TIMER` | `CLEAR_TIMER` | `NOTIFY` | `NOTIFY_ALL` | `END_GAME`
+- Hidden info: `getPlayerView(state, playerID)` filters per player. Never send full state.
+
+### Reusable UI components
+
+- `PlayerBadge` — `@repo/game-ui/player`
+- `GameOverModal` — `@repo/game-ui/feedback`
+- `Button`, `Badge`, `Card`, `Dialog` — `@/components/ui/*` (shadcn)
+
+### Workflow
+
+1. Copy `_template` to `games/<id>/`, update `package.json` name
+2. Implement `shared.ts` → `logic.ts` → `logic.test.ts` → `Board.tsx`
+3. Register (6 files above)
+4. `pnpm install && pnpm test && pnpm typecheck`
+5. `pnpm dev` — verify in browser
