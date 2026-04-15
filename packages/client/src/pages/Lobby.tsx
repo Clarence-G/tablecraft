@@ -26,12 +26,12 @@ const ICON_MAP: Record<string, ReactNode> = {
 };
 
 const TAG_COLORS: Record<string, string> = {
-  策略: 'bg-[#e8f0fe] text-[#1a3a8a] border-royal-blue',
-  棋类: 'bg-[#e8f0fe] text-[#1a3a8a] border-royal-blue',
-  推理: 'bg-[#f0e8fe] text-[#4a1a8a] border-crown',
-  卡牌: 'bg-[#f0e8fe] text-[#4a1a8a] border-crown',
-  派对: 'bg-[#fde8ec] text-[#8a1a30] border-coral',
-  休闲: 'bg-[#e8f8ee] text-[#0a5c2a] border-jade',
+  策略: 'bg-[#e8f0fe] text-[#1a3a8a] border-[#2563eb]',
+  棋类: 'bg-[#e8f8ee] text-[#0a5c2a] border-[#16a34a]',
+  推理: 'bg-[#f0e8fe] text-[#4a1a8a] border-[#7c3aed]',
+  卡牌: 'bg-[#fef3e0] text-[#7a4006] border-[#d97706]',
+  派对: 'bg-[#fde8ec] text-[#8a1a30] border-[#e8556d]',
+  休闲: 'bg-[#fde8e8] text-[#7a1a1a] border-[#d94040]',
 };
 
 export function Lobby({
@@ -183,8 +183,10 @@ export function Lobby({
                 key={m.id}
                 onClick={() => selectGame(m.id)}
                 data-testid={`game-card-${m.id}`}
-                className={`bg-card border-thick border-foreground rounded-[16px] p-4 text-left shadow-card transition-all duration-200 hover:-translate-y-1 hover:-rotate-[1.5deg] hover:shadow-card-hover active:translate-y-0 active:rotate-0 active:shadow-card-active ${
-                  active ? 'ring-2 ring-warning' : ''
+                className={`border-thick rounded-[16px] p-4 text-left transition-all duration-200 hover:-translate-y-1 hover:-rotate-[1.5deg] hover:shadow-card-hover active:translate-y-0 active:rotate-0 active:shadow-card-active ${
+                  active
+                    ? 'bg-[#fef3e0] border-warning shadow-[#7a4006_-6px_6px_0px,rgba(61,46,30,0.08)_0px_2px_8px] -translate-y-0.5'
+                    : 'bg-card border-foreground shadow-card'
                 }`}
               >
                 {/* Icon + name */}
