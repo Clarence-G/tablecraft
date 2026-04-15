@@ -5,6 +5,7 @@
     "baseUrl": ".",
     "typeRoots": ["./node_modules/@types"],
     "paths": {
+      "@/*": ["./src/*"],
       "@repo/shared": ["../shared/src"],
       "@repo/shared/*": ["../shared/src/*"],
       "@repo/game-ui": ["../game-ui/src"],

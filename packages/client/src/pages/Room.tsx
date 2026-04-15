@@ -1,3 +1,5 @@
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { useRoom } from '../hooks/useRoom';
 
 type RoomCtx = ReturnType<typeof useRoom>;
@@ -15,99 +17,103 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
 
   if (!room) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-gray-400">连接中...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">连接中...</div>
       </div>
     );
   }
 
   const me = room.players.find((p) => p.id === userId);
   const isHost = room.hostId === userId;
-  const allReady = room.players.length > 0 && room.players.every((p) => p.ready);
+  const hasEnoughPlayers = room.players.length >= room.minPlayers;
+  const allReady = hasEnoughPlayers && room.players.every((p) => p.ready);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8" data-testid="room-page">
+    <div className="min-h-screen p-8" data-testid="room-page">
       <div className="max-w-lg mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">等待室</h1>
           <div
             data-testid="room-code"
-            className="bg-gray-700 rounded-lg px-4 py-2 font-mono tracking-widest text-lg"
+            className="bg-secondary rounded-lg px-4 py-2 font-mono tracking-widest text-lg"
           >
             {roomId}
           </div>
         </div>
 
-        <div className="bg-gray-800 rounded-xl p-6 mb-6">
-          <h2 className="text-sm text-gray-400 uppercase mb-3">玩家列表</h2>
-          <div className="space-y-2" data-testid="player-list">
-            {room.players.map((player, index) => (
-              <div
-                key={player.id}
-                className="flex items-center justify-between"
-                data-testid={`player-${index}`}
-              >
-                <div className="flex items-center gap-2">
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-sm text-muted-foreground uppercase">玩家列表</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2" data-testid="player-list">
+              {room.players.map((player, index) => (
+                <div
+                  key={player.id}
+                  className="flex items-center justify-between"
+                  data-testid={`player-${index}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`w-2 h-2 rounded-full ${player.connected ? 'bg-success' : 'bg-muted-foreground/40'}`}
+                    />
+                    <span>{player.name}</span>
+                    {player.id === room.hostId && (
+                      <span className="text-xs text-warning">房主</span>
+                    )}
+                  </div>
                   <span
-                    className={`w-2 h-2 rounded-full ${player.connected ? 'bg-green-500' : 'bg-gray-500'}`}
-                  />
-                  <span>{player.name}</span>
-                  {player.id === room.hostId && (
-                    <span className="text-xs text-yellow-400">房主</span>
-                  )}
+                    className={`text-sm ${player.ready ? 'text-success' : 'text-muted-foreground'}`}
+                  >
+                    {player.ready ? '已准备' : '未准备'}
+                  </span>
                 </div>
-                <span className={`text-sm ${player.ready ? 'text-green-400' : 'text-gray-500'}`}>
-                  {player.ready ? '已准备' : '未准备'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="flex flex-col gap-3">
           {!me?.ready && (
-            <button
-              type="button"
+            <Button
               onClick={ready}
               data-testid="ready-btn"
-              className="bg-green-600 hover:bg-green-500 py-3 rounded-xl font-semibold"
+              className="w-full py-3 bg-success text-success-foreground hover:bg-success/80"
+              size="lg"
             >
               准备
-            </button>
+            </Button>
           )}
 
           {isHost && (
-            <button
-              type="button"
+            <Button
               onClick={start}
               disabled={!allReady}
               data-testid="start-btn"
-              className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 py-3 rounded-xl font-semibold"
+              className="w-full py-3"
+              size="lg"
             >
-              开始游戏
-            </button>
+              {!hasEnoughPlayers ? `至少需要 ${room.minPlayers} 名玩家` : '开始游戏'}
+            </Button>
           )}
 
           {room.status === 'finished' && (
-            <button
-              type="button"
-              onClick={restart}
-              className="bg-purple-600 hover:bg-purple-500 py-3 rounded-xl font-semibold"
-            >
+            <Button onClick={restart} className="w-full py-3" size="lg">
               再来一局
-            </button>
+            </Button>
           )}
 
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             onClick={() => {
               leave();
               onLeave();
             }}
-            className="bg-gray-700 hover:bg-gray-600 py-3 rounded-xl font-semibold"
+            className="w-full py-3"
+            size="lg"
           >
             离开
-          </button>
+          </Button>
         </div>
       </div>
     </div>

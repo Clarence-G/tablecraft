@@ -41,8 +41,8 @@ A real-time multiplayer board game platform. Players share a 6-character room co
 packages/
   shared/      @repo/shared    — types, PendingPhase utils, GameTestHarness
   server/      @repo/server    — Express + Socket.IO backend
-  client/      @repo/client    — React SPA (Vite + Tailwind)
-  game-ui/     @repo/game-ui   — shared UI components (GridBoard, GameOverModal, …)
+  client/      @repo/client    — React SPA (Vite + Tailwind + shadcn/ui)
+  game-ui/     @repo/game-ui   — shared game components (IntersectionBoard, PlayerBadge, …)
 
 games/
   _template/   — starter for new games
@@ -60,7 +60,9 @@ tests/
 | Layer | Technology |
 |-------|-----------|
 | Language | TypeScript (strict) |
-| Frontend | React 18, Vite, Tailwind CSS v4, Framer Motion |
+| Frontend | React 18, Vite, Tailwind CSS v4, shadcn/ui, Framer Motion |
+| UI Components | shadcn/ui (Button, Input, Card, Badge, Dialog) |
+| Game Components | @repo/game-ui (IntersectionBoard, PlayerBadge, GameOverModal) |
 | Backend | Express, Socket.IO 4 |
 | Database | SQLite via better-sqlite3 + Drizzle ORM |
 | Validation | Zod |
@@ -86,6 +88,42 @@ pnpm test:e2e     # Playwright E2E (auto-starts dev server)
 ```
 
 For the full developer guide, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+
+## UI & Component System
+
+### Design Tokens (Tailwind v4)
+
+All颜色通过 `packages/client/src/index.css` 中的 CSS 变量统一管理，永远深色模式：
+
+| Token | Tailwind class | 用途 |
+|-------|---------------|------|
+| `--background` | `bg-background` | 页面底色 |
+| `--card` | `bg-card` | 卡片/面板 |
+| `--primary` | `bg-primary` | 主按钮 |
+| `--muted-foreground` | `text-muted-foreground` | 次要文字 |
+| `--destructive` | `text-destructive` | 错误/危险 |
+| `--success` | `bg-success` | 成功/在线 |
+| `--warning` | `text-warning` | 警告/高亮 |
+| `--board` | `bg-board` | 棋盘表面 |
+| `--board-line` | SVG `var(--board-line)` | 棋盘网格线 |
+
+### Component Layers
+
+```
+┌─────────────────────────────────────────────────────┐
+│  shadcn/ui (packages/client/src/components/ui/)     │  通用 UI 基础组件
+│  Button, Input, Card, Badge, Dialog                 │  适用于所有页面
+├─────────────────────────────────────────────────────┤
+│  @repo/game-ui (packages/game-ui/src/)              │  游戏共享组件
+│  IntersectionBoard, PlayerBadge, GameOverModal      │  跨游戏复用
+│  GridBoard, GridCell                                │
+├─────────────────────────────────────────────────────┤
+│  Game Board (games/<game>/Board.tsx)                 │  游戏特有 UI
+│  组合上层组件 + 游戏特有逻辑                           │  每个游戏独立
+└─────────────────────────────────────────────────────┘
+```
+
+**开发新游戏时的优先级：复用现有组件 → 扩展通用组件 → 编写游戏逻辑**
 
 ## How It Works
 

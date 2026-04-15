@@ -9,6 +9,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: [
+      { find: /^@\//, replacement: path.resolve(__dirname, 'src') + '/' },
       { find: '@repo/shared', replacement: path.resolve(__dirname, '../shared/src') },
       { find: '@repo/game-ui', replacement: path.resolve(__dirname, '../game-ui/src') },
       { find: '@games/gomoku/shared', replacement: path.resolve(root, 'games/gomoku/shared.ts') },

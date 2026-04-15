@@ -15,7 +15,7 @@ export function GridBoard({
 }: GridBoardProps) {
   return (
     <div
-      className={`inline-grid border border-gray-600 ${className}`}
+      className={`inline-grid border border-border ${className}`}
       style={{
         gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
         gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`,
@@ -26,7 +26,7 @@ export function GridBoard({
           <div
             // biome-ignore lint/suspicious/noArrayIndexKey: board coordinates are fixed positional keys
             key={`${r}-${c}`}
-            className="border border-gray-600/30 flex items-center justify-center"
+            className="border border-border/30 flex items-center justify-center"
           >
             {renderCell(r, c)}
           </div>
