@@ -7,5 +7,6 @@ export default defineWorkspace([
   'games/love-letter/vitest.config.ts',
   'games/connect-four/vitest.config.ts',
   'games/liar-bar/vitest.config.ts',
+  'games/yahtzee/vitest.config.ts',
   'games/_template/vitest.config.ts',
 ]);

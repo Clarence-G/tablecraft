@@ -6,6 +6,8 @@ import { logic as liarBarLogic } from '@games/liar-bar/logic';
 import { meta as liarBarMeta } from '@games/liar-bar/shared';
 import { logic as loveLetterLogic } from '@games/love-letter/logic';
 import { meta as loveLetterMeta } from '@games/love-letter/shared';
+import { logic as yahtzeeLogic } from '@games/yahtzee/logic';
+import { meta as yahtzeeMeta } from '@games/yahtzee/shared';
 import type { ServerGamePlugin } from '@repo/shared';
 
 export const serverRegistry: Record<string, ServerGamePlugin> = {
@@ -13,4 +15,5 @@ export const serverRegistry: Record<string, ServerGamePlugin> = {
   [loveLetterMeta.id]: { meta: loveLetterMeta, logic: loveLetterLogic },
   [connectFourMeta.id]: { meta: connectFourMeta, logic: connectFourLogic },
   [liarBarMeta.id]: { meta: liarBarMeta, logic: liarBarLogic },
+  [yahtzeeMeta.id]: { meta: yahtzeeMeta, logic: yahtzeeLogic },
 };

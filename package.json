@@ -20,6 +20,7 @@
     "@games/love-letter": "workspace:*",
     "@games/connect-four": "workspace:*",
     "@games/liar-bar": "workspace:*",
+    "@games/yahtzee": "workspace:*",
     "@repo/server": "workspace:*",
     "@repo/client": "workspace:*"
   },

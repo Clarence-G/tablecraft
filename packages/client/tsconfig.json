@@ -17,7 +17,9 @@
       "@games/love-letter/shared": ["../../games/love-letter/shared.ts"],
       "@games/love-letter/board": ["../../games/love-letter/Board.tsx"],
       "@games/liar-bar/shared": ["../../games/liar-bar/shared.ts"],
-      "@games/liar-bar/board": ["../../games/liar-bar/Board.tsx"]
+      "@games/liar-bar/board": ["../../games/liar-bar/Board.tsx"],
+      "@games/yahtzee/shared": ["../../games/yahtzee/shared.ts"],
+      "@games/yahtzee/board": ["../../games/yahtzee/Board.tsx"]
     }
   },
   "include": ["src", "../../games"]
