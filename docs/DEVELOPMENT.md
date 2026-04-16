@@ -87,7 +87,7 @@ pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e
 │   │       └── App.tsx         # Root component — all hooks hoisted here
 │   └── game-ui/                # @repo/game-ui — shared game components
 │       └── src/
-│           ├── board/          # IntersectionBoard, GridBoard, GridCell
+│           ├── board/          # IntersectionBoard, DiscBoard, GridBoard, GridCell
 │           ├── feedback/       # GameOverModal
 │           └── player/         # PlayerBadge
 │
@@ -115,23 +115,63 @@ pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e
 
 ### 5.1 Design Tokens
 
-所有颜色、圆角通过 `packages/client/src/index.css` 中的 CSS 变量统一管理。项目永远使用深色模式（`:root` 直接定义深色值）。
+所有颜色通过 `packages/client/src/index.css` 中的 CSS 变量统一管理。风格：暖奶油色 skeuomorphic — 奶油白背景、深棕厚边框、硬偏移阴影。
 
-**核心 Token：**
+#### 核心 Token
 
 | 变量 | Tailwind class | 用途 |
 |------|---------------|------|
-| `--background` | `bg-background` | 页面底色（最深） |
-| `--card` | `bg-card` | 卡片、面板背景 |
-| `--secondary` | `bg-secondary` | 次要按钮、输入框背景 |
-| `--primary` | `bg-primary` | 主按钮 |
+| `--background` | `bg-background` | 页面底色（暖奶油 `#faf5eb`） |
+| `--card` | `bg-card` | 卡片、面板（纸白 `#ffffff`） |
+| `--secondary` / `--muted` | `bg-secondary` / `bg-muted` | 凹陷区域、次要背景 |
+| `--foreground` | `text-foreground` | 主文字、厚边框、硬阴影 |
 | `--muted-foreground` | `text-muted-foreground` | 次要文字、描述 |
-| `--border` | `border-border` | 边框（半透明白） |
+| `--border` | `border-border` | 分隔线、禁用状态 |
+| `--primary` | `bg-primary` | 主按钮背景 |
+| `--primary-foreground` | `text-primary-foreground` | 主按钮文字 |
 | `--destructive` | `text-destructive` | 错误、危险操作 |
-| `--success` | `bg-success` / `text-success` | 成功、在线状态 |
-| `--warning` | `text-warning` | 警告、高亮、房主标记 |
+| `--success` | `text-success` | 在线状态、成功 |
+| `--warning` | `text-warning` / `border-warning` | 当前回合、选中卡片 |
 
-**游戏专用 Token（棋盘类）：**
+#### 游戏调色板（六种固定颜色）
+
+这六种颜色用于游戏标签、棋子、卡牌等，**直接使用 hex 字面量**（不是 Tailwind 内置色），无需添加到 CSS 变量：
+
+| 名称 | Hex | 浅色 tint | 用途示例 |
+|------|-----|-----------|---------|
+| Dice Red | `#d94040` | `#fde8e8` | 错误、破坏、玩家0棋子 |
+| Royal Blue | `#2563eb` | `#e8f0fe` | 策略标签、高亮 |
+| Jade Green | `#16a34a` | `#e8f8ee` | 成功、在线、就绪 |
+| Amber Gold | `#d97706` | `#fef3e0` | 当前回合、选中、警告 |
+| Crown Purple | `#7c3aed` | `#f0e8fe` | 推理标签 |
+| Coral Pink | `#e8556d` | `#fde8ec` | 派对标签 |
+
+固定结构色（布局阴影用）：`#1a1108`（最深墨色）、`#3d2e1e`（深棕）、`#c4b8a8`（浅棕）、`#9c8b78`（灰棕）
+
+#### 卡片/面板标准写法
+
+```tsx
+// 标准卡片面板
+<div className="bg-card border-2 border-foreground rounded-[12px] shadow-[4px_4px_0px_0px_#3d2e1e]">
+
+// 主按钮
+<button className="bg-primary text-primary-foreground border-2 border-[#1a1108] shadow-[4px_4px_0px_0px_#1a1108] rounded-[12px] font-semibold transition-all hover:-translate-y-0.5 active:translate-y-px">
+```
+
+#### 禁止 / 允许 — 颜色速查
+
+```
+BANNED: bg-gray-*, text-gray-*, bg-red-*, bg-blue-*, bg-green-*, bg-yellow-*
+        text-white, bg-black, bg-white (除非是 #ffffff 的语义 token)
+
+ALLOWED: bg-card / bg-muted / bg-secondary / bg-primary / bg-background
+         text-foreground / text-muted-foreground / text-warning / text-success
+         border-border / border-foreground / border-warning
+         bg-[#d94040] / bg-[#d97706] / bg-[#16a34a] / bg-[#2563eb] 等六种调色板色
+         bg-[#1a1108] / bg-[#3d2e1e] 等固定结构色
+```
+
+#### 游戏专用 Token（棋盘类）
 
 | 变量 | 用途 | 使用方式 |
 |------|------|---------|
@@ -171,10 +211,29 @@ pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e
 | 组件 | 路径 | 用途 | 适用游戏 |
 |------|------|------|---------|
 | `IntersectionBoard` | `board/` | 交叉点棋盘（SVG 网格 + 落子 + 响应式） | 五子棋、围棋、黑白棋 |
-| `GridBoard` | `board/` | 格子棋盘（CSS Grid） | 国际象棋、跳棋等 |
+| `DiscBoard` | `board/` | 圆形棋子列式投放棋盘（Connect Four 式） | 四子棋及类似游戏 |
+| `GridBoard` | `board/` | 格子棋盘（CSS Grid，renderCell 回调） | 战舰、国际象棋等 |
 | `GridCell` | `board/` | 单个格子按钮 | 配合 GridBoard |
 | `PlayerBadge` | `player/` | 玩家徽章（名字、在线状态、回合指示） | 所有游戏 |
 | `GameOverModal` | `feedback/` | 游戏结束弹窗（排名、胜负） | 所有游戏 |
+
+**`DiscBoard` Props（列式投放棋盘）：**
+
+```tsx
+import { DiscBoard, PLAYER_DISC_BG } from '@repo/game-ui/board';
+
+<DiscBoard
+  rows={6}
+  cols={7}
+  board={state.board}          // number[], 0=空, 1=玩家0, 2=玩家1
+  myPlayerIndex={0}            // 0 或 1，决定 ghost 预览颜色
+  canPlay={isMyTurn && !gameOver}
+  onColumnClick={(col) => sendAction({ type: 'drop', col })}
+  winningCells={new Set([...])} // 可选，高亮获胜格子
+/>
+
+// 玩家棋子颜色：PLAYER_DISC_BG[0] = Dice Red, PLAYER_DISC_BG[1] = Amber Gold
+```
 
 **`IntersectionBoard` Props：**
 
@@ -497,15 +556,38 @@ pnpm exec biome format --write .
 
 Biome rules set to `"warn"` (not errors): `noNonNullAssertion`, `noExplicitAny`. Everything else must be error-free.
 
-Suppression syntax (place on the line immediately before the flagged code):
+**Acceptable suppressions — use exactly these patterns:**
+
 ```ts
 // biome-ignore lint/suspicious/noArrayIndexKey: board coordinates are stable positional keys
 key={`${r}-${c}`}
+
+// biome-ignore lint/suspicious/noArrayIndexKey: card hand reordered only after actions
+key={i}
+
+// biome-ignore lint/suspicious/noArrayIndexKey: fixed positional display (revolver chambers, dice faces)
+key={i}
+```
+
+`noExplicitAny` in **`*.test.ts` files** is acceptable — `GameTestHarness<any, ...>` and `h.rawState as any` are the standard white-box testing pattern used across all game tests. Do not suppress it; just leave it as a warning.
+
+`noNonNullAssertion` (`!`) must be eliminated from production code. Replace with optional chaining or explicit null checks:
+
+```ts
+// Bad
+const winner = state.winner!;
+
+// Good
+if (state.winner) { /* use state.winner */ }
+const winner = state.winner ?? '';
 ```
 
 ---
 
 ## 11. Common Pitfalls
+
+- **硬编码颜色** — 最常见错误。禁止使用 `bg-gray-*`, `text-yellow-*`, `bg-green-*` 等 Tailwind 内置色类。必须用 token（`bg-card`, `text-foreground`）或 Section 5.1 列出的六种调色板 hex。
+- **Design Token** — 参见 Section 5.1 的"禁止/允许速查"。使用前先确认 token 存在于 `index.css`。
 
 - **`getSnapshot` must return stable references** — do not create a new object on every call in `useSyncExternalStore`.
 - **Biome-ignore comments must go on the line directly before the flagged code**, not inside a block.
@@ -514,7 +596,6 @@ key={`${r}-${c}`}
 - **`for...of` instead of `.forEach()`** (Biome `noForEach`).
 - **`node:path` not `path`** (Biome `useNodejsImportProtocol`).
 - **Client `tsconfig.json` includes `../../games`** — if you add a new game, ensure its transpile path is covered by `paths` aliases.
-- **Design Token** — 不要在组件中硬编码颜色（如 `bg-gray-800`），使用 token class（如 `bg-card`）。
 - **`@source` in index.css** — `games/` 目录通过 `@source "../../../games"` 被 Tailwind 扫描，新游戏目录自动覆盖。
 - **禁止使用 emoji** — 代码、UI、文档中一律不得使用 emoji 字符。UI 中需要图标时使用 `lucide-react` 图标库（已安装在 `@repo/client` 和 `@repo/game-ui` 中）。日志和文档使用纯文本。
 - **PC + 移动端** — 所有页面和游戏必须同时支持 PC 和手机端，开发时缩放浏览器到 375px 宽度验证。
