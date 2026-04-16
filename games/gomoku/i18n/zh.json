@@ -1,0 +1,10 @@
+{
+  "name": "五子棋",
+  "description": "经典五子棋，先连成五子者胜",
+  "tags": ["策略", "棋类"],
+  "won": "获胜!",
+  "yourTurn": "你的回合",
+  "waiting": "等待",
+  "playBlack": "你执黑子",
+  "playWhite": "你执白子"
+}

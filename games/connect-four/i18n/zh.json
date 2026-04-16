@@ -1,0 +1,11 @@
+{
+  "name": "四子棋",
+  "description": "6x7棋盘，先连成四子者胜",
+  "tags": ["策略", "棋类"],
+  "won": "获胜!",
+  "draw": "平局!",
+  "yourTurn": "你的回合",
+  "waiting": "等待",
+  "playRed": "你执红子",
+  "playYellow": "你执黄子"
+}

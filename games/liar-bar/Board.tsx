@@ -2,6 +2,7 @@ import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Action, Card, PlayerView } from './shared';
 
 // Card color backgrounds (light tints for face-up cards)
@@ -102,6 +103,7 @@ export function Board({
   onReturnToRoom,
   onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
+  const { t } = useTranslation('liar-bar');
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
 
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
@@ -153,7 +155,7 @@ export function Board({
       {/* Challenge Result Overlay */}
       {cr && !gameOver && (
         <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-4 text-center">
-          <div className="text-sm font-bold mb-2">{cr.wasLying ? '撒谎被抓！' : '诚实无辜！'}</div>
+          <div className="text-sm font-bold mb-2">{cr.wasLying ? t('caughtLying') : t('honestInnocent')}</div>
           <div className="flex gap-1 justify-center mb-2">
             {cr.playedCards.map((card, i) => (
               <div
@@ -166,12 +168,12 @@ export function Board({
             ))}
           </div>
           <div className="text-xs text-muted-foreground">
-            {playerNames[cr.shooterId] ?? cr.shooterId} 扣动扳机 (第 {cr.shotChamberIndex + 1} 格)
+            {playerNames[cr.shooterId] ?? cr.shooterId} {t('triggerPull', { n: cr.shotChamberIndex + 1 })}
             {' — '}
             {cr.shotDied ? (
-              <span className="text-[#d94040] font-semibold">中弹出局</span>
+              <span className="text-[#d94040] font-semibold">{t('shotEliminated')}</span>
             ) : (
-              <span className="text-[#16a34a] font-semibold">幸运存活</span>
+              <span className="text-[#16a34a] font-semibold">{t('luckyAlive')}</span>
             )}
           </div>
         </div>
@@ -190,7 +192,7 @@ export function Board({
               />
               <RevolverDisplay chamber={info?.revolverChamber ?? 0} alive={info?.alive ?? true} />
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                {!info?.alive && <span className="text-[#d94040] font-semibold">出局</span>}
+                {!info?.alive && <span className="text-[#d94040] font-semibold">{t('out')}</span>}
                 {info?.alive && p.id !== myId && (
                   <div className="flex gap-0.5">
                     {Array.from({ length: info.cardCount }, (_, i) => (
@@ -207,7 +209,7 @@ export function Board({
 
       {/* Game Info */}
       <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-3 text-center">
-        <div className="text-xs text-muted-foreground mb-1">本轮宣告牌型</div>
+        <div className="text-xs text-muted-foreground mb-1">{t('declaredSuit')}</div>
         <div className={`text-2xl font-bold ${CARD_TEXT_COLOR[state.declaredSuit as Card]}`}>
           {state.declaredSuit}
         </div>
@@ -216,21 +218,21 @@ export function Board({
       {/* Status */}
       <div className="text-center text-sm text-muted-foreground">
         {gameOver
-          ? `${playerNames[state.winner ?? ''] ?? state.winner} 获胜！`
+          ? `${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`
           : state.phase === 'challenging' && state.lastPlay
-            ? `${playerNames[state.lastPlay.playerId] ?? state.lastPlay.playerId} 打出了 ${state.lastPlay.count} 张牌，等待 ${playerNames[deciderId ?? ''] ?? deciderId} 决定...`
+            ? `${playerNames[state.lastPlay.playerId] ?? state.lastPlay.playerId} ${t('playedCards')} ${state.lastPlay.count} ${t('cardsWaiting')} ${playerNames[deciderId ?? ''] ?? deciderId} ${t('deciding')}`
             : !amAlive
-              ? '你已出局，观战中...'
+              ? t('eliminatedWatching')
               : isMyTurn
-                ? '你的回合 — 选择 1~3 张牌打出'
-                : `等待 ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
+                ? t('yourTurnSelect')
+                : `${t('waiting')} ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
       </div>
 
       {/* Last Play Info */}
       {state.phase === 'challenging' && state.lastPlay && (
         <div className="text-center text-xs text-muted-foreground bg-secondary rounded-[8px] py-2 px-3">
-          {playerNames[state.lastPlay.playerId] ?? state.lastPlay.playerId} 声称打出了{' '}
-          <span className="font-semibold">{state.lastPlay.count}</span> 张{' '}
+          {playerNames[state.lastPlay.playerId] ?? state.lastPlay.playerId} {t('claimedPlayed')}{' '}
+          <span className="font-semibold">{state.lastPlay.count}</span> {t('cardsUnit')}{' '}
           <span className={`font-bold ${CARD_TEXT_COLOR[state.declaredSuit as Card]}`}>
             {state.declaredSuit}
           </span>
@@ -241,7 +243,7 @@ export function Board({
       {amAlive && !gameOver && state.phase === 'playing' && isMyTurn && (
         <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-3">
           <div className="text-xs font-medium text-muted-foreground mb-2">
-            你的手牌（选 1~3 张）
+            {t('yourHand')}
           </div>
           <div className="flex flex-wrap gap-2 justify-center mb-3">
             {state.myHand.map((card, i) => (
@@ -261,11 +263,11 @@ export function Board({
               onClick={handlePlayCards}
               className="w-full py-2.5 rounded-[12px] font-semibold text-sm bg-primary text-primary-foreground border-2 border-[#1a1108] shadow-[4px_4px_0px_0px_#1a1108] transition-all hover:-translate-y-0.5 active:translate-y-px"
             >
-              打出 {selectedIndices.length} 张牌（声称为 {state.declaredSuit}）
+              {t('playCards', { n: selectedIndices.length, suit: state.declaredSuit })}
             </button>
           )}
           {selectedIndices.length === 0 && (
-            <div className="text-xs text-muted-foreground text-center">点击选牌，然后打出</div>
+            <div className="text-xs text-muted-foreground text-center">{t('clickToSelect')}</div>
           )}
         </div>
       )}
@@ -273,7 +275,7 @@ export function Board({
       {/* Hand (view only, not my turn) */}
       {amAlive && !gameOver && state.phase === 'playing' && !isMyTurn && (
         <div className="border-2 border-border rounded-[12px] bg-card p-3">
-          <div className="text-xs font-medium text-muted-foreground mb-2">你的手牌</div>
+          <div className="text-xs font-medium text-muted-foreground mb-2">{t('yourHandView')}</div>
           <div className="flex flex-wrap gap-2 justify-center">
             {state.myHand.map((card, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: hand cards reordered only after actions
@@ -286,7 +288,7 @@ export function Board({
       {/* Hand during challenging phase */}
       {amAlive && !gameOver && state.phase === 'challenging' && (
         <div className="border-2 border-border rounded-[12px] bg-card p-3">
-          <div className="text-xs font-medium text-muted-foreground mb-2">你的手牌</div>
+          <div className="text-xs font-medium text-muted-foreground mb-2">{t('yourHandView')}</div>
           <div className="flex flex-wrap gap-2 justify-center">
             {state.myHand.map((card, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: hand cards reordered only after actions
@@ -304,14 +306,14 @@ export function Board({
             onClick={handleChallenge}
             className="flex-1 py-3 rounded-[12px] font-bold text-sm border-2 border-[#d94040] bg-[#fde8e8] text-[#d94040] shadow-[4px_4px_0px_0px_#d94040] transition-all hover:-translate-y-0.5 active:translate-y-px"
           >
-            质疑！骗子！
+            {t('challenge')}
           </button>
           <button
             type="button"
             onClick={handleBelieve}
             className="flex-1 py-3 rounded-[12px] font-bold text-sm border-2 border-[#16a34a] bg-[#e8f8ee] text-[#16a34a] shadow-[4px_4px_0px_0px_#16a34a] transition-all hover:-translate-y-0.5 active:translate-y-px"
           >
-            相信，继续
+            {t('believe')}
           </button>
         </div>
       )}
@@ -319,7 +321,7 @@ export function Board({
       {/* Spectator / eliminated view */}
       {!amAlive && !gameOver && (
         <div className="text-center text-sm text-muted-foreground border-2 border-border rounded-[12px] bg-card p-4">
-          你已出局，正在观战
+          {t('eliminatedSpectating')}
         </div>
       )}
 

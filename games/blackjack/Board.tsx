@@ -2,9 +2,20 @@ import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
-import { type Action, type PlayerInfo, type PlayerView, handTotal } from './shared';
+import { useTranslation } from 'react-i18next';
+import { type Action, type PlayerInfo, type PlayerView, SUIT_PATHS, handTotal } from './shared';
 
 // ---- Card Component ----
+
+function SuitIcon({ suit, className }: { suit: string; className?: string }) {
+  const d = SUIT_PATHS[suit];
+  if (!d) return null;
+  return (
+    <svg viewBox="0 0 512 512" className={className} aria-hidden>
+      <path fill="currentColor" d={d} />
+    </svg>
+  );
+}
 
 function CardFace({ card }: { card: string }) {
   const isHidden = card === 'hidden';
@@ -20,9 +31,7 @@ function CardFace({ card }: { card: string }) {
   const suit = card.slice(-1);
   const isRed = suit === 'h' || suit === 'd';
 
-  const suitSymbol: Record<string, string> = { s: '\u2660', h: '\u2665', d: '\u2666', c: '\u2663' };
   const displayRank = rank === 'T' ? '10' : rank;
-  const displaySuit = suitSymbol[suit] ?? suit;
 
   return (
     <div
@@ -40,19 +49,12 @@ function CardFace({ card }: { card: string }) {
       >
         {displayRank}
       </span>
-      <span
-        className={[
-          'text-base leading-none',
-          isRed ? 'text-[#d94040]' : 'text-foreground',
-        ].join(' ')}
-      >
-        {displaySuit}
-      </span>
+      <SuitIcon suit={suit} className={`size-4 ${isRed ? 'text-[#d94040]' : 'text-foreground'}`} />
     </div>
   );
 }
 
-function Hand({ cards, label, total }: { cards: string[]; label: string; total?: number }) {
+function Hand({ cards, label, total, pointsLabel }: { cards: string[]; label: string; total?: number; pointsLabel: string }) {
   return (
     <div className="flex flex-col items-center gap-1">
       <span className="text-xs text-muted-foreground font-medium">{label}</span>
@@ -70,7 +72,7 @@ function Hand({ cards, label, total }: { cards: string[]; label: string; total?:
         )}
       </div>
       {total !== undefined && total > 0 && (
-        <span className="text-sm font-semibold text-foreground">{total} 点</span>
+        <span className="text-sm font-semibold text-foreground">{total} {pointsLabel}</span>
       )}
     </div>
   );
@@ -89,13 +91,14 @@ function PlayerRow({
   isMe: boolean;
   isActive: boolean;
 }) {
+  const { t } = useTranslation('blackjack');
   const outcomeLabel: Record<string, string> = {
     pending: '',
-    win: '赢',
-    lose: '输',
-    push: '平',
-    blackjack: '21点!',
-    bust: '爆牌',
+    win: t('win'),
+    lose: t('lose'),
+    push: t('push'),
+    blackjack: t('blackjack'),
+    bust: t('busted'),
   };
 
   const outcomeColor: Record<string, string> = {
@@ -120,15 +123,15 @@ function PlayerRow({
       <div className="flex items-center gap-2 min-w-0">
         <span className="text-sm font-semibold truncate text-foreground">{name}</span>
         {isMe && (
-          <span className="text-xs text-muted-foreground shrink-0">（我）</span>
+          <span className="text-xs text-muted-foreground shrink-0">{t('me')}</span>
         )}
         {player.bet > 0 && (
-          <span className="text-xs text-[#d97706] shrink-0">下注 {player.bet}</span>
+          <span className="text-xs text-[#d97706] shrink-0">{t('bet')} {player.bet}</span>
         )}
       </div>
       <div className="flex items-center gap-2 shrink-0">
         {player.cardCount > 0 && (
-          <span className="text-xs text-muted-foreground">{player.cardCount}张</span>
+          <span className="text-xs text-muted-foreground">{player.cardCount}{t('cards')}</span>
         )}
         {player.outcome !== 'pending' && (
           <span className={`text-xs font-bold ${outcomeColor[player.outcome] ?? ''}`}>
@@ -155,18 +158,19 @@ function BettingPanel({
   onBet: (amount: number) => void;
 }) {
   const [custom, setCustom] = useState('');
+  const { t } = useTranslation('blackjack');
 
   if (hasBet) {
     return (
       <div className="text-center text-sm text-muted-foreground py-4">
-        已下注，等待其他玩家...
+        {t('betWaiting')}
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-sm font-semibold text-foreground text-center">选择下注金额</div>
+      <div className="text-sm font-semibold text-foreground text-center">{t('selectBet')}</div>
       <div className="flex flex-wrap gap-2 justify-center">
         {BET_AMOUNTS.map((amount) => (
           <button
@@ -192,7 +196,7 @@ function BettingPanel({
           max={Math.min(500, myChips)}
           value={custom}
           onChange={(e) => setCustom(e.target.value)}
-          placeholder="自定义金额"
+          placeholder={t('customAmount')}
           className="flex-1 border-2 border-foreground rounded-[8px] px-3 py-2 text-sm bg-card text-foreground outline-none focus:border-[#d97706]"
         />
         <button
@@ -212,7 +216,7 @@ function BettingPanel({
               : 'border-border bg-muted text-muted-foreground cursor-not-allowed',
           ].join(' ')}
         >
-          下注
+          {t('bet')}
         </button>
       </div>
     </div>
@@ -234,6 +238,7 @@ function ActionButtons({
   onStand: () => void;
   onDoubleDown: () => void;
 }) {
+  const { t } = useTranslation('blackjack');
   const btnBase =
     'flex-1 py-3 rounded-[8px] border-2 font-semibold text-sm transition-all';
   const btnActive =
@@ -248,7 +253,7 @@ function ActionButtons({
         onClick={onHit}
         className={`${btnBase} ${canAct ? btnActive : btnDisabled}`}
       >
-        要牌
+        {t('hit')}
       </button>
       <button
         type="button"
@@ -256,7 +261,7 @@ function ActionButtons({
         onClick={onStand}
         className={`${btnBase} ${canAct ? btnActive : btnDisabled}`}
       >
-        停牌
+        {t('stand')}
       </button>
       <button
         type="button"
@@ -264,7 +269,7 @@ function ActionButtons({
         onClick={onDoubleDown}
         className={`${btnBase} ${canAct && canDoubleDown ? btnActive : btnDisabled}`}
       >
-        加倍
+        {t('double')}
       </button>
     </div>
   );
@@ -281,6 +286,7 @@ export function Board({
   onReturnToRoom,
   onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
+  const { t } = useTranslation('blackjack');
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
   const myPlayer = state.players.find((p) => p.id === myId);
   const isMyTurn = state.phase === 'player_turns' && state.currentPlayer === myId;
@@ -295,11 +301,11 @@ export function Board({
     : null;
 
   const phaseLabel: Record<string, string> = {
-    betting: '下注阶段',
-    player_turns: '玩家行动',
-    dealer_turn: '庄家行动中...',
-    payout: '结算中...',
-    finished: '游戏结束',
+    betting: t('bettingPhase'),
+    player_turns: t('playerAction'),
+    dealer_turn: t('dealerAction'),
+    payout: t('settling'),
+    finished: t('gameOver'),
   };
 
   return (
@@ -321,8 +327,8 @@ export function Board({
 
       {/* Phase + Round */}
       <div className="text-center text-sm text-muted-foreground mb-3">
-        第 {state.round} 轮 · {phaseLabel[state.phase] ?? state.phase}
-        {isMyTurn && ' · 轮到你行动'}
+        {t('round', { n: state.round })} · {phaseLabel[state.phase] ?? state.phase}
+        {isMyTurn && ` · ${t('yourAction')}`}
       </div>
 
       {/* Error message */}
@@ -336,12 +342,13 @@ export function Board({
       <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-4 mb-3">
         <Hand
           cards={state.dealerHand}
-          label="庄家"
+          label={t('dealer')}
           total={state.dealerTotal > 0 ? state.dealerTotal : undefined}
+          pointsLabel={t('points')}
         />
         {state.dealerHiddenCard && state.dealerHand.length > 0 && (
           <div className="text-center text-xs text-muted-foreground mt-1">
-            已知 {handTotal([state.dealerHand[0]])} 点
+            {t('known')} {handTotal([state.dealerHand[0]])} {t('points')}
           </div>
         )}
       </div>
@@ -358,14 +365,15 @@ export function Board({
         >
           <Hand
             cards={state.myHand}
-            label="我的手牌"
+            label={t('myHand')}
             total={state.myTotal}
+            pointsLabel={t('points')}
           />
           {state.myTotal > 21 && (
-            <div className="text-center text-sm font-bold text-[#d94040] mt-1">爆牌！</div>
+            <div className="text-center text-sm font-bold text-[#d94040] mt-1">{t('bust')}</div>
           )}
           {state.myTotal === 21 && state.myHand.length === 2 && (
-            <div className="text-center text-sm font-bold text-[#16a34a] mt-1">21点！</div>
+            <div className="text-center text-sm font-bold text-[#16a34a] mt-1">{t('blackjack')}</div>
           )}
         </div>
       )}
@@ -390,7 +398,7 @@ export function Board({
         )}
         {state.phase === 'player_turns' && !isMyTurn && (
           <div className="text-center text-sm text-muted-foreground py-2">
-            等待 {playerNames[state.currentPlayer] ?? state.currentPlayer} 行动...
+            {t('waiting')} {playerNames[state.currentPlayer] ?? state.currentPlayer} {t('acting')}
           </div>
         )}
         {(state.phase === 'dealer_turn' || state.phase === 'payout') && (
@@ -399,13 +407,13 @@ export function Board({
           </div>
         )}
         {state.phase === 'finished' && !gameOver && (
-          <div className="text-center text-sm text-muted-foreground py-2">游戏结束</div>
+          <div className="text-center text-sm text-muted-foreground py-2">{t('gameOver')}</div>
         )}
       </div>
 
       {/* Players list */}
       <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-3 mb-3">
-        <div className="text-xs text-muted-foreground font-semibold mb-2">玩家状态</div>
+        <div className="text-xs text-muted-foreground font-semibold mb-2">{t('playerStatus')}</div>
         <div className="flex flex-col gap-1">
           {state.players.map((p) => (
             <PlayerRow

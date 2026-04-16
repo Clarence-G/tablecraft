@@ -51,6 +51,8 @@ export default defineConfig({
         replacement: path.resolve(root, 'games/texas-holdem/shared.ts'),
       },
       { find: /^@games\/(.+)\/board$/, replacement: path.resolve(root, 'games/$1/Board.tsx') },
+      { find: 'react-i18next', replacement: path.resolve(__dirname, 'node_modules/react-i18next') },
+      { find: 'i18next', replacement: path.resolve(__dirname, 'node_modules/i18next') },
     ],
   },
   server: {

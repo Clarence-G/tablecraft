@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 import type { useRoom } from '../hooks/useRoom';
 
 type RoomCtx = ReturnType<typeof useRoom>;
@@ -12,12 +13,13 @@ interface RoomPageProps {
 }
 
 export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPageProps) {
+  const { t } = useTranslation('common');
   const { room, ready, start, leave, restart } = roomCtx;
 
   if (!room) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-muted-foreground">连接中...</div>
+        <div className="text-muted-foreground">{t('room.connecting')}</div>
       </div>
     );
   }
@@ -31,7 +33,7 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
     <div className="min-h-screen p-6 sm:p-8" data-testid="room-page">
       <div className="max-w-lg mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-[#1a1108]">等待室</h1>
+          <h1 className="text-2xl font-bold text-[#1a1108]">{t('room.waitingRoom')}</h1>
           <div
             data-testid="room-code"
             className="bg-card border-2 border-foreground rounded-[8px] px-4 py-2 font-mono tracking-widest text-lg shadow-button"
@@ -42,7 +44,7 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
 
         <div className="bg-card border-thick border-foreground rounded-[16px] p-6 shadow-card mb-6">
           <h2 className="text-sm text-[#9c8b78] uppercase tracking-wider font-semibold mb-3">
-            玩家列表
+            {t('room.playerList')}
           </h2>
           <div className="space-y-2" data-testid="player-list">
             {room.players.map((player, index) => (
@@ -58,14 +60,14 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
                   <span className="font-medium">{player.name}</span>
                   {player.id === room.hostId && (
                     <span className="text-xs text-warning font-semibold bg-[#fef3e0] border border-warning rounded-full px-2 py-0.5">
-                      房主
+                      {t('room.host')}
                     </span>
                   )}
                 </div>
                 <span
                   className={`text-sm font-medium ${player.ready ? 'text-success' : 'text-[#9c8b78]'}`}
                 >
-                  {player.ready ? '已准备' : '未准备'}
+                  {player.ready ? t('room.ready') : t('room.notReady')}
                 </span>
               </div>
             ))}
@@ -80,7 +82,7 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
               className="w-full py-3 bg-jade border-2 border-[#0a5c2a] text-white shadow-[#0a5c2a_-4px_4px_0px] hover:-translate-y-0.5 hover:shadow-[#0a5c2a_-5px_6px_0px] active:translate-y-px active:shadow-[#0a5c2a_-2px_2px_0px] rounded-[12px] font-semibold"
               size="lg"
             >
-              准备
+              {t('room.readyBtn')}
             </Button>
           )}
 
@@ -92,7 +94,7 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
               className="w-full py-3 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[12px] font-semibold"
               size="lg"
             >
-              {!hasEnoughPlayers ? `至少需要 ${room.minPlayers} 名玩家` : '开始游戏'}
+              {!hasEnoughPlayers ? t('room.needPlayers', { count: room.minPlayers }) : t('room.startGame')}
             </Button>
           )}
 
@@ -102,7 +104,7 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
               className="w-full py-3 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[12px] font-semibold"
               size="lg"
             >
-              再来一局
+              {t('room.playAgain')}
             </Button>
           )}
 
@@ -115,7 +117,7 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
             className="w-full py-3 bg-card border-2 border-foreground shadow-[#3d2e1e_-4px_4px_0px] hover:-translate-y-0.5 hover:shadow-[#3d2e1e_-5px_6px_0px] active:translate-y-px active:shadow-[#3d2e1e_-2px_2px_0px] rounded-[12px] font-semibold"
             size="lg"
           >
-            离开
+            {t('room.leave')}
           </Button>
         </div>
       </div>

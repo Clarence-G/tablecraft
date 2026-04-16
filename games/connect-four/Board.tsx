@@ -2,6 +2,7 @@ import { DiscBoard, PLAYER_DISC_BG } from '@repo/game-ui/board';
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
+import { useTranslation } from 'react-i18next';
 import type { Action, PlayerView } from './shared';
 import { COLS, ROWS } from './shared';
 
@@ -13,16 +14,17 @@ export function Board({
   onReturnToRoom,
   onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
+  const { t } = useTranslation('connect-four');
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = !!state.winner || state.isDraw;
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
   const loserPlayer = players.find((p) => p.id !== state.winner);
 
   function statusText() {
-    if (state.winner) return `${playerNames[state.winner] ?? state.winner} 获胜!`;
-    if (state.isDraw) return '平局!';
-    if (isMyTurn) return '你的回合';
-    return `等待 ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`;
+    if (state.winner) return `${playerNames[state.winner] ?? state.winner} ${t('won')}`;
+    if (state.isDraw) return t('draw');
+    if (isMyTurn) return t('yourTurn');
+    return `${t('waiting')} ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`;
   }
 
   return (
@@ -58,7 +60,7 @@ export function Board({
       {/* My color indicator */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium bg-card border-2 border-foreground rounded-[8px] px-3 py-1.5 shadow-[2px_2px_0px_0px_#3d2e1e]">
         <div className={`w-4 h-4 rounded-full ${PLAYER_DISC_BG[state.myPlayerIndex]}`} />
-        <span>你执{state.myPlayerIndex === 0 ? '红子' : '黄子'}</span>
+        <span>{state.myPlayerIndex === 0 ? t('playRed') : t('playYellow')}</span>
       </div>
 
       {/* Game over modal */}

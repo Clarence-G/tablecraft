@@ -2,6 +2,7 @@ import { IntersectionBoard } from '@repo/game-ui/board';
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
+import { useTranslation } from 'react-i18next';
 import type { Action, PlayerView } from './shared';
 import { BOARD_SIZE } from './shared';
 
@@ -21,6 +22,7 @@ export function Board({
   onReturnToRoom,
   onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
+  const { t } = useTranslation('gomoku');
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = !!state.winner;
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
@@ -46,10 +48,10 @@ export function Board({
       {/* Turn indicator */}
       <div className="text-sm text-muted-foreground font-medium">
         {state.winner
-          ? `${playerNames[state.winner] ?? state.winner} 获胜!`
+          ? `${playerNames[state.winner] ?? state.winner} ${t('won')}`
           : isMyTurn
-            ? '你的回合'
-            : `等待 ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
+            ? t('yourTurn')
+            : `${t('waiting')} ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
       </div>
 
       {/* Board */}
@@ -67,7 +69,7 @@ export function Board({
         <div
           className={`w-4 h-4 rounded-full border ${state.myStone === 'black' ? 'bg-[#1a1108] border-[#3d2e1e]' : 'bg-white border-[#c4b8a8]'}`}
         />
-        <span>你执{state.myStone === 'black' ? '黑子' : '白子'}</span>
+        <span>{state.myStone === 'black' ? t('playBlack') : t('playWhite')}</span>
       </div>
 
       {/* Game over modal */}

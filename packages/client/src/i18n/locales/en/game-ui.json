@@ -1,0 +1,9 @@
+{
+  "youWin": "You Win!",
+  "rank": "Rank #{{rank}}",
+  "you": "You",
+  "playAgain": "Play Again",
+  "returnToRoom": "Return to Room",
+  "returnToLobby": "Return to Lobby",
+  "yourTurn": "Your Turn"
+}

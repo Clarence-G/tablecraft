@@ -2,10 +2,9 @@ import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   type Action,
-  CARD_DESCRIPTIONS,
-  CARD_NAMES,
   OTHER_TARGET_CARDS,
   type PlayerView,
 } from './shared';
@@ -18,12 +17,14 @@ function CardFace({
   disabled,
   onClick,
   size = 'normal',
+  t,
 }: {
   value: number;
   selected?: boolean;
   disabled?: boolean;
   onClick?: () => void;
   size?: 'small' | 'normal';
+  t: (key: string) => string;
 }) {
   const isSmall = size === 'small';
   return (
@@ -44,11 +45,11 @@ function CardFace({
     >
       <span className={`font-bold ${isSmall ? 'text-sm' : 'text-2xl sm:text-3xl'}`}>{value}</span>
       <span className={`font-medium ${isSmall ? 'text-[10px]' : 'text-xs sm:text-sm'}`}>
-        {CARD_NAMES[value]}
+        {t(`cardNames.${value}`)}
       </span>
       {!isSmall && (
         <span className="text-[10px] text-muted-foreground text-center px-1 mt-1 leading-tight hidden sm:block">
-          {CARD_DESCRIPTIONS[value]}
+          {t(`cardDescriptions.${value}`)}
         </span>
       )}
     </button>
@@ -80,6 +81,7 @@ export function Board({
   onReturnToRoom,
   onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
+  const { t } = useTranslation('love-letter');
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
   const [selectedGuess, setSelectedGuess] = useState<number | null>(null);
@@ -152,11 +154,11 @@ export function Board({
       {/* Notifications */}
       {priestPeek && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-card border border-ring/50 rounded-xl px-4 py-3 shadow-lg text-center">
-          <div className="text-xs text-muted-foreground mb-1">偷看手牌</div>
+          <div className="text-xs text-muted-foreground mb-1">{t('peekHand')}</div>
           <div className="text-sm">
-            {playerNames[priestPeek.target]} 的手牌是{' '}
+            {playerNames[priestPeek.target]}{t('handIs')}{' '}
             <span className="font-bold">
-              {CARD_NAMES[priestPeek.card]}({priestPeek.card})
+              {t(`cardNames.${priestPeek.card}`)}({priestPeek.card})
             </span>
           </div>
         </div>
@@ -164,16 +166,16 @@ export function Board({
 
       {baronCompare && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-card border border-ring/50 rounded-xl px-4 py-3 shadow-lg text-center">
-          <div className="text-xs text-muted-foreground mb-1">男爵比较</div>
+          <div className="text-xs text-muted-foreground mb-1">{t('baronCompare')}</div>
           <div className="text-sm">
-            你的牌:{' '}
+            {t('yourCard')}{' '}
             <span className="font-bold">
-              {CARD_NAMES[baronCompare.myCard]}({baronCompare.myCard})
+              {t(`cardNames.${baronCompare.myCard}`)}({baronCompare.myCard})
             </span>
             {' vs '}
             {playerNames[baronCompare.target]}:{' '}
             <span className="font-bold">
-              {CARD_NAMES[baronCompare.theirCard]}({baronCompare.theirCard})
+              {t(`cardNames.${baronCompare.theirCard}`)}({baronCompare.theirCard})
             </span>
           </div>
         </div>
@@ -191,8 +193,8 @@ export function Board({
                 isMe={p.id === myId}
               />
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                {!info?.alive && <span className="text-destructive">已淘汰</span>}
-                {info?.alive && info.protected && <span className="text-warning">受保护</span>}
+                {!info?.alive && <span className="text-destructive">{t('eliminated')}</span>}
+                {info?.alive && info.protected && <span className="text-warning">{t('protected')}</span>}
                 {info?.alive && p.id !== myId && (
                   <span className="flex gap-0.5">
                     {Array.from({ length: info?.cardCount ?? 0 }).map((_, i) => (
@@ -209,29 +211,29 @@ export function Board({
       {/* Turn indicator */}
       <div className="text-center text-sm text-muted-foreground mb-2">
         {gameOver
-          ? `${playerNames[state.winner!] ?? state.winner} 获胜!`
+          ? `${playerNames[state.winner!] ?? state.winner} ${t('won')}`
           : !amAlive
-            ? '你已被淘汰，观战中...'
+            ? t('eliminatedWatching')
             : isMyTurn
-              ? '你的回合 - 选择一张牌打出'
-              : `等待 ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
+              ? t('yourTurnPlay')
+              : `${t('waiting')} ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
       </div>
 
       {/* Deck info */}
       <div className="text-center text-xs text-muted-foreground mb-3">
-        牌堆剩余: {state.deckSize} 张
+        {t('deckRemaining')} {state.deckSize} {t('cardsUnit')}
         {state.removedCards.length > 0 && (
           <span className="ml-2">
-            | 移除: {state.removedCards.map((c) => `${CARD_NAMES[c]}(${c})`).join(', ')}
+            | {t('removed')} {state.removedCards.map((c) => `${t(`cardNames.${c}`)}(${c})`).join(', ')}
           </span>
         )}
       </div>
 
       {/* Play Log */}
       <div className="flex-1 bg-card rounded-xl ring-1 ring-foreground/10 p-3 mb-3 overflow-y-auto max-h-48 sm:max-h-64">
-        <div className="text-xs font-medium text-muted-foreground mb-2">出牌记录</div>
+        <div className="text-xs font-medium text-muted-foreground mb-2">{t('playHistory')}</div>
         {state.playLog.length === 0 ? (
-          <div className="text-xs text-muted-foreground/60 text-center py-4">暂无记录</div>
+          <div className="text-xs text-muted-foreground/60 text-center py-4">{t('noHistory')}</div>
         ) : (
           <div className="space-y-1.5">
             {state.playLog.map((entry, i) => (
@@ -240,9 +242,9 @@ export function Board({
                   {playerNames[entry.playerId] ?? entry.playerId}
                 </span>
                 <span className="text-muted-foreground">
-                  打出 {CARD_NAMES[entry.card]}({entry.card})
+                  {t('played')} {t(`cardNames.${entry.card}`)}({entry.card})
                   {entry.target && ` → ${playerNames[entry.target] ?? entry.target}`}
-                  {entry.guess !== undefined && ` 猜${CARD_NAMES[entry.guess]}(${entry.guess})`}
+                  {entry.guess !== undefined && ` ${t('guess')}${t(`cardNames.${entry.guess}`)}(${entry.guess})`}
                 </span>
                 <span className="text-muted-foreground/80 ml-auto shrink-0">{entry.effect}</span>
               </div>
@@ -262,7 +264,7 @@ export function Board({
               </div>
               <div className="flex gap-0.5">
                 {p.playedCards.map((c, i) => (
-                  <CardFace key={i} value={c} size="small" />
+                  <CardFace key={i} value={c} size="small" t={t} />
                 ))}
               </div>
             </div>
@@ -272,7 +274,7 @@ export function Board({
       {/* My Hand */}
       {amAlive && !gameOver && (
         <div className="bg-card rounded-xl ring-1 ring-foreground/10 p-3">
-          <div className="text-xs font-medium text-muted-foreground mb-2">你的手牌</div>
+          <div className="text-xs font-medium text-muted-foreground mb-2">{t('yourHand')}</div>
           <div className="flex gap-3 justify-center mb-3">
             {state.hand.map((card, i) => {
               const isForced = mustPlayCountess && card !== 7;
@@ -282,6 +284,7 @@ export function Board({
                   value={card}
                   selected={selectedCard === card && i === state.hand.indexOf(selectedCard)}
                   disabled={!isMyTurn || isForced}
+                  t={t}
                   onClick={() => {
                     if (!isMyTurn || isForced) return;
                     if (selectedCard === card) {
@@ -301,14 +304,14 @@ export function Board({
 
           {mustPlayCountess && isMyTurn && (
             <div className="text-xs text-warning text-center mb-2">
-              持有国王或王子时必须打出伯爵夫人
+              {t('mustPlayCountess')}
             </div>
           )}
 
           {/* Target Selection */}
           {isMyTurn && selectedCard && needsTarget && validTargets.length > 0 && (
             <div className="mb-3">
-              <div className="text-xs text-muted-foreground mb-1.5">选择目标</div>
+              <div className="text-xs text-muted-foreground mb-1.5">{t('selectTarget')}</div>
               <div className="flex flex-wrap gap-2 justify-center">
                 {validTargets.map((p) => (
                   <button
@@ -325,7 +328,7 @@ export function Board({
                     `}
                   >
                     {playerNames[p.id] ?? p.id}
-                    {p.id === myId && ' (自己)'}
+                    {p.id === myId && ` (${t('self')})`}
                   </button>
                 ))}
               </div>
@@ -335,7 +338,7 @@ export function Board({
           {/* Guard Guess */}
           {isMyTurn && selectedCard === 1 && selectedTarget && (
             <div className="mb-3">
-              <div className="text-xs text-muted-foreground mb-1.5">猜测手牌</div>
+              <div className="text-xs text-muted-foreground mb-1.5">{t('guessHand')}</div>
               <div className="flex flex-wrap gap-1.5 justify-center">
                 {[2, 3, 4, 5, 6, 7, 8].map((n) => (
                   <button
@@ -351,7 +354,7 @@ export function Board({
                       }
                     `}
                   >
-                    {n}-{CARD_NAMES[n]}
+                    {n}-{t(`cardNames.${n}`)}
                   </button>
                 ))}
               </div>
@@ -373,7 +376,7 @@ export function Board({
                 }
               `}
             >
-              打出 {CARD_NAMES[selectedCard]}
+              {t('playCard', { card: t(`cardNames.${selectedCard}`) })}
             </button>
           )}
         </div>
@@ -382,7 +385,7 @@ export function Board({
       {/* Eliminated spectator hint */}
       {!amAlive && !gameOver && (
         <div className="text-center text-sm text-muted-foreground bg-card rounded-xl ring-1 ring-foreground/10 p-4">
-          你已被淘汰，正在观战
+          {t('eliminatedWatching2')}
         </div>
       )}
 

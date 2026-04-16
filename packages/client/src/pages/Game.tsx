@@ -1,5 +1,6 @@
 import type { RoomState } from '@repo/shared';
 import { Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
 import { clientRegistry } from '../../../../games/client-registry';
 import type { useGame } from '../hooks/useGame';
 
@@ -14,20 +15,22 @@ interface GamePageProps {
 }
 
 function Loading() {
+  const { t } = useTranslation('common');
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="text-muted-foreground">加载中...</div>
+      <div className="text-muted-foreground">{t('game.loading')}</div>
     </div>
   );
 }
 
 export function Game({ userId, room, game, onReturnToRoom, onReturnToLobby }: GamePageProps) {
+  const { t } = useTranslation('common');
   const { state, sendAction, lastReject, notifications } = game;
 
   if (!room || !state) return <Loading />;
 
   const plugin = clientRegistry[room.gameId];
-  if (!plugin) return <div className="p-8">未知游戏: {room.gameId}</div>;
+  if (!plugin) return <div className="p-8">{t('game.unknownGame')}: {room.gameId}</div>;
 
   const Board = plugin.Board;
 

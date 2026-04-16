@@ -1,0 +1,20 @@
+{
+  "name": "Hive",
+  "description": "昆虫棋，用各种昆虫包围对手的蜂后",
+  "tags": ["策略", "棋类"],
+  "draw": "平局!",
+  "won": "获胜!",
+  "yourTurn": "你的回合",
+  "waiting": "等待",
+  "white": "白方",
+  "black": "黑方",
+  "selectPiece": "选择棋子放置",
+  "deselect": "取消选择",
+  "deselectPiece": "取消选择棋子",
+  "skipTurn": "无子可动，跳过",
+  "pieceQueen": "蜂后",
+  "pieceSpider": "蜘蛛",
+  "pieceBeetle": "甲虫",
+  "pieceGrasshopper": "蚱蜢",
+  "pieceAnt": "蚂蚁"
+}

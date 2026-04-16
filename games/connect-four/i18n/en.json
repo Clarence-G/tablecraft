@@ -1,0 +1,11 @@
+{
+  "name": "Connect Four",
+  "description": "6x7 board, first to connect 4 wins",
+  "tags": ["Strategy", "Board"],
+  "won": "You Win!",
+  "draw": "Draw!",
+  "yourTurn": "Your Turn",
+  "waiting": "Waiting",
+  "playRed": "You play Red",
+  "playYellow": "You play Yellow"
+}

@@ -10,3 +10,4 @@ playwright-report/
 /packages/server/data/
 .dev.pid
 .DS_Store
+.ace-tool/

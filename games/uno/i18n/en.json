@@ -1,0 +1,19 @@
+{
+  "name": "UNO",
+  "description": "Shed your cards fast, first to empty wins",
+  "tags": ["Cards", "Party"],
+  "won": "You Win!",
+  "yourTurn": "Your Turn",
+  "waiting": "Waiting",
+  "drawPile": "Draw Pile",
+  "discardPile": "Discard Pile",
+  "currentColor": "Color",
+  "direction": "Direction",
+  "yourHand": "Your Hand",
+  "cards": "cards",
+  "noCards": "No cards",
+  "playCard": "Play",
+  "drawCard": "Draw",
+  "pass": "Pass",
+  "chooseColor": "Choose Color"
+}

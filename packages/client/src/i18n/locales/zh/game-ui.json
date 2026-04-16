@@ -1,0 +1,9 @@
+{
+  "youWin": "你赢了!",
+  "rank": "第 {{rank}} 名",
+  "you": "你",
+  "playAgain": "再来一局",
+  "returnToRoom": "返回房间",
+  "returnToLobby": "返回大厅",
+  "yourTurn": "回合中"
+}

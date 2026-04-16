@@ -1,22 +1,11 @@
+import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { ClientEvents, RoomSummary, ServerEvents } from '@repo/shared';
 import Avatar from 'boring-avatars';
-import {
-  Bug,
-  Circle,
-  Clock,
-  Dices,
-  Heart,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Skull,
-  Sofa,
-  Target,
-  Users,
-} from 'lucide-react';
-import { type ReactNode, useState } from 'react';
+import { Clock, Pencil, Plus, RefreshCw, Sofa, Users } from 'lucide-react';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Socket } from 'socket.io-client';
 import { clientRegistry } from '../../../../games/client-registry';
 import type { useRoom } from '../hooks/useRoom';
@@ -33,15 +22,9 @@ interface LobbyProps {
   onRoomJoined: (roomId: string) => void;
 }
 
-const ICON_MAP: Record<string, ReactNode> = {
-  Target: <Target className="size-5" />,
-  Heart: <Heart className="size-5" />,
-  Dices: <Dices className="size-5" />,
-  Skull: <Skull className="size-5" />,
-  Bug: <Bug className="size-5" />,
-  Circle: <Circle className="size-5" />,
-  Dice5: <Dices className="size-5" />,
-};
+function GameIcon({ name, className }: { name: string; className?: string }) {
+  return <img src={`/game-icons/${name}.svg`} alt="" className={className} />;
+}
 
 const TAG_COLORS: Record<string, string> = {
   策略: 'bg-[#e8f0fe] text-[#1a3a8a] border-[#2563eb]',
@@ -61,6 +44,7 @@ export function Lobby({
   onRoomCreated,
   onRoomJoined,
 }: LobbyProps) {
+  const { t } = useTranslation('common');
   const { create, join, listRooms } = roomCtx;
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -155,11 +139,12 @@ export function Lobby({
       <nav className="sticky top-0 z-50 bg-background border-b-[2.5px] border-foreground px-4 sm:px-6 py-3">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Dices className="size-6 text-foreground" />
-            <span className="text-xl font-bold text-[#1a1108]">桌游大全</span>
+            <GameIcon name="rolling-dices" className="size-6" />
+            <span className="text-xl font-bold text-[#1a1108]">{t('app.title')}</span>
           </div>
-          {/* User avatar + name */}
           <div className="flex items-center gap-2">
+            <LocaleSwitch />
+            {/* User avatar + name */}
             <Avatar
               name={userName}
               size={32}
@@ -201,11 +186,11 @@ export function Lobby({
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
         {/* Slogan */}
-        <p className="text-center text-muted-foreground mb-6">和朋友一起，随时随地玩桌游</p>
+        <p className="text-center text-muted-foreground mb-6">{t('app.slogan')}</p>
 
         {/* Game selector header + tag filters */}
         <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <h2 className="text-lg font-semibold">选择游戏</h2>
+          <h2 className="text-lg font-semibold">{t('lobby.selectGame')}</h2>
           <div className="flex gap-1.5 flex-wrap">
             <button
               type="button"
@@ -216,7 +201,7 @@ export function Lobby({
                   : 'bg-card border-border text-muted-foreground hover:border-foreground'
               }`}
             >
-              全部
+              {t('lobby.all')}
             </button>
             {allTags.map((tag) => (
               <button
@@ -255,7 +240,7 @@ export function Lobby({
                 {/* Icon + name */}
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-foreground">
-                    {ICON_MAP[m.icon ?? ''] ?? <Dices className="size-6" />}
+                    <GameIcon name={m.icon ?? 'rolling-dices'} className="size-5" />
                   </span>
                   <span className="text-base font-bold leading-tight">{m.name}</span>
                 </div>
@@ -270,12 +255,12 @@ export function Lobby({
                     {m.minPlayers === m.maxPlayers
                       ? m.minPlayers
                       : `${m.minPlayers}-${m.maxPlayers}`}
-                    人
+                    {t('lobby.players')}
                   </span>
                   {m.estimatedMinutes && (
                     <span className="inline-flex items-center gap-0.5 text-xs text-[#6b5744] bg-[#f0e8d8] border border-border rounded-full px-2 py-0.5">
                       <Clock className="size-3" />
-                      {m.estimatedMinutes}分钟
+                      {m.estimatedMinutes}{t('lobby.minutes')}
                     </span>
                   )}
                   {m.tags?.map((tag) => (
@@ -289,7 +274,7 @@ export function Lobby({
                 </div>
                 {/* Room count */}
                 {count > 0 && (
-                  <div className="mt-2 text-xs text-success font-medium">{count} 个房间进行中</div>
+                  <div className="mt-2 text-xs text-success font-medium">{t('lobby.roomsActive', { count })}</div>
                 )}
               </button>
             );
@@ -303,15 +288,15 @@ export function Lobby({
             <div className="flex items-center gap-2">
               <h2 className="text-base font-semibold">
                 {selectedGameId
-                  ? `${clientRegistry[selectedGameId]?.meta.name} - 房间`
-                  : '所有房间'}
+                  ? `${clientRegistry[selectedGameId]?.meta.name} - ${t('lobby.rooms')}`
+                  : t('lobby.allRooms')}
               </h2>
               <button
                 type="button"
                 onClick={() => fetchRooms(selectedGameId ?? undefined)}
                 disabled={refreshing}
                 className="p-1 rounded-[6px] border border-border hover:border-foreground transition-colors"
-                aria-label="刷新"
+                aria-label={t('lobby.refresh')}
               >
                 <RefreshCw className={`size-3.5 ${refreshing ? 'animate-spin' : ''}`} />
               </button>
@@ -319,7 +304,7 @@ export function Lobby({
             <div className="flex items-center gap-2">
               <Input
                 type="text"
-                placeholder="房间码"
+                placeholder={t('lobby.roomCode')}
                 value={joinCode}
                 onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                 maxLength={6}
@@ -334,7 +319,7 @@ export function Lobby({
                 size="sm"
                 className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[8px] px-2 font-semibold text-xs h-7"
               >
-                加入
+                {t('lobby.join')}
               </Button>
               <Button
                 onClick={() => selectedGameId && handleCreate(selectedGameId)}
@@ -343,7 +328,7 @@ export function Lobby({
                 size="sm"
               >
                 <Plus className="size-3.5" />
-                创建新房间
+                {t('lobby.createRoom')}
               </Button>
             </div>
           </div>
@@ -351,15 +336,15 @@ export function Lobby({
           {/* Room list body */}
           <div className="px-4 sm:px-5 py-3 min-h-[120px]">
             {loadingRooms ? (
-              <div className="text-center text-muted-foreground py-8">加载中...</div>
+              <div className="text-center text-muted-foreground py-8">{t('lobby.loading')}</div>
             ) : rooms.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Sofa className="size-10 text-[#c4b8a8] mb-3" />
                 <p className="text-muted-foreground mb-1">
-                  {selectedGameId ? '暂无房间' : '还没有人创建房间'}
+                  {selectedGameId ? t('lobby.noRooms') : t('lobby.noRoomsYet')}
                 </p>
                 <p className="text-xs text-[#9c8b78] mb-4">
-                  {selectedGameId ? '创建一个房间，邀请好友加入吧' : '选择一个游戏，创建房间开始玩'}
+                  {selectedGameId ? t('lobby.createInvite') : t('lobby.selectAndCreate')}
                 </p>
                 {selectedGameId && (
                   <Button
@@ -368,7 +353,7 @@ export function Lobby({
                     className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[12px] px-6 font-semibold gap-1"
                   >
                     <Plus className="size-4" />
-                    创建房间
+                    {t('lobby.createRoomShort')}
                   </Button>
                 )}
               </div>
@@ -401,7 +386,7 @@ export function Lobby({
                         className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[8px] px-2.5 font-semibold text-xs h-7"
                         size="sm"
                       >
-                        加入
+                        {t('lobby.join')}
                       </Button>
                     </div>
                   </div>

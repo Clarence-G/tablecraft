@@ -2,21 +2,31 @@ import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   type Action,
   type PlayerInfo,
   type PlayerView,
+  SUIT_PATHS,
   displayRank,
   isRedSuit,
-  suitSymbol,
 } from './shared';
 
 // ---- Card Component ----
 
+function SuitIcon({ suit, className }: { suit: string; className?: string }) {
+  const d = SUIT_PATHS[suit];
+  if (!d) return null;
+  return (
+    <svg viewBox="0 0 512 512" className={className} aria-hidden>
+      <path fill="currentColor" d={d} />
+    </svg>
+  );
+}
+
 function CardFace({ card }: { card: string }) {
   const suit = card[card.length - 1] ?? '';
   const red = isRedSuit(suit);
-  const symbol = suitSymbol(suit);
   const rank = displayRank(card);
 
   return (
@@ -35,11 +45,7 @@ function CardFace({ card }: { card: string }) {
       >
         {rank}
       </span>
-      <span
-        className={['text-sm leading-none', red ? 'text-[#d94040]' : 'text-foreground'].join(' ')}
-      >
-        {symbol}
-      </span>
+      <SuitIcon suit={suit} className={`size-3.5 ${red ? 'text-[#d94040]' : 'text-foreground'}`} />
     </div>
   );
 }
@@ -68,18 +74,20 @@ function PlayerSeat({
   isMe,
   isActive,
   isDealer,
+  t,
 }: {
   player: PlayerInfo;
   name: string;
   isMe: boolean;
   isActive: boolean;
   isDealer: boolean;
+  t: (key: string) => string;
 }) {
   const statusLabel: Record<string, string> = {
     active: '',
-    folded: '弃牌',
-    all_in: '全押',
-    eliminated: '淘汰',
+    folded: t('fold'),
+    all_in: t('allIn'),
+    eliminated: t('eliminated'),
   };
   const statusColor: Record<string, string> = {
     folded: 'text-muted-foreground',
@@ -101,7 +109,7 @@ function PlayerSeat({
           <span className="text-xs bg-[#d97706] text-card px-1 rounded font-bold shrink-0">D</span>
         )}
         <span className="text-sm font-semibold truncate text-foreground">{name}</span>
-        {isMe && <span className="text-xs text-muted-foreground shrink-0">（我）</span>}
+        {isMe && <span className="text-xs text-muted-foreground shrink-0">({t('me')})</span>}
       </div>
       <div className="flex items-center gap-2 shrink-0">
         {player.status !== 'active' && player.status !== 'eliminated' && (
@@ -110,7 +118,7 @@ function PlayerSeat({
           </span>
         )}
         {player.currentBet > 0 && (
-          <span className="text-xs text-[#d97706]">注:{player.currentBet}</span>
+          <span className="text-xs text-[#d97706]">{t('bet')}{player.currentBet}</span>
         )}
         <span className="text-sm font-mono text-foreground">{player.chips}</span>
         <div className="flex gap-0.5">
@@ -139,12 +147,14 @@ function RaisePanel({
   bigBlind,
   onRaise,
   onCancel,
+  t,
 }: {
   minRaise: number;
   maxRaise: number;
   bigBlind: number;
   onRaise: (amount: number) => void;
   onCancel: () => void;
+  t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
   const [amount, setAmount] = useState(minRaise);
 
@@ -152,7 +162,7 @@ function RaisePanel({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-sm font-semibold text-foreground">加注总额</div>
+      <div className="text-sm font-semibold text-foreground">{t('raiseTotal')}</div>
       <input
         type="range"
         min={minRaise}
@@ -171,7 +181,7 @@ function RaisePanel({
           onChange={(e) => setAmount(Number(e.target.value))}
           className="flex-1 border-2 border-foreground rounded-[8px] px-3 py-2 text-sm bg-card text-foreground outline-none focus:border-[#d97706]"
         />
-        <span className="text-sm text-muted-foreground shrink-0">筹码</span>
+        <span className="text-sm text-muted-foreground shrink-0">{t('chips')}</span>
       </div>
       <div className="flex gap-2">
         <button
@@ -179,14 +189,14 @@ function RaisePanel({
           onClick={() => onRaise(clamped)}
           className="flex-1 py-2 rounded-[8px] border-2 border-foreground bg-primary text-primary-foreground font-semibold text-sm shadow-[2px_2px_0px_0px_#1a1108] active:translate-y-[1px] active:shadow-none"
         >
-          加注 {clamped}
+          {t('raiseAmount', { amount: clamped })}
         </button>
         <button
           type="button"
           onClick={onCancel}
           className="flex-1 py-2 rounded-[8px] border-2 border-border bg-card text-foreground font-semibold text-sm"
         >
-          取消
+          {t('cancel')}
         </button>
       </div>
     </div>
@@ -209,6 +219,7 @@ function ActionPanel({
   onCall,
   onRaise,
   onAllIn,
+  t,
 }: {
   canCheck: boolean;
   canCall: boolean;
@@ -223,6 +234,7 @@ function ActionPanel({
   onCall: () => void;
   onRaise: (amount: number) => void;
   onAllIn: () => void;
+  t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
   const [showRaise, setShowRaise] = useState(false);
 
@@ -244,6 +256,7 @@ function ActionPanel({
           onRaise(amt);
         }}
         onCancel={() => setShowRaise(false)}
+        t={t}
       />
     );
   }
@@ -251,16 +264,16 @@ function ActionPanel({
   return (
     <div className="flex gap-2 flex-wrap">
       <button type="button" onClick={onFold} className={`${btnBase} flex-1 ${btnDanger}`}>
-        弃牌
+        {t('fold')}
       </button>
       {canCheck && (
         <button type="button" onClick={onCheck} className={`${btnBase} flex-1 ${btnActive}`}>
-          过牌
+          {t('check')}
         </button>
       )}
       {canCall && (
         <button type="button" onClick={onCall} className={`${btnBase} flex-1 ${btnActive}`}>
-          跟注 {callAmount}
+          {t('callAmount', { amount: callAmount })}
         </button>
       )}
       {canRaise && (
@@ -269,7 +282,7 @@ function ActionPanel({
           onClick={() => setShowRaise(true)}
           className={`${btnBase} flex-1 ${btnActive}`}
         >
-          加注
+          {t('raise')}
         </button>
       )}
       <button
@@ -278,7 +291,7 @@ function ActionPanel({
         disabled={myChips <= 0}
         className={`${btnBase} flex-1 ${myChips > 0 ? btnActive : btnDisabled}`}
       >
-        全押
+        {t('allIn')}
       </button>
     </div>
   );
@@ -286,11 +299,11 @@ function ActionPanel({
 
 // ---- Round Label ----
 
-const ROUND_LABELS: Record<string, string> = {
-  preflop: '翻牌前',
-  flop: '翻牌',
-  turn: '转牌',
-  river: '河牌',
+const ROUND_KEYS: Record<string, string> = {
+  preflop: 'preflop',
+  flop: 'flop',
+  turn: 'turn',
+  river: 'river',
 };
 
 // ---- Main Board ----
@@ -304,6 +317,7 @@ export function Board({
   onReturnToRoom,
   onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
+  const { t } = useTranslation('texas-holdem');
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
   const isMyTurn = state.handPhase === 'betting' && state.currentPlayer === myId;
   const gameOver = state.gamePhase === 'finished';
@@ -338,8 +352,8 @@ export function Board({
 
       {/* Status row */}
       <div className="text-center text-sm text-muted-foreground mb-2">
-        第 {state.handNumber} 手 · {ROUND_LABELS[state.bettingRound] ?? state.bettingRound}
-        {isMyTurn && ' · 轮到你行动'}
+        {t('hand', { n: state.handNumber })} · {t(ROUND_KEYS[state.bettingRound] ?? state.bettingRound)}
+        {isMyTurn && ` · ${t('yourAction')}`}
       </div>
 
       {/* Error message */}
@@ -352,7 +366,7 @@ export function Board({
       {/* Community cards + pot */}
       <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-4 mb-3">
         <div className="flex flex-col items-center gap-2">
-          <div className="text-xs text-muted-foreground font-semibold">公共牌</div>
+          <div className="text-xs text-muted-foreground font-semibold">{t('communityCards')}</div>
           <div className="flex gap-2 justify-center flex-wrap">
             {state.communityCards.map((card, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: community cards are ordered and stable for display
@@ -363,7 +377,7 @@ export function Board({
               <CardPlaceholder key={i} />
             ))}
           </div>
-          <div className="text-base font-bold text-foreground">底池: {state.pot}</div>
+          <div className="text-base font-bold text-foreground">{t('pot')} {state.pot}</div>
         </div>
       </div>
 
@@ -378,7 +392,7 @@ export function Board({
           ].join(' ')}
         >
           <div className="flex flex-col items-center gap-2">
-            <div className="text-xs text-muted-foreground font-semibold">我的手牌</div>
+            <div className="text-xs text-muted-foreground font-semibold">{t('myHand')}</div>
             <div className="flex gap-2">
               {state.myHoleCards.map((card, i) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: hole cards are ordered and stable
@@ -392,7 +406,7 @@ export function Board({
       {/* Showdown result */}
       {state.showdownResult && state.handPhase !== 'betting' && (
         <div className="border-2 border-[#16a34a] rounded-[12px] bg-[#e8f8ee] shadow-[4px_4px_0px_0px_#16a34a] p-4 mb-3">
-          <div className="text-xs font-semibold text-[#16a34a] mb-2">摊牌结果</div>
+          <div className="text-xs font-semibold text-[#16a34a] mb-2">{t('showdown')}</div>
           {state.showdownResult.map((r) => (
             <div key={r.playerId} className="flex justify-between items-center text-sm py-1">
               <span className="text-foreground font-semibold">
@@ -422,18 +436,19 @@ export function Board({
             onCall={() => sendAction({ type: 'call' })}
             onRaise={(amount) => sendAction({ type: 'raise', amount })}
             onAllIn={() => sendAction({ type: 'all_in' })}
+            t={t}
           />
         </div>
       )}
       {!isMyTurn && state.handPhase === 'betting' && (
         <div className="border-2 border-border rounded-[12px] bg-card p-3 mb-3 text-center text-sm text-muted-foreground">
-          等待 {playerNames[state.currentPlayer] ?? state.currentPlayer} 行动...
+          {t('waiting')} {playerNames[state.currentPlayer] ?? state.currentPlayer} {t('acting')}
         </div>
       )}
 
       {/* Players list */}
       <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-3 mb-3">
-        <div className="text-xs text-muted-foreground font-semibold mb-2">玩家状态</div>
+        <div className="text-xs text-muted-foreground font-semibold mb-2">{t('playerStatus')}</div>
         <div className="flex flex-col gap-1">
           {state.players.map((p, i) => (
             <PlayerSeat
@@ -443,6 +458,7 @@ export function Board({
               isMe={p.id === myId}
               isActive={state.handPhase === 'betting' && state.currentPlayer === p.id}
               isDealer={i === state.dealerIdx}
+              t={t}
             />
           ))}
         </div>

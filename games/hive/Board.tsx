@@ -2,6 +2,7 @@ import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Action, HexCoord, HivePieceType, PlayerView, Tile } from './shared';
 import { HEX_SIZE, coordKey, hexToPixel } from './shared';
 
@@ -134,12 +135,12 @@ const PIECE_ICONS: Record<HivePieceType, IconComponent> = {
   ant: AntIcon,
 };
 
-const PIECE_NAMES: Record<HivePieceType, string> = {
-  queen: '蜂后',
-  spider: '蜘蛛',
-  beetle: '甲虫',
-  grasshopper: '蚱蜢',
-  ant: '蚂蚁',
+const PIECE_NAME_KEYS: Record<HivePieceType, string> = {
+  queen: 'pieceQueen',
+  spider: 'pieceSpider',
+  beetle: 'pieceBeetle',
+  grasshopper: 'pieceGrasshopper',
+  ant: 'pieceAnt',
 };
 
 // ============ Hex geometry ============
@@ -236,6 +237,7 @@ export function Board({
   onReturnToRoom,
   onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
+  const { t } = useTranslation('hive');
   const [selectedPieceType, setSelectedPieceType] = useState<HivePieceType | null>(null);
   const [selectedTileCoord, setSelectedTileCoord] = useState<HexCoord | null>(null);
 
@@ -385,8 +387,8 @@ export function Board({
   }, [gameOver, state.isDraw, state.winner, players]);
 
   const colorLabel: Record<string, string> = {
-    white: '白方',
-    black: '黑方',
+    white: t('white'),
+    black: t('black'),
   };
 
   return (
@@ -410,11 +412,11 @@ export function Board({
       <div className="text-sm text-muted-foreground font-medium">
         {gameOver
           ? state.isDraw
-            ? '平局!'
-            : `${playerNames[state.winner ?? ''] ?? state.winner} 获胜!`
+            ? t('draw')
+            : `${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`
           : isMyTurn
-            ? `你的回合 (${colorLabel[state.myColor]})`
-            : `等待 ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
+            ? `${t('yourTurn')} (${colorLabel[state.myColor]})`
+            : `${t('waiting')} ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
       </div>
 
       {/* Hex board */}
@@ -501,7 +503,7 @@ export function Board({
       {/* Piece inventory / placement panel */}
       {isMyTurn && !gameOver && (
         <div className="w-full max-w-lg bg-card border-2 border-foreground rounded-[12px] p-3 shadow-[4px_4px_0px_0px_#3d2e1e]">
-          <div className="text-xs text-muted-foreground font-medium mb-2">选择棋子放置</div>
+          <div className="text-xs text-muted-foreground font-medium mb-2">{t('selectPiece')}</div>
           <div className="flex flex-wrap gap-2">
             {(['queen', 'spider', 'beetle', 'grasshopper', 'ant'] as HivePieceType[]).map((pt) => {
               const count = myInventory[pt];
@@ -526,7 +528,7 @@ export function Board({
                   <svg viewBox="0 0 24 24" width={24} height={24} aria-hidden="true">
                     {PIECE_ICONS[pt]({ color: state.myColor === 'white' ? '#1a1108' : '#fef3e0' })}
                   </svg>
-                  <span className="text-xs font-medium text-foreground">{PIECE_NAMES[pt]}</span>
+                  <span className="text-xs font-medium text-foreground">{t(PIECE_NAME_KEYS[pt])}</span>
                   <span className="text-xs text-muted-foreground">{count}</span>
                 </button>
               );
@@ -538,7 +540,7 @@ export function Board({
               onClick={clearSelection}
               className="mt-2 text-xs text-muted-foreground underline"
             >
-              取消选择
+              {t('deselect')}
             </button>
           )}
           {selectedTileCoord && (
@@ -547,7 +549,7 @@ export function Board({
               onClick={clearSelection}
               className="mt-2 text-xs text-muted-foreground underline"
             >
-              取消选择棋子
+              {t('deselectPiece')}
             </button>
           )}
           {canPass && (
@@ -556,7 +558,7 @@ export function Board({
               onClick={() => sendAction({ type: 'pass' })}
               className="mt-2 w-full bg-muted border-2 border-border text-foreground py-2 rounded-[8px] font-medium text-sm hover:border-foreground transition-all"
             >
-              无子可动，跳过
+              {t('skipTurn')}
             </button>
           )}
         </div>

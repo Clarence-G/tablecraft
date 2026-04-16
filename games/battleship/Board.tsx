@@ -2,6 +2,7 @@ import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   type Action,
   CLASSIC_SHIPS,
@@ -202,9 +203,13 @@ function ShipSelector({
 function SunkIndicator({
   sunkList,
   label,
+  destroyedLabel,
+  aliveLabel,
 }: {
   sunkList: boolean[];
   label: string;
+  destroyedLabel: string;
+  aliveLabel: string;
 }) {
   return (
     <div className="text-xs text-muted-foreground">
@@ -214,7 +219,7 @@ function SunkIndicator({
           // biome-ignore lint/suspicious/noArrayIndexKey: ship index is stable
           key={i}
           className={`inline-block w-2 h-2 rounded-full mr-0.5 ${sunk ? 'bg-[#d94040]' : 'bg-[#2563eb]'}`}
-          title={`${SHIP_NAMES_ZH[i]} ${sunk ? '已沉没' : '存活'}`}
+          title={`${SHIP_NAMES_ZH[i]} ${sunk ? destroyedLabel : aliveLabel}`}
         />
       ))}
     </div>
@@ -238,6 +243,7 @@ export function Board({
     new Array(GRID_SIZE * GRID_SIZE).fill(0),
   );
   const [placedShips, setPlacedShips] = useState<Set<number>>(new Set());
+  const { t } = useTranslation('battleship');
 
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
   const isMyTurn = state.currentPlayer === myId;
@@ -344,7 +350,7 @@ export function Board({
       {/* Phase: Placement */}
       {state.phase === 'placement' && !state.myPlaced && (
         <div className="flex flex-col items-center gap-3 w-full max-w-sm">
-          <div className="text-sm font-semibold text-foreground">部署你的舰队</div>
+          <div className="text-sm font-semibold text-foreground">{t('deployFleet')}</div>
 
           {/* Ship Selector */}
           <ShipSelector
@@ -358,7 +364,7 @@ export function Board({
           {/* Rotation + Preview */}
           {selectedShipIdx !== null && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>方向:</span>
+              <span>{t('direction')}</span>
               <div className="flex gap-0.5">
                 {rotatedOffsets.map(([r, c], i) => (
                   <div
@@ -377,7 +383,7 @@ export function Board({
                 onClick={() => setRotation((r) => (r + 1) % 4)}
                 className="px-2 py-0.5 text-xs bg-secondary border border-border rounded hover:border-foreground/60 transition-colors"
               >
-                旋转
+                {t('rotate')}
               </button>
             </div>
           )}
@@ -398,7 +404,7 @@ export function Board({
               onClick={handleReset}
               className="px-3 py-1.5 text-xs bg-secondary border-2 border-border rounded shadow-[2px_2px_0px_0px_#3d2e1e] hover:border-foreground/60 transition-colors"
             >
-              重置
+              {t('reset')}
             </button>
             <button
               type="button"
@@ -412,7 +418,7 @@ export function Board({
                 }
               `}
             >
-              确认部署 ({placedShips.size}/{CLASSIC_SHIPS.length})
+              {t('confirmDeploy')} ({placedShips.size}/{CLASSIC_SHIPS.length})
             </button>
           </div>
         </div>
@@ -421,8 +427,8 @@ export function Board({
       {/* Placement: waiting for opponent */}
       {state.phase === 'placement' && state.myPlaced && (
         <div className="bg-card border-2 border-border rounded shadow-[4px_4px_0px_0px_#3d2e1e] px-6 py-4 text-center">
-          <div className="text-sm font-semibold text-foreground mb-1">舰队已部署</div>
-          <div className="text-xs text-muted-foreground">等待对手完成部署...</div>
+          <div className="text-sm font-semibold text-foreground mb-1">{t('fleetDeployed')}</div>
+          <div className="text-xs text-muted-foreground">{t('waitingOpponent')}</div>
         </div>
       )}
 
@@ -432,27 +438,27 @@ export function Board({
           {/* Turn indicator */}
           <div className="text-sm font-medium text-muted-foreground">
             {isMyTurn
-              ? '你的回合 — 点击敌方海域开炮'
-              : `等待 ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
+              ? t('yourTurnFire')
+              : `${t('waiting')} ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
           </div>
 
           {/* Sunk indicators */}
           <div className="flex gap-4 text-xs">
-            <SunkIndicator sunkList={state.opponentShipsSunk} label="已击沉" />
-            <SunkIndicator sunkList={state.myShipsSunk} label="我方损失" />
+            <SunkIndicator sunkList={state.opponentShipsSunk} label={t('sunk')} destroyedLabel={t('destroyed')} aliveLabel={t('alive')} />
+            <SunkIndicator sunkList={state.myShipsSunk} label={t('ourLosses')} destroyedLabel={t('destroyed')} aliveLabel={t('alive')} />
           </div>
 
           {/* Grids */}
           <div className="flex flex-wrap gap-4 justify-center">
             <BattleGrid
-              label="敌方海域"
+              label={t('enemyWaters')}
               shipGrid={new Array(GRID_SIZE * GRID_SIZE).fill(0)}
               shotsGrid={state.myShots}
               clickable={isMyTurn && !gameOver}
               onCellClick={(row, col) => sendAction({ type: 'fire', row, col })}
             />
             <BattleGrid
-              label="我方舰队"
+              label={t('ourFleet')}
               shipGrid={state.myGrid}
               shotsGrid={state.opponentShots}
               clickable={false}

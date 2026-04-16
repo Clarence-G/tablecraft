@@ -1,0 +1,20 @@
+{
+  "name": "Battleship",
+  "description": "Deploy your fleet on a 10x10 grid, find and sink all enemy ships",
+  "tags": ["Strategy", "Casual"],
+  "deployFleet": "Deploy Your Fleet",
+  "direction": "Direction:",
+  "rotate": "Rotate",
+  "reset": "Reset",
+  "confirmDeploy": "Confirm Deploy",
+  "fleetDeployed": "Fleet Deployed",
+  "waitingOpponent": "Waiting for opponent to deploy...",
+  "yourTurnFire": "Your turn — click enemy waters to fire",
+  "sunk": "Sunk",
+  "ourLosses": "Our Losses",
+  "enemyWaters": "Enemy Waters",
+  "ourFleet": "Our Fleet",
+  "destroyed": "Destroyed",
+  "alive": "Active",
+  "waiting": "Waiting"
+}

@@ -1,0 +1,20 @@
+{
+  "name": "Hive",
+  "description": "Insect chess, surround your opponent's Queen Bee",
+  "tags": ["Strategy", "Board"],
+  "draw": "Draw!",
+  "won": "You Win!",
+  "yourTurn": "Your Turn",
+  "waiting": "Waiting",
+  "white": "White",
+  "black": "Black",
+  "selectPiece": "Select piece to place",
+  "deselect": "Deselect",
+  "deselectPiece": "Deselect piece",
+  "skipTurn": "No moves available, skip",
+  "pieceQueen": "Queen",
+  "pieceSpider": "Spider",
+  "pieceBeetle": "Beetle",
+  "pieceGrasshopper": "Grasshopper",
+  "pieceAnt": "Ant"
+}

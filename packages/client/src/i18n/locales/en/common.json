@@ -1,0 +1,42 @@
+{
+  "app": {
+    "title": "TableCraft",
+    "slogan": "Play board games with friends, anytime, anywhere"
+  },
+  "lobby": {
+    "selectGame": "Select Game",
+    "all": "All",
+    "roomCode": "Room Code",
+    "join": "Join",
+    "createRoom": "Create Room",
+    "loading": "Loading...",
+    "noRooms": "No rooms yet",
+    "noRoomsYet": "No one has created a room yet",
+    "createInvite": "Create a room and invite friends to join",
+    "selectAndCreate": "Select a game and create a room to start playing",
+    "createRoomShort": "Create Room",
+    "roomsActive": "{{count}} room(s) active",
+    "rooms": "Rooms",
+    "allRooms": "All Rooms",
+    "refresh": "Refresh",
+    "players": "players",
+    "minutes": "min"
+  },
+  "room": {
+    "connecting": "Connecting...",
+    "waitingRoom": "Waiting Room",
+    "playerList": "Player List",
+    "host": "Host",
+    "ready": "Ready",
+    "notReady": "Not Ready",
+    "readyBtn": "Ready",
+    "needPlayers": "Need at least {{count}} players",
+    "startGame": "Start Game",
+    "playAgain": "Play Again",
+    "leave": "Leave"
+  },
+  "game": {
+    "loading": "Loading...",
+    "unknownGame": "Unknown game"
+  }
+}

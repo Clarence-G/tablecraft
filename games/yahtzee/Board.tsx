@@ -2,9 +2,9 @@ import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   type Action,
-  CATEGORY_NAMES_ZH,
   NUM_CATEGORIES,
   type PlayerScore,
   type PlayerView,
@@ -51,7 +51,7 @@ const DOT_POSITIONS: Record<number, [number, number][]> = {
   ],
 };
 
-function DieFace({ value, held, onClick }: { value: number; held: boolean; onClick?: () => void }) {
+function DieFace({ value, held, onClick, t }: { value: number; held: boolean; onClick?: () => void; t: (key: string) => string }) {
   const dots = value >= 1 && value <= 6 ? DOT_POSITIONS[value] : [];
   const isUnrolled = value === 0;
 
@@ -68,7 +68,7 @@ function DieFace({ value, held, onClick }: { value: number; held: boolean; onCli
           : 'bg-card border-foreground shadow-[4px_4px_0px_0px_#3d2e1e]',
         onClick ? 'cursor-pointer active:translate-y-[2px] active:shadow-none' : 'cursor-default',
       ].join(' ')}
-      aria-label={isUnrolled ? '未投掷' : `骰子${value}${held ? '（已锁定）' : ''}`}
+      aria-label={isUnrolled ? t('notRolled') : `${t('dice')}${value}${held ? t('locked') : ''}`}
     >
       {isUnrolled ? (
         <span className="text-muted-foreground text-xs">?</span>
@@ -99,6 +99,7 @@ function ScoreRow({
   isMyTurn,
   canScore,
   onScore,
+  t,
 }: {
   category: number;
   score: number;
@@ -106,6 +107,7 @@ function ScoreRow({
   isMyTurn: boolean;
   canScore: boolean;
   onScore: () => void;
+  t: (key: string, opts?: Record<string, unknown>) => string;
 }) {
   const isFilled = score >= 0;
   const showPotential = isMyTurn && canScore && !isFilled && potential !== null;
@@ -124,9 +126,9 @@ function ScoreRow({
             ? 'bg-[#fef3e0] border-[#d97706] cursor-pointer hover:bg-[#fde8e8] hover:border-[#d94040]'
             : 'bg-muted border-border text-muted-foreground cursor-default',
       ].join(' ')}
-      aria-label={`${CATEGORY_NAMES_ZH[category]}: ${isFilled ? score : showPotential ? `预览${potential}` : '未填'}`}
+      aria-label={`${t(`categories.${category}`)}: ${isFilled ? score : showPotential ? `${t('preview')}${potential}` : t('unfilled')}`}
     >
-      <span className="font-medium">{CATEGORY_NAMES_ZH[category]}</span>
+      <span className="font-medium">{t(`categories.${category}`)}</span>
       <span
         className={[
           'font-mono font-semibold min-w-[2.5rem] text-right',
@@ -141,7 +143,7 @@ function ScoreRow({
 
 // ---- Opponent Scorecard (compact) ----
 
-function OpponentCard({ player, name }: { player: PlayerScore; name: string }) {
+function OpponentCard({ player, name, t }: { player: PlayerScore; name: string; t: (key: string, opts?: Record<string, unknown>) => string }) {
   const upperSum = getUpperSectionSum(player.scores);
   const hasBonus = upperSum >= UPPER_BONUS_THRESHOLD;
   const filled = player.scores.filter((s) => s >= 0).length;
@@ -150,10 +152,10 @@ function OpponentCard({ player, name }: { player: PlayerScore; name: string }) {
     <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-3">
       <div className="text-xs font-semibold text-foreground mb-1 truncate">{name}</div>
       <div className="text-xs text-muted-foreground">
-        {filled}/13 已填 · 上区{upperSum}
+        {t('filledCount', { n: filled })} · {t('upperSection')}{upperSum}
         {hasBonus && <span className="text-[#16a34a] ml-1">+{UPPER_BONUS_VALUE}</span>}
       </div>
-      <div className="text-sm font-bold text-foreground mt-1">{player.totalScore} 分</div>
+      <div className="text-sm font-bold text-foreground mt-1">{player.totalScore} {t('points')}</div>
     </div>
   );
 }
@@ -168,6 +170,7 @@ export function Board({
   onReturnToRoom,
   onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
+  const { t } = useTranslation('yahtzee');
   const [showFullScorecard, setShowFullScorecard] = useState(false);
 
   const isMyTurn = state.currentPlayer === myId;
@@ -217,10 +220,10 @@ export function Board({
       {/* Status */}
       <div className="text-center text-sm text-muted-foreground mb-3">
         {gameOver
-          ? `游戏结束！${playerNames[state.winner ?? ''] ?? state.winner} 获胜`
+          ? `${t('gameOver')} ${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`
           : isMyTurn
-            ? `你的回合 · 第 ${state.roundNumber}/13 轮 · 剩余投掷: ${state.rollsLeft}`
-            : `等待 ${playerNames[state.currentPlayer] ?? state.currentPlayer} · 第 ${state.roundNumber}/13 轮`}
+            ? t('yourTurnRound', { round: state.roundNumber, rolls: state.rollsLeft })
+            : t('waitingPlayer', { name: playerNames[state.currentPlayer] ?? state.currentPlayer, round: state.roundNumber })}
       </div>
 
       {/* Opponents (compact) */}
@@ -228,7 +231,7 @@ export function Board({
         <div className="flex gap-2 overflow-x-auto pb-1 mb-3">
           {opponents.map((opp) => (
             <div key={opp.id} className="shrink-0 w-36">
-              <OpponentCard player={opp} name={playerNames[opp.id] ?? opp.id} />
+              <OpponentCard player={opp} name={playerNames[opp.id] ?? opp.id} t={t} />
             </div>
           ))}
         </div>
@@ -244,12 +247,13 @@ export function Board({
                 value={d}
                 held={state.heldDice[i]}
                 onClick={canHold ? () => sendAction({ type: 'hold', diceIndex: i }) : undefined}
+                t={t}
               />
             ))}
           </div>
           {canHold && (
             <div className="text-center text-xs text-muted-foreground mb-3">
-              点击骰子锁定/解锁（锁定的骰子不会重新投掷）
+              {t('lockHint')}
             </div>
           )}
           <button
@@ -264,10 +268,10 @@ export function Board({
             ].join(' ')}
           >
             {!hasRolled
-              ? '投掷骰子'
+              ? t('rollDice')
               : state.rollsLeft === 0
-                ? '请选择计分分类'
-                : `再次投掷（剩余 ${state.rollsLeft} 次）`}
+                ? t('selectCategory')
+                : t('rollAgain', { n: state.rollsLeft })}
           </button>
         </div>
       )}
@@ -276,26 +280,26 @@ export function Board({
       {myPlayerScore && (
         <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-3 mb-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold">我的计分表</span>
+            <span className="text-sm font-semibold">{t('myScorecard')}</span>
             <button
               type="button"
               onClick={() => setShowFullScorecard((v) => !v)}
               className="text-xs text-muted-foreground underline"
             >
-              {showFullScorecard ? '收起' : '展开'}
+              {showFullScorecard ? t('collapse') : t('expand')}
             </button>
           </div>
 
           {/* Upper section bonus progress */}
           <div className="mb-2 text-xs text-muted-foreground">
-            上区合计: {upperSum}/{UPPER_BONUS_THRESHOLD}
+            {t('upperSectionSum')} {upperSum}/{UPPER_BONUS_THRESHOLD}
             {hasUpperBonus ? (
               <span className="text-[#16a34a] font-semibold ml-1">
-                已获得+{UPPER_BONUS_VALUE}分奖励
+                {t('bonusEarned')}
               </span>
             ) : (
               <span className="ml-1">
-                （满{UPPER_BONUS_THRESHOLD}分额外+{UPPER_BONUS_VALUE}分）
+                {t('bonusHint', { threshold: UPPER_BONUS_THRESHOLD, bonus: UPPER_BONUS_VALUE })}
               </span>
             )}
           </div>
@@ -309,7 +313,7 @@ export function Board({
           {(showFullScorecard || isMyTurn) && (
             <>
               {/* Upper section */}
-              <div className="text-xs text-muted-foreground font-semibold mb-1 px-1">上区</div>
+              <div className="text-xs text-muted-foreground font-semibold mb-1 px-1">{t('upperSection')}</div>
               <div className="space-y-1 mb-2">
                 {Array.from({ length: 6 }, (_, i) => (
                   <ScoreRow // biome-ignore lint/suspicious/noArrayIndexKey: category index is the stable identifier
@@ -320,12 +324,13 @@ export function Board({
                     isMyTurn={isMyTurn}
                     canScore={canScore}
                     onScore={() => sendAction({ type: 'score', category: i })}
+                    t={t}
                   />
                 ))}
               </div>
 
               {/* Lower section */}
-              <div className="text-xs text-muted-foreground font-semibold mb-1 px-1">下区</div>
+              <div className="text-xs text-muted-foreground font-semibold mb-1 px-1">{t('lowerSection')}</div>
               <div className="space-y-1">
                 {Array.from({ length: 7 }, (_, i) => {
                   const cat = i + 6;
@@ -338,6 +343,7 @@ export function Board({
                       isMyTurn={isMyTurn}
                       canScore={canScore}
                       onScore={() => sendAction({ type: 'score', category: cat })}
+                      t={t}
                     />
                   );
                 })}
@@ -346,7 +352,7 @@ export function Board({
               {/* Yahtzee bonus */}
               {myPlayerScore.yahtzeeBonus > 0 && (
                 <div className="mt-2 text-xs font-semibold text-[#16a34a] px-1">
-                  快艇奖励: +{myPlayerScore.yahtzeeBonus * 100} 分
+                  {t('yahtzeeBonus', { n: myPlayerScore.yahtzeeBonus * 100 })}
                 </div>
               )}
             </>
@@ -354,7 +360,7 @@ export function Board({
 
           {/* Total */}
           <div className="mt-3 pt-2 border-t border-border flex items-center justify-between">
-            <span className="text-sm font-semibold">总分</span>
+            <span className="text-sm font-semibold">{t('totalScore')}</span>
             <span className="text-lg font-bold text-foreground">
               {calculateTotalScore(myPlayerScore.scores, myPlayerScore.yahtzeeBonus)}
             </span>

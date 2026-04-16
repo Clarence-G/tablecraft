@@ -1,0 +1,42 @@
+{
+  "app": {
+    "title": "桌游大全",
+    "slogan": "和朋友一起，随时随地玩桌游"
+  },
+  "lobby": {
+    "selectGame": "选择游戏",
+    "all": "全部",
+    "roomCode": "房间码",
+    "join": "加入",
+    "createRoom": "创建新房间",
+    "loading": "加载中...",
+    "noRooms": "暂无房间",
+    "noRoomsYet": "还没有人创建房间",
+    "createInvite": "创建一个房间，邀请好友加入吧",
+    "selectAndCreate": "选择一个游戏，创建房间开始玩",
+    "createRoomShort": "创建房间",
+    "roomsActive": "{{count}} 个房间进行中",
+    "rooms": "房间",
+    "allRooms": "所有房间",
+    "refresh": "刷新",
+    "players": "人",
+    "minutes": "分钟"
+  },
+  "room": {
+    "connecting": "连接中...",
+    "waitingRoom": "等待室",
+    "playerList": "玩家列表",
+    "host": "房主",
+    "ready": "已准备",
+    "notReady": "未准备",
+    "readyBtn": "准备",
+    "needPlayers": "至少需要 {{count}} 名玩家",
+    "startGame": "开始游戏",
+    "playAgain": "再来一局",
+    "leave": "离开"
+  },
+  "game": {
+    "loading": "加载中...",
+    "unknownGame": "未知游戏"
+  }
+}

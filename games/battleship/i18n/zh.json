@@ -1,0 +1,20 @@
+{
+  "name": "战舰",
+  "description": "在10×10海域部署舰队，找出并击沉对手的所有舰船",
+  "tags": ["策略", "休闲"],
+  "deployFleet": "部署你的舰队",
+  "direction": "方向:",
+  "rotate": "旋转",
+  "reset": "重置",
+  "confirmDeploy": "确认部署",
+  "fleetDeployed": "舰队已部署",
+  "waitingOpponent": "等待对手完成部署...",
+  "yourTurnFire": "你的回合 — 点击敌方海域开炮",
+  "sunk": "已击沉",
+  "ourLosses": "我方损失",
+  "enemyWaters": "敌方海域",
+  "ourFleet": "我方舰队",
+  "destroyed": "已沉没",
+  "alive": "存活",
+  "waiting": "等待"
+}

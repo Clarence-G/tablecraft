@@ -1,0 +1,19 @@
+{
+  "name": "UNO",
+  "description": "快速出完手牌，先出完者获胜",
+  "tags": ["卡牌", "派对"],
+  "won": "获胜!",
+  "yourTurn": "你的回合",
+  "waiting": "等待",
+  "drawPile": "摸牌堆",
+  "discardPile": "出牌堆",
+  "currentColor": "当前色",
+  "direction": "方向",
+  "yourHand": "你的手牌",
+  "cards": "张",
+  "noCards": "无手牌",
+  "playCard": "出牌",
+  "drawCard": "摸牌",
+  "pass": "跳过",
+  "chooseColor": "选择颜色"
+}

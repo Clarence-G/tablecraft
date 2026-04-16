@@ -1,4 +1,5 @@
 import type { PlayerInfo } from '@repo/shared';
+import { useTranslation } from 'react-i18next';
 
 interface PlayerBadgeProps {
   player: PlayerInfo;
@@ -7,6 +8,7 @@ interface PlayerBadgeProps {
 }
 
 export function PlayerBadge({ player, isCurrentTurn, isMe }: PlayerBadgeProps) {
+  const { t } = useTranslation('game-ui');
   return (
     <div
       className={`flex items-center gap-2 px-3 py-1.5 rounded-[12px] text-sm border-2 transition-all
@@ -18,9 +20,9 @@ export function PlayerBadge({ player, isCurrentTurn, isMe }: PlayerBadgeProps) {
         className={`w-2.5 h-2.5 rounded-full border ${player.connected ? 'bg-success border-[#0a5c2a]' : 'bg-[#c4b8a8] border-[#9c8b78]'}`}
       />
       <span className="font-semibold">{player.name}</span>
-      {isMe && <span className="text-xs text-muted-foreground font-medium">你</span>}
+      {isMe && <span className="text-xs text-muted-foreground font-medium">{t('you')}</span>}
       <span className={`text-xs font-semibold ${isCurrentTurn ? 'text-warning' : 'invisible'}`}>
-        回合中
+        {t('yourTurn')}
       </span>
     </div>
   );

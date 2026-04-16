@@ -2,6 +2,7 @@ import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { type Action, COLORS, type PlayerView, type UnoColor, deserializeCard } from './shared';
 
 // ---- Card color styling ----
@@ -91,10 +92,11 @@ function ColorDot({ color }: { color: UnoColor }) {
 // ---- Color Picker Modal ----
 
 function ColorPickerModal({ onChoose }: { onChoose: (c: UnoColor) => void }) {
+  const { t } = useTranslation('uno');
   return (
     <div className="fixed inset-0 bg-[#1a1108]/60 flex items-center justify-center z-50">
       <div className="bg-card border-2 border-foreground rounded-[16px] p-6 shadow-[4px_4px_0px_0px_#3d2e1e] max-w-xs w-full mx-4 text-center">
-        <div className="text-sm font-semibold text-foreground mb-4">选择颜色</div>
+        <div className="text-sm font-semibold text-foreground mb-4">{t('chooseColor')}</div>
         <div className="flex gap-3 justify-center">
           {COLORS.map((c) => {
             const { className, style } = getCardStyle(c);
@@ -128,6 +130,7 @@ export function Board({
 }: BoardProps<PlayerView, Action>) {
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [pendingWild, setPendingWild] = useState<number | null>(null);
+  const { t } = useTranslation('uno');
 
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = state.phase === 'finished';
@@ -189,7 +192,7 @@ export function Board({
                 isCurrentTurn={state.currentPlayer === p.id}
                 isMe={p.id === myId}
               />
-              <div className="text-xs text-muted-foreground">{info?.cardCount ?? 0} 张</div>
+              <div className="text-xs text-muted-foreground">{info?.cardCount ?? 0} {t('cards')}</div>
             </div>
           );
         })}
@@ -198,10 +201,10 @@ export function Board({
       {/* Turn indicator */}
       <div className="text-center text-sm text-muted-foreground mb-3">
         {gameOver
-          ? `${playerNames[state.winner ?? ''] ?? state.winner} 获胜!`
+          ? `${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`
           : isMyTurn
-            ? '你的回合'
-            : `等待 ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
+            ? t('yourTurn')
+            : `${t('waiting')} ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
       </div>
 
       {/* Center area: discard pile + color indicator */}
@@ -211,7 +214,7 @@ export function Board({
           <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-[10px] border-2 border-foreground bg-muted flex items-center justify-center text-muted-foreground font-bold text-xs shadow-[4px_4px_0px_0px_#3d2e1e]">
             {state.drawPileCount}
           </div>
-          <span className="text-xs text-muted-foreground">摸牌堆</span>
+          <span className="text-xs text-muted-foreground">{t('drawPile')}</span>
         </div>
 
         {/* Discard pile top card */}
@@ -221,14 +224,14 @@ export function Board({
           ) : (
             <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-[10px] border-2 border-border bg-muted" />
           )}
-          <span className="text-xs text-muted-foreground">出牌堆</span>
+          <span className="text-xs text-muted-foreground">{t('discardPile')}</span>
         </div>
 
         {/* Active color (shown when top card is wild) */}
         {topCardIsWild && (
           <div className="flex flex-col items-center gap-1">
             <ColorDot color={state.activeColor} />
-            <span className="text-xs text-muted-foreground">当前色</span>
+            <span className="text-xs text-muted-foreground">{t('currentColor')}</span>
           </div>
         )}
 
@@ -237,7 +240,7 @@ export function Board({
           <span className="text-lg font-bold text-foreground">
             {state.direction === 1 ? '>' : '<'}
           </span>
-          <span className="text-xs text-muted-foreground">方向</span>
+          <span className="text-xs text-muted-foreground">{t('direction')}</span>
         </div>
       </div>
 
@@ -245,7 +248,7 @@ export function Board({
       {!gameOver && (
         <div className="bg-card rounded-[12px] border-2 border-foreground p-3 shadow-[4px_4px_0px_0px_#3d2e1e] mb-3">
           <div className="text-xs font-medium text-muted-foreground mb-2">
-            你的手牌 ({state.myHand.length} 张)
+            {t('yourHand')} ({state.myHand.length} {t('cards')})
           </div>
           <div className="flex flex-wrap gap-2 justify-center mb-3 overflow-x-auto py-1">
             {state.myHand.map((serialized, idx) => (
@@ -263,13 +266,13 @@ export function Board({
                     onClick={() => handlePlayCard(idx)}
                     className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-[6px] font-semibold"
                   >
-                    出牌
+                    {t('playCard')}
                   </button>
                 )}
               </div>
             ))}
             {state.myHand.length === 0 && (
-              <span className="text-xs text-muted-foreground">无手牌</span>
+              <span className="text-xs text-muted-foreground">{t('noCards')}</span>
             )}
           </div>
 
@@ -282,7 +285,7 @@ export function Board({
                   onClick={handleDraw}
                   className="bg-secondary text-secondary-foreground border-2 border-foreground px-4 py-2 rounded-[10px] font-semibold text-sm shadow-[2px_2px_0px_0px_#3d2e1e] hover:-translate-y-0.5 transition-transform"
                 >
-                  摸牌
+                  {t('drawCard')}
                 </button>
               )}
               {state.hasDrawnThisTurn && (
@@ -291,7 +294,7 @@ export function Board({
                   onClick={handlePass}
                   className="bg-muted text-muted-foreground border-2 border-border px-4 py-2 rounded-[10px] font-semibold text-sm hover:bg-secondary transition-colors"
                 >
-                  跳过
+                  {t('pass')}
                 </button>
               )}
             </div>
