@@ -347,6 +347,8 @@ interface GameMeta {
   actionThrottleMs?: number;
   configSchema?: z.ZodType;
   defaultConfig?: unknown;
+  rules?: string;              // Human-readable rules (Chinese in meta, i18n in zh/en.json)
+  agentRules?: string;         // Machine-readable action/view schema for AI agents
 }
 ```
 
@@ -384,7 +386,7 @@ Engine events in `events[]`:
 
 2. **Edit `games/<your-game>/package.json`** — change `name` to `@games/<your-game>`.
 
-3. **Edit `games/<your-game>/shared.ts`** — set `meta` (id, name, description, minPlayers, maxPlayers, tags, icon, estimatedMinutes) and define `ActionSchema`.
+3. **Edit `games/<your-game>/shared.ts`** — set `meta` (id, name, description, minPlayers, maxPlayers, tags, icon, estimatedMinutes, rules, agentRules) and define `ActionSchema`.
 
 4. **Edit `games/<your-game>/logic.ts`** — implement `setup`, `onAction`, `getPlayerView`.
 
