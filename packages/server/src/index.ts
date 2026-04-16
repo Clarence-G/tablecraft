@@ -5,6 +5,8 @@ import type { ClientEvents, ServerEvents } from '@repo/shared';
 import express from 'express';
 import { Server } from 'socket.io';
 import { serverRegistry } from '../../../games/server-registry.js';
+import { createApiRouter } from './api/router.js';
+import { TokenStore } from './api/token-store.js';
 import { initDb } from './db/index.js';
 import { RoomManager } from './engine/RoomManager.js';
 import { setupAuth } from './socket/auth.js';
@@ -26,9 +28,17 @@ const io = new Server<ClientEvents, ServerEvents>(httpServer, {
 });
 
 const roomManager = new RoomManager();
+const tokenStore = new TokenStore();
 
 setupAuth(io);
 setupHandlers(io, roomManager, serverRegistry);
+
+// REST API for bots
+app.use('/api', createApiRouter(roomManager, serverRegistry, tokenStore));
+
+// Generate default bot token for development
+const defaultBot = tokenStore.generate('DefaultBot');
+console.log(`Bot token: ${defaultBot.token} (userId: ${defaultBot.userId})`);
 
 // Serve static in production
 if (process.env.NODE_ENV === 'production') {
