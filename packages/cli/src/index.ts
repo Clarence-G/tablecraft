@@ -1,25 +1,42 @@
 #!/usr/bin/env node
 
+import { gameActionCommand, gameStateCommand, gameWaitCommand } from './commands/game.js';
+import { gamesListCommand, gamesRulesCommand } from './commands/games.js';
+import { loginCommand, whoamiCommand } from './commands/login.js';
+import {
+  roomsCreateCommand,
+  roomsJoinCommand,
+  roomsLeaveCommand,
+  roomsListCommand,
+  roomsShowCommand,
+  roomsStartCommand,
+} from './commands/rooms.js';
 import { ApiClient } from './lib/client.js';
 import { resolveConfig } from './lib/config.js';
-import { loginCommand, whoamiCommand } from './commands/login.js';
-import { gamesListCommand, gamesRulesCommand } from './commands/games.js';
-import { roomsListCommand, roomsCreateCommand, roomsShowCommand, roomsJoinCommand, roomsLeaveCommand, roomsStartCommand } from './commands/rooms.js';
-import { gameStateCommand, gameActionCommand, gameWaitCommand } from './commands/game.js';
 
 function output(data: unknown): void {
   console.log(JSON.stringify(data));
 }
 
 function fail(message: string): never {
-  output({ ok: false, error: 'USAGE', message, hint: 'Run "tablecraft" with no args to see usage' });
+  output({
+    ok: false,
+    error: 'USAGE',
+    message,
+    hint: 'Run "tablecraft" with no args to see usage',
+  });
   process.exit(1);
 }
 
 function requireClient(): { client: ApiClient; config: { server: string; token: string } } {
   const config = resolveConfig();
   if (!config) {
-    output({ ok: false, error: 'NOT_LOGGED_IN', message: 'Not logged in', hint: 'Run: tablecraft login --server <url> --token <token>' });
+    output({
+      ok: false,
+      error: 'NOT_LOGGED_IN',
+      message: 'Not logged in',
+      hint: 'Run: tablecraft login --server <url> --token <token>',
+    });
     process.exit(1);
   }
   return { client: new ApiClient(config), config };
@@ -135,7 +152,12 @@ async function main() {
     const ok = result && typeof result === 'object' && 'ok' in result && (result as any).ok;
     process.exit(ok ? 0 : 1);
   } catch (err: any) {
-    output({ ok: false, error: 'NETWORK_ERROR', message: err.message || 'Request failed', hint: 'Check that the server is running and accessible' });
+    output({
+      ok: false,
+      error: 'NETWORK_ERROR',
+      message: err.message || 'Request failed',
+      hint: 'Check that the server is running and accessible',
+    });
     process.exit(1);
   }
 }

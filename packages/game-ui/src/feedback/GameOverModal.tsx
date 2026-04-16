@@ -49,7 +49,9 @@ export function GameOverModal({
             >
               <span className="font-bold font-mono w-6">{i + 1}.</span>
               <span className="font-medium">{playerNames[pid] ?? pid}</span>
-              {pid === myId && <span className="text-xs text-muted-foreground ml-auto">{t('you')}</span>}
+              {pid === myId && (
+                <span className="text-xs text-muted-foreground ml-auto">{t('you')}</span>
+              )}
             </div>
           ))}
         </div>

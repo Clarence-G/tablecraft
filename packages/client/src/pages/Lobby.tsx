@@ -51,7 +51,8 @@ export function Lobby({
   const tagTranslation = new Map<string, string>();
   for (const g of Object.values(clientRegistry)) {
     const zhTags: string[] = g.meta.tags ?? [];
-    const translatedTags: string[] = (i18n.t('tags', { ns: g.meta.id, returnObjects: true }) as string[]) ?? [];
+    const translatedTags: string[] =
+      (i18n.t('tags', { ns: g.meta.id, returnObjects: true }) as string[]) ?? [];
     zhTags.forEach((zh, i) => {
       if (translatedTags[i]) tagTranslation.set(zh, translatedTags[i]);
     });
@@ -178,7 +179,6 @@ export function Lobby({
                 }}
                 onBlur={confirmRename}
                 maxLength={12}
-                autoFocus
               />
             ) : (
               <button
@@ -223,8 +223,7 @@ export function Lobby({
                 onClick={() => setActiveTag(activeTag === tag ? null : tag)}
                 className={`text-xs font-semibold border rounded-full px-2.5 py-0.5 transition-all ${
                   activeTag === tag
-                    ? (TAG_COLORS[tag] ?? 'bg-secondary text-foreground border-foreground') +
-                      ' shadow-[2px_2px_0px_0px_#3d2e1e]'
+                    ? `${TAG_COLORS[tag] ?? 'bg-secondary text-foreground border-foreground'} shadow-[2px_2px_0px_0px_#3d2e1e]`
                     : 'bg-card border-border text-muted-foreground hover:border-foreground'
                 }`}
               >
@@ -273,7 +272,8 @@ export function Lobby({
                   {m.estimatedMinutes && (
                     <span className="inline-flex items-center gap-0.5 text-xs text-[#6b5744] bg-[#f0e8d8] border border-border rounded-full px-2 py-0.5">
                       <Clock className="size-3" />
-                      {m.estimatedMinutes}{t('lobby.minutes')}
+                      {m.estimatedMinutes}
+                      {t('lobby.minutes')}
                     </span>
                   )}
                   {m.tags?.map((tag) => (
@@ -287,7 +287,9 @@ export function Lobby({
                 </div>
                 {/* Room count */}
                 {count > 0 && (
-                  <div className="mt-2 text-xs text-success font-medium">{t('lobby.roomsActive', { count })}</div>
+                  <div className="mt-2 text-xs text-success font-medium">
+                    {t('lobby.roomsActive', { count })}
+                  </div>
                 )}
               </button>
             );

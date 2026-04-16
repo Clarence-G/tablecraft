@@ -358,8 +358,6 @@ importers:
         specifier: ^5.2.0
         version: 5.4.21(@types/node@20.19.39)(lightningcss@1.32.0)
 
-  packages/game-assets: {}
-
   packages/game-ui:
     dependencies:
       '@repo/shared':

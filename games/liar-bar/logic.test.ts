@@ -303,7 +303,7 @@ describe('Liar Bar Logic', () => {
 
       expect(h.isFinished).toBe(true);
       expect(h.rankings).not.toBeNull();
-      expect(h.rankings![0]).toBe('Bob');
+      expect(h.rankings?.[0]).toBe('Bob');
     });
 
     it('winner is set in the view after game over', () => {

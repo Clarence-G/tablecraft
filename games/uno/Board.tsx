@@ -192,7 +192,9 @@ export function Board({
                 isCurrentTurn={state.currentPlayer === p.id}
                 isMe={p.id === myId}
               />
-              <div className="text-xs text-muted-foreground">{info?.cardCount ?? 0} {t('cards')}</div>
+              <div className="text-xs text-muted-foreground">
+                {info?.cardCount ?? 0} {t('cards')}
+              </div>
             </div>
           );
         })}

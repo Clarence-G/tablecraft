@@ -34,7 +34,7 @@ export class GameRoom {
   finishedAt: number | null;
   lastActivityAt: number;
   createdAt: number;
-  seq: number = 0;
+  seq = 0;
   rankings: string[] | null = null;
   private waiters: Array<(seq: number) => void> = [];
 

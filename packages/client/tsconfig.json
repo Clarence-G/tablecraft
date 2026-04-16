@@ -29,7 +29,8 @@
       "@games/uno/shared": ["../../games/uno/shared.ts"],
       "@games/uno/board": ["../../games/uno/Board.tsx"],
       "@games/texas-holdem/shared": ["../../games/texas-holdem/shared.ts"],
-      "@games/texas-holdem/board": ["../../games/texas-holdem/Board.tsx"]
+      "@games/texas-holdem/board": ["../../games/texas-holdem/Board.tsx"],
+      "react-i18next": ["./node_modules/react-i18next"]
     }
   },
   "include": ["src", "../../games"]

@@ -155,7 +155,9 @@ export function Board({
       {/* Challenge Result Overlay */}
       {cr && !gameOver && (
         <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-4 text-center">
-          <div className="text-sm font-bold mb-2">{cr.wasLying ? t('caughtLying') : t('honestInnocent')}</div>
+          <div className="text-sm font-bold mb-2">
+            {cr.wasLying ? t('caughtLying') : t('honestInnocent')}
+          </div>
           <div className="flex gap-1 justify-center mb-2">
             {cr.playedCards.map((card, i) => (
               <div
@@ -168,7 +170,8 @@ export function Board({
             ))}
           </div>
           <div className="text-xs text-muted-foreground">
-            {playerNames[cr.shooterId] ?? cr.shooterId} {t('triggerPull', { n: cr.shotChamberIndex + 1 })}
+            {playerNames[cr.shooterId] ?? cr.shooterId}{' '}
+            {t('triggerPull', { n: cr.shotChamberIndex + 1 })}
             {' — '}
             {cr.shotDied ? (
               <span className="text-[#d94040] font-semibold">{t('shotEliminated')}</span>
@@ -242,9 +245,7 @@ export function Board({
       {/* My Hand */}
       {amAlive && !gameOver && state.phase === 'playing' && isMyTurn && (
         <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-3">
-          <div className="text-xs font-medium text-muted-foreground mb-2">
-            {t('yourHand')}
-          </div>
+          <div className="text-xs font-medium text-muted-foreground mb-2">{t('yourHand')}</div>
           <div className="flex flex-wrap gap-2 justify-center mb-3">
             {state.myHand.map((card, i) => (
               <HandCard

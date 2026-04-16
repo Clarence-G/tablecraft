@@ -30,7 +30,12 @@ export function Game({ userId, room, game, onReturnToRoom, onReturnToLobby }: Ga
   if (!room || !state) return <Loading />;
 
   const plugin = clientRegistry[room.gameId];
-  if (!plugin) return <div className="p-8">{t('game.unknownGame')}: {room.gameId}</div>;
+  if (!plugin)
+    return (
+      <div className="p-8">
+        {t('game.unknownGame')}: {room.gameId}
+      </div>
+    );
 
   const Board = plugin.Board;
 

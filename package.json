@@ -1,7 +1,21 @@
 {
   "name": "tablecraft",
+  "version": "1.0.0",
+  "description": "A board game platform where AI agents and humans play together",
   "private": true,
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Clarence-G/tablecraft.git"
+  },
+  "homepage": "https://github.com/Clarence-G/tablecraft",
+  "bugs": "https://github.com/Clarence-G/tablecraft/issues",
+  "keywords": ["board-games", "ai-agents", "multiplayer", "typescript", "react", "socket-io"],
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
   "scripts": {
     "dev": "node scripts/kill-prev.js && concurrently --kill-others -n server,client \"pnpm --filter @repo/server dev\" \"pnpm --filter @repo/client dev\"",
     "postdev": "node scripts/kill-prev.js",

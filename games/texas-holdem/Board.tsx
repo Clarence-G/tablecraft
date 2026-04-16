@@ -118,7 +118,10 @@ function PlayerSeat({
           </span>
         )}
         {player.currentBet > 0 && (
-          <span className="text-xs text-[#d97706]">{t('bet')}{player.currentBet}</span>
+          <span className="text-xs text-[#d97706]">
+            {t('bet')}
+            {player.currentBet}
+          </span>
         )}
         <span className="text-sm font-mono text-foreground">{player.chips}</span>
         <div className="flex gap-0.5">
@@ -352,7 +355,8 @@ export function Board({
 
       {/* Status row */}
       <div className="text-center text-sm text-muted-foreground mb-2">
-        {t('hand', { n: state.handNumber })} · {t(ROUND_KEYS[state.bettingRound] ?? state.bettingRound)}
+        {t('hand', { n: state.handNumber })} ·{' '}
+        {t(ROUND_KEYS[state.bettingRound] ?? state.bettingRound)}
         {isMyTurn && ` · ${t('yourAction')}`}
       </div>
 
@@ -377,7 +381,9 @@ export function Board({
               <CardPlaceholder key={i} />
             ))}
           </div>
-          <div className="text-base font-bold text-foreground">{t('pot')} {state.pot}</div>
+          <div className="text-base font-bold text-foreground">
+            {t('pot')} {state.pot}
+          </div>
         </div>
       </div>
 

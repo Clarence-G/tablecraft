@@ -7,7 +7,12 @@ export async function gamesListCommand(client: ApiClient): Promise<unknown> {
 export async function gamesRulesCommand(client: ApiClient, args: string[]): Promise<unknown> {
   const gameId = args[0];
   if (!gameId) {
-    return { ok: false, error: 'MISSING_ARGS', message: 'Usage: tablecraft games rules <gameId>', hint: '' };
+    return {
+      ok: false,
+      error: 'MISSING_ARGS',
+      message: 'Usage: tablecraft games rules <gameId>',
+      hint: '',
+    };
   }
   return client.get(`/games/${encodeURIComponent(gameId)}`);
 }

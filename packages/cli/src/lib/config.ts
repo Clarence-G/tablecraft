@@ -21,7 +21,7 @@ export function loadConfig(): Config | null {
 
 export function saveConfig(config: Config): void {
   mkdirSync(CONFIG_DIR, { recursive: true });
-  writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2) + '\n');
+  writeFileSync(CONFIG_FILE, `${JSON.stringify(config, null, 2)}\n`);
 }
 
 export function resolveConfig(): Config | null {

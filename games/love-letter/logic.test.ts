@@ -50,11 +50,11 @@ describe('Love Letter Logic', () => {
       expect(state.deck.length).toBe(10);
       expect(state.setAsideCard).toBeGreaterThanOrEqual(1);
       // First player has 2 cards (already drew)
-      expect(state.hands['Alice'].length).toBe(2);
+      expect(state.hands.Alice.length).toBe(2);
       // Others have 1
-      expect(state.hands['Bob'].length).toBe(1);
-      expect(state.hands['Carol'].length).toBe(1);
-      expect(state.hands['Diana'].length).toBe(1);
+      expect(state.hands.Bob.length).toBe(1);
+      expect(state.hands.Carol.length).toBe(1);
+      expect(state.hands.Diana.length).toBe(1);
     });
 
     it('2-player variant removes 3 extra cards face-up', () => {
@@ -252,7 +252,7 @@ describe('Love Letter Logic', () => {
       setDeck(h, [1, 1, 1, 1, 1, 1]);
       h.action('Alice', { type: 'play_card', card: 3, target: 'Bob' });
       const view = h.view('Alice');
-      expect(view.players.find((p) => p.id === 'Bob')!.alive).toBe(false);
+      expect(view.players.find((p) => p.id === 'Bob')?.alive).toBe(false);
     });
 
     it('lower card loses, player eliminated', () => {
@@ -262,7 +262,7 @@ describe('Love Letter Logic', () => {
       setDeck(h, [2, 1, 1, 1, 1, 1]);
       h.action('Alice', { type: 'play_card', card: 3, target: 'Bob' });
       const view = h.view('Bob');
-      expect(view.players.find((p) => p.id === 'Alice')!.alive).toBe(false);
+      expect(view.players.find((p) => p.id === 'Alice')?.alive).toBe(false);
     });
 
     it('tie results in no elimination', () => {
@@ -272,8 +272,8 @@ describe('Love Letter Logic', () => {
       setDeck(h, [1, 1, 1, 1, 1, 1]);
       h.action('Alice', { type: 'play_card', card: 3, target: 'Bob' });
       const view = h.view('Alice');
-      expect(view.players.find((p) => p.id === 'Alice')!.alive).toBe(true);
-      expect(view.players.find((p) => p.id === 'Bob')!.alive).toBe(true);
+      expect(view.players.find((p) => p.id === 'Alice')?.alive).toBe(true);
+      expect(view.players.find((p) => p.id === 'Bob')?.alive).toBe(true);
     });
   });
 
@@ -284,7 +284,7 @@ describe('Love Letter Logic', () => {
       setDeck(h, [2, 1, 1, 1, 1, 1]);
       h.action('Alice', { type: 'play_card', card: 4 });
       const view = h.view('Bob');
-      expect(view.players.find((p) => p.id === 'Alice')!.protected).toBe(true);
+      expect(view.players.find((p) => p.id === 'Alice')?.protected).toBe(true);
     });
 
     it('protection clears at start of own next turn', () => {
@@ -295,13 +295,13 @@ describe('Love Letter Logic', () => {
 
       // Alice plays Handmaid
       h.action('Alice', { type: 'play_card', card: 4 });
-      expect(h.view('Bob').players.find((p) => p.id === 'Alice')!.protected).toBe(true);
+      expect(h.view('Bob').players.find((p) => p.id === 'Alice')?.protected).toBe(true);
 
       // Bob plays Handmaid
       h.action('Bob', { type: 'play_card', card: 4 });
 
       // Now it's Alice's turn again — protection should be cleared
-      expect(h.view('Alice').players.find((p) => p.id === 'Alice')!.protected).toBe(false);
+      expect(h.view('Alice').players.find((p) => p.id === 'Alice')?.protected).toBe(false);
     });
   });
 
@@ -314,9 +314,9 @@ describe('Love Letter Logic', () => {
       h.action('Alice', { type: 'play_card', card: 5, target: 'Bob' });
       const view = h.view('Bob');
       // Bob should have drawn a new card (6 was on top of deck)
-      expect(view.players.find((p) => p.id === 'Bob')!.alive).toBe(true);
+      expect(view.players.find((p) => p.id === 'Bob')?.alive).toBe(true);
       // Bob's old card (3) should be in their played pile
-      expect(view.players.find((p) => p.id === 'Bob')!.playedCards).toContain(3);
+      expect(view.players.find((p) => p.id === 'Bob')?.playedCards).toContain(3);
     });
 
     it('discarding Princess eliminates target', () => {
@@ -326,7 +326,7 @@ describe('Love Letter Logic', () => {
       setDeck(h, [2, 1, 1, 1, 1, 1]);
       h.action('Alice', { type: 'play_card', card: 5, target: 'Bob' });
       const view = h.view('Alice');
-      expect(view.players.find((p) => p.id === 'Bob')!.alive).toBe(false);
+      expect(view.players.find((p) => p.id === 'Bob')?.alive).toBe(false);
     });
 
     it('can target self', () => {
@@ -352,7 +352,7 @@ describe('Love Letter Logic', () => {
       (h.rawState as any).setAsideCard = 4;
       h.action('Alice', { type: 'play_card', card: 5, target: 'Bob' });
       // Bob should have gotten the set-aside card
-      const bobHand = (h.rawState as any).hands['Bob'];
+      const bobHand = (h.rawState as any).hands.Bob;
       expect(bobHand).toContain(4);
     });
   });
@@ -368,7 +368,7 @@ describe('Love Letter Logic', () => {
       // After swap: Alice has [8], Bob has [1]
       const aliceView = h.view('Alice');
       expect(aliceView.hand).toEqual([8]);
-      const bobState = (h.rawState as any).hands['Bob'];
+      const bobState = (h.rawState as any).hands.Bob;
       // Bob drew a card for the new turn, so should have [1, drawn_card]
       expect(bobState[0]).toBe(1);
     });
@@ -424,7 +424,7 @@ describe('Love Letter Logic', () => {
       setDeck(h, [2, 1, 1, 1, 1, 1]);
       h.action('Alice', { type: 'play_card', card: 8 });
       const view = h.view('Bob');
-      expect(view.players.find((p) => p.id === 'Alice')!.alive).toBe(false);
+      expect(view.players.find((p) => p.id === 'Alice')?.alive).toBe(false);
     });
   });
 
@@ -534,7 +534,7 @@ describe('Love Letter Logic', () => {
       // Alice must play 5 (can't play 8-Princess voluntarily... well she can, but let's test Prince)
       h.action('Alice', { type: 'play_card', card: 5, target: 'Alice' });
       const view = h.view('Bob');
-      expect(view.players.find((p) => p.id === 'Alice')!.alive).toBe(false);
+      expect(view.players.find((p) => p.id === 'Alice')?.alive).toBe(false);
     });
   });
 });

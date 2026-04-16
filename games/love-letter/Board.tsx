@@ -3,11 +3,7 @@ import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  type Action,
-  OTHER_TARGET_CARDS,
-  type PlayerView,
-} from './shared';
+import { type Action, OTHER_TARGET_CARDS, type PlayerView } from './shared';
 
 // ---- Card Component ----
 
@@ -156,7 +152,8 @@ export function Board({
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-card border border-ring/50 rounded-xl px-4 py-3 shadow-lg text-center">
           <div className="text-xs text-muted-foreground mb-1">{t('peekHand')}</div>
           <div className="text-sm">
-            {playerNames[priestPeek.target]}{t('handIs')}{' '}
+            {playerNames[priestPeek.target]}
+            {t('handIs')}{' '}
             <span className="font-bold">
               {t(`cardNames.${priestPeek.card}`)}({priestPeek.card})
             </span>
@@ -194,7 +191,9 @@ export function Board({
               />
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 {!info?.alive && <span className="text-destructive">{t('eliminated')}</span>}
-                {info?.alive && info.protected && <span className="text-warning">{t('protected')}</span>}
+                {info?.alive && info.protected && (
+                  <span className="text-warning">{t('protected')}</span>
+                )}
                 {info?.alive && p.id !== myId && (
                   <span className="flex gap-0.5">
                     {Array.from({ length: info?.cardCount ?? 0 }).map((_, i) => (
@@ -224,7 +223,8 @@ export function Board({
         {t('deckRemaining')} {state.deckSize} {t('cardsUnit')}
         {state.removedCards.length > 0 && (
           <span className="ml-2">
-            | {t('removed')} {state.removedCards.map((c) => `${t(`cardNames.${c}`)}(${c})`).join(', ')}
+            | {t('removed')}{' '}
+            {state.removedCards.map((c) => `${t(`cardNames.${c}`)}(${c})`).join(', ')}
           </span>
         )}
       </div>
@@ -244,7 +244,8 @@ export function Board({
                 <span className="text-muted-foreground">
                   {t('played')} {t(`cardNames.${entry.card}`)}({entry.card})
                   {entry.target && ` → ${playerNames[entry.target] ?? entry.target}`}
-                  {entry.guess !== undefined && ` ${t('guess')}${t(`cardNames.${entry.guess}`)}(${entry.guess})`}
+                  {entry.guess !== undefined &&
+                    ` ${t('guess')}${t(`cardNames.${entry.guess}`)}(${entry.guess})`}
                 </span>
                 <span className="text-muted-foreground/80 ml-auto shrink-0">{entry.effect}</span>
               </div>
@@ -303,9 +304,7 @@ export function Board({
           </div>
 
           {mustPlayCountess && isMyTurn && (
-            <div className="text-xs text-warning text-center mb-2">
-              {t('mustPlayCountess')}
-            </div>
+            <div className="text-xs text-warning text-center mb-2">{t('mustPlayCountess')}</div>
           )}
 
           {/* Target Selection */}

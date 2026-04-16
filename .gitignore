@@ -11,3 +11,9 @@ playwright-report/
 .dev.pid
 .DS_Store
 .ace-tool/
+
+# Build artifacts in games/
+games/**/*.js
+games/**/*.js.map
+games/**/*.d.ts
+games/**/*.d.ts.map

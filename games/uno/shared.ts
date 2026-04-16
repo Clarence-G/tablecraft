@@ -10,7 +10,8 @@ export const meta: GameMeta = {
   tags: ['卡牌', '派对'],
   icon: 'card-exchange',
   estimatedMinutes: 20,
-  rules: '出牌必须与弃牌堆顶的颜色或数字匹配，或使用万能牌。无法出牌时必须摸牌。出完所有手牌的玩家获胜。',
+  rules:
+    '出牌必须与弃牌堆顶的颜色或数字匹配，或使用万能牌。无法出牌时必须摸牌。出完所有手牌的玩家获胜。',
   agentRules: `Card shedding game. Match top discard by color or value, or play a wild card. First to empty hand wins.
 
 Card format: "<color>_<value>" e.g. "red_5", "blue_skip", "wild", "wild_draw_four".

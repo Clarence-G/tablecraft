@@ -94,7 +94,9 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
               className="w-full py-3 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[12px] font-semibold"
               size="lg"
             >
-              {!hasEnoughPlayers ? t('room.needPlayers', { count: room.minPlayers }) : t('room.startGame')}
+              {!hasEnoughPlayers
+                ? t('room.needPlayers', { count: room.minPlayers })
+                : t('room.startGame')}
             </Button>
           )}
 

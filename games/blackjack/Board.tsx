@@ -54,7 +54,12 @@ function CardFace({ card }: { card: string }) {
   );
 }
 
-function Hand({ cards, label, total, pointsLabel }: { cards: string[]; label: string; total?: number; pointsLabel: string }) {
+function Hand({
+  cards,
+  label,
+  total,
+  pointsLabel,
+}: { cards: string[]; label: string; total?: number; pointsLabel: string }) {
   return (
     <div className="flex flex-col items-center gap-1">
       <span className="text-xs text-muted-foreground font-medium">{label}</span>
@@ -72,7 +77,9 @@ function Hand({ cards, label, total, pointsLabel }: { cards: string[]; label: st
         )}
       </div>
       {total !== undefined && total > 0 && (
-        <span className="text-sm font-semibold text-foreground">{total} {pointsLabel}</span>
+        <span className="text-sm font-semibold text-foreground">
+          {total} {pointsLabel}
+        </span>
       )}
     </div>
   );
@@ -114,24 +121,25 @@ function PlayerRow({
     <div
       className={[
         'flex items-center justify-between px-3 py-2 rounded-[8px] border-2',
-        isActive
-          ? 'border-[#d97706] bg-[#fef3e0]'
-          : 'border-border bg-card',
+        isActive ? 'border-[#d97706] bg-[#fef3e0]' : 'border-border bg-card',
         isMe ? 'border-foreground' : '',
       ].join(' ')}
     >
       <div className="flex items-center gap-2 min-w-0">
         <span className="text-sm font-semibold truncate text-foreground">{name}</span>
-        {isMe && (
-          <span className="text-xs text-muted-foreground shrink-0">{t('me')}</span>
-        )}
+        {isMe && <span className="text-xs text-muted-foreground shrink-0">{t('me')}</span>}
         {player.bet > 0 && (
-          <span className="text-xs text-[#d97706] shrink-0">{t('bet')} {player.bet}</span>
+          <span className="text-xs text-[#d97706] shrink-0">
+            {t('bet')} {player.bet}
+          </span>
         )}
       </div>
       <div className="flex items-center gap-2 shrink-0">
         {player.cardCount > 0 && (
-          <span className="text-xs text-muted-foreground">{player.cardCount}{t('cards')}</span>
+          <span className="text-xs text-muted-foreground">
+            {player.cardCount}
+            {t('cards')}
+          </span>
         )}
         {player.outcome !== 'pending' && (
           <span className={`text-xs font-bold ${outcomeColor[player.outcome] ?? ''}`}>
@@ -161,11 +169,7 @@ function BettingPanel({
   const { t } = useTranslation('blackjack');
 
   if (hasBet) {
-    return (
-      <div className="text-center text-sm text-muted-foreground py-4">
-        {t('betWaiting')}
-      </div>
-    );
+    return <div className="text-center text-sm text-muted-foreground py-4">{t('betWaiting')}</div>;
   }
 
   return (
@@ -239,8 +243,7 @@ function ActionButtons({
   onDoubleDown: () => void;
 }) {
   const { t } = useTranslation('blackjack');
-  const btnBase =
-    'flex-1 py-3 rounded-[8px] border-2 font-semibold text-sm transition-all';
+  const btnBase = 'flex-1 py-3 rounded-[8px] border-2 font-semibold text-sm transition-all';
   const btnActive =
     'border-foreground bg-card shadow-[2px_2px_0px_0px_#3d2e1e] active:translate-y-[1px] active:shadow-none hover:bg-[#fef3e0]';
   const btnDisabled = 'border-border bg-muted text-muted-foreground cursor-not-allowed';
@@ -294,7 +297,8 @@ export function Board({
 
   const hasBet = (myPlayer?.bet ?? 0) > 0;
   const myHandLen = state.myHand.length;
-  const canDoubleDown = isMyTurn && myHandLen === 2 && (myPlayer?.chips ?? 0) >= (myPlayer?.bet ?? 0);
+  const canDoubleDown =
+    isMyTurn && myHandLen === 2 && (myPlayer?.chips ?? 0) >= (myPlayer?.bet ?? 0);
 
   const rankings = gameOver
     ? [...state.players].sort((a, b) => b.chips - a.chips).map((p) => p.id)
@@ -373,7 +377,9 @@ export function Board({
             <div className="text-center text-sm font-bold text-[#d94040] mt-1">{t('bust')}</div>
           )}
           {state.myTotal === 21 && state.myHand.length === 2 && (
-            <div className="text-center text-sm font-bold text-[#16a34a] mt-1">{t('blackjack')}</div>
+            <div className="text-center text-sm font-bold text-[#16a34a] mt-1">
+              {t('blackjack')}
+            </div>
           )}
         </div>
       )}

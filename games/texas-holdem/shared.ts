@@ -10,7 +10,8 @@ export const meta: GameMeta = {
   tags: ['卡牌', '策略'],
   icon: 'poker-hand',
   estimatedMinutes: 30,
-  rules: '每人发 2 张底牌，配合 5 张公共牌组成最佳 5 张牌型。经过四轮下注（翻牌前、翻牌、转牌、河牌），最佳牌型或逼退所有对手者赢取底池。',
+  rules:
+    '每人发 2 张底牌，配合 5 张公共牌组成最佳 5 张牌型。经过四轮下注（翻牌前、翻牌、转牌、河牌），最佳牌型或逼退所有对手者赢取底池。',
   agentRules: `Texas Hold'em poker. Each player gets 2 hole cards. 5 community cards dealt across 4 betting rounds: preflop(0), flop(3), turn(4), river(5).
 
 Card format: "<rank><suit>" e.g. "As"=Ace of spades, "Td"=10 of diamonds. Ranks: 2-9, T, J, Q, K, A. Suits: s, h, d, c.

@@ -1,192 +1,103 @@
 # TableCraft
 
-**Craft, Play, Compete.**
+**Craft, Play, Compete.** A board game platform where AI agents and humans play together.
 
-A board game platform where AI agents and humans play together. Craft new games with ease, let agents play them via CLI.
+Create a room, share the code, and play -- in the browser or from the terminal. Games are drop-in plugins: add one with four files, and both humans and bots can play it instantly.
 
-## Architecture
+<p align="center">
+  <img src="screenshots/lobby-desktop.png" width="720" alt="Desktop lobby" />
+</p>
 
-```
-  Browser (humans)                CLI / REST API (agents)
-  ┌───────────────┐               ┌────────────────────┐
-  │  React SPA    │               │  tablecraft CLI     │
-  │  (Vite/TS)    │               │  or any HTTP client │
-  └──────┬────────┘               └─────────┬──────────┘
-         │ Socket.IO                        │ HTTP
-         │                                  │
-┌────────▼──────────────────────────────────▼─────────────────────┐
-│  Express + Socket.IO Server (Node / TypeScript)                  │
-│  ┌───────────────────────────────────────────────────────────┐   │
-│  │  RoomManager — in-memory room registry (Map)              │   │
-│  │  GameRoom — per-room lifecycle: waiting → playing → done  │   │
-│  │  TimerManager — per-room named timers (setTimeout)        │   │
-│  │  RandomProvider — seeded PRNG for deterministic games     │   │
-│  └───────────────────────────────────────────────────────────┘   │
-│  ┌───────────────────────────────────────────────────────────┐   │
-│  │  REST API (/api/*) — rooms, games, actions for agents     │   │
-│  └───────────────────────────────────────────────────────────┘   │
-│  ┌───────────────────────────────────────────────────────────┐   │
-│  │  SQLite (better-sqlite3 + Drizzle ORM)                    │   │
-│  │  Tables: users, rooms, room_players, action_log           │   │
-│  └───────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-         │
-┌────────▼────────────────────────────────────────────────────────┐
-│  Game Plugins (games/)                                           │
-│  Each game: shared.ts, logic.ts, Board.tsx, logic.test.ts        │
-│  10 games registered                                             │
-└──────────────────────────────────────────────────────────────────┘
-```
+<details>
+<summary>Mobile view</summary>
+<p align="center">
+  <img src="screenshots/lobby-mobile.png" width="360" alt="Mobile lobby" />
+</p>
+</details>
 
-Both access paths share the same `RoomManager` and `GameRoom` instances. Bots and humans play in the same rooms.
+## Features
 
-## Games
+- **10 games** -- Gomoku, Love Letter, Connect Four, Liar Bar, Yahtzee, Hive, Battleship, Blackjack, UNO, Texas Hold'em
+- **Human + AI in the same room** -- bots join via REST API or CLI, no special treatment
+- **Plugin architecture** -- add a new game with `shared.ts`, `logic.ts`, `Board.tsx`, and a test file
+- **Mobile-friendly** -- responsive UI, works on phones and tablets
+- **i18n** -- English and Chinese out of the box
+- **Room codes** -- create a room, share a 6-char code, start playing
 
-| Game | ID | Players | Description |
-|------|----|---------|-------------|
-| Gomoku | `gomoku` | 2 | Five-in-a-Row on a 15x15 board |
-| Love Letter | `love-letter` | 2-4 | Deduction card game |
-| Connect Four | `connect-four` | 2 | Classic drop-four-in-a-row |
-| Liar Bar | `liar-bar` | 2-6 | Bluffing card game |
-| Yahtzee | `yahtzee` | 1-4 | Dice combination game |
-| Hive | `hive` | 2 | Insect-themed strategy |
-| Battleship | `battleship` | 2 | Grid-based naval combat |
-| Blackjack | `blackjack` | 1-6 | Classic card game |
-| UNO | `uno` | 2-6 | Fast card shedding |
-| Texas Hold'em | `texas-holdem` | 2-6 | Poker with community cards |
-
-## Monorepo Structure
-
-```
-packages/
-  shared/      @repo/shared    — types, testing harness
-  server/      @repo/server    — Express + Socket.IO + REST API
-  client/      @repo/client    — React SPA (Vite + Tailwind + shadcn/ui)
-  game-ui/     @repo/game-ui   — shared game components
-  cli/         @repo/cli       — CLI tool for agent access
-
-games/
-  _template/   — starter for new games
-  gomoku/      — reference implementation (with agentRules)
-  ... (10 games total)
-```
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Language | TypeScript (strict) |
-| Frontend | React 18, Vite, Tailwind CSS v4, shadcn/ui, Framer Motion |
-| UI Components | shadcn/ui (Button, Input, Card, Badge, Dialog) |
-| Game Components | @repo/game-ui (IntersectionBoard, PlayerBadge, GameOverModal) |
-| Backend | Express, Socket.IO 4 |
-| Database | SQLite via better-sqlite3 + Drizzle ORM |
-| CLI | Node.js built-in fetch, zero dependencies |
-| Validation | Zod |
-| Linting | Biome |
-| Tests | Vitest (unit), Playwright (E2E) |
-| Monorepo | pnpm workspaces |
-
-## Getting Started
+## Quick Start
 
 ```bash
-# Install
 pnpm install
-pnpm exec playwright install chromium   # First time only
-
-# Develop
-pnpm dev          # Server :3001 + Client :5173
-
-# Verify
-pnpm typecheck    # TSC, zero errors
-pnpm lint         # Biome, zero errors
-pnpm test         # Vitest unit tests
-pnpm test:e2e     # Playwright E2E (auto-starts dev server)
+pnpm dev        # Server :3001 + Client :5173
 ```
 
-For the full developer guide, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+Open http://localhost:5173, create a room, and play.
 
-## Agent Access
-
-AI agents interact with TableCraft through the CLI tool or the REST API directly.
-
-### 1. Generate a bot token
+### Verify everything works
 
 ```bash
+pnpm typecheck  # Type checking
+pnpm lint       # Linting (Biome)
+pnpm test       # Unit tests (Vitest)
+pnpm test:e2e   # E2E tests (Playwright)
+```
+
+> Requires Node.js >= 20 and pnpm >= 9.
+
+## AI Agent Access
+
+Bots interact via CLI or REST API:
+
+```bash
+# Generate a bot token
 curl -s -X POST http://localhost:3001/api/admin/token \
   -H 'Content-Type: application/json' \
   -d '{"name":"MyBot"}'
-```
 
-### 2. Login
-
-```bash
+# Play via CLI
 tablecraft login --server http://localhost:3001 --token <token>
-```
-
-### 3. Discover games and rules
-
-```bash
-tablecraft games list
-tablecraft games rules gomoku
-```
-
-### 4. Play
-
-```bash
 tablecraft rooms create gomoku
 tablecraft game action <roomId> '{"type":"place","row":7,"col":7}'
 ```
 
-### 5. REST API
+Each game includes machine-readable `agentRules` so bots know the exact action format and view schema.
 
-All endpoints are available at `/api/*` for any HTTP client.
+## Games
 
-## How It Works
+| Game | Players | Tags |
+|------|---------|------|
+| Gomoku | 2 | Strategy |
+| Love Letter | 2-4 | Deduction, Cards |
+| Connect Four | 2 | Strategy |
+| Liar Bar | 2-6 | Bluffing, Party |
+| Yahtzee | 1-4 | Dice |
+| Hive | 2 | Strategy |
+| Battleship | 2 | Strategy |
+| Blackjack | 1-6 | Cards |
+| UNO | 2-6 | Cards, Party |
+| Texas Hold'em | 2-6 | Cards, Strategy |
 
-### Room lifecycle
+## Adding a New Game
 
-1. Player A creates a room by selecting a game -- receives a 6-char code
-2. Player B enters the code -- joins the room
-3. Both click Ready -- host clicks Start
-4. Server calls `logic.setup()`, broadcasts `game:state` to all players
-5. Each action goes through Zod validation -- `logic.onAction()` -- broadcast updated views
-6. `logic.onAction()` returns `{ ok: false }` -- only the sender gets a `game:reject` event
-7. Engine events (`END_GAME`, `SET_TIMER`, ...) drive side effects on the server
+A game plugin is four files in `games/<your-game>/`:
 
-### Game plugins
+| File | What it does |
+|------|-------------|
+| `shared.ts` | Game metadata, action schema (Zod), types |
+| `logic.ts` | Server-side game rules |
+| `Board.tsx` | React UI for the game board |
+| `logic.test.ts` | Unit tests |
 
-A game plugin is four files:
+Copy `games/_template/` to get started, or look at `games/gomoku/` as a reference. See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the full guide.
 
-| File | Responsibility | Runs |
-|------|---------------|-------|
-| `shared.ts` | `meta`, `actionSchema`, public types | Both |
-| `logic.ts` | Full game rules (`GameLogic` interface) | Server |
-| `Board.tsx` | React game UI (`BoardProps`) | Client |
-| `logic.test.ts` | Unit tests via `GameTestHarness` | Tests |
+## Tech Stack
 
-The client and server each have a registry (`client-registry.ts`, `server-registry.ts`). Adding a game requires registering it in both.
+TypeScript, React, Vite, Tailwind CSS, Express, Socket.IO, SQLite, pnpm workspaces.
 
-### State visibility
+## Contributing
 
-The server calls `getPlayerView(state, playerId)` for each player -- private information (hand cards, hidden roles, etc.) is filtered per player before broadcasting. Clients never see the raw server state.
-
-## Design Tokens
-
-All colors are managed via CSS variables in `packages/client/src/index.css` using Tailwind v4:
-
-| Token | Class | Usage |
-|-------|-------|-------|
-| `--background` | `bg-background` | Page background |
-| `--card` | `bg-card` | Cards/panels |
-| `--primary` | `bg-primary` | Primary buttons |
-| `--muted-foreground` | `text-muted-foreground` | Secondary text |
-| `--destructive` | `text-destructive` | Errors/danger |
-| `--success` | `bg-success` | Success/online |
-| `--warning` | `text-warning` | Warnings/highlights |
-| `--board` | `bg-board` | Board surface |
-| `--board-line` | `var(--board-line)` | Board grid lines |
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 
-MIT
+[MIT](LICENSE)

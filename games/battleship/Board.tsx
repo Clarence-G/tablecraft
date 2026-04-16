@@ -444,8 +444,18 @@ export function Board({
 
           {/* Sunk indicators */}
           <div className="flex gap-4 text-xs">
-            <SunkIndicator sunkList={state.opponentShipsSunk} label={t('sunk')} destroyedLabel={t('destroyed')} aliveLabel={t('alive')} />
-            <SunkIndicator sunkList={state.myShipsSunk} label={t('ourLosses')} destroyedLabel={t('destroyed')} aliveLabel={t('alive')} />
+            <SunkIndicator
+              sunkList={state.opponentShipsSunk}
+              label={t('sunk')}
+              destroyedLabel={t('destroyed')}
+              aliveLabel={t('alive')}
+            />
+            <SunkIndicator
+              sunkList={state.myShipsSunk}
+              label={t('ourLosses')}
+              destroyedLabel={t('destroyed')}
+              aliveLabel={t('alive')}
+            />
           </div>
 
           {/* Grids */}

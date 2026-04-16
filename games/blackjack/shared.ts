@@ -10,7 +10,8 @@ export const meta: GameMeta = {
   tags: ['卡牌', '休闲'],
   icon: 'card-ace-spades',
   estimatedMinutes: 15,
-  rules: '所有玩家对抗庄家。先下注，然后通过要牌使手牌点数尽量接近 21 点但不超过。A 可算 1 或 11，J/Q/K 算 10。超过 21 点即爆牌出局。',
+  rules:
+    '所有玩家对抗庄家。先下注，然后通过要牌使手牌点数尽量接近 21 点但不超过。A 可算 1 或 11，J/Q/K 算 10。超过 21 点即爆牌出局。',
   agentRules: `Players vs dealer. Multi-round: bet → play → dealer reveals → payout.
 Cards: A=1 or 11 (best for hand), 2-9=face value, T/J/Q/K=10. Card format: "<rank><suit>" e.g. "As"=Ace of spades, "Th"=10 of hearts. Suits: s=spade, h=heart, d=diamond, c=club.
 
