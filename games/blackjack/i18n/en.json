@@ -2,6 +2,7 @@
   "name": "Blackjack",
   "description": "Beat the dealer, get as close to 21 as possible",
   "tags": ["Cards", "Casual"],
+  "rules": "All players compete against the dealer. Place bets, then draw cards to get as close to 21 as possible without going over. Ace counts as 1 or 11, face cards count as 10. Exceeding 21 means bust.",
   "points": "pts",
   "me": "(Me)",
   "bet": "Bet",

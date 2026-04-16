@@ -8,8 +8,34 @@ export const meta: GameMeta = {
   minPlayers: 2,
   maxPlayers: 4,
   tags: ['骰子', '休闲'],
-  icon: 'Dice5',
+  icon: 'dice-six-faces-five',
   estimatedMinutes: 30,
+  rules: '每回合掷 5 颗骰子，最多掷 3 次（可锁定部分骰子），然后选择一个计分类别填入得分。共 13 轮，总分最高者获胜。',
+  agentRules: `5 dice, 13 rounds per player. Each turn: up to 3 rolls, hold/release dice between rolls, then score in one category.
+
+Actions:
+  { "type": "roll" }                        — roll all unheld dice (must have rollsLeft > 0)
+  { "type": "hold", "diceIndex": <int 0-4> } — toggle hold on a die (only after first roll, before scoring)
+  { "type": "score", "category": <int 0-12> } — score current dice in a category (must have rolled at least once)
+
+Categories: 0=Ones, 1=Twos, 2=Threes, 3=Fours, 4=Fives, 5=Sixes (upper section, sum of matching dice),
+  6=Three of a Kind (sum all if 3+ match), 7=Four of a Kind (sum all if 4+ match),
+  8=Full House (25 pts, 3+2), 9=Small Straight (30 pts, 4 consecutive),
+  10=Large Straight (40 pts, 5 consecutive), 11=Yahtzee (50 pts, all 5 same),
+  12=Chance (sum all dice). Upper section bonus: +35 if upper sum >= 63.
+
+PlayerView fields:
+  dice: number[] — 5 values (1-6), [0,0,0,0,0] before first roll
+  heldDice: boolean[] — 5 booleans
+  rollsLeft: number — 0-3
+  roundNumber: number — current round (1-13)
+  currentPlayer: string
+  phase: "rolling"|"scoring"|"finished"
+  players: { id, scores: number[], yahtzeeBonus: number, totalScore: number }[]
+    scores: 13-element array, -1=unfilled, >=0=scored value
+  winner: string|null
+
+Invalid: scoring an already-filled category, rolling with 0 rolls left, scoring before rolling.`,
 };
 
 export const NUM_DICE = 5;

@@ -2,6 +2,7 @@
   "name": "Liar's Bar",
   "description": "Use deception and luck to be the last one standing",
   "tags": ["Deduction", "Party"],
+  "rules": "Each round declares a suit (Q/K/A). Players take turns playing 1-3 cards face-down, claiming they match. Next player believes or challenges. Losers pull a revolver trigger. Last one standing wins.",
   "caughtLying": "Caught lying!",
   "honestInnocent": "Honest!",
   "triggerPull": "Pull trigger (chamber {{n}})",

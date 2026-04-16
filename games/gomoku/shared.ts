@@ -8,7 +8,7 @@ export const meta: GameMeta = {
   minPlayers: 2,
   maxPlayers: 2,
   tags: ['策略', '棋类'],
-  icon: 'Target',
+  icon: 'crosshair',
   estimatedMinutes: 10,
   rules: '两人轮流在 15x15 棋盘上落子（黑先白后），先将五颗棋子连成一条线（横、竖、斜均可）的玩家获胜。落子后不可移动或移除。',
   agentRules: `15x15 board, coordinates row=0-14 col=0-14, black plays first.

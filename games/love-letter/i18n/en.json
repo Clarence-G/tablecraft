@@ -2,6 +2,7 @@
   "name": "Love Letter",
   "description": "A micro card game of deduction and deception",
   "tags": ["Deduction", "Cards"],
+  "rules": "Draw one card each turn, then play one of your two cards to trigger its effect. Eliminate others through deduction, or hold the highest card when the deck runs out.",
   "peekHand": "Peek at hand",
   "handIs": "'s hand is",
   "baronCompare": "Baron compare",

@@ -2,6 +2,7 @@
   "name": "UNO",
   "description": "Shed your cards fast, first to empty wins",
   "tags": ["Cards", "Party"],
+  "rules": "Play a card matching the top discard's color or number, or use a wild card. Draw if you can't play. First to empty their hand wins.",
   "won": "You Win!",
   "yourTurn": "Your Turn",
   "waiting": "Waiting",

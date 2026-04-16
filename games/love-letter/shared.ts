@@ -8,8 +8,36 @@ export const meta: GameMeta = {
   minPlayers: 2,
   maxPlayers: 4,
   tags: ['推理', '卡牌'],
-  icon: 'Heart',
+  icon: 'love-letter',
   estimatedMinutes: 15,
+  rules: '每回合摸一张牌，然后打出手中两张牌之一并发动效果。通过推理淘汰其他玩家，或在牌堆耗尽时持有最大牌的玩家获胜。',
+  agentRules: `Micro card game. 16-card deck with values 1-8. Each turn: draw 1, play 1 from your 2-card hand.
+
+Cards (value: name, count, effect):
+  1: Guard (x5) — guess a player's hand (not 1); correct = eliminate them. Requires target + guess.
+  2: Priest (x2) — peek at a player's hand. Requires target.
+  3: Baron (x2) — compare hands with a player; lower value is eliminated. Requires target.
+  4: Handmaid (x2) — protected until your next turn. No target.
+  5: Prince (x2) — force a player (or yourself) to discard and redraw. Requires target.
+  6: King (x1) — trade hands with a player. Requires target.
+  7: Countess (x1) — no effect, but MUST be played if you also hold King(6) or Prince(5). No target.
+  8: Princess (x1) — if you discard this, you're eliminated. No target. (Never play voluntarily.)
+
+Action: { "type": "play_card", "card": <int 1-8>, "target": "<playerID>", "guess": <int 2-8> }
+  - card: the card value you play (must be in your hand)
+  - target: required for cards 1,2,3,5,6 (must be an alive, unprotected player; for 5 you can target yourself)
+  - guess: required only for card 1 (Guard), must be 2-8
+
+PlayerView fields:
+  hand: number[] — your cards (1-2 values)
+  players: { id, alive, protected, playedCards: number[], cardCount }[]
+  currentPlayer: string
+  deckSize: number
+  playLog: { playerId, card, target?, guess?, effect }[]
+  removedCards: number[] — cards removed from game at start
+  winner: string|null
+
+Win condition: last player alive, or highest card when deck runs out.`,
 };
 
 // ---- Card Constants ----

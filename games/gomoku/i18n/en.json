@@ -2,6 +2,7 @@
   "name": "Gomoku",
   "description": "Classic Five-in-a-Row, first to connect 5 wins",
   "tags": ["Strategy", "Board"],
+  "rules": "Two players alternate placing stones on a 15x15 board (Black first). First to connect five in a row (horizontal, vertical, or diagonal) wins. Stones cannot be moved or removed.",
   "won": "You Win!",
   "yourTurn": "Your Turn",
   "waiting": "Waiting",

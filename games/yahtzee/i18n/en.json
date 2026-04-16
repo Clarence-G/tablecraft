@@ -2,6 +2,7 @@
   "name": "Yahtzee",
   "description": "Roll dice for 13 rounds, fill your scorecard, highest total wins",
   "tags": ["Dice", "Casual"],
+  "rules": "Roll 5 dice each turn, up to 3 rolls per turn (you may hold dice between rolls), then choose a scoring category. 13 rounds total, highest score wins.",
   "notRolled": "Not Rolled",
   "dice": "Dice",
   "locked": "(Locked)",

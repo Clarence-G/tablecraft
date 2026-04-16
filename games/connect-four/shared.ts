@@ -8,8 +8,22 @@ export const meta: GameMeta = {
   minPlayers: 2,
   maxPlayers: 2,
   tags: ['策略', '棋类'],
-  icon: 'Circle',
+  icon: 'stack',
   estimatedMinutes: 10,
+  rules: '两人轮流在 6x7 的竖直棋盘上投放棋子，棋子受重力下落至最低空位，先将四颗棋子连成一条线（横、竖、斜均可）的玩家获胜。',
+  agentRules: `6-row x 7-column vertical board. Pieces drop to the lowest empty cell in the chosen column. Player 1 goes first.
+
+Action: { "type": "drop", "col": <int 0-6> }
+
+PlayerView fields:
+  board: number[] — 42 cells (row-major, row 0 = top), 0=empty, 1=player1, 2=player2. Index = row*7+col.
+  currentPlayer: string — playerID whose turn it is
+  myPlayerIndex: 0|1 — your player index (0=first player, 1=second player)
+  winner: string|null — playerID of winner, null if ongoing
+  isDraw: boolean — true if board is full with no winner
+
+Win condition: four consecutive pieces in a line (horizontal, vertical, diagonal).
+Invalid moves: dropping into a full column (all 6 cells occupied), acting when not your turn.`,
 };
 
 export const ROWS = 6;

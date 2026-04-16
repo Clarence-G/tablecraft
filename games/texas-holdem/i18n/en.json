@@ -2,6 +2,7 @@
   "name": "Texas Hold'em",
   "description": "Classic Texas Hold'em - use your hole cards and community cards to win chips",
   "tags": ["Cards", "Strategy"],
+  "rules": "Each player gets 2 hole cards combined with 5 community cards to make the best 5-card hand. Four betting rounds (preflop, flop, turn, river). Best hand or last player standing wins the pot.",
   "fold": "Fold",
   "allIn": "All In",
   "eliminated": "Eliminated",

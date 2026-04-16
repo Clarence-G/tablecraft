@@ -8,8 +8,34 @@ export const meta: GameMeta = {
   minPlayers: 2,
   maxPlayers: 6,
   tags: ['卡牌', '派对'],
-  icon: 'Layers',
+  icon: 'card-exchange',
   estimatedMinutes: 20,
+  rules: '出牌必须与弃牌堆顶的颜色或数字匹配，或使用万能牌。无法出牌时必须摸牌。出完所有手牌的玩家获胜。',
+  agentRules: `Card shedding game. Match top discard by color or value, or play a wild card. First to empty hand wins.
+
+Card format: "<color>_<value>" e.g. "red_5", "blue_skip", "wild", "wild_draw_four".
+Colors: red, blue, green, yellow. Special values: skip, reverse, draw_two. Wild cards: wild, wild_draw_four.
+
+Actions:
+  { "type": "play_card", "cardIndex": <int>, "chosenColor": "red"|"blue"|"green"|"yellow" }
+    — cardIndex: 0-based index into myHand. chosenColor: required only for wild/wild_draw_four cards.
+  { "type": "draw_card" }  — draw one card from pile (when you can't or don't want to play)
+  { "type": "pass" }       — pass turn (only after drawing a card this turn, if drawn card can't be played)
+
+PlayerView fields:
+  myHand: string[] — your cards (serialized format)
+  topCard: string — top of discard pile
+  activeColor: "red"|"blue"|"green"|"yellow" — current active color
+  drawPileCount: number — cards remaining in draw pile
+  players: { id, cardCount }[]
+  currentPlayer: string
+  direction: 1|-1 — play direction (1=clockwise, -1=counter-clockwise)
+  phase: "playing"|"finished"
+  hasDrawnThisTurn: boolean — true if you already drew this turn
+  winner: string|null
+
+Play rules: card must match activeColor or top card's value. Wild can always be played. Skip/Reverse/Draw Two have special effects.
+Invalid: playing a card that doesn't match, passing without drawing first.`,
 };
 
 // ---- Card Types ----

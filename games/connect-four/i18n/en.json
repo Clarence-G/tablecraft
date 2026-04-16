@@ -2,6 +2,7 @@
   "name": "Connect Four",
   "description": "6x7 board, first to connect 4 wins",
   "tags": ["Strategy", "Board"],
+  "rules": "Two players take turns dropping pieces into a 6x7 vertical board. Pieces fall to the lowest empty cell. First to connect four in a row (horizontally, vertically, or diagonally) wins.",
   "won": "You Win!",
   "draw": "Draw!",
   "yourTurn": "Your Turn",

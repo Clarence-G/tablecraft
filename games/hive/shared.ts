@@ -8,8 +8,35 @@ export const meta: GameMeta = {
   minPlayers: 2,
   maxPlayers: 2,
   tags: ['策略', '棋类'],
-  icon: 'Bug',
+  icon: 'bee',
   estimatedMinutes: 30,
+  rules: '两人轮流在六角棋盘上放置或移动昆虫棋子，用棋子完全包围对手的蜂后即获胜。蜂后必须在第 4 回合前放置。',
+  agentRules: `Hex grid using axial coordinates {q, r}. White plays first. Each player has: 1 Queen, 2 Spiders, 2 Beetles, 3 Grasshoppers, 3 Ants.
+
+Key rule: Queen must be placed by turn 4. Pieces must stay connected (one hive). Use validActions from PlayerView to determine legal moves.
+
+Actions:
+  { "type": "place", "pieceType": "queen"|"spider"|"beetle"|"grasshopper"|"ant", "coord": { "q": <int>, "r": <int> } }
+  { "type": "move", "from": { "q": <int>, "r": <int> }, "to": { "q": <int>, "r": <int> } }
+  { "type": "pass" }  — only when no legal place or move exists
+
+Piece movement:
+  Queen: 1 step. Spider: exactly 3 steps along hive edge. Beetle: 1 step, can climb on top of other pieces.
+  Grasshopper: jump in straight line over adjacent pieces. Ant: any number of steps along hive edge.
+
+PlayerView fields:
+  tiles: { coord: {q,r}, color: "white"|"black", type: string, stackLevel: number }[]
+  myColor: "white"|"black"
+  currentPlayer: string
+  phase: "playing"|"finished"
+  turnNumber: number
+  validActions: { placements: [{pieceType, targets: {q,r}[]}], moves: [{from: {q,r}, targets: {q,r}[]}] } | null
+  whiteInventory: { queen, spider, beetle, grasshopper, ant } — remaining piece counts
+  blackInventory: same
+  winner: string|null
+  isDraw: boolean
+
+Win condition: opponent's Queen is completely surrounded (all 6 adjacent hexes occupied).`,
 };
 
 // ============ Types ============

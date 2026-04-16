@@ -8,8 +8,37 @@ export const meta: GameMeta = {
   minPlayers: 2,
   maxPlayers: 2,
   tags: ['策略', '休闲'],
-  icon: 'Crosshair',
+  icon: 'battleship',
   estimatedMinutes: 25,
+  rules: '两人各自在 10x10 海域秘密部署 5 艘舰船，然后轮流射击对方海域，先击沉对手所有舰船的玩家获胜。',
+  agentRules: `10x10 grid (row=0-9, col=0-9). Two phases: placement then firing.
+
+Ships (5 total): Carrier(5), Battleship(4), Cruiser(3), Submarine(3), Destroyer(2).
+Ships must not overlap or go out of bounds. Rotation 0-3 = 0/90/180/270 degrees.
+
+Actions:
+  Placement phase:
+    { "type": "place_ships", "placements": [ { "shipIndex": <0-4>, "row": <0-9>, "col": <0-9>, "rotation": <0-3> }, ... ] }
+    Must place all 5 ships at once. shipIndex: 0=Carrier, 1=Battleship, 2=Cruiser, 3=Submarine, 4=Destroyer.
+
+  Firing phase:
+    { "type": "fire", "row": <int 0-9>, "col": <int 0-9> }
+
+PlayerView fields:
+  phase: "placement"|"playing"|"finished"
+  currentPlayer: string
+  myGrid: number[] — 100 cells, 0=water, 1-5=ship index
+  myShots: number[] — your shots on opponent grid, 0=unknown, 1=miss, 2=hit
+  opponentShots: number[] — opponent's shots on your grid
+  myShipsSunk: boolean[] — 5 booleans, your ship sunk status
+  opponentShipsSunk: boolean[] — 5 booleans, opponent ship sunk status
+  myPlaced: boolean — whether you placed ships
+  opponentPlaced: boolean — whether opponent placed ships
+  winner: string|null
+
+Grid indexing: index = row * 10 + col.
+Win condition: sink all 5 opponent ships.
+Invalid moves: firing a cell already fired at, firing when not your turn.`,
 };
 
 export const GRID_SIZE = 10;

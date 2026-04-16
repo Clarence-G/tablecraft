@@ -2,6 +2,7 @@
   "name": "Hive",
   "description": "Insect chess, surround your opponent's Queen Bee",
   "tags": ["Strategy", "Board"],
+  "rules": "Two players take turns placing or moving insect pieces on a hex board. Completely surround the opponent's Queen Bee to win. Queen must be placed by turn 4.",
   "draw": "Draw!",
   "won": "You Win!",
   "yourTurn": "Your Turn",

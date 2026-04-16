@@ -2,6 +2,7 @@
   "name": "Battleship",
   "description": "Deploy your fleet on a 10x10 grid, find and sink all enemy ships",
   "tags": ["Strategy", "Casual"],
+  "rules": "Two players secretly place 5 ships on a 10x10 grid, then take turns firing at the opponent's grid. First to sink all enemy ships wins.",
   "deployFleet": "Deploy Your Fleet",
   "direction": "Direction:",
   "rotate": "Rotate",

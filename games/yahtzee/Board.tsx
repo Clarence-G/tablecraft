@@ -17,42 +17,21 @@ import {
 
 // ---- Dice Face SVG ----
 
-const DOT_POSITIONS: Record<number, [number, number][]> = {
-  1: [[50, 50]],
-  2: [
-    [25, 25],
-    [75, 75],
-  ],
-  3: [
-    [25, 25],
-    [50, 50],
-    [75, 75],
-  ],
-  4: [
-    [25, 25],
-    [75, 25],
-    [25, 75],
-    [75, 75],
-  ],
-  5: [
-    [25, 25],
-    [75, 25],
-    [50, 50],
-    [25, 75],
-    [75, 75],
-  ],
-  6: [
-    [25, 25],
-    [75, 25],
-    [25, 50],
-    [75, 50],
-    [25, 75],
-    [75, 75],
-  ],
+const DICE_ICON_PATHS: Record<number, string> = {
+  1: '/game-icons/yahtzee/dice-six-faces-one.svg',
+  2: '/game-icons/yahtzee/dice-six-faces-two.svg',
+  3: '/game-icons/yahtzee/dice-six-faces-three.svg',
+  4: '/game-icons/yahtzee/dice-six-faces-four.svg',
+  5: '/game-icons/yahtzee/dice-six-faces-five.svg',
+  6: '/game-icons/yahtzee/dice-six-faces-six.svg',
 };
 
-function DieFace({ value, held, onClick, t }: { value: number; held: boolean; onClick?: () => void; t: (key: string) => string }) {
-  const dots = value >= 1 && value <= 6 ? DOT_POSITIONS[value] : [];
+function DieFace({
+  value,
+  held,
+  onClick,
+  t,
+}: { value: number; held: boolean; onClick?: () => void; t: (key: string) => string }) {
   const isUnrolled = value === 0;
 
   return (
@@ -73,17 +52,8 @@ function DieFace({ value, held, onClick, t }: { value: number; held: boolean; on
       {isUnrolled ? (
         <span className="text-muted-foreground text-xs">?</span>
       ) : (
-        <svg viewBox="0 0 100 100" className="w-10 h-10" aria-hidden="true">
-          {dots.map(([cx, cy], i) => (
-            <circle // biome-ignore lint/suspicious/noArrayIndexKey: dot positions are stable per die face value
-              key={i}
-              cx={cx}
-              cy={cy}
-              r={9}
-              fill="currentColor"
-              className="text-foreground"
-            />
-          ))}
+        <svg viewBox="0 0 512 512" className="w-10 h-10" aria-hidden="true">
+          <image href={DICE_ICON_PATHS[value]} width={512} height={512} />
         </svg>
       )}
     </button>
@@ -143,7 +113,15 @@ function ScoreRow({
 
 // ---- Opponent Scorecard (compact) ----
 
-function OpponentCard({ player, name, t }: { player: PlayerScore; name: string; t: (key: string, opts?: Record<string, unknown>) => string }) {
+function OpponentCard({
+  player,
+  name,
+  t,
+}: {
+  player: PlayerScore;
+  name: string;
+  t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
   const upperSum = getUpperSectionSum(player.scores);
   const hasBonus = upperSum >= UPPER_BONUS_THRESHOLD;
   const filled = player.scores.filter((s) => s >= 0).length;
@@ -152,10 +130,13 @@ function OpponentCard({ player, name, t }: { player: PlayerScore; name: string; 
     <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-3">
       <div className="text-xs font-semibold text-foreground mb-1 truncate">{name}</div>
       <div className="text-xs text-muted-foreground">
-        {t('filledCount', { n: filled })} · {t('upperSection')}{upperSum}
+        {t('filledCount', { n: filled })} · {t('upperSection')}
+        {upperSum}
         {hasBonus && <span className="text-[#16a34a] ml-1">+{UPPER_BONUS_VALUE}</span>}
       </div>
-      <div className="text-sm font-bold text-foreground mt-1">{player.totalScore} {t('points')}</div>
+      <div className="text-sm font-bold text-foreground mt-1">
+        {player.totalScore} {t('points')}
+      </div>
     </div>
   );
 }
@@ -223,7 +204,10 @@ export function Board({
           ? `${t('gameOver')} ${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`
           : isMyTurn
             ? t('yourTurnRound', { round: state.roundNumber, rolls: state.rollsLeft })
-            : t('waitingPlayer', { name: playerNames[state.currentPlayer] ?? state.currentPlayer, round: state.roundNumber })}
+            : t('waitingPlayer', {
+                name: playerNames[state.currentPlayer] ?? state.currentPlayer,
+                round: state.roundNumber,
+              })}
       </div>
 
       {/* Opponents (compact) */}
@@ -252,9 +236,7 @@ export function Board({
             ))}
           </div>
           {canHold && (
-            <div className="text-center text-xs text-muted-foreground mb-3">
-              {t('lockHint')}
-            </div>
+            <div className="text-center text-xs text-muted-foreground mb-3">{t('lockHint')}</div>
           )}
           <button
             type="button"
@@ -294,9 +276,7 @@ export function Board({
           <div className="mb-2 text-xs text-muted-foreground">
             {t('upperSectionSum')} {upperSum}/{UPPER_BONUS_THRESHOLD}
             {hasUpperBonus ? (
-              <span className="text-[#16a34a] font-semibold ml-1">
-                {t('bonusEarned')}
-              </span>
+              <span className="text-[#16a34a] font-semibold ml-1">{t('bonusEarned')}</span>
             ) : (
               <span className="ml-1">
                 {t('bonusHint', { threshold: UPPER_BONUS_THRESHOLD, bonus: UPPER_BONUS_VALUE })}
@@ -313,7 +293,9 @@ export function Board({
           {(showFullScorecard || isMyTurn) && (
             <>
               {/* Upper section */}
-              <div className="text-xs text-muted-foreground font-semibold mb-1 px-1">{t('upperSection')}</div>
+              <div className="text-xs text-muted-foreground font-semibold mb-1 px-1">
+                {t('upperSection')}
+              </div>
               <div className="space-y-1 mb-2">
                 {Array.from({ length: 6 }, (_, i) => (
                   <ScoreRow // biome-ignore lint/suspicious/noArrayIndexKey: category index is the stable identifier
@@ -330,7 +312,9 @@ export function Board({
               </div>
 
               {/* Lower section */}
-              <div className="text-xs text-muted-foreground font-semibold mb-1 px-1">{t('lowerSection')}</div>
+              <div className="text-xs text-muted-foreground font-semibold mb-1 px-1">
+                {t('lowerSection')}
+              </div>
               <div className="space-y-1">
                 {Array.from({ length: 7 }, (_, i) => {
                   const cat = i + 6;

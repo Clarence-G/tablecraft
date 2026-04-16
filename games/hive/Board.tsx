@@ -6,133 +6,14 @@ import { useTranslation } from 'react-i18next';
 import type { Action, HexCoord, HivePieceType, PlayerView, Tile } from './shared';
 import { HEX_SIZE, coordKey, hexToPixel } from './shared';
 
-// ============ Piece Icons (SVG) ============
+// ============ Piece Icons ============
 
-function QueenIcon({ color }: { color: string }) {
-  return (
-    <g fill={color} stroke={color} strokeWidth={0.5}>
-      <ellipse cx={12} cy={14} rx={4.5} ry={3.5} />
-      <circle cx={12} cy={9} r={2.2} />
-      <ellipse cx={7} cy={11} rx={3} ry={1.8} fill="none" strokeWidth={1} opacity={0.7} />
-      <ellipse cx={17} cy={11} rx={3} ry={1.8} fill="none" strokeWidth={1} opacity={0.7} />
-      <path d="M10.5 7.5 Q9 4 7.5 3.5" fill="none" strokeWidth={1} strokeLinecap="round" />
-      <path d="M13.5 7.5 Q15 4 16.5 3.5" fill="none" strokeWidth={1} strokeLinecap="round" />
-      <line
-        x1={8.5}
-        y1={13}
-        x2={15.5}
-        y2={13}
-        stroke={color === '#1a1108' ? '#555' : '#aaa'}
-        strokeWidth={0.7}
-        opacity={0.5}
-      />
-      <line
-        x1={8.5}
-        y1={15}
-        x2={15.5}
-        y2={15}
-        stroke={color === '#1a1108' ? '#555' : '#aaa'}
-        strokeWidth={0.7}
-        opacity={0.5}
-      />
-    </g>
-  );
-}
-
-function SpiderIcon({ color }: { color: string }) {
-  return (
-    <g fill={color} stroke={color} strokeWidth={1} strokeLinecap="round">
-      <circle cx={12} cy={13} r={3} />
-      <circle cx={12} cy={9} r={1.8} />
-      <path d="M9.5 11 Q6 8 4 6" fill="none" />
-      <path d="M9.2 13 Q5.5 12 3 11" fill="none" />
-      <path d="M9.5 15 Q6 17 4 19" fill="none" />
-      <path d="M10 16 Q8 19 6.5 20.5" fill="none" />
-      <path d="M14.5 11 Q18 8 20 6" fill="none" />
-      <path d="M14.8 13 Q18.5 12 21 11" fill="none" />
-      <path d="M14.5 15 Q18 17 20 19" fill="none" />
-      <path d="M14 16 Q16 19 17.5 20.5" fill="none" />
-    </g>
-  );
-}
-
-function BeetleIcon({ color }: { color: string }) {
-  return (
-    <g fill={color} stroke={color} strokeWidth={0.5}>
-      <ellipse cx={12} cy={14} rx={5} ry={4} />
-      <line
-        x1={12}
-        y1={10}
-        x2={12}
-        y2={18}
-        stroke={color === '#1a1108' ? '#555' : '#aaa'}
-        strokeWidth={0.8}
-      />
-      <circle cx={12} cy={9} r={2} />
-      <line x1={8} y1={12} x2={5} y2={10} strokeWidth={1} strokeLinecap="round" />
-      <line x1={7.5} y1={14} x2={4.5} y2={14} strokeWidth={1} strokeLinecap="round" />
-      <line x1={8} y1={16} x2={5} y2={18} strokeWidth={1} strokeLinecap="round" />
-      <line x1={16} y1={12} x2={19} y2={10} strokeWidth={1} strokeLinecap="round" />
-      <line x1={16.5} y1={14} x2={19.5} y2={14} strokeWidth={1} strokeLinecap="round" />
-      <line x1={16} y1={16} x2={19} y2={18} strokeWidth={1} strokeLinecap="round" />
-    </g>
-  );
-}
-
-function GrasshopperIcon({ color }: { color: string }) {
-  return (
-    <g fill={color} stroke={color} strokeWidth={0.5}>
-      <ellipse cx={12} cy={13} rx={5.5} ry={2.5} />
-      <circle cx={18} cy={11.5} r={2} />
-      <path d="M19.5 10 Q21 7 22 5.5" fill="none" strokeWidth={0.8} strokeLinecap="round" />
-      <path d="M18.5 9.5 Q19 6.5 20 5" fill="none" strokeWidth={0.8} strokeLinecap="round" />
-      <path
-        d="M8 14.5 L5.5 10 L3 16"
-        fill="none"
-        strokeWidth={1.2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9 15 L7 11 L4.5 17"
-        fill="none"
-        strokeWidth={1.2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <line x1={14} y1={15} x2={13} y2={18.5} strokeWidth={0.8} strokeLinecap="round" />
-      <line x1={16} y1={14.5} x2={16} y2={18} strokeWidth={0.8} strokeLinecap="round" />
-      <ellipse cx={12} cy={11.5} rx={4} ry={1.5} fill="none" strokeWidth={0.7} opacity={0.5} />
-    </g>
-  );
-}
-
-function AntIcon({ color }: { color: string }) {
-  return (
-    <g fill={color} stroke={color} strokeWidth={0.5}>
-      <ellipse cx={8} cy={15} rx={3} ry={2.5} />
-      <ellipse cx={12} cy={13.5} rx={2} ry={1.8} />
-      <circle cx={16} cy={11.5} r={2.2} />
-      <path d="M17.5 9.8 Q19 7 20.5 5.5" fill="none" strokeWidth={0.8} strokeLinecap="round" />
-      <path d="M16.5 9.5 Q17 6.5 18.5 5" fill="none" strokeWidth={0.8} strokeLinecap="round" />
-      <line x1={10.5} y1={14.5} x2={8} y2={18} strokeWidth={0.8} strokeLinecap="round" />
-      <line x1={11} y1={13} x2={8.5} y2={10} strokeWidth={0.8} strokeLinecap="round" />
-      <line x1={12.5} y1={15} x2={11.5} y2={18.5} strokeWidth={0.8} strokeLinecap="round" />
-      <line x1={13} y1={12.5} x2={12} y2={9.5} strokeWidth={0.8} strokeLinecap="round" />
-      <line x1={15} y1={13} x2={14.5} y2={17} strokeWidth={0.8} strokeLinecap="round" />
-      <line x1={15.5} y1={12} x2={15} y2={9} strokeWidth={0.8} strokeLinecap="round" />
-    </g>
-  );
-}
-
-type IconComponent = (props: { color: string }) => React.ReactNode;
-
-const PIECE_ICONS: Record<HivePieceType, IconComponent> = {
-  queen: QueenIcon,
-  spider: SpiderIcon,
-  beetle: BeetleIcon,
-  grasshopper: GrasshopperIcon,
-  ant: AntIcon,
+const PIECE_ICON_PATHS: Record<HivePieceType, string> = {
+  queen: '/game-icons/hive/bee.svg',
+  spider: '/game-icons/hive/spider.svg',
+  beetle: '/game-icons/hive/beetle.svg',
+  grasshopper: '/game-icons/hive/grasshopper.svg',
+  ant: '/game-icons/hive/ant.svg',
 };
 
 const PIECE_NAME_KEYS: Record<HivePieceType, string> = {
@@ -174,8 +55,7 @@ function HexTile({ x, y, size, tile, selected, isMoveable, onClick }: HexTilePro
   const defaultStroke = isWhite ? '#3d2e1e' : '#c4b8a8';
   const stroke = selected ? '#d97706' : defaultStroke;
   const strokeWidth = selected ? 3 : 1.5;
-  const iconColor = isWhite ? '#1a1108' : '#fef3e0';
-  const IconComponent = PIECE_ICONS[tile.type];
+  const isLightIcon = !isWhite;
   const iconScale = (size * 0.7) / 24;
 
   return (
@@ -192,12 +72,17 @@ function HexTile({ x, y, size, tile, selected, isMoveable, onClick }: HexTilePro
         strokeWidth={strokeWidth}
       />
       {/* Icon */}
-      <g
-        transform={`translate(${x - 12 * iconScale}, ${y - 12 * iconScale}) scale(${iconScale})`}
-        style={{ pointerEvents: 'none' }}
-      >
-        <IconComponent color={iconColor} />
-      </g>
+      <image
+        href={PIECE_ICON_PATHS[tile.type]}
+        x={x - 12 * iconScale}
+        y={y - 12 * iconScale}
+        width={24 * iconScale}
+        height={24 * iconScale}
+        style={{
+          pointerEvents: 'none',
+          filter: isLightIcon ? 'invert(1)' : 'none',
+        }}
+      />
       {/* Stack badge */}
       {tile.stackLevel > 0 && (
         <>
@@ -525,10 +410,19 @@ export function Board({
                           : 'bg-muted border-border opacity-40 cursor-not-allowed'
                     }`}
                 >
-                  <svg viewBox="0 0 24 24" width={24} height={24} aria-hidden="true">
-                    {PIECE_ICONS[pt]({ color: state.myColor === 'white' ? '#1a1108' : '#fef3e0' })}
+                  <svg viewBox="0 0 512 512" width={24} height={24} aria-hidden="true">
+                    <image
+                      href={PIECE_ICON_PATHS[pt]}
+                      width={512}
+                      height={512}
+                      style={{
+                        filter: state.myColor === 'white' ? 'none' : 'invert(1)',
+                      }}
+                    />
                   </svg>
-                  <span className="text-xs font-medium text-foreground">{t(PIECE_NAME_KEYS[pt])}</span>
+                  <span className="text-xs font-medium text-foreground">
+                    {t(PIECE_NAME_KEYS[pt])}
+                  </span>
                   <span className="text-xs text-muted-foreground">{count}</span>
                 </button>
               );
