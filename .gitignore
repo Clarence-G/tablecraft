@@ -9,3 +9,4 @@ playwright-report/
 *.db-wal
 /packages/server/data/
 .dev.pid
+.DS_Store
