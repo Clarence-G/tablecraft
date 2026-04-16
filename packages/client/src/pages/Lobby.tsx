@@ -44,7 +44,20 @@ export function Lobby({
   onRoomCreated,
   onRoomJoined,
 }: LobbyProps) {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
+  const gt = (gameId: string, key: string) => i18n.t(key, { ns: gameId });
+
+  // Build tag translation: Chinese tag -> translated tag
+  const tagTranslation = new Map<string, string>();
+  for (const g of Object.values(clientRegistry)) {
+    const zhTags: string[] = g.meta.tags ?? [];
+    const translatedTags: string[] = (i18n.t('tags', { ns: g.meta.id, returnObjects: true }) as string[]) ?? [];
+    zhTags.forEach((zh, i) => {
+      if (translatedTags[i]) tagTranslation.set(zh, translatedTags[i]);
+    });
+  }
+  const translateTag = (zhTag: string) => tagTranslation.get(zhTag) ?? zhTag;
+
   const { create, join, listRooms } = roomCtx;
   const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -215,7 +228,7 @@ export function Lobby({
                     : 'bg-card border-border text-muted-foreground hover:border-foreground'
                 }`}
               >
-                {tag}
+                {translateTag(tag)}
               </button>
             ))}
           </div>
@@ -242,11 +255,11 @@ export function Lobby({
                   <span className="text-foreground">
                     <GameIcon name={m.icon ?? 'rolling-dices'} className="size-5" />
                   </span>
-                  <span className="text-base font-bold leading-tight">{m.name}</span>
+                  <span className="text-base font-bold leading-tight">{gt(m.id, 'name')}</span>
                 </div>
                 {/* Description */}
                 <div className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                  {m.description}
+                  {gt(m.id, 'description')}
                 </div>
                 {/* Meta row */}
                 <div className="flex items-center gap-2 flex-wrap">
@@ -268,7 +281,7 @@ export function Lobby({
                       key={tag}
                       className={`text-xs font-semibold border rounded-full px-2 py-0.5 ${TAG_COLORS[tag] ?? 'bg-secondary text-muted-foreground border-border'}`}
                     >
-                      {tag}
+                      {translateTag(tag)}
                     </span>
                   ))}
                 </div>
@@ -288,7 +301,7 @@ export function Lobby({
             <div className="flex items-center gap-2">
               <h2 className="text-base font-semibold">
                 {selectedGameId
-                  ? `${clientRegistry[selectedGameId]?.meta.name} - ${t('lobby.rooms')}`
+                  ? `${gt(selectedGameId, 'name')} - ${t('lobby.rooms')}`
                   : t('lobby.allRooms')}
               </h2>
               <button
