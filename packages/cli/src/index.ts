@@ -12,20 +12,20 @@ function output(data: unknown): void {
 }
 
 function fail(message: string): never {
-  output({ ok: false, error: 'USAGE', message, hint: 'Run "tabletop" with no args to see usage' });
+  output({ ok: false, error: 'USAGE', message, hint: 'Run "tablecraft" with no args to see usage' });
   process.exit(1);
 }
 
 function requireClient(): { client: ApiClient; config: { server: string; token: string } } {
   const config = resolveConfig();
   if (!config) {
-    output({ ok: false, error: 'NOT_LOGGED_IN', message: 'Not logged in', hint: 'Run: tabletop login --server <url> --token <token>' });
+    output({ ok: false, error: 'NOT_LOGGED_IN', message: 'Not logged in', hint: 'Run: tablecraft login --server <url> --token <token>' });
     process.exit(1);
   }
   return { client: new ApiClient(config), config };
 }
 
-const USAGE = `Usage: tabletop <command> [args]
+const USAGE = `Usage: tablecraft <command> [args]
 
 Auth:
   login --server <url> --token <token>    Save credentials

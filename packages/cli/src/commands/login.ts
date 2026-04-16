@@ -11,7 +11,7 @@ export async function loginCommand(args: string[]): Promise<unknown> {
   }
 
   if (!server || !token) {
-    return { ok: false, error: 'MISSING_ARGS', message: 'Usage: tabletop login --server <url> --token <token>', hint: '' };
+    return { ok: false, error: 'MISSING_ARGS', message: 'Usage: tablecraft login --server <url> --token <token>', hint: '' };
   }
 
   server = server.replace(/\/+$/, '');

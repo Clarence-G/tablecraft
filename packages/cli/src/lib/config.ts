@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-const CONFIG_DIR = join(homedir(), '.tabletop');
+const CONFIG_DIR = join(homedir(), '.tablecraft');
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
 
 export interface Config {
@@ -26,8 +26,8 @@ export function saveConfig(config: Config): void {
 
 export function resolveConfig(): Config | null {
   // Priority: env var > config file
-  const server = process.env.TABLETOP_SERVER;
-  const token = process.env.TABLETOP_TOKEN;
+  const server = process.env.TABLECRAFT_SERVER;
+  const token = process.env.TABLECRAFT_TOKEN;
   const saved = loadConfig();
 
   const resolvedServer = server || saved?.server;

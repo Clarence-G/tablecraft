@@ -3,7 +3,7 @@ import type { ApiClient } from '../lib/client.js';
 export async function gameStateCommand(client: ApiClient, args: string[]): Promise<unknown> {
   const roomId = args[0];
   if (!roomId) {
-    return { ok: false, error: 'MISSING_ARGS', message: 'Usage: tabletop game state <roomId>', hint: '' };
+    return { ok: false, error: 'MISSING_ARGS', message: 'Usage: tablecraft game state <roomId>', hint: '' };
   }
   return client.get(`/rooms/${encodeURIComponent(roomId)}/state`);
 }
@@ -12,7 +12,7 @@ export async function gameActionCommand(client: ApiClient, args: string[]): Prom
   const roomId = args[0];
   const actionJson = args[1];
   if (!roomId || !actionJson) {
-    return { ok: false, error: 'MISSING_ARGS', message: 'Usage: tabletop game action <roomId> \'<json>\'', hint: '' };
+    return { ok: false, error: 'MISSING_ARGS', message: 'Usage: tablecraft game action <roomId> \'<json>\'', hint: '' };
   }
 
   let action: unknown;
@@ -37,7 +37,7 @@ export async function gameActionCommand(client: ApiClient, args: string[]): Prom
 export async function gameWaitCommand(client: ApiClient, args: string[]): Promise<unknown> {
   const roomId = args[0];
   if (!roomId) {
-    return { ok: false, error: 'MISSING_ARGS', message: 'Usage: tabletop game wait <roomId>', hint: '' };
+    return { ok: false, error: 'MISSING_ARGS', message: 'Usage: tablecraft game wait <roomId>', hint: '' };
   }
 
   let after: string | undefined;
