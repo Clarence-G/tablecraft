@@ -6,6 +6,7 @@ export interface PlayerInfo {
   ready: boolean;
   connected: boolean;
   seatIndex: number;
+  isBot: boolean;
 }
 
 export interface RoomState {

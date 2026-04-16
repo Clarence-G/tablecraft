@@ -34,6 +34,9 @@ export class GameRoom {
   finishedAt: number | null;
   lastActivityAt: number;
   createdAt: number;
+  seq: number = 0;
+  rankings: string[] | null = null;
+  private waiters: Array<(seq: number) => void> = [];
 
   private broadcast: BroadcastFn | null = null;
 
@@ -63,7 +66,7 @@ export class GameRoom {
     return [...this.players.values()][0]?.id ?? '';
   }
 
-  join(playerID: string, name: string): Ack<void> {
+  join(playerID: string, name: string, isBot = false): Ack<void> {
     if (this.status !== 'waiting') {
       return { ok: false, error: 'Game already started' };
     }
@@ -74,9 +77,10 @@ export class GameRoom {
     this.players.set(playerID, {
       id: playerID,
       name,
-      ready: false,
+      ready: isBot,
       connected: true,
       seatIndex,
+      isBot,
     });
     this.lastActivityAt = Date.now();
     return { ok: true, data: undefined };
@@ -114,6 +118,7 @@ export class GameRoom {
     this.state = this.logic.setup(this.ctx, this.config);
     this.status = 'playing';
     this.lastActivityAt = Date.now();
+    this.onStateChanged();
     return { ok: true, data: undefined };
   }
 
@@ -157,6 +162,7 @@ export class GameRoom {
     this.lastActivityAt = now;
     this.processEvents(result.events ?? []);
     this.broadcastViews();
+    this.onStateChanged();
   }
 
   handleTimer(timerName: string): void {
@@ -172,6 +178,7 @@ export class GameRoom {
     this.state = result.state;
     this.processEvents(result.events ?? []);
     this.broadcastViews();
+    this.onStateChanged();
   }
 
   markDisconnected(playerID: string): void {
@@ -196,9 +203,76 @@ export class GameRoom {
     this.lastActionTime.clear();
     this.timerManager.clearAll();
     for (const [id, player] of this.players) {
-      this.players.set(id, { ...player, ready: false });
+      this.players.set(id, { ...player, ready: player.isBot });
     }
     this.lastActivityAt = Date.now();
+  }
+
+  onStateChanged(): void {
+    this.seq++;
+    const cbs = this.waiters.splice(0);
+    for (const cb of cbs) cb(this.seq);
+  }
+
+  waitForChange(afterSeq: number, timeoutMs: number): Promise<number | null> {
+    if (this.seq > afterSeq) return Promise.resolve(this.seq);
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        this.waiters = this.waiters.filter((cb) => cb !== resolve);
+        resolve(null);
+      }, timeoutMs);
+      const cb = (newSeq: number) => {
+        clearTimeout(timer);
+        resolve(newSeq);
+      };
+      this.waiters.push(cb);
+    });
+  }
+
+  /** Submit action via REST API — returns result instead of emitting via socket */
+  submitAction(
+    playerID: string,
+    rawAction: unknown,
+    seq?: number,
+  ): { ok: true; seq: number } | { ok: false; error: string; reason: string } {
+    if (this.status !== 'playing') {
+      return { ok: false, error: 'GAME_NOT_STARTED', reason: `Room status is "${this.status}"` };
+    }
+
+    const prevSeq = this.lastSeq.get(playerID) ?? -1;
+    const actualSeq = seq !== undefined ? seq : prevSeq + 1;
+
+    // Idempotent: duplicate seq
+    if (actualSeq <= prevSeq) {
+      return { ok: true, seq: actualSeq };
+    }
+
+    const parsed = this.logic.actions.safeParse(rawAction);
+    if (!parsed.success) {
+      return { ok: false, error: 'INVALID_ACTION', reason: parsed.error.message };
+    }
+
+    let result: ActionResult<unknown>;
+    try {
+      result = this.logic.onAction(this.state, parsed.data, playerID, this.ctx);
+    } catch (e) {
+      console.error('onAction threw:', e);
+      return { ok: false, error: 'ACTION_REJECTED', reason: 'Internal game logic error' };
+    }
+
+    if (!result.ok) {
+      return { ok: false, error: 'ACTION_REJECTED', reason: result.reason };
+    }
+
+    this.state = result.state;
+    this.lastSeq.set(playerID, actualSeq);
+    this.lastActionTime.set(playerID, Date.now());
+    this.lastActivityAt = Date.now();
+    this.processEvents(result.events ?? []);
+    this.broadcastViews();
+    this.onStateChanged();
+
+    return { ok: true, seq: actualSeq };
   }
 
   toRoomState(): RoomState {
@@ -260,6 +334,7 @@ export class GameRoom {
           }
           break;
         case 'END_GAME':
+          this.rankings = event.rankings;
           this.status = 'finished';
           this.finishedAt = Date.now();
           this.timerManager.clearAll();

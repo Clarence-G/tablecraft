@@ -15,6 +15,10 @@ export interface GameMeta {
   actionThrottleMs?: number;
   configSchema?: z.ZodType;
   defaultConfig?: unknown;
+  /** Human-readable game rules (displayed in room UI) */
+  rules?: string;
+  /** Machine-readable rules for agents (action format, view schema, error cases) */
+  agentRules?: string;
 }
 
 /** 引擎提供给游戏逻辑的上下文 */
