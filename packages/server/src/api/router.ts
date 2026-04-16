@@ -27,6 +27,14 @@ export function createApiRouter(
 
   router.use(express.json());
 
+  // --- Admin endpoints (dev only) ---
+
+  router.post('/admin/token', (req, res) => {
+    const name = req.body?.name || 'Bot';
+    const result = tokenStore.generate(name);
+    res.status(201).json({ ok: true, data: result });
+  });
+
   // --- Public endpoints ---
 
   router.get('/games', (_req, res) => {
