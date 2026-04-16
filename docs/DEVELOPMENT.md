@@ -99,7 +99,6 @@ pnpm typecheck && pnpm lint && pnpm test && pnpm test:e2e
 │           └── wait-for.ts     # waitForGameBoard, waitForGameOver
 │
 ├── docs/
-│   ├── tech.md                 # Full technical specification (initial design, may diverge from code)
 │   ├── DESIGN.md               # Visual design language spec
 │   └── DEVELOPMENT.md          # This file
 │
@@ -599,3 +598,78 @@ const winner = state.winner ?? '';
 - **`@source` in index.css** — `games/` 目录通过 `@source "../../../games"` 被 Tailwind 扫描，新游戏目录自动覆盖。
 - **禁止使用 emoji** — 代码、UI、文档中一律不得使用 emoji 字符。UI 中需要图标时使用 `lucide-react` 图标库（已安装在 `@repo/client` 和 `@repo/game-ui` 中）。日志和文档使用纯文本。
 - **PC + 移动端** — 所有页面和游戏必须同时支持 PC 和手机端，开发时缩放浏览器到 375px 宽度验证。
+
+---
+
+## CLI & REST API for Agents
+
+TableCraft exposes a REST API and CLI tool for AI agents to play games programmatically.
+
+### Generating a Bot Token
+
+```bash
+# Server must be running (pnpm dev)
+curl -s -X POST http://localhost:3001/api/admin/token \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"TestBot"}'
+# Returns: { "ok": true, "data": { "token": "...", "userId": "bot_..." } }
+```
+
+### Running the CLI
+
+```bash
+# Set credentials via environment variables
+export TABLECRAFT_SERVER="http://localhost:3001"
+export TABLECRAFT_TOKEN="<token-from-above>"
+
+# Or persist to ~/.tablecraft/config.json
+tsx packages/cli/src/index.ts login --server http://localhost:3001 --token <token>
+```
+
+### Quick Test
+
+```bash
+CLI="tsx packages/cli/src/index.ts"
+
+# List games
+$CLI games list
+
+# Read gomoku rules (agent-friendly)
+$CLI games rules gomoku
+
+# Create a room, join with a second bot, start, and play
+$CLI rooms create gomoku
+$CLI game state <roomId>
+$CLI game action <roomId> '{"type":"place","row":7,"col":7}'
+$CLI game wait <roomId> --after <seq>
+```
+
+### REST API Endpoints
+
+All under `/api/*`. Auth via `Authorization: Bearer <token>` header.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | /api/admin/token | Generate bot token |
+| POST | /api/auth/login | Verify identity |
+| GET | /api/games | List all game types |
+| GET | /api/games/:gameId | Game detail + agentRules |
+| GET | /api/rooms | List joinable rooms |
+| POST | /api/rooms | Create room |
+| GET | /api/rooms/:id | Room state |
+| POST | /api/rooms/:id/join | Join room (bot auto-ready) |
+| POST | /api/rooms/:id/leave | Leave room |
+| POST | /api/rooms/:id/start | Start game (host only) |
+| GET | /api/rooms/:id/state | Current PlayerView |
+| POST | /api/rooms/:id/action | Submit action |
+| GET | /api/rooms/:id/wait | Long-poll for state changes |
+
+### Writing agentRules for New Games
+
+Every new game should include `agentRules` in its `meta` export. This is a machine-readable string that tells agents:
+- The exact JSON shape of actions
+- What each PlayerView field means
+- Win/loss conditions
+- What moves are illegal
+
+See `games/gomoku/shared.ts` for a complete example.

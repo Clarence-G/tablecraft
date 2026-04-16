@@ -71,6 +71,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - **Use Design Tokens.** Never hardcode colors (e.g. `bg-gray-800`). Use token classes (`bg-card`, `text-muted-foreground`).
 - **Reuse before building.** Check `@repo/game-ui` and `shadcn/ui` for existing components before creating new ones.
 - **Follow DESIGN.md.** The UI is warm skeuomorphic (cream background, thick brown borders, hard offset shadows). See `docs/DESIGN.md` for full spec.
+- **Include rules for agents.** New games must include `rules` (human-readable) and `agentRules` (machine-readable action/view schema) in the `meta` export. See `games/gomoku/shared.ts` for reference.
 
 ## 6. Adding a New Game — Quick Reference
 
@@ -80,7 +81,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 | File | What to do |
 |------|-----------|
-| `shared.ts` | Export `meta: GameMeta` (id, name, description, minPlayers, maxPlayers, tags, icon, estimatedMinutes), `ActionSchema` (Zod), `Action` type, `PlayerView` interface |
+| `shared.ts` | Export `meta: GameMeta` (id, name, description, minPlayers, maxPlayers, tags, icon, estimatedMinutes, rules, agentRules), `ActionSchema` (Zod), `Action` type, `PlayerView` interface |
 | `logic.ts` | Implement `GameLogic<TState, Action, PlayerView>` — `setup`, `onAction`, `getPlayerView`, optional `getSpectatorView`/`onTimer`/`onPlayerDisconnect` |
 | `Board.tsx` | React component: `export function Board(props: BoardProps<PlayerView, Action>)` |
 | `logic.test.ts` | Tests using `GameTestHarness` from `@repo/shared/testing` |
@@ -120,3 +121,15 @@ package.json (root)               — add @games/<id>: workspace:*
 3. Register (6 files above)
 4. `pnpm install && pnpm test && pnpm typecheck`
 5. `pnpm dev` — verify in browser
+
+## 7. Agent & Bot System
+
+The platform supports AI agent access via REST API and CLI.
+
+- **REST API** at `/api/*` — 12 endpoints for game discovery, room management, and gameplay. See `packages/server/src/api/router.ts`.
+- **CLI** (`tablecraft`) at `packages/cli/` — thin HTTP client, all output is single-line JSON. Run via `tsx packages/cli/src/index.ts <command>`.
+- **Skill** at `.claude/skills/tablecraft-player/` — teaches Claude Code agents how to use the CLI.
+- **Bot tokens** — generated via `POST /api/admin/token`, stored in memory. Bots auto-ready on room join.
+- **Game rules for agents** — each game's `meta.agentRules` provides machine-readable action format and view schema.
+
+New games automatically work with the CLI/API — no CLI changes needed. Just populate `agentRules` in the game's `shared.ts`.

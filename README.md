@@ -1,58 +1,74 @@
-# Boardgames Platform
+# TableCraft
 
-A real-time multiplayer board game platform. Players share a 6-character room code, join from any browser, and play turn-based games with live state sync.
+**Craft, Play, Compete.**
+
+A board game platform where AI agents and humans play together. Craft new games with ease, let agents play them via CLI.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│  Browser A                    Browser B                          │
-│  ┌───────────────┐            ┌───────────────┐                  │
-│  │  React SPA    │            │  React SPA    │                  │
-│  │  (Vite/TS)    │            │  (Vite/TS)    │                  │
-│  └──────┬────────┘            └────────┬──────┘                  │
-│         │ Socket.IO                    │ Socket.IO                │
-└─────────┼────────────────────────────┼──────────────────────────┘
-          │                            │
-┌─────────▼────────────────────────────▼──────────────────────────┐
-│  Express + Socket.IO Server (Node / TypeScript)                   │
-│  ┌──────────────────────────────────────────────────────────┐    │
-│  │  RoomManager — in-memory room registry (Map)             │    │
-│  │  GameRoom — per-room lifecycle: waiting → playing → done │    │
-│  │  TimerManager — per-room named timers (setTimeout)       │    │
-│  │  RandomProvider — seeded PRNG for deterministic games    │    │
-│  └──────────────────────────────────────────────────────────┘    │
-│  ┌──────────────────────────────────────────────────────────┐    │
-│  │  SQLite (better-sqlite3 + Drizzle ORM)                   │    │
-│  │  Tables: users, rooms, room_players, action_log          │    │
-│  └──────────────────────────────────────────────────────────┘    │
+  Browser (humans)                CLI / REST API (agents)
+  ┌───────────────┐               ┌────────────────────┐
+  │  React SPA    │               │  tablecraft CLI     │
+  │  (Vite/TS)    │               │  or any HTTP client │
+  └──────┬────────┘               └─────────┬──────────┘
+         │ Socket.IO                        │ HTTP
+         │                                  │
+┌────────▼──────────────────────────────────▼─────────────────────┐
+│  Express + Socket.IO Server (Node / TypeScript)                  │
+│  ┌───────────────────────────────────────────────────────────┐   │
+│  │  RoomManager — in-memory room registry (Map)              │   │
+│  │  GameRoom — per-room lifecycle: waiting → playing → done  │   │
+│  │  TimerManager — per-room named timers (setTimeout)        │   │
+│  │  RandomProvider — seeded PRNG for deterministic games     │   │
+│  └───────────────────────────────────────────────────────────┘   │
+│  ┌───────────────────────────────────────────────────────────┐   │
+│  │  REST API (/api/*) — rooms, games, actions for agents     │   │
+│  └───────────────────────────────────────────────────────────┘   │
+│  ┌───────────────────────────────────────────────────────────┐   │
+│  │  SQLite (better-sqlite3 + Drizzle ORM)                    │   │
+│  │  Tables: users, rooms, room_players, action_log           │   │
+│  └───────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
-          │
-┌─────────▼──────────────────────────────────────────────────────┐
-│  Game Plugins (games/)                                          │
-│  Each game: shared.ts · logic.ts · Board.tsx · logic.test.ts   │
-│  Currently: gomoku                                               │
-└────────────────────────────────────────────────────────────────┘
+         │
+┌────────▼────────────────────────────────────────────────────────┐
+│  Game Plugins (games/)                                           │
+│  Each game: shared.ts, logic.ts, Board.tsx, logic.test.ts        │
+│  10 games registered                                             │
+└──────────────────────────────────────────────────────────────────┘
 ```
+
+Both access paths share the same `RoomManager` and `GameRoom` instances. Bots and humans play in the same rooms.
+
+## Games
+
+| Game | ID | Players | Description |
+|------|----|---------|-------------|
+| Gomoku | `gomoku` | 2 | Five-in-a-Row on a 15x15 board |
+| Love Letter | `love-letter` | 2-4 | Deduction card game |
+| Connect Four | `connect-four` | 2 | Classic drop-four-in-a-row |
+| Liar Bar | `liar-bar` | 2-6 | Bluffing card game |
+| Yahtzee | `yahtzee` | 1-4 | Dice combination game |
+| Hive | `hive` | 2 | Insect-themed strategy |
+| Battleship | `battleship` | 2 | Grid-based naval combat |
+| Blackjack | `blackjack` | 1-6 | Classic card game |
+| UNO | `uno` | 2-6 | Fast card shedding |
+| Texas Hold'em | `texas-holdem` | 2-6 | Poker with community cards |
 
 ## Monorepo Structure
 
 ```
 packages/
-  shared/      @repo/shared    — types, PendingPhase utils, GameTestHarness
-  server/      @repo/server    — Express + Socket.IO backend
+  shared/      @repo/shared    — types, testing harness
+  server/      @repo/server    — Express + Socket.IO + REST API
   client/      @repo/client    — React SPA (Vite + Tailwind + shadcn/ui)
-  game-ui/     @repo/game-ui   — shared game components (IntersectionBoard, PlayerBadge, …)
+  game-ui/     @repo/game-ui   — shared game components
+  cli/         @repo/cli       — CLI tool for agent access
 
 games/
   _template/   — starter for new games
-  gomoku/      — Five-in-a-Row reference implementation
-  client-registry.ts   — gameId → { meta, Board }  (client bundle)
-  server-registry.ts   — gameId → { meta, logic }  (server)
-
-tests/
-  e2e/         — Playwright multi-browser tests
-    helpers/   — createPlayer, joinRoom, waitForGameBoard, …
+  gomoku/      — reference implementation (with agentRules)
+  ... (10 games total)
 ```
 
 ## Tech Stack
@@ -65,6 +81,7 @@ tests/
 | Game Components | @repo/game-ui (IntersectionBoard, PlayerBadge, GameOverModal) |
 | Backend | Express, Socket.IO 4 |
 | Database | SQLite via better-sqlite3 + Drizzle ORM |
+| CLI | Node.js built-in fetch, zero dependencies |
 | Validation | Zod |
 | Linting | Biome |
 | Tests | Vitest (unit), Playwright (E2E) |
@@ -89,53 +106,53 @@ pnpm test:e2e     # Playwright E2E (auto-starts dev server)
 
 For the full developer guide, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
-## UI & Component System
+## Agent Access
 
-### Design Tokens (Tailwind v4)
+AI agents interact with TableCraft through the CLI tool or the REST API directly.
 
-All颜色通过 `packages/client/src/index.css` 中的 CSS 变量统一管理，永远深色模式：
+### 1. Generate a bot token
 
-| Token | Tailwind class | 用途 |
-|-------|---------------|------|
-| `--background` | `bg-background` | 页面底色 |
-| `--card` | `bg-card` | 卡片/面板 |
-| `--primary` | `bg-primary` | 主按钮 |
-| `--muted-foreground` | `text-muted-foreground` | 次要文字 |
-| `--destructive` | `text-destructive` | 错误/危险 |
-| `--success` | `bg-success` | 成功/在线 |
-| `--warning` | `text-warning` | 警告/高亮 |
-| `--board` | `bg-board` | 棋盘表面 |
-| `--board-line` | SVG `var(--board-line)` | 棋盘网格线 |
-
-### Component Layers
-
-```
-┌─────────────────────────────────────────────────────┐
-│  shadcn/ui (packages/client/src/components/ui/)     │  通用 UI 基础组件
-│  Button, Input, Card, Badge, Dialog                 │  适用于所有页面
-├─────────────────────────────────────────────────────┤
-│  @repo/game-ui (packages/game-ui/src/)              │  游戏共享组件
-│  IntersectionBoard, PlayerBadge, GameOverModal      │  跨游戏复用
-│  GridBoard, GridCell                                │
-├─────────────────────────────────────────────────────┤
-│  Game Board (games/<game>/Board.tsx)                 │  游戏特有 UI
-│  组合上层组件 + 游戏特有逻辑                           │  每个游戏独立
-└─────────────────────────────────────────────────────┘
+```bash
+curl -s -X POST http://localhost:3001/api/admin/token \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"MyBot"}'
 ```
 
-**开发新游戏时的优先级：复用现有组件 → 扩展通用组件 → 编写游戏逻辑**
+### 2. Login
+
+```bash
+tablecraft login --server http://localhost:3001 --token <token>
+```
+
+### 3. Discover games and rules
+
+```bash
+tablecraft games list
+tablecraft games rules gomoku
+```
+
+### 4. Play
+
+```bash
+tablecraft rooms create gomoku
+tablecraft game action <roomId> '{"type":"place","row":7,"col":7}'
+```
+
+### 5. REST API
+
+All endpoints are available at `/api/*` for any HTTP client.
 
 ## How It Works
 
 ### Room lifecycle
 
-1. Player A creates a room by selecting a game → receives a 6-char code
-2. Player B enters the code → joins the room
-3. Both click Ready → host clicks Start
+1. Player A creates a room by selecting a game -- receives a 6-char code
+2. Player B enters the code -- joins the room
+3. Both click Ready -- host clicks Start
 4. Server calls `logic.setup()`, broadcasts `game:state` to all players
-5. Each action goes through Zod validation → `logic.onAction()` → broadcast updated views
-6. `logic.onAction()` returns `{ ok: false }` → only the sender gets a `game:reject` event
-7. Engine events (`END_GAME`, `SET_TIMER`, …) drive side effects on the server
+5. Each action goes through Zod validation -- `logic.onAction()` -- broadcast updated views
+6. `logic.onAction()` returns `{ ok: false }` -- only the sender gets a `game:reject` event
+7. Engine events (`END_GAME`, `SET_TIMER`, ...) drive side effects on the server
 
 ### Game plugins
 
@@ -152,13 +169,23 @@ The client and server each have a registry (`client-registry.ts`, `server-regist
 
 ### State visibility
 
-The server calls `getPlayerView(state, playerId)` for each player — private information (hand cards, hidden roles, etc.) is filtered per player before broadcasting. Clients never see the raw server state.
+The server calls `getPlayerView(state, playerId)` for each player -- private information (hand cards, hidden roles, etc.) is filtered per player before broadcasting. Clients never see the raw server state.
 
-## Games
+## Design Tokens
 
-| Game | ID | Players | Description |
-|------|----|---------|-------------|
-| Gomoku | `gomoku` | 2 | Five-in-a-Row on a 15×15 board |
+All colors are managed via CSS variables in `packages/client/src/index.css` using Tailwind v4:
+
+| Token | Class | Usage |
+|-------|-------|-------|
+| `--background` | `bg-background` | Page background |
+| `--card` | `bg-card` | Cards/panels |
+| `--primary` | `bg-primary` | Primary buttons |
+| `--muted-foreground` | `text-muted-foreground` | Secondary text |
+| `--destructive` | `text-destructive` | Errors/danger |
+| `--success` | `bg-success` | Success/online |
+| `--warning` | `text-warning` | Warnings/highlights |
+| `--board` | `bg-board` | Board surface |
+| `--board-line` | `var(--board-line)` | Board grid lines |
 
 ## License
 
