@@ -38,6 +38,9 @@ importers:
       '@games/yahtzee':
         specifier: workspace:*
         version: link:games/yahtzee
+      '@repo/cli':
+        specifier: workspace:*
+        version: link:packages/cli
       '@repo/client':
         specifier: workspace:*
         version: link:packages/client
@@ -253,6 +256,19 @@ importers:
       vitest:
         specifier: ^1.6.0
         version: 1.6.1(@types/node@20.19.39)(lightningcss@1.32.0)
+
+  packages/cli:
+    dependencies:
+      tsx:
+        specifier: ^4.11.0
+        version: 4.21.0
+    devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.39
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
 
   packages/client:
     dependencies:

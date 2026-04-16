@@ -26,6 +26,7 @@
     "@games/blackjack": "workspace:*",
     "@games/uno": "workspace:*",
     "@games/texas-holdem": "workspace:*",
+    "@repo/cli": "workspace:*",
     "@repo/server": "workspace:*",
     "@repo/client": "workspace:*"
   },
