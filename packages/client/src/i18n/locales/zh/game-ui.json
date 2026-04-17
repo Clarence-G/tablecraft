@@ -5,5 +5,17 @@
   "playAgain": "再来一局",
   "returnToRoom": "返回房间",
   "returnToLobby": "返回大厅",
-  "yourTurn": "回合中"
+  "yourTurn": "回合中",
+  "header": {
+    "back": "返回",
+    "rules": "规则",
+    "settings": "设置",
+    "exit": "退出",
+    "copied": "已复制",
+    "copyRoomCode": "复制房间码",
+    "exitConfirmTitle": "确认离开对局？",
+    "exitConfirmBody": "房间开放时你仍可以从大厅重新加入。",
+    "exitConfirmCancel": "留下",
+    "exitConfirmOk": "离开"
+  }
 }

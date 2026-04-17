@@ -5,5 +5,17 @@
   "playAgain": "Play Again",
   "returnToRoom": "Return to Room",
   "returnToLobby": "Return to Lobby",
-  "yourTurn": "Your Turn"
+  "yourTurn": "Your Turn",
+  "header": {
+    "back": "Back",
+    "rules": "Rules",
+    "settings": "Settings",
+    "exit": "Exit",
+    "copied": "Copied",
+    "copyRoomCode": "Copy room code",
+    "exitConfirmTitle": "Leave the match?",
+    "exitConfirmBody": "You can rejoin from the lobby if the room is still open.",
+    "exitConfirmCancel": "Stay",
+    "exitConfirmOk": "Leave"
+  }
 }
