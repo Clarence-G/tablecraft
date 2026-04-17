@@ -125,8 +125,6 @@ export function Board({
   myId,
   players,
   sendAction,
-  onReturnToRoom,
-  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [pendingWild, setPendingWild] = useState<number | null>(null);
@@ -313,8 +311,6 @@ export function Board({
           ].filter(Boolean)}
           playerNames={playerNames}
           myId={myId}
-          onReturnToRoom={onReturnToRoom}
-          onReturnToLobby={onReturnToLobby}
         />
       )}
     </div>
