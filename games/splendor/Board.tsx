@@ -421,8 +421,6 @@ export function Board({
   players,
   sendAction,
   lastReject,
-  onReturnToRoom,
-  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = !!state.winner;
@@ -918,8 +916,6 @@ export function Board({
           rankings={rankingOrder}
           playerNames={playerNames}
           myId={myId}
-          onReturnToRoom={onReturnToRoom}
-          onReturnToLobby={onReturnToLobby}
         />
       )}
     </div>
