@@ -2,6 +2,7 @@ import type { RoomState } from '@repo/shared';
 import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { clientRegistry } from '../../../../games/client-registry';
+import { GameRoomLayout } from '../components/layout/GameRoomLayout';
 import type { useGame } from '../hooks/useGame';
 
 type GameState = ReturnType<typeof useGame>;
@@ -11,7 +12,7 @@ interface GamePageProps {
   room: RoomState | null;
   game: GameState;
   onReturnToRoom?: () => void;
-  onReturnToLobby?: () => void;
+  onReturnToLobby: () => void;
 }
 
 function Loading() {
@@ -25,7 +26,7 @@ function Loading() {
 
 export function Game({ userId, room, game, onReturnToRoom, onReturnToLobby }: GamePageProps) {
   const { t } = useTranslation('common');
-  const { state, sendAction, lastReject, notifications } = game;
+  const { state, sendAction, lastReject, notifications, matchStartedAt } = game;
 
   if (!room || !state) return <Loading />;
 
@@ -38,11 +39,21 @@ export function Game({ userId, room, game, onReturnToRoom, onReturnToLobby }: Ga
     );
 
   const Board = plugin.Board;
+  const meta = plugin.meta;
+  const localizedName = t(`${room.gameId}:name`, { defaultValue: meta.name });
 
   return (
-    <div className="min-h-screen">
+    <GameRoomLayout
+      gameId={room.gameId}
+      gameName={localizedName}
+      icon={meta.icon}
+      roomId={room.roomId}
+      matchStartedAt={matchStartedAt ?? null}
+      onReturnToRoom={onReturnToRoom}
+      onReturnToLobby={onReturnToLobby}
+    >
       {lastReject && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-[#fde8e8] border-2 border-destructive rounded-[12px] px-4 py-2 text-destructive font-medium z-50 shadow-card-active">
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 bg-[#fde8e8] border-2 border-destructive rounded-[12px] px-4 py-2 text-destructive font-medium z-50 shadow-card-active">
           {lastReject}
         </div>
       )}
@@ -54,10 +65,8 @@ export function Game({ userId, room, game, onReturnToRoom, onReturnToLobby }: Ga
           sendAction={sendAction}
           lastReject={lastReject}
           notifications={notifications}
-          onReturnToRoom={onReturnToRoom}
-          onReturnToLobby={onReturnToLobby}
         />
       </Suspense>
-    </div>
+    </GameRoomLayout>
   );
 }
