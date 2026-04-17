@@ -108,7 +108,7 @@ This copies `_template/`, rewrites `package.json` / `vitest.config.ts` / `shared
 ### Key interfaces (don't read engine source, just use these)
 
 - `GameLogic<TState, TAction, TView>` — server game rules (`@repo/shared`)
-- `BoardProps<TView, TAction>` — React Board props: `{ state, myId, players, sendAction, lastReject, notifications, onReturnToRoom?, onReturnToLobby? }`
+- `BoardProps<TView, TAction>` — React Board props: `{ state, myId, players, sendAction, lastReject, notifications }`. Chrome (back button, exit, room code) is rendered by `<GameRoomLayout>` — Boards never render their own header or lobby-nav buttons.
 - `GameContext` — `{ players: string[], random: SeededRandom }` passed to `setup`/`onAction`
 - `ActionResult<S>` — return `{ ok: true, state, events? }` or `{ ok: false, reason }`
 - `EngineEvent` — `SET_TIMER` | `CLEAR_TIMER` | `NOTIFY` | `NOTIFY_ALL` | `END_GAME`

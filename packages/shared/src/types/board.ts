@@ -1,6 +1,6 @@
 import type { PlayerInfo } from './room';
 
-/** Board 组件 Props */
+/** Board 组件 Props — chrome props (back/exit) are owned by the layout. */
 export interface BoardProps<TView, TAction = unknown> {
   state: TView;
   myId: string;
@@ -8,6 +8,4 @@ export interface BoardProps<TView, TAction = unknown> {
   sendAction: (action: TAction) => void;
   lastReject: string | null;
   notifications: unknown[];
-  onReturnToRoom?: () => void;
-  onReturnToLobby?: () => void;
 }
