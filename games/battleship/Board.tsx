@@ -233,8 +233,6 @@ export function Board({
   myId,
   players,
   sendAction,
-  onReturnToRoom,
-  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const [selectedShipIdx, setSelectedShipIdx] = useState<number | null>(null);
   const [rotation, setRotation] = useState(0);
@@ -486,8 +484,6 @@ export function Board({
           ]}
           playerNames={playerNames}
           myId={myId}
-          onReturnToRoom={onReturnToRoom}
-          onReturnToLobby={onReturnToLobby}
         />
       )}
     </div>
