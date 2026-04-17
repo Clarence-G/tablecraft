@@ -11,8 +11,6 @@ export function Board({
   myId,
   players,
   sendAction,
-  onReturnToRoom,
-  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('connect-four');
   const isMyTurn = state.currentPlayer === myId;
@@ -69,8 +67,6 @@ export function Board({
           rankings={[state.winner, loserPlayer.id]}
           playerNames={playerNames}
           myId={myId}
-          onReturnToRoom={onReturnToRoom}
-          onReturnToLobby={onReturnToLobby}
         />
       )}
       {state.isDraw && (
@@ -78,8 +74,6 @@ export function Board({
           rankings={players.map((p) => p.id)}
           playerNames={playerNames}
           myId={myId}
-          onReturnToRoom={onReturnToRoom}
-          onReturnToLobby={onReturnToLobby}
         />
       )}
     </div>
