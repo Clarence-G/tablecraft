@@ -286,8 +286,6 @@ export function Board({
   players,
   sendAction,
   lastReject,
-  onReturnToRoom,
-  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('blackjack');
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
@@ -439,8 +437,6 @@ export function Board({
           rankings={rankings}
           playerNames={playerNames}
           myId={myId}
-          onReturnToRoom={onReturnToRoom}
-          onReturnToLobby={onReturnToLobby}
         />
       )}
     </div>
