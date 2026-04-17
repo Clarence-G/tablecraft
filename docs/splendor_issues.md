@@ -152,3 +152,25 @@
 | 中 | icon fallback 到 lucide-react 同名图标 | 无 SVG 也能跑 |
 | 低 | 引擎抽象 "last round" | 为未来类似游戏铺路 |
 | 低 | PlayerView 自动生成 schema | agent 体验升级 |
+
+## 八、已闭环（跟踪于 [2026-04-17 scaffold spec](superpowers/specs/2026-04-17-new-game-scaffold-design.md)）
+
+- §1.1 i18n 自动发现（`import.meta.glob`）
+- §1.2 icon Lucide 回退（单字段，双轨渲染，`GameIcon` 组件）
+- §1.3 `_template` 加 `lucide-react` dep
+- §1.4 `pnpm new:game <id>` 命令同步 name 等占位符
+- §4.1 Biome error vs warn 清单写进 DEVELOPMENT.md §10
+- §4.2 多行 JSX `biome-ignore` 示例写进 DEVELOPMENT.md §10
+- §4.3 shadcn `Dialog` 建议（进 §7 Board.tsx 一条）
+- §5.1 测试命令改为 `pnpm --filter @games/<id> test`
+- §5.2 test 文件 `any/!` 通过 `biome.json` overrides 消音
+- §6.1 `gen-registry` 日志加了 rename-to-`_` 的 hint
+- §6.2 rules / agentRules / description 对照表写进 DEVELOPMENT.md §7
+- §6.3 checklist 缩到 3 步（`pnpm new:game` 一把梭）
+
+**未在本次处理（另行立项）：**
+- §2.1 `z.enum(readonly)` 坑（补 doc 即可，没合入本次）
+- §2.2 PlayerView JSON Schema 自动生成
+- §3.1 引擎「最后一轮」抽象
+- §3.2 pending-phase 文档
+

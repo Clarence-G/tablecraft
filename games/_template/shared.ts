@@ -8,6 +8,10 @@ export const meta: GameMeta = {
   minPlayers: 2,
   maxPlayers: 4,
   tags: [],
+  // icon: Lucide icon name (e.g. 'Crown') OR SVG filename (no extension)
+  // in packages/client/public/game-icons/. Renderer tries SVG first, then
+  // falls back to the Lucide component with the same name, then to a default.
+  // icon: 'Gamepad2',
 };
 
 // ---- Action Schema ----

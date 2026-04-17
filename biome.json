@@ -35,5 +35,16 @@
   },
   "files": {
     "ignore": ["**/dist/**", "**/node_modules/**", "**/*.d.ts"]
-  }
+  },
+  "overrides": [
+    {
+      "include": ["**/*.test.ts", "**/*.test.tsx"],
+      "linter": {
+        "rules": {
+          "suspicious": { "noExplicitAny": "off" },
+          "style": { "noNonNullAssertion": "off" }
+        }
+      }
+    }
+  ]
 }

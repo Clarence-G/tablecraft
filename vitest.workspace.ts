@@ -15,5 +15,7 @@ const gameConfigs = readdirSync(gamesDir, { withFileTypes: true })
 export default defineWorkspace([
   'packages/shared/vitest.config.ts',
   'packages/server/vitest.config.ts',
+  'packages/client/vitest.config.ts',
+  'scripts/vitest.config.ts',
   ...gameConfigs,
 ]);

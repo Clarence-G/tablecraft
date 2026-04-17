@@ -315,13 +315,19 @@ Each game exports four artifacts:
 | `Board.tsx` | React game UI (`BoardProps`) | Client only |
 | `logic.test.ts` | Unit tests via `GameTestHarness` | Test only |
 
-Registering a new game is fully automated — run:
+Registering a new game is fully automated — either use the scaffolding command to generate the whole skeleton:
+
+```bash
+pnpm new:game <your-game>
+```
+
+Or, if you copied `_template/` manually, run:
 
 ```bash
 pnpm gen:registry
 ```
 
-This rewrites `games/server-registry.ts` and syncs root `package.json` `@games/*` deps from what's on disk. The client registry (`games/client-registry.ts`) uses `import.meta.glob` so it picks up new games at build time with zero edits. `vitest.workspace.ts` auto-discovers every `games/*/vitest.config.ts`. Vite aliases and client tsconfig paths use `@games/*/shared` / `@games/*/board` globs. No per-game editing needed anywhere.
+Both paths rewrite `games/server-registry.ts`, sync root `package.json` `@games/*` deps, and regenerate `packages/client/src/generated/game-icons.ts` (the SVG icon manifest consumed by `GameIcon`) from disk. The client registry (`games/client-registry.ts`) uses `import.meta.glob` so it picks up new games at build time with zero edits. `packages/client/src/i18n/index.ts` likewise auto-discovers `games/*/i18n/*.json`. `vitest.workspace.ts` auto-discovers every `games/*/vitest.config.ts`. Vite aliases and client tsconfig paths use `@games/*/shared` / `@games/*/board` globs. No per-game editing needed anywhere.
 
 ### 6.4 Game logic contract
 
@@ -342,7 +348,10 @@ interface GameMeta {
   minPlayers: number;
   maxPlayers: number;
   tags?: string[];              // e.g. ['策略', '棋类']
-  icon?: string;                // Lucide icon name, e.g. 'Target', 'Heart'
+  icon?: string;                // Either a Lucide icon name (e.g. 'Crown')
+                                // OR a filename (no extension) in
+                                // packages/client/public/game-icons/<name>.svg.
+                                // Renderer tries SVG first, then Lucide.
   estimatedMinutes?: number;    // Estimated play time
   actionThrottleMs?: number;
   configSchema?: z.ZodType;
@@ -370,58 +379,69 @@ Engine events in `events[]`:
 ### 开发流程
 
 ```
-1. 检查通用组件  →  能复用就复用
-2. 缺少通用组件  →  先在 @repo/game-ui 中扩展
-3. 编写游戏逻辑  →  shared.ts + logic.ts + logic.test.ts
-4. 编写游戏 UI   →  Board.tsx（组合通用组件）
-5. 注册 + 验证   →  registry + typecheck + lint + test
+1. pnpm new:game <id>   →  scaffold: 生成目录、同步 registry
+2. 编写游戏逻辑          →  shared.ts + logic.ts + logic.test.ts
+3. 编写游戏 UI          →  Board.tsx（复用 @repo/game-ui / shadcn/ui）
+4. 填 i18n              →  games/<id>/i18n/en.json 和 zh.json
+5. 验证                 →  typecheck + lint + test
 ```
 
 ### 具体步骤
 
-1. **Copy the template:**
+1. **Scaffold the game:**
    ```bash
-   cp -r games/_template games/<your-game>
+   pnpm new:game <your-game>
    ```
 
-2. **Edit `games/<your-game>/package.json`** — change `name` to `@games/<your-game>`.
+   This copies `games/_template/` to `games/<your-game>/`, rewrites the
+   placeholder names (`package.json`, `vitest.config.ts`, `shared.ts`), and
+   runs `pnpm gen:registry` — so the server-side registry, root `package.json`
+   `@games/*` deps, and the SVG icon manifest all get synced in one go.
 
-3. **Edit `games/<your-game>/shared.ts`** — set `meta` (id, name, description, minPlayers, maxPlayers, tags, icon, estimatedMinutes, rules, agentRules) and define `ActionSchema`.
+   If `games/<your-game>/` already exists, pass `--force` to overwrite
+   (this deletes the existing directory first).
 
-4. **Edit `games/<your-game>/logic.ts`** — implement `setup`, `onAction`, `getPlayerView`.
-
-5. **Edit `games/<your-game>/Board.tsx`** — implement the React UI.
-   - The outer `<div>` must have `data-testid="game-board"`
-   - Use Design Token classes (`bg-background`, `text-muted-foreground`, etc.)
-   - Use `@repo/game-ui` components (`PlayerBadge`, `GameOverModal`, `IntersectionBoard`, etc.)
-   - Use `@/components/ui/*` for buttons, inputs, cards
-   - **Must support PC and mobile** — test at 375px width
-
-6. **Register the game:** Just run
-
+   If you prefer the manual path:
    ```bash
+   cp -r games/_template games/<your-game>
+   # Edit games/<your-game>/package.json (name → @games/<your-game>)
+   # Edit games/<your-game>/vitest.config.ts (name → '<your-game>')
+   # Edit games/<your-game>/shared.ts (meta.id → '<your-game>')
    pnpm gen:registry
    ```
 
-   This auto-discovers `games/*` directories and rewrites `games/server-registry.ts`.
-   `games/client-registry.ts` uses `import.meta.glob` and picks up new games with zero edits.
-   `vitest.workspace.ts` also auto-discovers `games/*/vitest.config.ts`.
+2. **Edit `games/<your-game>/shared.ts`** — fill in the rest of `meta` (name, description, minPlayers, maxPlayers, tags, icon, estimatedMinutes, rules, agentRules) and define `ActionSchema` / `PlayerView`.
 
-   Vite aliases (`@games/*/shared`, `@games/*/board`) and client tsconfig paths already use globs — no per-game entries to add.
+3. **Edit `games/<your-game>/logic.ts`** — implement `setup`, `onAction`, `getPlayerView`.
 
-7. **Install + write tests:**
+4. **Edit `games/<your-game>/Board.tsx`** — implement the React UI.
+   - The outer `<div>` must have `data-testid="game-board"`
+   - Use Design Token classes (`bg-background`, `text-muted-foreground`, etc.)
+   - Use `@repo/game-ui` components (`PlayerBadge`, `GameOverModal`, `IntersectionBoard`, etc.)
+   - Use `@/components/ui/*` for buttons, inputs, cards (prefer shadcn `Dialog` over building your own modal)
+   - **Must support PC and mobile** — test at 375px width
 
-   ```bash
-   pnpm install
-   ```
+5. **Fill i18n:** Edit `games/<your-game>/i18n/en.json` and `zh.json`. Minimum keys: `name`, `description`, `tags` (array matching `meta.tags`), `rules`. Any extra keys get scoped to the `<your-game>` namespace automatically.
 
-   Write tests in `logic.test.ts` using `GameTestHarness`.
+6. **Add an icon (optional):** Either set `meta.icon` to a Lucide icon name (no file needed), or drop an SVG at `packages/client/public/game-icons/<name>.svg` and set `meta.icon` to that filename. After adding an SVG, run `pnpm gen:registry` again to refresh the manifest.
+
+7. **Write tests:** Use `GameTestHarness` in `logic.test.ts`.
 
 8. **Verify:**
 
    ```bash
    pnpm typecheck && pnpm lint && pnpm test
    ```
+
+### `description` vs `rules` vs `agentRules`
+
+| 字段 | 读者 | 位置 | 长度 |
+|---|---|---|---|
+| `description` | 人 | 大厅卡片副标题 | 一句话 |
+| `rules` | 人 | 房间内规则弹窗 | 几段 |
+| `agentRules` | AI agent | REST `/api/games/:id` 响应 | 策略提示、视图字段补充说明（JSON Schema 不表达的） |
+
+`description` 和 `rules` 支持 i18n（覆盖值写在 `i18n/<lang>.json` 同名键）。`agentRules` 走 `meta` 里的中文字符串即可——agent 是模型，读中英文都行。
 
 ---
 
@@ -434,10 +454,10 @@ Engine events in `events[]`:
 pnpm test
 
 # Run only gomoku tests
-pnpm exec vitest run games/gomoku/
+pnpm --filter @games/gomoku test
 
-# Watch mode
-pnpm exec vitest games/gomoku/
+# Watch mode (across all workspaces)
+pnpm exec vitest --workspace vitest.workspace.ts
 ```
 
 `GameTestHarness` API:
@@ -531,7 +551,16 @@ pnpm lint:fix
 pnpm exec biome format --write .
 ```
 
-Biome rules set to `"warn"` (not errors): `noNonNullAssertion`, `noExplicitAny`. Everything else must be error-free.
+Biome rules set to `"warn"` (not errors): `noNonNullAssertion`, `noExplicitAny`. The following are **errors** that fail `pnpm lint`:
+
+- `lint/a11y/*` (except `noAutofocus` which is off, and `noSvgWithoutTitle` which is a warning)
+- `lint/correctness/*` (recommended default)
+- `lint/style/useConst`, `lint/style/useTemplate`, `lint/style/noUnusedTemplateLiteral`
+- `lint/suspicious/*` (except `noExplicitAny` / `noArrayIndexKey` which are warnings)
+- `organizeImports` (import order)
+- `format` (spaces, quotes, trailing commas — run `pnpm lint:fix` to auto-fix)
+
+Test files (`**/*.test.ts`, `**/*.test.tsx`) have `noExplicitAny` and `noNonNullAssertion` turned off via `biome.json` overrides — `GameTestHarness<any, ...>` and `h.rawState!` are the standard white-box testing pattern and no longer produce warnings.
 
 **Acceptable suppressions — use exactly these patterns:**
 
@@ -546,7 +575,18 @@ key={i}
 key={i}
 ```
 
-`noExplicitAny` in **`*.test.ts` files** is acceptable — `GameTestHarness<any, ...>` and `h.rawState as any` are the standard white-box testing pattern used across all game tests. Do not suppress it; just leave it as a warning.
+`noExplicitAny` in **`*.test.ts` files** is already disabled via `biome.json` overrides — `GameTestHarness<any, ...>` and `h.rawState as any` are the standard white-box testing pattern used across all game tests.
+
+**Multi-line JSX:** `biome-ignore` comments must sit on the line *immediately before* the flagged expression. For multi-line JSX elements, put the ignore on the line containing the actual flagged attribute (e.g. `key={...}`), not on the opening `<div>`:
+
+```tsx
+<div className="...">
+  {/* biome-ignore lint/suspicious/noArrayIndexKey: fixed positional keys */}
+  <span key={i}>{label}</span>
+</div>
+```
+
+If the flagged line is a prop spread across several lines, refactor to put `key` on a single line so the ignore can target it directly.
 
 `noNonNullAssertion` (`!`) must be eliminated from production code. Replace with optional chaining or explicit null checks:
 

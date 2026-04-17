@@ -1,3 +1,4 @@
+import { GameIcon } from '@/components/GameIcon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,10 +21,6 @@ interface LobbyProps {
   roomCtx: RoomCtx;
   onRoomCreated: (roomId: string) => void;
   onRoomJoined: (roomId: string) => void;
-}
-
-function GameIcon({ name, className }: { name: string; className?: string }) {
-  return <img src={`/game-icons/${name}.svg`} alt="" className={className} />;
 }
 
 const TAG_COLORS: Record<string, string> = {
