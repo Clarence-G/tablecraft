@@ -19,8 +19,6 @@ export function Board({
   myId,
   players,
   sendAction,
-  onReturnToRoom,
-  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('gomoku');
   const isMyTurn = state.currentPlayer === myId;
@@ -78,8 +76,6 @@ export function Board({
           rankings={[state.winner, loserPlayer.id]}
           playerNames={playerNames}
           myId={myId}
-          onReturnToRoom={onReturnToRoom}
-          onReturnToLobby={onReturnToLobby}
         />
       )}
     </div>
