@@ -8,10 +8,16 @@ interface GameSnapshot {
   state: unknown;
   lastReject: string | null;
   notifications: unknown[];
+  matchStartedAt: number | null;
 }
 
 // Stable empty snapshot — singleton so Object.is() stays true when nothing changed
-const EMPTY_SNAPSHOT: GameSnapshot = { state: null, lastReject: null, notifications: [] };
+const EMPTY_SNAPSHOT: GameSnapshot = {
+  state: null,
+  lastReject: null,
+  notifications: [],
+  matchStartedAt: null,
+};
 const noop = () => {};
 const noopUnsub = () => noop;
 
@@ -26,7 +32,8 @@ class GameStore {
     this.socket = socket;
 
     socket.on('game:state', (view) => {
-      this._snapshot = { ...this._snapshot, state: view };
+      const matchStartedAt = this._snapshot.matchStartedAt ?? Date.now();
+      this._snapshot = { ...this._snapshot, state: view, matchStartedAt };
       this.notify();
     });
 
