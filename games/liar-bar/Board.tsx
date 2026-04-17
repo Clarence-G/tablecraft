@@ -100,8 +100,6 @@ export function Board({
   myId,
   players,
   sendAction,
-  onReturnToRoom,
-  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('liar-bar');
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
@@ -335,8 +333,6 @@ export function Board({
           ]}
           playerNames={playerNames}
           myId={myId}
-          onReturnToRoom={onReturnToRoom}
-          onReturnToLobby={onReturnToLobby}
         />
       )}
     </div>
