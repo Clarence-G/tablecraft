@@ -74,8 +74,6 @@ export function Board({
   players,
   sendAction,
   notifications,
-  onReturnToRoom,
-  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('love-letter');
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
@@ -397,8 +395,6 @@ export function Board({
           ]}
           playerNames={playerNames}
           myId={myId}
-          onReturnToRoom={onReturnToRoom}
-          onReturnToLobby={onReturnToLobby}
         />
       )}
     </div>
