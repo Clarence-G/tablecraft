@@ -18,6 +18,20 @@ const roomIdAlphabet = customAlphabet('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', 6)
 
 type BroadcastFn = (roomId: string, playerViews: Map<string, unknown>) => void;
 
+/**
+ * Structured outcome of attempting an action. Both WebSocket (`handleAction`)
+ * and REST (`submitAction`) entry points share the same pipeline via
+ * `tryAction`; they only differ in how each outcome is delivered to the caller.
+ */
+type ActionOutcome =
+  | { kind: 'ok'; seq: number }
+  | { kind: 'throttled' }
+  | { kind: 'stale-seq'; currentSeq: number }
+  | { kind: 'not-playing'; status: RoomStatus }
+  | { kind: 'invalid'; reason: string }
+  | { kind: 'rejected'; reason: string }
+  | { kind: 'internal-error' };
+
 export class GameRoom {
   roomId: string;
   gameId: string;
@@ -123,46 +137,23 @@ export class GameRoom {
   }
 
   handleAction(playerID: string, rawAction: unknown, seq: number): void {
-    if (this.status !== 'playing') return;
-
-    const throttleMs = 100;
-    const now = Date.now();
-    const lastTime = this.lastActionTime.get(playerID) ?? 0;
-    if (now - lastTime < throttleMs) {
-      this.emitToPlayer(playerID, 'game:reject', 'Too fast');
-      return;
+    const outcome = this.tryAction(playerID, rawAction, seq);
+    switch (outcome.kind) {
+      case 'throttled':
+        this.emitToPlayer(playerID, 'game:reject', 'Too fast');
+        return;
+      case 'invalid':
+      case 'rejected':
+        this.emitToPlayer(playerID, 'game:reject', outcome.reason);
+        return;
+      case 'internal-error':
+        this.emitToPlayer(playerID, 'game:reject', 'Internal error');
+        return;
+      case 'stale-seq':
+      case 'not-playing':
+      case 'ok':
+        return;
     }
-
-    const lastSeq = this.lastSeq.get(playerID) ?? -1;
-    if (seq <= lastSeq) return;
-
-    const parsed = this.logic.actions.safeParse(rawAction);
-    if (!parsed.success) {
-      this.emitToPlayer(playerID, 'game:reject', parsed.error.message);
-      return;
-    }
-
-    let result: ActionResult<unknown>;
-    try {
-      result = this.logic.onAction(this.state, parsed.data, playerID, this.ctx);
-    } catch (e) {
-      console.error('onAction threw:', e);
-      this.emitToPlayer(playerID, 'game:reject', 'Internal error');
-      return;
-    }
-
-    if (!result.ok) {
-      this.emitToPlayer(playerID, 'game:reject', result.reason);
-      return;
-    }
-
-    this.state = result.state;
-    this.lastSeq.set(playerID, seq);
-    this.lastActionTime.set(playerID, now);
-    this.lastActivityAt = now;
-    this.processEvents(result.events ?? []);
-    this.broadcastViews();
-    this.onStateChanged();
   }
 
   handleTimer(timerName: string): void {
@@ -186,6 +177,20 @@ export class GameRoom {
     if (player) {
       this.players.set(playerID, { ...player, connected: false });
     }
+    if (this.status !== 'playing' || !this.logic.onPlayerDisconnect) return;
+    let result: ActionResult<unknown>;
+    try {
+      result = this.logic.onPlayerDisconnect(this.state, playerID, this.ctx);
+    } catch (e) {
+      console.error('onPlayerDisconnect threw:', e);
+      return;
+    }
+    if (!result.ok) return;
+    this.state = result.state;
+    this.lastActivityAt = Date.now();
+    this.processEvents(result.events ?? []);
+    this.broadcastViews();
+    this.onStateChanged();
   }
 
   markReconnected(playerID: string): void {
@@ -235,44 +240,28 @@ export class GameRoom {
     rawAction: unknown,
     seq?: number,
   ): { ok: true; seq: number } | { ok: false; error: string; reason: string } {
-    if (this.status !== 'playing') {
-      return { ok: false, error: 'GAME_NOT_STARTED', reason: `Room status is "${this.status}"` };
+    const outcome = this.tryAction(playerID, rawAction, seq);
+    switch (outcome.kind) {
+      case 'ok':
+        return { ok: true, seq: outcome.seq };
+      case 'stale-seq':
+        // Idempotent: duplicate seq is treated as success at the REST boundary
+        return { ok: true, seq: outcome.currentSeq };
+      case 'throttled':
+        return { ok: false, error: 'THROTTLED', reason: 'Too fast' };
+      case 'not-playing':
+        return {
+          ok: false,
+          error: 'GAME_NOT_STARTED',
+          reason: `Room status is "${outcome.status}"`,
+        };
+      case 'invalid':
+        return { ok: false, error: 'INVALID_ACTION', reason: outcome.reason };
+      case 'rejected':
+        return { ok: false, error: 'ACTION_REJECTED', reason: outcome.reason };
+      case 'internal-error':
+        return { ok: false, error: 'ACTION_REJECTED', reason: 'Internal game logic error' };
     }
-
-    const prevSeq = this.lastSeq.get(playerID) ?? -1;
-    const actualSeq = seq !== undefined ? seq : prevSeq + 1;
-
-    // Idempotent: duplicate seq
-    if (actualSeq <= prevSeq) {
-      return { ok: true, seq: actualSeq };
-    }
-
-    const parsed = this.logic.actions.safeParse(rawAction);
-    if (!parsed.success) {
-      return { ok: false, error: 'INVALID_ACTION', reason: parsed.error.message };
-    }
-
-    let result: ActionResult<unknown>;
-    try {
-      result = this.logic.onAction(this.state, parsed.data, playerID, this.ctx);
-    } catch (e) {
-      console.error('onAction threw:', e);
-      return { ok: false, error: 'ACTION_REJECTED', reason: 'Internal game logic error' };
-    }
-
-    if (!result.ok) {
-      return { ok: false, error: 'ACTION_REJECTED', reason: result.reason };
-    }
-
-    this.state = result.state;
-    this.lastSeq.set(playerID, actualSeq);
-    this.lastActionTime.set(playerID, Date.now());
-    this.lastActivityAt = Date.now();
-    this.processEvents(result.events ?? []);
-    this.broadcastViews();
-    this.onStateChanged();
-
-    return { ok: true, seq: actualSeq };
   }
 
   toRoomState(): RoomState {
@@ -314,6 +303,64 @@ export class GameRoom {
       updatedAt: Date.now(),
       finishedAt: this.finishedAt,
     };
+  }
+
+  /**
+   * Core action pipeline shared by `handleAction` (socket) and `submitAction`
+   * (REST). Does parse → logic → state update → events → broadcast, returning
+   * a structured outcome. Callers translate the outcome into their transport's
+   * error format.
+   *
+   * `seq === undefined` (REST default) means "auto-assign next seq". A given
+   * number means "only accept if strictly greater than lastSeq for this player
+   * (socket) or equal to next expected (REST idempotency)".
+   */
+  private tryAction(playerID: string, rawAction: unknown, seq: number | undefined): ActionOutcome {
+    if (this.status !== 'playing') {
+      return { kind: 'not-playing', status: this.status };
+    }
+
+    // Stale seq is checked BEFORE throttle: a duplicate submission must stay
+    // idempotent even if it lands inside the throttle window — otherwise
+    // retrying after a dropped response would falsely return 429.
+    const prevSeq = this.lastSeq.get(playerID) ?? -1;
+    const effectiveSeq = seq ?? prevSeq + 1;
+    if (effectiveSeq <= prevSeq) {
+      return { kind: 'stale-seq', currentSeq: prevSeq };
+    }
+
+    const throttleMs = this.meta.actionThrottleMs ?? 100;
+    const now = Date.now();
+    const lastTime = this.lastActionTime.get(playerID) ?? 0;
+    if (now - lastTime < throttleMs) {
+      return { kind: 'throttled' };
+    }
+
+    const parsed = this.logic.actions.safeParse(rawAction);
+    if (!parsed.success) {
+      return { kind: 'invalid', reason: parsed.error.message };
+    }
+
+    let result: ActionResult<unknown>;
+    try {
+      result = this.logic.onAction(this.state, parsed.data, playerID, this.ctx);
+    } catch (e) {
+      console.error('onAction threw:', e);
+      return { kind: 'internal-error' };
+    }
+
+    if (!result.ok) {
+      return { kind: 'rejected', reason: result.reason };
+    }
+
+    this.state = result.state;
+    this.lastSeq.set(playerID, effectiveSeq);
+    this.lastActionTime.set(playerID, now);
+    this.lastActivityAt = now;
+    this.processEvents(result.events ?? []);
+    this.broadcastViews();
+    this.onStateChanged();
+    return { kind: 'ok', seq: effectiveSeq };
   }
 
   private processEvents(events: EngineEvent[]): void {

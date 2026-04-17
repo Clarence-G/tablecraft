@@ -11,16 +11,6 @@ export function setupHandlers(
   roomManager: RoomManager,
   registry: Record<string, ServerGamePlugin>,
 ): void {
-  // Broadcast helper: send each player their view
-  const broadcastViews = (roomId: string, views: Map<string, unknown>) => {
-    const sockets = io.sockets.adapter.rooms.get(roomId);
-    if (!sockets) return;
-    for (const [socketId] of sockets.entries?.() ?? []) {
-      // no-op: views are emitted per-socket by emitToPlayer
-    }
-    // Actually emit via emitToPlayer bound per room
-  };
-
   io.on('connection', (socket: Sock) => {
     const userId = socket.data.userId;
 

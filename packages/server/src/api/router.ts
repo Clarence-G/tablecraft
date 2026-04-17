@@ -1,4 +1,5 @@
 import type { ServerGamePlugin } from '@repo/shared';
+import { buildGameDetail } from '@repo/shared';
 import { Router } from 'express';
 import express from 'express';
 import type { GameRoom } from '../engine/GameRoom.js';
@@ -61,19 +62,9 @@ export function createApiRouter(
       });
       return;
     }
-    const { meta } = plugin;
     res.json({
       ok: true,
-      data: {
-        id: meta.id,
-        name: meta.name,
-        description: meta.description,
-        minPlayers: meta.minPlayers,
-        maxPlayers: meta.maxPlayers,
-        tags: meta.tags ?? [],
-        rules: meta.rules ?? null,
-        agentRules: meta.agentRules ?? null,
-      },
+      data: buildGameDetail(plugin.meta, plugin.logic),
     });
   });
 
@@ -309,13 +300,14 @@ export function createApiRouter(
         INVALID_ACTION: 400,
         ACTION_REJECTED: 409,
         GAME_NOT_STARTED: 409,
+        THROTTLED: 429,
       };
       const status = statusMap[result.error] ?? 400;
       res.status(status).json({
         ok: false,
         error: result.error,
         message: result.reason,
-        hint: '',
+        hint: result.error === 'THROTTLED' ? 'Wait before submitting the next action' : '',
       });
       return;
     }

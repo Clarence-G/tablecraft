@@ -1,55 +1,30 @@
-import { meta as battleshipMeta } from '@games/battleship/shared';
-import { meta as blackjackMeta } from '@games/blackjack/shared';
-import { meta as connectFourMeta } from '@games/connect-four/shared';
-import { meta as gomokuMeta } from '@games/gomoku/shared';
-import { meta as hiveMeta } from '@games/hive/shared';
-import { meta as liarBarMeta } from '@games/liar-bar/shared';
-import { meta as loveLetterMeta } from '@games/love-letter/shared';
-import { meta as texasHoldemMeta } from '@games/texas-holdem/shared';
-import { meta as unoMeta } from '@games/uno/shared';
-import { meta as yahtzeeMeta } from '@games/yahtzee/shared';
-import type { ClientGamePlugin } from '@repo/shared';
-import { lazy } from 'react';
+/// <reference types="vite/client" />
+import type { ClientGamePlugin, GameMeta } from '@repo/shared';
+import { type ComponentType, lazy } from 'react';
 
-export const clientRegistry: Record<string, ClientGamePlugin> = {
-  [battleshipMeta.id]: {
-    meta: battleshipMeta,
-    Board: lazy(() => import('@games/battleship/board').then((m) => ({ default: m.Board }))),
-  },
-  [gomokuMeta.id]: {
-    meta: gomokuMeta,
-    Board: lazy(() => import('@games/gomoku/board').then((m) => ({ default: m.Board }))),
-  },
-  [loveLetterMeta.id]: {
-    meta: loveLetterMeta,
-    Board: lazy(() => import('@games/love-letter/board').then((m) => ({ default: m.Board }))),
-  },
-  [connectFourMeta.id]: {
-    meta: connectFourMeta,
-    Board: lazy(() => import('@games/connect-four/board').then((m) => ({ default: m.Board }))),
-  },
-  [liarBarMeta.id]: {
-    meta: liarBarMeta,
-    Board: lazy(() => import('@games/liar-bar/board').then((m) => ({ default: m.Board }))),
-  },
-  [yahtzeeMeta.id]: {
-    meta: yahtzeeMeta,
-    Board: lazy(() => import('@games/yahtzee/board').then((m) => ({ default: m.Board }))),
-  },
-  [hiveMeta.id]: {
-    meta: hiveMeta,
-    Board: lazy(() => import('@games/hive/board').then((m) => ({ default: m.Board }))),
-  },
-  [blackjackMeta.id]: {
-    meta: blackjackMeta,
-    Board: lazy(() => import('@games/blackjack/board').then((m) => ({ default: m.Board }))),
-  },
-  [unoMeta.id]: {
-    meta: unoMeta,
-    Board: lazy(() => import('@games/uno/board').then((m) => ({ default: m.Board }))),
-  },
-  [texasHoldemMeta.id]: {
-    meta: texasHoldemMeta,
-    Board: lazy(() => import('@games/texas-holdem/board').then((m) => ({ default: m.Board }))),
-  },
-};
+// Auto-discover games by scanning sibling directories of this file.
+// Relative paths ensure Vite correctly code-splits each Board into its own
+// async chunk (lazy loading). `_template` is filtered out by meta.id.
+const sharedModules = import.meta.glob<{ meta: GameMeta }>('./*/shared.ts', {
+  eager: true,
+});
+const boardModules = import.meta.glob<{ Board: ComponentType<unknown> }>('./*/Board.tsx');
+
+function buildRegistry(): Record<string, ClientGamePlugin> {
+  const registry: Record<string, ClientGamePlugin> = {};
+  for (const [sharedPath, mod] of Object.entries(sharedModules)) {
+    // Skip scaffolding directories (same convention as scripts/gen-registry.ts):
+    // any folder whose name starts with "_" is treated as a template, not a game.
+    if (/\/_[^/]+\/shared\.ts$/.test(sharedPath)) continue;
+    const boardPath = sharedPath.replace(/shared\.ts$/, 'Board.tsx');
+    const loader = boardModules[boardPath];
+    if (!loader) continue;
+    registry[mod.meta.id] = {
+      meta: mod.meta,
+      Board: lazy(async () => ({ default: (await loader()).Board })),
+    };
+  }
+  return registry;
+}
+
+export const clientRegistry: Record<string, ClientGamePlugin> = buildRegistry();

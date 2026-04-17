@@ -315,13 +315,13 @@ Each game exports four artifacts:
 | `Board.tsx` | React game UI (`BoardProps`) | Client only |
 | `logic.test.ts` | Unit tests via `GameTestHarness` | Test only |
 
-Registering a new game requires changes in **6 places**:
-1. `games/server-registry.ts` — add `{ meta, logic }`
-2. `games/client-registry.ts` — add `{ meta, Board: lazy(...) }`
-3. `packages/client/vite.config.ts` — add `@games/<id>/shared` alias
-4. `packages/client/tsconfig.json` — add paths for `shared` and `board`
-5. `vitest.workspace.ts` — add vitest config path
-6. `package.json` (root) — add `@games/<id>: workspace:*` dependency
+Registering a new game is fully automated — run:
+
+```bash
+pnpm gen:registry
+```
+
+This rewrites `games/server-registry.ts` and syncs root `package.json` `@games/*` deps from what's on disk. The client registry (`games/client-registry.ts`) uses `import.meta.glob` so it picks up new games at build time with zero edits. `vitest.workspace.ts` auto-discovers every `games/*/vitest.config.ts`. Vite aliases and client tsconfig paths use `@games/*/shared` / `@games/*/board` globs. No per-game editing needed anywhere.
 
 ### 6.4 Game logic contract
 
@@ -397,60 +397,28 @@ Engine events in `events[]`:
    - Use `@/components/ui/*` for buttons, inputs, cards
    - **Must support PC and mobile** — test at 375px width
 
-6. **Register the game:**
-   ```ts
-   // games/server-registry.ts
-   import { logic as myLogic } from '@games/my-game/logic';
-   import { meta as myMeta } from '@games/my-game/shared';
-   export const serverRegistry = {
-     [myMeta.id]: { meta: myMeta, logic: myLogic },
-     // ...existing
-   };
-   ```
-   ```ts
-   // games/client-registry.ts
-   import { meta as myMeta } from '@games/my-game/shared';
-   export const clientRegistry = {
-     [myMeta.id]: {
-       meta: myMeta,
-       Board: lazy(() => import('@games/my-game/board').then(m => ({ default: m.Board }))),
-     },
-     // ...existing
-   };
+6. **Register the game:** Just run
+
+   ```bash
+   pnpm gen:registry
    ```
 
-7. **Add Vite alias** (in `packages/client/vite.config.ts`):
-   ```ts
-   { find: '@games/<your-game>/shared', replacement: path.resolve(root, 'games/<your-game>/shared.ts') },
-   ```
-   Note: the generic regex alias `@games/(.+)/board` already handles Board.tsx -- you only need to add the `shared` alias.
+   This auto-discovers `games/*` directories and rewrites `games/server-registry.ts`.
+   `games/client-registry.ts` uses `import.meta.glob` and picks up new games with zero edits.
+   `vitest.workspace.ts` also auto-discovers `games/*/vitest.config.ts`.
 
-8. **Add TypeScript paths** (in `packages/client/tsconfig.json`):
-   ```json
-   "@games/<your-game>/shared": ["../../games/<your-game>/shared.ts"],
-   "@games/<your-game>/board": ["../../games/<your-game>/Board.tsx"]
-   ```
+   Vite aliases (`@games/*/shared`, `@games/*/board`) and client tsconfig paths already use globs — no per-game entries to add.
 
-9. **Add workspace dependency** (in root `package.json`):
-   ```json
-   "@games/<your-game>": "workspace:*"
-   ```
+7. **Install + write tests:**
 
-10. **Add vitest config:**
-   ```ts
-   // games/<your-game>/vitest.config.ts  (copy from _template, change test name)
-   ```
-   ```ts
-   // vitest.workspace.ts — add the new config path
-   ```
-
-11. **Install + write tests:**
    ```bash
    pnpm install
    ```
+
    Write tests in `logic.test.ts` using `GameTestHarness`.
 
-12. **Verify:**
+8. **Verify:**
+
    ```bash
    pnpm typecheck && pnpm lint && pnpm test
    ```
@@ -487,7 +455,15 @@ h.lastEvents;        // Events from the last action
 h.isFinished;        // true after END_GAME event
 h.rankings;          // string[] | null
 h.timer('name');     // Simulate timer firing
+h.disconnect('Alice'); // Invoke logic.onPlayerDisconnect
+h.expectViewsDiffer('myHoleCards', 'Alice', 'Bob'); // Assert hidden info isn't leaking
 ```
+
+**Contract guards built into the harness:**
+
+- Any `onAction` / `onTimer` / `onPlayerDisconnect` that **mutates** its input `state` throws a `TypeError`. Always build a fresh object (`return { ok: true, state: { ...state, foo } }`) — never mutate and return the same reference.
+- `expectViewsDiffer('<field>', playerA, playerB)` fails if both viewers see the same value for that field. Use it on private-info fields (hands, roles, secret cards) right after setup and key actions to catch `getPlayerView` leaks.
+- Pass `freezeInput: false` to the harness options if you *really* need the old looser behavior (e.g. large fuzz runs); by default guards are on.
 
 ### E2E tests
 
@@ -655,7 +631,7 @@ All under `/api/*`. Auth via `Authorization: Bearer <token>` header.
 | POST | /api/admin/token | Generate bot token |
 | POST | /api/auth/login | Verify identity |
 | GET | /api/games | List all game types |
-| GET | /api/games/:gameId | Game detail + agentRules |
+| GET | /api/games/:gameId | Game detail: `rules`, `agentRules`, `actionSchema` (JSON Schema auto-derived from Zod) |
 | GET | /api/rooms | List joinable rooms |
 | POST | /api/rooms | Create room |
 | GET | /api/rooms/:id | Room state |
@@ -663,15 +639,17 @@ All under `/api/*`. Auth via `Authorization: Bearer <token>` header.
 | POST | /api/rooms/:id/leave | Leave room |
 | POST | /api/rooms/:id/start | Start game (host only) |
 | GET | /api/rooms/:id/state | Current PlayerView |
-| POST | /api/rooms/:id/action | Submit action |
+| POST | /api/rooms/:id/action | Submit action. Errors: `INVALID_ACTION` (400), `ACTION_REJECTED` (409), `GAME_NOT_STARTED` (409), `THROTTLED` (429) |
 | GET | /api/rooms/:id/wait | Long-poll for state changes |
 
 ### Writing agentRules for New Games
 
-Every new game should include `agentRules` in its `meta` export. This is a machine-readable string that tells agents:
-- The exact JSON shape of actions
-- What each PlayerView field means
-- Win/loss conditions
-- What moves are illegal
+Every new game should include `agentRules` in its `meta` export. Focus on things the JSON Schema can't express:
+
+- Strategy / win conditions / scoring
+- What each `PlayerView` field means (the engine doesn't auto-generate a view schema)
+- Legal-move constraints that go beyond the action shape (e.g. "can't raise if you don't have enough chips")
+
+The **action JSON shape** is auto-generated from `ActionSchema` (Zod) and exposed as `actionSchema` on `/api/games/:gameId` — no need to hand-write it in `agentRules` anymore.
 
 See `games/gomoku/shared.ts` for a complete example.

@@ -1,17 +1,19 @@
+import { existsSync, readdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineWorkspace } from 'vitest/config';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const gamesDir = join(__dirname, 'games');
+
+// Auto-discover every game that has its own vitest.config.ts (including _template).
+const gameConfigs = readdirSync(gamesDir, { withFileTypes: true })
+  .filter((ent) => ent.isDirectory())
+  .map((ent) => join(gamesDir, ent.name, 'vitest.config.ts'))
+  .filter((p) => existsSync(p));
 
 export default defineWorkspace([
   'packages/shared/vitest.config.ts',
   'packages/server/vitest.config.ts',
-  'games/gomoku/vitest.config.ts',
-  'games/love-letter/vitest.config.ts',
-  'games/connect-four/vitest.config.ts',
-  'games/liar-bar/vitest.config.ts',
-  'games/yahtzee/vitest.config.ts',
-  'games/hive/vitest.config.ts',
-  'games/blackjack/vitest.config.ts',
-  'games/uno/vitest.config.ts',
-  'games/battleship/vitest.config.ts',
-  'games/texas-holdem/vitest.config.ts',
-  'games/_template/vitest.config.ts',
+  ...gameConfigs,
 ]);
