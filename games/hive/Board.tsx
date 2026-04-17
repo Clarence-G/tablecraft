@@ -119,8 +119,6 @@ export function Board({
   myId,
   players,
   sendAction,
-  onReturnToRoom,
-  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('hive');
   const [selectedPieceType, setSelectedPieceType] = useState<HivePieceType | null>(null);
@@ -464,8 +462,6 @@ export function Board({
           rankings={rankings}
           playerNames={playerNames}
           myId={myId}
-          onReturnToRoom={onReturnToRoom}
-          onReturnToLobby={onReturnToLobby}
         />
       )}
     </div>
