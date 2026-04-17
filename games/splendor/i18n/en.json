@@ -1,0 +1,6 @@
+{
+  "name": "Splendor",
+  "description": "Collect gems, buy mines and merchant ships, attract nobles",
+  "tags": ["Strategy", "Cards"],
+  "rules": "On your turn, choose one action: (1) take 3 different colored gems; (2) take 2 gems of the same color (requires supply ≥ 4); (3) reserve a visible or top-deck card and gain 1 gold; (4) buy a visible or reserved card (gold can substitute any gem). Each card gives a permanent gem discount; nobles automatically visit when your discounts match their requirements (+3 prestige). If you end a turn holding more than 10 gems, discard the excess. When a player first reaches 15 prestige, finish the round, then the highest prestige wins (tiebreak: fewest cards)."
+}

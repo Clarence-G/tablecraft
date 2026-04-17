@@ -15,6 +15,8 @@ import { logic as liarBarLogic } from '@games/liar-bar/logic';
 import { meta as liarBarMeta } from '@games/liar-bar/shared';
 import { logic as loveLetterLogic } from '@games/love-letter/logic';
 import { meta as loveLetterMeta } from '@games/love-letter/shared';
+import { logic as splendorLogic } from '@games/splendor/logic';
+import { meta as splendorMeta } from '@games/splendor/shared';
 import { logic as texasHoldemLogic } from '@games/texas-holdem/logic';
 import { meta as texasHoldemMeta } from '@games/texas-holdem/shared';
 import { logic as unoLogic } from '@games/uno/logic';
@@ -31,6 +33,7 @@ export const serverRegistry: Record<string, ServerGamePlugin> = {
   [hiveMeta.id]: { meta: hiveMeta, logic: hiveLogic },
   [liarBarMeta.id]: { meta: liarBarMeta, logic: liarBarLogic },
   [loveLetterMeta.id]: { meta: loveLetterMeta, logic: loveLetterLogic },
+  [splendorMeta.id]: { meta: splendorMeta, logic: splendorLogic },
   [texasHoldemMeta.id]: { meta: texasHoldemMeta, logic: texasHoldemLogic },
   [unoMeta.id]: { meta: unoMeta, logic: unoLogic },
   [yahtzeeMeta.id]: { meta: yahtzeeMeta, logic: yahtzeeLogic },

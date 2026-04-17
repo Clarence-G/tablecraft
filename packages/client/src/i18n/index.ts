@@ -15,6 +15,8 @@ import enLiarBar from '../../../../games/liar-bar/i18n/en.json';
 import zhLiarBar from '../../../../games/liar-bar/i18n/zh.json';
 import enLoveLetter from '../../../../games/love-letter/i18n/en.json';
 import zhLoveLetter from '../../../../games/love-letter/i18n/zh.json';
+import enSplendor from '../../../../games/splendor/i18n/en.json';
+import zhSplendor from '../../../../games/splendor/i18n/zh.json';
 import enTexasHoldem from '../../../../games/texas-holdem/i18n/en.json';
 import zhTexasHoldem from '../../../../games/texas-holdem/i18n/zh.json';
 import enUno from '../../../../games/uno/i18n/en.json';
@@ -44,6 +46,7 @@ i18n
         yahtzee: zhYahtzee,
         'love-letter': zhLoveLetter,
         'liar-bar': zhLiarBar,
+        splendor: zhSplendor,
       },
       en: {
         common: enCommon,
@@ -58,6 +61,7 @@ i18n
         yahtzee: enYahtzee,
         'love-letter': enLoveLetter,
         'liar-bar': enLiarBar,
+        splendor: enSplendor,
       },
     },
     fallbackLng: 'zh',
