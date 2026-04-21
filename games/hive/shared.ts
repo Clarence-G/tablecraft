@@ -10,6 +10,7 @@ export const meta: GameMeta = {
   tags: ['策略', '棋类'],
   icon: 'bee',
   estimatedMinutes: 30,
+  surface: 'wood',
   rules:
     '两人轮流在六角棋盘上放置或移动昆虫棋子，用棋子完全包围对手的蜂后即获胜。蜂后必须在第 4 回合前放置。',
   agentRules: `Hex grid using axial coordinates {q, r}. White plays first. Each player has: 1 Queen, 2 Spiders, 2 Beetles, 3 Grasshoppers, 3 Ants.

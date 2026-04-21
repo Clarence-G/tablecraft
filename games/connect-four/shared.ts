@@ -10,6 +10,7 @@ export const meta: GameMeta = {
   tags: ['策略', '棋类'],
   icon: 'stack',
   estimatedMinutes: 10,
+  surface: 'wood',
   rules:
     '两人轮流在 6x7 的竖直棋盘上投放棋子，棋子受重力下落至最低空位，先将四颗棋子连成一条线（横、竖、斜均可）的玩家获胜。',
   agentRules: `6-row x 7-column vertical board. Pieces drop to the lowest empty cell in the chosen column. Player 1 goes first.

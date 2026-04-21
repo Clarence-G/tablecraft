@@ -1,11 +1,19 @@
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
+import { useGameHeaderStatus } from '@repo/game-ui';
+import { type CardAccent, PlayingCard } from '@repo/game-ui/card';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Action, Card, PlayerView } from './shared';
 
-// Card color backgrounds (light tints for face-up cards)
+const CARD_ACCENT: Record<Card, CardAccent> = {
+  Q: 'blue',
+  K: 'purple',
+  A: 'green',
+  Joker: 'red',
+};
+
 const CARD_BG: Record<Card, string> = {
   Q: 'bg-[#e8f0fe]',
   K: 'bg-[#f0e8fe]',
@@ -39,37 +47,21 @@ function HandCard({
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <PlayingCard
+      size="md"
+      accent={CARD_ACCENT[card]}
+      backgroundClass={CARD_BG[card]}
+      corner={card === 'Joker' ? 'J' : card}
+      center={card === 'Joker' ? 'Joker' : card}
+      selected={selected}
       disabled={disabled}
-      className={[
-        'relative flex flex-col items-center justify-center',
-        'w-14 h-20 sm:w-16 sm:h-24 rounded-[12px] border-2',
-        'transition-all select-none',
-        CARD_BG[card],
-        selected
-          ? 'border-foreground shadow-[4px_4px_0px_0px_#3d2e1e] -translate-y-2'
-          : CARD_BORDER_COLOR[card],
-        disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:-translate-y-1',
-      ].join(' ')}
-    >
-      <span className={`text-lg font-bold ${CARD_TEXT_COLOR[card]}`}>
-        {card === 'Joker' ? 'J' : card}
-      </span>
-      <span className={`text-[10px] font-medium ${CARD_TEXT_COLOR[card]}`}>
-        {card === 'Joker' ? 'Joker' : card}
-      </span>
-    </button>
+      onClick={onClick}
+    />
   );
 }
 
 function FaceDownCard() {
-  return (
-    <div className="w-8 h-11 rounded-[8px] border-2 border-foreground bg-muted flex items-center justify-center">
-      <span className="text-muted-foreground text-xs font-bold">?</span>
-    </div>
-  );
+  return <PlayingCard size="xs" faceDown />;
 }
 
 function RevolverDisplay({ chamber, alive }: { chamber: number; alive: boolean }) {
@@ -109,6 +101,7 @@ export function Board({
   const amAlive = myInfo?.alive ?? false;
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = state.phase === 'finished';
+  useGameHeaderStatus(gameOver ? undefined : state.currentPlayer);
 
   // Who is the decider in challenging phase
   const lastPlayerId = state.lastPlay?.playerId;
@@ -149,10 +142,10 @@ export function Board({
   const cr = state.challengeResult;
 
   return (
-    <div className="min-h-screen text-foreground flex flex-col p-3 sm:p-4 max-w-lg mx-auto gap-3">
+    <div className="flex-1 text-foreground flex flex-col p-3 sm:p-4 max-w-lg mx-auto w-full gap-3">
       {/* Challenge Result Overlay */}
       {cr && !gameOver && (
-        <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-4 text-center">
+        <div className="border-2 border-foreground/50 rounded-[12px] bg-card/85 backdrop-blur-sm shadow-[4px_4px_0px_0px_rgba(26,17,8,0.4)] p-4 text-center">
           <div className="text-sm font-bold mb-2">
             {cr.wasLying ? t('caughtLying') : t('honestInnocent')}
           </div>
@@ -209,25 +202,25 @@ export function Board({
       </div>
 
       {/* Game Info */}
-      <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-3 text-center">
+      <div className="border-2 border-foreground/50 rounded-[12px] bg-card/85 backdrop-blur-sm shadow-[4px_4px_0px_0px_rgba(26,17,8,0.4)] p-3 text-center">
         <div className="text-xs text-muted-foreground mb-1">{t('declaredSuit')}</div>
         <div className={`text-2xl font-bold ${CARD_TEXT_COLOR[state.declaredSuit as Card]}`}>
           {state.declaredSuit}
         </div>
       </div>
 
-      {/* Status */}
-      <div className="text-center text-sm text-muted-foreground">
-        {gameOver
-          ? `${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`
-          : state.phase === 'challenging' && state.lastPlay
-            ? `${playerNames[state.lastPlay.playerId] ?? state.lastPlay.playerId} ${t('playedCards')} ${state.lastPlay.count} ${t('cardsWaiting')} ${playerNames[deciderId ?? ''] ?? deciderId} ${t('deciding')}`
-            : !amAlive
-              ? t('eliminatedWatching')
-              : isMyTurn
-                ? t('yourTurnSelect')
-                : `${t('waiting')} ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
-      </div>
+      {/* Status (challenge phase / game over / eliminated — turn lives in header) */}
+      {(gameOver ||
+        (state.phase === 'challenging' && state.lastPlay) ||
+        !amAlive) && (
+        <div className="text-center text-sm text-muted-foreground">
+          {gameOver
+            ? `${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`
+            : state.phase === 'challenging' && state.lastPlay
+              ? `${playerNames[state.lastPlay.playerId] ?? state.lastPlay.playerId} ${t('playedCards')} ${state.lastPlay.count} ${t('cardsWaiting')} ${playerNames[deciderId ?? ''] ?? deciderId} ${t('deciding')}`
+              : t('eliminatedWatching')}
+        </div>
+      )}
 
       {/* Last Play Info */}
       {state.phase === 'challenging' && state.lastPlay && (
@@ -242,7 +235,7 @@ export function Board({
 
       {/* My Hand */}
       {amAlive && !gameOver && state.phase === 'playing' && isMyTurn && (
-        <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-3">
+        <div className="border-2 border-foreground/50 rounded-[12px] bg-card/85 backdrop-blur-sm shadow-[4px_4px_0px_0px_rgba(26,17,8,0.4)] p-3">
           <div className="text-xs font-medium text-muted-foreground mb-2">{t('yourHand')}</div>
           <div className="flex flex-wrap gap-2 justify-center mb-3">
             {state.myHand.map((card, i) => (

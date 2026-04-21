@@ -1,5 +1,6 @@
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
+import { useGameHeaderStatus } from '@repo/game-ui';
 import type { BoardProps } from '@repo/shared';
 import { Coins, Crown, Gem, ShoppingCart, Sparkles, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -424,6 +425,7 @@ export function Board({
 }: BoardProps<PlayerView, Action>) {
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = !!state.winner;
+  useGameHeaderStatus(gameOver ? undefined : state.currentPlayer);
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
   const me = state.players.find((p) => p.id === myId);
 
@@ -591,7 +593,7 @@ export function Board({
 
   return (
     <div
-      className="min-h-screen bg-background text-foreground p-3 sm:p-4 max-w-5xl mx-auto flex flex-col gap-3"
+      className="flex-1 text-foreground p-3 sm:p-4 max-w-5xl mx-auto w-full flex flex-col gap-3"
       data-testid="game-board"
     >
       {/* Header: players + status */}

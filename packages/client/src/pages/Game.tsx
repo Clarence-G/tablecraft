@@ -11,7 +11,6 @@ interface GamePageProps {
   userId: string;
   room: RoomState | null;
   game: GameState;
-  onReturnToRoom?: () => void;
   onReturnToLobby: () => void;
 }
 
@@ -24,7 +23,7 @@ function Loading() {
   );
 }
 
-export function Game({ userId, room, game, onReturnToRoom, onReturnToLobby }: GamePageProps) {
+export function Game({ userId, room, game, onReturnToLobby }: GamePageProps) {
   const { t } = useTranslation('common');
   const { state, sendAction, lastReject, notifications, matchStartedAt } = game;
 
@@ -49,7 +48,9 @@ export function Game({ userId, room, game, onReturnToRoom, onReturnToLobby }: Ga
       icon={meta.icon}
       roomId={room.roomId}
       matchStartedAt={matchStartedAt ?? null}
-      onReturnToRoom={onReturnToRoom}
+      players={room.players}
+      myId={userId}
+      surface={meta.surface}
       onReturnToLobby={onReturnToLobby}
     >
       {lastReject && (

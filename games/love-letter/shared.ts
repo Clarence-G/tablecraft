@@ -10,6 +10,7 @@ export const meta: GameMeta = {
   tags: ['推理', '卡牌'],
   icon: 'love-letter',
   estimatedMinutes: 15,
+  surface: 'parchment',
   rules:
     '每回合摸一张牌，然后打出手中两张牌之一并发动效果。通过推理淘汰其他玩家，或在牌堆耗尽时持有最大牌的玩家获胜。',
   agentRules: `Micro card game. 16-card deck with values 1-8. Each turn: draw 1, play 1 from your 2-card hand.

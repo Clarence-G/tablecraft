@@ -10,6 +10,7 @@ export const meta: GameMeta = {
   tags: ['推理', '派对'],
   icon: 'skull-slices',
   estimatedMinutes: 20,
+  surface: 'wood',
   rules:
     '每轮宣告一种牌型（Q/K/A），玩家轮流声称打出该牌型的牌（可以撒谎）。下家选择相信或质疑，被抓撒谎或错误质疑者扣动左轮手枪。最后存活者获胜。',
   agentRules: `Bluffing game with Russian roulette. Cards: Q, K, A, Joker. Each round declares a suit (Q, K, or A). Players play 1-3 cards face-down, claiming they are the declared suit. Next player believes or challenges.

@@ -10,6 +10,7 @@ export const meta: GameMeta = {
   tags: ['策略', '休闲'],
   icon: 'battleship',
   estimatedMinutes: 25,
+  surface: 'water',
   rules:
     '两人各自在 10x10 海域秘密部署 5 艘舰船，然后轮流射击对方海域，先击沉对手所有舰船的玩家获胜。',
   agentRules: `10x10 grid (row=0-9, col=0-9). Two phases: placement then firing.

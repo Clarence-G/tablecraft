@@ -1,4 +1,5 @@
-import { GameHeader } from '@repo/game-ui';
+import { GameHeader, GameHeaderProvider, GameTable, useHeaderStatus } from '@repo/game-ui';
+import type { PlayerInfo, SurfaceKind } from '@repo/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
@@ -18,8 +19,10 @@ export interface GameRoomLayoutProps {
   roomId: string;
   /** Epoch ms when the match started; used to compute elapsed time. */
   matchStartedAt: number | null;
-  phase?: string;
-  onReturnToRoom?: () => void;
+  players?: PlayerInfo[];
+  myId?: string;
+  /** Visual surface for the Zone C play area. Defaults to 'marble'. */
+  surface?: SurfaceKind;
   onReturnToLobby: () => void;
   children: React.ReactNode;
 }
@@ -34,18 +37,21 @@ function useElapsed(startedAt: number | null): number {
   return Math.max(0, Math.floor((now - startedAt) / 1000));
 }
 
-export function GameRoomLayout({
+function Inner({
   gameName,
   icon,
   roomId,
   matchStartedAt,
-  phase,
+  players,
+  myId,
+  surface,
   onReturnToLobby,
   children,
-}: GameRoomLayoutProps) {
+}: Omit<GameRoomLayoutProps, 'gameId'>) {
   const { t } = useTranslation('game-ui');
   const elapsed = useElapsed(matchStartedAt);
   const [confirming, setConfirming] = useState(false);
+  const { currentPlayerId, phase } = useHeaderStatus();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -55,10 +61,13 @@ export function GameRoomLayout({
         roomId={roomId}
         elapsedSeconds={elapsed}
         phase={phase}
+        players={players}
+        currentPlayerId={currentPlayerId}
+        myId={myId}
         onBack={onReturnToLobby}
         onExit={() => setConfirming(true)}
       />
-      <div className="flex-1 min-h-0 flex flex-col">{children}</div>
+      <GameTable surface={surface}>{children}</GameTable>
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent>
@@ -89,5 +98,13 @@ export function GameRoomLayout({
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export function GameRoomLayout(props: GameRoomLayoutProps) {
+  return (
+    <GameHeaderProvider>
+      <Inner {...props} />
+    </GameHeaderProvider>
   );
 }

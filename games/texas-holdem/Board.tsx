@@ -1,5 +1,7 @@
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
+import { useGameHeaderStatus } from '@repo/game-ui';
+import { PlayingCard } from '@repo/game-ui/card';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -30,38 +32,24 @@ function CardFace({ card }: { card: string }) {
   const rank = displayRank(card);
 
   return (
-    <div
-      className={[
-        'w-9 h-12 sm:w-10 sm:h-14 rounded-[6px] border-2 border-foreground bg-card',
-        'flex flex-col items-center justify-between py-1 px-1',
-        'shadow-[2px_2px_0px_0px_#3d2e1e] shrink-0',
-      ].join(' ')}
-    >
-      <span
-        className={[
-          'text-xs font-bold leading-none',
-          red ? 'text-[#d94040]' : 'text-foreground',
-        ].join(' ')}
-      >
-        {rank}
-      </span>
-      <SuitIcon suit={suit} className={`size-3.5 ${red ? 'text-[#d94040]' : 'text-foreground'}`} />
-    </div>
+    <PlayingCard
+      size="md"
+      accent={red ? 'red' : 'default'}
+      corner={rank}
+      cornerIcon={<SuitIcon suit={suit} className="size-3" />}
+      center={<SuitIcon suit={suit} className="size-6" />}
+    />
   );
 }
 
 function CardBack() {
-  return (
-    <div className="w-9 h-12 sm:w-10 sm:h-14 rounded-[6px] border-2 border-foreground bg-primary flex items-center justify-center shadow-[2px_2px_0px_0px_#1a1108] shrink-0">
-      <span className="text-primary-foreground text-xs font-bold">?</span>
-    </div>
-  );
+  return <PlayingCard size="md" faceDown />;
 }
 
 function CardPlaceholder() {
   return (
-    <div className="w-9 h-12 sm:w-10 sm:h-14 rounded-[6px] border-2 border-dashed border-border flex items-center justify-center shrink-0">
-      <span className="text-muted-foreground text-xs">-</span>
+    <div className="w-14 h-20 rounded-[10px] border-2 border-dashed border-card/50 bg-card/5 flex items-center justify-center shrink-0">
+      <span className="text-card/50 text-base">·</span>
     </div>
   );
 }
@@ -322,6 +310,7 @@ export function Board({
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
   const isMyTurn = state.handPhase === 'betting' && state.currentPlayer === myId;
   const gameOver = state.gamePhase === 'finished';
+  useGameHeaderStatus(gameOver ? undefined : state.currentPlayer);
 
   const highestBet = Math.max(...state.players.map((p) => p.currentBet), 0);
   const callAmount = highestBet - state.myCurrentBet;
@@ -336,67 +325,44 @@ export function Board({
 
   return (
     <div
-      className="min-h-screen text-foreground flex flex-col p-3 sm:p-4 max-w-lg mx-auto"
+      className="flex-1 text-card flex flex-col p-3 sm:p-4 max-w-2xl mx-auto w-full gap-3"
       data-testid="game-board"
     >
-      {/* Player badges */}
-      <div className="flex flex-wrap gap-2 justify-center mb-2">
-        {players.map((p) => (
-          <PlayerBadge
-            key={p.id}
-            player={p}
-            isCurrentTurn={state.currentPlayer === p.id}
-            isMe={p.id === myId}
-          />
-        ))}
-      </div>
-
       {/* Status row */}
-      <div className="text-center text-sm text-muted-foreground mb-2">
+      <div className="text-center text-xs text-card/80 font-semibold uppercase tracking-wider">
         {t('hand', { n: state.handNumber })} ·{' '}
         {t(ROUND_KEYS[state.bettingRound] ?? state.bettingRound)}
-        {isMyTurn && ` · ${t('yourAction')}`}
       </div>
 
       {/* Error message */}
       {lastReject && (
-        <div className="mb-2 px-3 py-2 rounded-[8px] bg-[#fde8e8] border-2 border-[#d94040] text-[#d94040] text-sm text-center">
+        <div className="px-3 py-2 rounded-[8px] bg-[#fde8e8] border-2 border-[#d94040] text-[#d94040] text-sm text-center">
           {lastReject}
         </div>
       )}
 
-      {/* Community cards + pot */}
-      <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-4 mb-3">
-        <div className="flex flex-col items-center gap-2">
-          <div className="text-xs text-muted-foreground font-semibold">{t('communityCards')}</div>
-          <div className="flex gap-2 justify-center flex-wrap">
-            {state.communityCards.map((card, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: community cards are ordered and stable for display
-              <CardFace key={i} card={card} />
-            ))}
-            {Array.from({ length: Math.max(0, 5 - state.communityCards.length) }).map((_, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: placeholder positions are ordered and stable
-              <CardPlaceholder key={i} />
-            ))}
-          </div>
-          <div className="text-base font-bold text-foreground">
-            {t('pot')} {state.pot}
-          </div>
+      {/* Community cards + pot — floating on felt */}
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-4">
+        <div className="text-xs text-card/80 font-semibold">
+          {t('pot')} <span className="text-base text-card font-bold ml-1">{state.pot}</span>
         </div>
-      </div>
+        <div className="flex gap-2 justify-center flex-wrap">
+          {state.communityCards.map((card, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: community cards are ordered and stable for display
+            <CardFace key={i} card={card} />
+          ))}
+          {Array.from({ length: Math.max(0, 5 - state.communityCards.length) }).map((_, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: placeholder positions are ordered and stable
+            <CardPlaceholder key={i} />
+          ))}
+        </div>
 
-      {/* My hole cards */}
-      {state.myHoleCards && (
-        <div
-          className={[
-            'border-2 rounded-[12px] bg-card p-4 mb-3',
-            isMyTurn
-              ? 'border-[#d97706] shadow-[4px_4px_0px_0px_#d97706]'
-              : 'border-foreground shadow-[4px_4px_0px_0px_#3d2e1e]',
-          ].join(' ')}
-        >
-          <div className="flex flex-col items-center gap-2">
-            <div className="text-xs text-muted-foreground font-semibold">{t('myHand')}</div>
+        {/* My hole cards */}
+        {state.myHoleCards && (
+          <div className="flex flex-col items-center gap-1">
+            <div className="text-[11px] text-card/70 font-semibold uppercase tracking-wider">
+              {t('myHand')}
+            </div>
             <div className="flex gap-2">
               {state.myHoleCards.map((card, i) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: hole cards are ordered and stable
@@ -404,8 +370,8 @@ export function Board({
               ))}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Showdown result */}
       {state.showdownResult && state.handPhase !== 'betting' && (
@@ -425,7 +391,7 @@ export function Board({
 
       {/* Action area */}
       {isMyTurn && (
-        <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-4 mb-3">
+        <div className="border-2 border-card/40 rounded-[12px] bg-card/90 backdrop-blur-sm text-foreground shadow-[4px_4px_0px_0px_#1a1108] p-4 mb-3">
           <ActionPanel
             canCheck={canCheck}
             canCall={canCall}
@@ -445,13 +411,13 @@ export function Board({
         </div>
       )}
       {!isMyTurn && state.handPhase === 'betting' && (
-        <div className="border-2 border-border rounded-[12px] bg-card p-3 mb-3 text-center text-sm text-muted-foreground">
-          {t('waiting')} {playerNames[state.currentPlayer] ?? state.currentPlayer} {t('acting')}
+        <div className="border-2 border-card/30 rounded-[12px] bg-card/20 backdrop-blur-sm p-3 mb-3 text-center text-sm text-card">
+          {t(ROUND_KEYS[state.bettingRound] ?? state.bettingRound)}
         </div>
       )}
 
       {/* Players list */}
-      <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-3 mb-3">
+      <div className="border-2 border-card/40 rounded-[12px] bg-card/80 backdrop-blur-sm text-foreground shadow-[4px_4px_0px_0px_#1a1108] p-3 mb-3">
         <div className="text-xs text-muted-foreground font-semibold mb-2">{t('playerStatus')}</div>
         <div className="flex flex-col gap-1">
           {state.players.map((p, i) => (

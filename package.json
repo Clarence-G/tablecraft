@@ -20,6 +20,7 @@
     "dev": "node scripts/kill-prev.js && concurrently --kill-others -n server,client \"pnpm --filter @repo/server dev\" \"pnpm --filter @repo/client dev\"",
     "postdev": "node scripts/kill-prev.js",
     "build": "pnpm --filter @repo/shared build && pnpm --filter @repo/server build && pnpm --filter @repo/client build",
+    "lan": "node scripts/lan.js",
     "gen:registry": "tsx scripts/gen-registry.ts",
     "new:game": "tsx scripts/new-game.ts",
     "test": "vitest run --workspace vitest.workspace.ts",

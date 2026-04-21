@@ -1,5 +1,7 @@
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
+import { useGameHeaderStatus } from '@repo/game-ui';
+import { PlayingCard } from '@repo/game-ui/card';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,39 +20,21 @@ function SuitIcon({ suit, className }: { suit: string; className?: string }) {
 }
 
 function CardFace({ card }: { card: string }) {
-  const isHidden = card === 'hidden';
-  if (isHidden) {
-    return (
-      <div className="w-10 h-14 rounded-[6px] border-2 border-foreground bg-primary flex items-center justify-center shadow-[2px_2px_0px_0px_#1a1108]">
-        <span className="text-primary-foreground text-xs font-bold">?</span>
-      </div>
-    );
-  }
+  if (card === 'hidden') return <PlayingCard size="sm" faceDown />;
 
   const rank = card.slice(0, -1);
   const suit = card.slice(-1);
   const isRed = suit === 'h' || suit === 'd';
-
   const displayRank = rank === 'T' ? '10' : rank;
 
   return (
-    <div
-      className={[
-        'w-10 h-14 rounded-[6px] border-2 border-foreground bg-card',
-        'flex flex-col items-center justify-between py-1 px-1',
-        'shadow-[2px_2px_0px_0px_#3d2e1e]',
-      ].join(' ')}
-    >
-      <span
-        className={[
-          'text-xs font-bold leading-none',
-          isRed ? 'text-[#d94040]' : 'text-foreground',
-        ].join(' ')}
-      >
-        {displayRank}
-      </span>
-      <SuitIcon suit={suit} className={`size-4 ${isRed ? 'text-[#d94040]' : 'text-foreground'}`} />
-    </div>
+    <PlayingCard
+      size="sm"
+      accent={isRed ? 'red' : 'default'}
+      corner={displayRank}
+      cornerIcon={<SuitIcon suit={suit} className="size-2.5" />}
+      center={<SuitIcon suit={suit} className="size-4" />}
+    />
   );
 }
 
@@ -292,6 +276,7 @@ export function Board({
   const myPlayer = state.players.find((p) => p.id === myId);
   const isMyTurn = state.phase === 'player_turns' && state.currentPlayer === myId;
   const gameOver = state.phase === 'finished';
+  useGameHeaderStatus(gameOver ? undefined : state.currentPlayer);
 
   const hasBet = (myPlayer?.bet ?? 0) > 0;
   const myHandLen = state.myHand.length;
@@ -312,7 +297,7 @@ export function Board({
 
   return (
     <div
-      className="min-h-screen text-foreground flex flex-col p-3 sm:p-4 max-w-lg mx-auto"
+      className="flex-1 text-foreground flex flex-col p-3 sm:p-4 max-w-lg mx-auto w-full"
       data-testid="game-board"
     >
       {/* Header */}
@@ -341,7 +326,7 @@ export function Board({
       )}
 
       {/* Dealer hand */}
-      <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-4 mb-3">
+      <div className="border-2 border-card/40 rounded-[12px] bg-card/85 backdrop-blur-sm text-foreground shadow-[4px_4px_0px_0px_#1a1108] p-4 mb-3">
         <Hand
           cards={state.dealerHand}
           label={t('dealer')}
@@ -359,10 +344,10 @@ export function Board({
       {state.myHand.length > 0 && (
         <div
           className={[
-            'border-2 rounded-[12px] bg-card p-4 mb-3',
+            'border-2 rounded-[12px] bg-card/90 backdrop-blur-sm text-foreground p-4 mb-3',
             isMyTurn
               ? 'border-[#d97706] shadow-[4px_4px_0px_0px_#d97706]'
-              : 'border-foreground shadow-[4px_4px_0px_0px_#3d2e1e]',
+              : 'border-card/40 shadow-[4px_4px_0px_0px_#1a1108]',
           ].join(' ')}
         >
           <Hand
@@ -383,7 +368,7 @@ export function Board({
       )}
 
       {/* Action area */}
-      <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-4 mb-3">
+      <div className="border-2 border-card/40 rounded-[12px] bg-card/90 backdrop-blur-sm text-foreground shadow-[4px_4px_0px_0px_#1a1108] p-4 mb-3">
         {state.phase === 'betting' && (
           <BettingPanel
             myChips={myPlayer?.chips ?? 0}
@@ -402,7 +387,7 @@ export function Board({
         )}
         {state.phase === 'player_turns' && !isMyTurn && (
           <div className="text-center text-sm text-muted-foreground py-2">
-            {t('waiting')} {playerNames[state.currentPlayer] ?? state.currentPlayer} {t('acting')}
+            {phaseLabel[state.phase]}
           </div>
         )}
         {(state.phase === 'dealer_turn' || state.phase === 'payout') && (
@@ -416,7 +401,7 @@ export function Board({
       </div>
 
       {/* Players list */}
-      <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-3 mb-3">
+      <div className="border-2 border-card/40 rounded-[12px] bg-card/80 backdrop-blur-sm text-foreground shadow-[4px_4px_0px_0px_#1a1108] p-3 mb-3">
         <div className="text-xs text-muted-foreground font-semibold mb-2">{t('playerStatus')}</div>
         <div className="flex flex-col gap-1">
           {state.players.map((p) => (

@@ -6,10 +6,13 @@
     ".": "./src/index.ts",
     "./board": "./src/board/index.ts",
     "./player": "./src/player/index.ts",
-    "./feedback": "./src/feedback/index.ts"
+    "./feedback": "./src/feedback/index.ts",
+    "./table": "./src/table/index.ts",
+    "./card": "./src/card/index.ts"
   },
   "dependencies": {
     "@repo/shared": "workspace:*",
+    "boring-avatars": "^2.0.4",
     "framer-motion": "^11.0.0",
     "lucide-react": "^1.8.0",
     "react": "^18.3.0"

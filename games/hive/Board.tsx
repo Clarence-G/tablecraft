@@ -1,5 +1,6 @@
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
+import { useGameHeaderStatus } from '@repo/game-ui';
 import type { BoardProps } from '@repo/shared';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -126,6 +127,7 @@ export function Board({
 
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = state.phase === 'finished';
+  useGameHeaderStatus(gameOver ? undefined : state.currentPlayer);
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
 
   // Build top-tile map for rendering
@@ -276,7 +278,7 @@ export function Board({
 
   return (
     <div
-      className="min-h-screen text-foreground flex flex-col items-center gap-3 p-3"
+      className="flex-1 text-foreground flex flex-col items-center gap-3 p-3 w-full"
       data-testid="game-board"
     >
       {/* Players */}
@@ -291,19 +293,17 @@ export function Board({
         ))}
       </div>
 
-      {/* Turn indicator */}
-      <div className="text-sm text-muted-foreground font-medium">
-        {gameOver
-          ? state.isDraw
+      {/* Game-specific status (winner / draw only — turn lives in header) */}
+      {gameOver && (
+        <div className="text-sm text-muted-foreground font-medium">
+          {state.isDraw
             ? t('draw')
-            : `${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`
-          : isMyTurn
-            ? `${t('yourTurn')} (${colorLabel[state.myColor]})`
-            : `${t('waiting')} ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
-      </div>
+            : `${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`}
+        </div>
+      )}
 
       {/* Hex board */}
-      <div className="bg-card border-2 border-foreground rounded-[12px] overflow-hidden w-full max-w-lg shadow-[4px_4px_0px_0px_#3d2e1e]">
+      <div className="bg-foreground/5 border-2 border-foreground/40 rounded-[12px] overflow-hidden w-full max-w-lg shadow-[4px_4px_0px_0px_rgba(26,17,8,0.35)]">
         {/* biome-ignore lint/a11y/noSvgWithoutTitle: game board SVG */}
         <svg
           viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}
@@ -385,7 +385,7 @@ export function Board({
 
       {/* Piece inventory / placement panel */}
       {isMyTurn && !gameOver && (
-        <div className="w-full max-w-lg bg-card border-2 border-foreground rounded-[12px] p-3 shadow-[4px_4px_0px_0px_#3d2e1e]">
+        <div className="w-full max-w-lg bg-card/85 backdrop-blur-sm border-2 border-foreground/40 rounded-[12px] p-3 shadow-[4px_4px_0px_0px_rgba(26,17,8,0.4)]">
           <div className="text-xs text-muted-foreground font-medium mb-2">{t('selectPiece')}</div>
           <div className="flex flex-wrap gap-2">
             {(['queen', 'spider', 'beetle', 'grasshopper', 'ant'] as HivePieceType[]).map((pt) => {

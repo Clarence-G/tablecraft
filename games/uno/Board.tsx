@@ -1,5 +1,7 @@
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
+import { useGameHeaderStatus } from '@repo/game-ui';
+import { PlayingCard } from '@repo/game-ui/card';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -57,26 +59,18 @@ function UnoCardFace({
   const color = getCardColor(serialized);
   const { className: colorClass, style: colorStyle } = getCardStyle(color);
   const label = getCardLabel(serialized);
-  const isSmall = size === 'small';
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <PlayingCard
+      size={size === 'small' ? 'sm' : 'md'}
+      backgroundClass={`${colorClass} text-card`}
+      corner={label}
+      center={label}
+      selected={selected}
       disabled={disabled}
+      onClick={onClick}
       style={colorStyle}
-      className={[
-        'border-2 rounded-[10px] font-bold flex flex-col items-center justify-center transition-all',
-        colorClass,
-        isSmall ? 'w-10 h-14 text-xs' : 'w-16 h-24 sm:w-20 sm:h-28 text-base sm:text-lg',
-        selected ? 'shadow-[0px_-4px_0px_0px_#1a1108] -translate-y-2' : '',
-        disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer hover:-translate-y-1',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-    >
-      <span className="leading-none">{label}</span>
-    </button>
+    />
   );
 }
 
@@ -132,6 +126,7 @@ export function Board({
 
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = state.phase === 'finished';
+  useGameHeaderStatus(gameOver ? undefined : state.currentPlayer);
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
 
   const topCard = state.topCard;
@@ -173,7 +168,7 @@ export function Board({
 
   return (
     <div
-      className="min-h-screen text-foreground flex flex-col p-3 sm:p-4 max-w-lg mx-auto"
+      className="flex-1 text-foreground flex flex-col p-3 sm:p-4 max-w-lg mx-auto w-full"
       data-testid="game-board"
     >
       {/* Color picker modal */}
@@ -198,23 +193,21 @@ export function Board({
         })}
       </div>
 
-      {/* Turn indicator */}
-      <div className="text-center text-sm text-muted-foreground mb-3">
-        {gameOver
-          ? `${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`
-          : isMyTurn
-            ? t('yourTurn')
-            : `${t('waiting')} ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
-      </div>
+      {/* Winner banner (turn state lives in header) */}
+      {gameOver && (
+        <div className="text-center text-sm text-card font-semibold mb-3">
+          {`${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`}
+        </div>
+      )}
 
       {/* Center area: discard pile + color indicator */}
       <div className="flex items-center justify-center gap-6 mb-4">
         {/* Draw pile */}
         <div className="flex flex-col items-center gap-1">
-          <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-[10px] border-2 border-foreground bg-muted flex items-center justify-center text-muted-foreground font-bold text-xs shadow-[4px_4px_0px_0px_#3d2e1e]">
+          <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-[10px] border-2 border-card/40 bg-card/20 backdrop-blur-sm flex items-center justify-center text-card font-bold text-xs shadow-[4px_4px_0px_0px_#1a1108]">
             {state.drawPileCount}
           </div>
-          <span className="text-xs text-muted-foreground">{t('drawPile')}</span>
+          <span className="text-xs text-card/70">{t('drawPile')}</span>
         </div>
 
         {/* Discard pile top card */}
@@ -222,31 +215,31 @@ export function Board({
           {topCard !== '' ? (
             <UnoCardFace serialized={topCard} size="normal" />
           ) : (
-            <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-[10px] border-2 border-border bg-muted" />
+            <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-[10px] border-2 border-card/30 bg-card/10 backdrop-blur-sm" />
           )}
-          <span className="text-xs text-muted-foreground">{t('discardPile')}</span>
+          <span className="text-xs text-card/70">{t('discardPile')}</span>
         </div>
 
         {/* Active color (shown when top card is wild) */}
         {topCardIsWild && (
           <div className="flex flex-col items-center gap-1">
             <ColorDot color={state.activeColor} />
-            <span className="text-xs text-muted-foreground">{t('currentColor')}</span>
+            <span className="text-xs text-card/70">{t('currentColor')}</span>
           </div>
         )}
 
         {/* Direction indicator */}
         <div className="flex flex-col items-center gap-1">
-          <span className="text-lg font-bold text-foreground">
+          <span className="text-lg font-bold text-card">
             {state.direction === 1 ? '>' : '<'}
           </span>
-          <span className="text-xs text-muted-foreground">{t('direction')}</span>
+          <span className="text-xs text-card/70">{t('direction')}</span>
         </div>
       </div>
 
       {/* My Hand */}
       {!gameOver && (
-        <div className="bg-card rounded-[12px] border-2 border-foreground p-3 shadow-[4px_4px_0px_0px_#3d2e1e] mb-3">
+        <div className="bg-card/90 backdrop-blur-sm text-foreground rounded-[12px] border-2 border-card/40 p-3 shadow-[4px_4px_0px_0px_#1a1108] mb-3">
           <div className="text-xs font-medium text-muted-foreground mb-2">
             {t('yourHand')} ({state.myHand.length} {t('cards')})
           </div>

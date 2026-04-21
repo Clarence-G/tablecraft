@@ -1,6 +1,6 @@
 import { IntersectionBoard } from '@repo/game-ui/board';
 import { GameOverModal } from '@repo/game-ui/feedback';
-import { PlayerBadge } from '@repo/game-ui/player';
+import { useGameHeaderStatus } from '@repo/game-ui';
 import type { BoardProps } from '@repo/shared';
 import { useTranslation } from 'react-i18next';
 import type { Action, PlayerView } from './shared';
@@ -26,33 +26,19 @@ export function Board({
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
   const loserPlayer = players.find((p) => p.id !== state.winner);
 
+  useGameHeaderStatus(state.winner ? undefined : state.currentPlayer);
+
   return (
     <div
-      className="min-h-screen text-foreground flex flex-col items-center justify-center gap-4 p-4"
+      className="flex-1 text-foreground flex flex-col items-center justify-center gap-4 p-4 w-full"
       data-testid="game-board"
     >
-      {/* Players */}
-      <div className="flex gap-4">
-        {players.map((p) => (
-          <PlayerBadge
-            key={p.id}
-            player={p}
-            isCurrentTurn={state.currentPlayer === p.id}
-            isMe={p.id === myId}
-          />
-        ))}
-      </div>
+      {state.winner && (
+        <div className="text-sm font-semibold text-warning">
+          {`${playerNames[state.winner] ?? state.winner} ${t('won')}`}
+        </div>
+      )}
 
-      {/* Turn indicator */}
-      <div className="text-sm text-muted-foreground font-medium">
-        {state.winner
-          ? `${playerNames[state.winner] ?? state.winner} ${t('won')}`
-          : isMyTurn
-            ? t('yourTurn')
-            : `${t('waiting')} ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
-      </div>
-
-      {/* Board */}
       <IntersectionBoard
         size={BOARD_SIZE}
         stones={state.board}
@@ -62,15 +48,13 @@ export function Board({
         onPlace={(r, c) => sendAction({ type: 'place', row: r, col: c })}
       />
 
-      {/* My stone indicator */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium bg-card border-2 border-border rounded-[8px] px-3 py-1.5">
+      <div className="flex items-center gap-2 text-sm font-medium bg-foreground/85 text-card border-2 border-foreground rounded-[8px] px-3 py-1.5 shadow-button">
         <div
           className={`w-4 h-4 rounded-full border ${state.myStone === 'black' ? 'bg-[#1a1108] border-[#3d2e1e]' : 'bg-white border-[#c4b8a8]'}`}
         />
         <span>{state.myStone === 'black' ? t('playBlack') : t('playWhite')}</span>
       </div>
 
-      {/* Game over modal */}
       {state.winner && loserPlayer && (
         <GameOverModal
           rankings={[state.winner, loserPlayer.id]}

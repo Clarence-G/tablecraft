@@ -1,5 +1,8 @@
 import type { z } from 'zod';
 
+/** Visual surface of the play area (Zone C backdrop). */
+export type SurfaceKind = 'felt' | 'water' | 'wood' | 'marble' | 'parchment';
+
 /** 游戏元信息 */
 export interface GameMeta {
   id: string;
@@ -19,6 +22,8 @@ export interface GameMeta {
   rules?: string;
   /** Machine-readable rules for agents (action format, view schema, error cases) */
   agentRules?: string;
+  /** Visual surface for the play area. Defaults to 'marble' if omitted. */
+  surface?: SurfaceKind;
 }
 
 /** 引擎提供给游戏逻辑的上下文 */
@@ -81,6 +86,7 @@ export interface ClientGamePlugin {
     | 'tags'
     | 'icon'
     | 'estimatedMinutes'
+    | 'surface'
   >;
   Board: React.LazyExoticComponent<React.ComponentType<any>> | React.ComponentType<any>;
 }

@@ -82,9 +82,6 @@ export function App() {
         userId={userId}
         room={roomCtx.room}
         game={game}
-        onReturnToRoom={() => {
-          roomCtx.restart();
-        }}
         onReturnToLobby={() => {
           roomCtx.leave();
           setRoomId(null);

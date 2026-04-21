@@ -1,5 +1,6 @@
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
+import { useGameHeaderStatus } from '@repo/game-ui';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,19 +23,19 @@ type CellKind = 'water' | 'ship' | 'hit' | 'miss' | 'preview' | 'preview-invalid
 function cellClass(kind: CellKind): string {
   switch (kind) {
     case 'water':
-      return 'bg-muted border-border';
+      return 'bg-card/10 border-card/20';
     case 'ship':
       return 'bg-[#2563eb] border-[#1a1108]';
     case 'hit':
       return 'bg-[#d94040] border-[#1a1108]';
     case 'miss':
-      return 'bg-secondary border-border';
+      return 'bg-card/40 border-card/30';
     case 'preview':
       return 'bg-[#2563eb]/60 border-[#2563eb]';
     case 'preview-invalid':
       return 'bg-[#d94040]/40 border-[#d94040]';
     default:
-      return 'bg-muted border-border';
+      return 'bg-card/10 border-card/20';
   }
 }
 
@@ -69,7 +70,7 @@ function PlacementGrid({
 }: PlacementGridProps) {
   return (
     <div
-      className="inline-grid border-2 border-foreground shadow-[4px_4px_0px_0px_#3d2e1e]"
+      className="inline-grid border-2 border-card/50 shadow-[4px_4px_0px_0px_#1a1108]"
       style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)` }}
     >
       {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, idx) => {
@@ -118,7 +119,7 @@ function BattleGrid({ label, shipGrid, shotsGrid, clickable, onCellClick }: Batt
         {label}
       </div>
       <div
-        className="inline-grid border-2 border-foreground shadow-[4px_4px_0px_0px_#3d2e1e]"
+        className="inline-grid border-2 border-card/50 shadow-[4px_4px_0px_0px_#1a1108]"
         style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)` }}
       >
         {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, idx) => {
@@ -246,6 +247,7 @@ export function Board({
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = state.phase === 'finished';
+  useGameHeaderStatus(gameOver ? undefined : state.currentPlayer);
 
   // Compute preview cells for placement grid
   const previewCells = new Set<number>();
@@ -330,7 +332,7 @@ export function Board({
 
   return (
     <div
-      className="min-h-screen text-foreground flex flex-col items-center p-3 sm:p-4 gap-3"
+      className="flex-1 text-foreground flex flex-col items-center p-3 sm:p-4 gap-3 w-full"
       data-testid="game-board"
     >
       {/* Players */}
@@ -433,13 +435,6 @@ export function Board({
       {/* Phase: Playing */}
       {state.phase === 'playing' && (
         <div className="flex flex-col items-center gap-3 w-full">
-          {/* Turn indicator */}
-          <div className="text-sm font-medium text-muted-foreground">
-            {isMyTurn
-              ? t('yourTurnFire')
-              : `${t('waiting')} ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
-          </div>
-
           {/* Sunk indicators */}
           <div className="flex gap-4 text-xs">
             <SunkIndicator

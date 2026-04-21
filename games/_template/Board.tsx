@@ -5,7 +5,7 @@ export function Board({ state, myId, sendAction, lastReject }: BoardProps<Player
   const isMyTurn = state.currentPlayer === myId;
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center gap-4">
+    <div className="flex-1 text-foreground flex flex-col items-center justify-center gap-4 p-4 w-full">
       <h1 className="text-2xl font-bold">游戏模板</h1>
       <p className="text-gray-400">{isMyTurn ? '你的回合' : `等待 ${state.currentPlayer} 行动`}</p>
       {isMyTurn && (

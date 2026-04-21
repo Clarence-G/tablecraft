@@ -1,5 +1,7 @@
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
+import { useGameHeaderStatus } from '@repo/game-ui';
+import { PlayingCard } from '@repo/game-ui/card';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -24,46 +26,20 @@ function CardFace({
 }) {
   const isSmall = size === 'small';
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <PlayingCard
+      size={isSmall ? 'sm' : 'lg'}
+      corner={value}
+      center={t(`cardNames.${value}`)}
+      subtitle={!isSmall ? t(`cardDescriptions.${value}`) : undefined}
+      selected={selected}
       disabled={disabled}
-      className={`
-        relative flex flex-col items-center justify-center rounded-xl border-2 transition-all
-        ${isSmall ? 'w-10 h-14 text-xs' : 'w-20 h-28 sm:w-24 sm:h-32'}
-        ${
-          selected
-            ? 'border-ring bg-primary/10 ring-2 ring-ring scale-105'
-            : 'border-border bg-card hover:border-foreground/30'
-        }
-        ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
-      `}
-    >
-      <span className={`font-bold ${isSmall ? 'text-sm' : 'text-2xl sm:text-3xl'}`}>{value}</span>
-      <span className={`font-medium ${isSmall ? 'text-[10px]' : 'text-xs sm:text-sm'}`}>
-        {t(`cardNames.${value}`)}
-      </span>
-      {!isSmall && (
-        <span className="text-[10px] text-muted-foreground text-center px-1 mt-1 leading-tight hidden sm:block">
-          {t(`cardDescriptions.${value}`)}
-        </span>
-      )}
-    </button>
+      onClick={onClick}
+    />
   );
 }
 
 function CardBack({ size = 'small' }: { size?: 'small' | 'normal' }) {
-  const isSmall = size === 'small';
-  return (
-    <div
-      className={`
-        flex items-center justify-center rounded-xl border-2 border-border bg-muted
-        ${isSmall ? 'w-7 h-10' : 'w-20 h-28'}
-      `}
-    >
-      <span className={`text-muted-foreground ${isSmall ? 'text-xs' : 'text-lg'}`}>?</span>
-    </div>
-  );
+  return <PlayingCard size={size === 'small' ? 'sm' : 'lg'} faceDown />;
 }
 
 // ---- Main Board ----
@@ -83,6 +59,7 @@ export function Board({
   const isMyTurn = state.currentPlayer === myId;
   const amAlive = state.players.find((p) => p.id === myId)?.alive ?? false;
   const gameOver = !!state.winner;
+  useGameHeaderStatus(gameOver ? undefined : state.currentPlayer);
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
 
   // Determine if selected card needs a target
@@ -142,7 +119,7 @@ export function Board({
 
   return (
     <div
-      className="min-h-screen text-foreground flex flex-col p-3 sm:p-4 max-w-lg mx-auto"
+      className="flex-1 text-foreground flex flex-col p-3 sm:p-4 max-w-lg mx-auto w-full"
       data-testid="game-board"
     >
       {/* Notifications */}
@@ -205,16 +182,14 @@ export function Board({
         })}
       </div>
 
-      {/* Turn indicator */}
-      <div className="text-center text-sm text-muted-foreground mb-2">
-        {gameOver
-          ? `${playerNames[state.winner!] ?? state.winner} ${t('won')}`
-          : !amAlive
-            ? t('eliminatedWatching')
-            : isMyTurn
-              ? t('yourTurnPlay')
-              : `${t('waiting')} ${playerNames[state.currentPlayer] ?? state.currentPlayer}...`}
-      </div>
+      {/* Game-specific status (winner / eliminated — turn lives in header) */}
+      {(gameOver || !amAlive) && (
+        <div className="text-center text-sm text-muted-foreground mb-2">
+          {gameOver
+            ? `${playerNames[state.winner!] ?? state.winner} ${t('won')}`
+            : t('eliminatedWatching')}
+        </div>
+      )}
 
       {/* Deck info */}
       <div className="text-center text-xs text-muted-foreground mb-3">
@@ -228,7 +203,7 @@ export function Board({
       </div>
 
       {/* Play Log */}
-      <div className="flex-1 bg-card rounded-xl ring-1 ring-foreground/10 p-3 mb-3 overflow-y-auto max-h-48 sm:max-h-64">
+      <div className="flex-1 bg-card/60 backdrop-blur-sm rounded-xl ring-1 ring-foreground/15 p-3 mb-3 overflow-y-auto max-h-48 sm:max-h-64">
         <div className="text-xs font-medium text-muted-foreground mb-2">{t('playHistory')}</div>
         {state.playLog.length === 0 ? (
           <div className="text-xs text-muted-foreground/60 text-center py-4">{t('noHistory')}</div>
@@ -272,7 +247,7 @@ export function Board({
 
       {/* My Hand */}
       {amAlive && !gameOver && (
-        <div className="bg-card rounded-xl ring-1 ring-foreground/10 p-3">
+        <div className="bg-card/60 backdrop-blur-sm rounded-xl ring-1 ring-foreground/15 p-3">
           <div className="text-xs font-medium text-muted-foreground mb-2">{t('yourHand')}</div>
           <div className="flex gap-3 justify-center mb-3">
             {state.hand.map((card, i) => {
@@ -381,7 +356,7 @@ export function Board({
 
       {/* Eliminated spectator hint */}
       {!amAlive && !gameOver && (
-        <div className="text-center text-sm text-muted-foreground bg-card rounded-xl ring-1 ring-foreground/10 p-4">
+        <div className="text-center text-sm text-muted-foreground bg-card/60 backdrop-blur-sm rounded-xl ring-1 ring-foreground/15 p-4">
           {t('eliminatedWatching2')}
         </div>
       )}

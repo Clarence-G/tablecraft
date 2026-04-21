@@ -1,5 +1,6 @@
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
+import { useGameHeaderStatus } from '@repo/game-ui';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -154,6 +155,7 @@ export function Board({
 
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = state.phase === 'finished';
+  useGameHeaderStatus(gameOver ? undefined : state.currentPlayer);
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
 
   const myPlayerScore = state.players.find((p) => p.id === myId);
@@ -181,7 +183,7 @@ export function Board({
 
   return (
     <div
-      className="min-h-screen text-foreground flex flex-col p-3 sm:p-4 max-w-2xl mx-auto"
+      className="flex-1 text-foreground flex flex-col p-3 sm:p-4 max-w-2xl mx-auto w-full"
       data-testid="game-board"
     >
       {/* Header: Players */}
@@ -196,15 +198,19 @@ export function Board({
         ))}
       </div>
 
-      {/* Status */}
+      {/* Status (round + rolls info — turn lives in header) */}
       <div className="text-center text-sm text-muted-foreground mb-3">
         {gameOver
           ? `${t('gameOver')} ${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`
           : isMyTurn
-            ? t('yourTurnRound', { round: state.roundNumber, rolls: state.rollsLeft })
-            : t('waitingPlayer', {
-                name: playerNames[state.currentPlayer] ?? state.currentPlayer,
+            ? t('roundInfoMine', {
                 round: state.roundNumber,
+                rolls: state.rollsLeft,
+                defaultValue: '第 {{round}}/13 轮 · 剩余投掷: {{rolls}}',
+              })
+            : t('roundInfoOther', {
+                round: state.roundNumber,
+                defaultValue: '第 {{round}}/13 轮',
               })}
       </div>
 
