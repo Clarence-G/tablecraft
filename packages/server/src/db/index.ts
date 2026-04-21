@@ -55,5 +55,3 @@ export function initDb(): void {
     CREATE INDEX IF NOT EXISTS idx_rooms_status ON rooms(status);
   `);
 }
-
-export { sqlite };

@@ -1,12 +1,30 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src",
+    "noEmit": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
-    "target": "ES2022"
+    "target": "ES2022",
+    "baseUrl": ".",
+    "paths": {
+      "@repo/shared": ["../shared/src"],
+      "@repo/shared/*": ["../shared/src/*"],
+      "@repo/game-ui": ["../game-ui/src"],
+      "@repo/game-ui/*": ["../game-ui/src/*"],
+      "@games/*/shared": ["../../games/*/shared.ts"],
+      "@games/*/logic": ["../../games/*/logic.ts"],
+      "@games/*/board": ["../../games/*/Board.tsx"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "../../games"],
+  "exclude": [
+    "../../games/_template",
+    "../../games/client-registry.ts",
+    "../../games/**/Board.tsx",
+    "../../games/**/*.test.ts",
+    "../../games/**/*.test.tsx",
+    "../../games/**/node_modules",
+    "dist"
+  ]
 }
