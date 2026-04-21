@@ -1,6 +1,6 @@
+import { useGameHeaderStatus } from '@repo/game-ui';
 import { IntersectionBoard } from '@repo/game-ui/board';
 import { GameOverModal } from '@repo/game-ui/feedback';
-import { useGameHeaderStatus } from '@repo/game-ui';
 import type { BoardProps } from '@repo/shared';
 import { useTranslation } from 'react-i18next';
 import type { Action, PlayerView } from './shared';
@@ -14,12 +14,7 @@ const STAR_POINTS: [number, number][] = [
   [11, 11],
 ];
 
-export function Board({
-  state,
-  myId,
-  players,
-  sendAction,
-}: BoardProps<PlayerView, Action>) {
+export function Board({ state, myId, players, sendAction }: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('gomoku');
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = !!state.winner;

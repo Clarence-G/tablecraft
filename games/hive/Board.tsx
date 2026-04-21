@@ -1,6 +1,6 @@
+import { useGameHeaderStatus } from '@repo/game-ui';
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
-import { useGameHeaderStatus } from '@repo/game-ui';
 import type { BoardProps } from '@repo/shared';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -115,12 +115,7 @@ function HexTile({ x, y, size, tile, selected, isMoveable, onClick }: HexTilePro
 
 // ============ Board Component ============
 
-export function Board({
-  state,
-  myId,
-  players,
-  sendAction,
-}: BoardProps<PlayerView, Action>) {
+export function Board({ state, myId, players, sendAction }: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('hive');
   const [selectedPieceType, setSelectedPieceType] = useState<HivePieceType | null>(null);
   const [selectedTileCoord, setSelectedTileCoord] = useState<HexCoord | null>(null);
@@ -458,11 +453,7 @@ export function Board({
 
       {/* Game over modal */}
       {gameOver && rankings && (
-        <GameOverModal
-          rankings={rankings}
-          playerNames={playerNames}
-          myId={myId}
-        />
+        <GameOverModal rankings={rankings} playerNames={playerNames} myId={myId} />
       )}
     </div>
   );

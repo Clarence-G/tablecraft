@@ -21,18 +21,14 @@ describe('GameHeader', () => {
 
   it('fires onBack when back button clicked', () => {
     const onBack = vi.fn();
-    render(
-      <GameHeader gameName="x" icon="Target" roomId="A" elapsedSeconds={0} onBack={onBack} />,
-    );
+    render(<GameHeader gameName="x" icon="Target" roomId="A" elapsedSeconds={0} onBack={onBack} />);
     fireEvent.click(screen.getByLabelText(/back/i));
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it('fires onExit when exit button clicked', () => {
     const onExit = vi.fn();
-    render(
-      <GameHeader gameName="x" icon="Target" roomId="A" elapsedSeconds={0} onExit={onExit} />,
-    );
+    render(<GameHeader gameName="x" icon="Target" roomId="A" elapsedSeconds={0} onExit={onExit} />);
     fireEvent.click(screen.getByRole('button', { name: /exit/i }));
     expect(onExit).toHaveBeenCalledTimes(1);
   });

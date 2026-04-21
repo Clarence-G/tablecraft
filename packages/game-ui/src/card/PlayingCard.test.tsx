@@ -1,5 +1,5 @@
+import { fireEvent, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { render, fireEvent } from '@testing-library/react';
 import { PlayingCard } from './PlayingCard';
 
 describe('PlayingCard', () => {
@@ -19,9 +19,7 @@ describe('PlayingCard', () => {
 
   it('does not fire onClick when disabled', () => {
     const onClick = vi.fn();
-    const { getByRole } = render(
-      <PlayingCard corner="A" center="♠" onClick={onClick} disabled />,
-    );
+    const { getByRole } = render(<PlayingCard corner="A" center="♠" onClick={onClick} disabled />);
     fireEvent.click(getByRole('button'));
     expect(onClick).not.toHaveBeenCalled();
   });
@@ -34,9 +32,7 @@ describe('PlayingCard', () => {
   });
 
   it('applies ring + lift classes when selected', () => {
-    const { container } = render(
-      <PlayingCard corner="A" center="♠" onClick={() => {}} selected />,
-    );
+    const { container } = render(<PlayingCard corner="A" center="♠" onClick={() => {}} selected />);
     const btn = container.querySelector('button');
     expect(btn?.className).toMatch(/ring-2/);
     expect(btn?.className).toMatch(/-translate-y-2/);

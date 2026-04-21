@@ -1,17 +1,12 @@
+import { useGameHeaderStatus } from '@repo/game-ui';
 import { DiscBoard, PLAYER_DISC_BG } from '@repo/game-ui/board';
 import { GameOverModal } from '@repo/game-ui/feedback';
-import { useGameHeaderStatus } from '@repo/game-ui';
 import type { BoardProps } from '@repo/shared';
 import { useTranslation } from 'react-i18next';
 import type { Action, PlayerView } from './shared';
 import { COLS, ROWS } from './shared';
 
-export function Board({
-  state,
-  myId,
-  players,
-  sendAction,
-}: BoardProps<PlayerView, Action>) {
+export function Board({ state, myId, players, sendAction }: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('connect-four');
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = !!state.winner || state.isDraw;
@@ -56,11 +51,7 @@ export function Board({
         />
       )}
       {state.isDraw && (
-        <GameOverModal
-          rankings={players.map((p) => p.id)}
-          playerNames={playerNames}
-          myId={myId}
-        />
+        <GameOverModal rankings={players.map((p) => p.id)} playerNames={playerNames} myId={myId} />
       )}
     </div>
   );

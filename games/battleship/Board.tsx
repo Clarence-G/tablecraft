@@ -1,6 +1,6 @@
+import { useGameHeaderStatus } from '@repo/game-ui';
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
-import { useGameHeaderStatus } from '@repo/game-ui';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -229,12 +229,7 @@ function SunkIndicator({
 
 // ---- Main Board ----
 
-export function Board({
-  state,
-  myId,
-  players,
-  sendAction,
-}: BoardProps<PlayerView, Action>) {
+export function Board({ state, myId, players, sendAction }: BoardProps<PlayerView, Action>) {
   const [selectedShipIdx, setSelectedShipIdx] = useState<number | null>(null);
   const [rotation, setRotation] = useState(0);
   const [hoverCell, setHoverCell] = useState<{ row: number; col: number } | null>(null);

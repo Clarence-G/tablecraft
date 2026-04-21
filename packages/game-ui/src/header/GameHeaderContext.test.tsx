@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { render, act } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { useEffect } from 'react';
+import { describe, expect, it } from 'vitest';
 import { GameHeaderProvider, useGameHeaderStatus, useHeaderStatus } from './GameHeaderContext';
 
 function Probe({ player, phase }: { player?: string; phase?: string }) {

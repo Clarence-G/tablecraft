@@ -1,6 +1,6 @@
+import { useGameHeaderStatus } from '@repo/game-ui';
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
-import { useGameHeaderStatus } from '@repo/game-ui';
 import type { BoardProps } from '@repo/shared';
 import { Coins, Crown, Gem, ShoppingCart, Sparkles, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
@@ -913,13 +913,7 @@ export function Board({
       )}
 
       {/* Game over */}
-      {gameOver && (
-        <GameOverModal
-          rankings={rankingOrder}
-          playerNames={playerNames}
-          myId={myId}
-        />
-      )}
+      {gameOver && <GameOverModal rankings={rankingOrder} playerNames={playerNames} myId={myId} />}
     </div>
   );
 }

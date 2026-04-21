@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import type { ActionResult, GameContext, GameLogic, GameMeta } from './types/engine';
 import { buildActionSchema, buildGameDetail } from './plugin-meta';
+import type { ActionResult, GameContext, GameLogic, GameMeta } from './types/engine';
 
-function makeStubLogic<T extends z.ZodTypeAny>(actions: T): GameLogic<unknown, z.infer<T>, unknown> {
+function makeStubLogic<T extends z.ZodTypeAny>(
+  actions: T,
+): GameLogic<unknown, z.infer<T>, unknown> {
   return {
     actions,
     setup(): unknown {

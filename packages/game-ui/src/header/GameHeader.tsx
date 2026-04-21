@@ -1,8 +1,8 @@
-import { ArrowLeft, icons, LogOut, ScrollText, Settings } from 'lucide-react';
+import type { PlayerInfo } from '@repo/shared';
 import Avatar from 'boring-avatars';
+import { ArrowLeft, LogOut, ScrollText, Settings, icons } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { PlayerInfo } from '@repo/shared';
 
 export interface GameHeaderProps {
   gameName: string;
@@ -76,12 +76,7 @@ function CompactPlayer({
       }`}
     >
       <div className="relative shrink-0">
-        <Avatar
-          name={player.name}
-          size={24}
-          variant="beam"
-          colors={AVATAR_COLORS}
-        />
+        <Avatar name={player.name} size={24} variant="beam" colors={AVATAR_COLORS} />
         {!player.connected && (
           <span className="absolute inset-0 rounded-full bg-card/70 border border-border" />
         )}
@@ -131,7 +126,7 @@ export function GameHeader({
     ? isMyTurn
       ? t('header.yourTurn', { defaultValue: '你的回合' })
       : t('header.playerTurn', {
-          defaultValue: "{{name}} 的回合",
+          defaultValue: '{{name}} 的回合',
           name: currentPlayer.name,
         })
     : null;

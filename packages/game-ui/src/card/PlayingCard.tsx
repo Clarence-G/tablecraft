@@ -97,7 +97,7 @@ export function PlayingCard({
     SIZE[size],
     'relative shrink-0 border-2 shadow-button transition-all',
     'flex flex-col items-stretch justify-between',
-    faceDown ? 'bg-primary border-[#1a1108]' : backgroundClass ?? 'bg-card',
+    faceDown ? 'bg-primary border-[#1a1108]' : (backgroundClass ?? 'bg-card'),
     faceDown ? '' : ACCENT_BORDER[accent],
     isButton && !disabled
       ? 'hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active'
@@ -135,7 +135,9 @@ export function PlayingCard({
       >
         {center !== undefined && <div className="font-bold">{center}</div>}
         {subtitle !== undefined && (
-          <div className={`text-[10px] font-medium opacity-80 ${size === 'lg' ? 'sm:text-xs' : ''}`}>
+          <div
+            className={`text-[10px] font-medium opacity-80 ${size === 'lg' ? 'sm:text-xs' : ''}`}
+          >
             {subtitle}
           </div>
         )}

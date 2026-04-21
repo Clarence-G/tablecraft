@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
 import type { SurfaceKind } from '@repo/shared';
+import type { ReactNode } from 'react';
 
 export type { SurfaceKind };
 

@@ -1,7 +1,7 @@
-import { GameOverModal } from '@repo/game-ui/feedback';
-import { PlayerBadge } from '@repo/game-ui/player';
 import { useGameHeaderStatus } from '@repo/game-ui';
 import { PlayingCard } from '@repo/game-ui/card';
+import { GameOverModal } from '@repo/game-ui/feedback';
+import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';

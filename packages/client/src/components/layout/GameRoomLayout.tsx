@@ -1,7 +1,3 @@
-import { GameHeader, GameHeaderProvider, GameTable, useHeaderStatus } from '@repo/game-ui';
-import type { PlayerInfo, SurfaceKind } from '@repo/shared';
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -11,6 +7,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { GameHeader, GameHeaderProvider, GameTable, useHeaderStatus } from '@repo/game-ui';
+import type { PlayerInfo, SurfaceKind } from '@repo/shared';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export interface GameRoomLayoutProps {
   gameId: string;

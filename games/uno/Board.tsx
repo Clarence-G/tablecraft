@@ -1,7 +1,7 @@
-import { GameOverModal } from '@repo/game-ui/feedback';
-import { PlayerBadge } from '@repo/game-ui/player';
 import { useGameHeaderStatus } from '@repo/game-ui';
 import { PlayingCard } from '@repo/game-ui/card';
+import { GameOverModal } from '@repo/game-ui/feedback';
+import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -114,12 +114,7 @@ function ColorPickerModal({ onChoose }: { onChoose: (c: UnoColor) => void }) {
 
 // ---- Main Board ----
 
-export function Board({
-  state,
-  myId,
-  players,
-  sendAction,
-}: BoardProps<PlayerView, Action>) {
+export function Board({ state, myId, players, sendAction }: BoardProps<PlayerView, Action>) {
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [pendingWild, setPendingWild] = useState<number | null>(null);
   const { t } = useTranslation('uno');
@@ -230,9 +225,7 @@ export function Board({
 
         {/* Direction indicator */}
         <div className="flex flex-col items-center gap-1">
-          <span className="text-lg font-bold text-card">
-            {state.direction === 1 ? '>' : '<'}
-          </span>
+          <span className="text-lg font-bold text-card">{state.direction === 1 ? '>' : '<'}</span>
           <span className="text-xs text-card/70">{t('direction')}</span>
         </div>
       </div>
