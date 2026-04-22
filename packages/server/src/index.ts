@@ -14,8 +14,8 @@ import { setupHandlers } from './socket/handlers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Init DB
-initDb();
+// Init DB (runs drizzle migrations)
+await initDb();
 
 const app = express();
 const httpServer = createServer(app);
