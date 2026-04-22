@@ -48,25 +48,32 @@ export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}
 
 /**
  * Fire-and-forget guest→user merge. Called once after sign-up/sign-in so the
- * guest's ledger rows roll into the new account. Swallows 409 (already
- * merged, or guestId taken by another user) because the call is idempotent
- * from the caller's perspective — the UI has already navigated forward.
+ * guest's ledger rows roll into the new account. Silently absorbs the two
+ * idempotent 409 codes (`ALREADY_CLAIMED`, `GUEST_ALREADY_CLAIMED`) because
+ * from the caller's perspective the merge has effectively already happened.
+ * Any other error is surfaced via `console.warn` so ops can see auth/network
+ * failures — but we still return `null` so login flows don't block on it.
+ *
+ * Returns `{ mergedRows }` on success, `null` when the call was skipped or
+ * failed (both success paths are identical to Login.tsx / Register.tsx).
  */
-export async function claimGuest(guestId: string): Promise<void> {
+export async function claimGuest(guestId: string): Promise<{ mergedRows: number } | null> {
   try {
     const data = await apiFetch<{ mergedRows: number }>('/api/me/claim-guest', {
       method: 'POST',
       body: JSON.stringify({ guestId }),
     });
     console.info(`[claim-guest] merged ${data.mergedRows} rows for ${guestId}`);
+    return data;
   } catch (err) {
     if (
       err instanceof ApiError &&
       (err.code === 'ALREADY_CLAIMED' || err.code === 'GUEST_ALREADY_CLAIMED')
     ) {
       console.info(`[claim-guest] skipped (${err.code})`);
-      return;
+      return null;
     }
-    console.info('[claim-guest] failed', err);
+    console.warn('[claim-guest] failed', err);
+    return null;
   }
 }

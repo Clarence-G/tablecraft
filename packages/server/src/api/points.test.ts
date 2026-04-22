@@ -220,6 +220,47 @@ describe('points REST routes', () => {
     expect(resp.status).toBe(401);
   });
 
+  it('POST /api/me/claim-guest 400 INVALID_BODY on empty / non-string guestId', async () => {
+    const { cookie } = await signUp('a@e.com', 'correct-horse-battery-staple', 'A');
+    // Empty body
+    const empty = await fetch(`${baseUrl}/api/me/claim-guest`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie },
+      body: JSON.stringify({}),
+    });
+    expect(empty.status).toBe(400);
+    expect((await empty.json()).error.code).toBe('INVALID_BODY');
+
+    // Non-string guestId
+    const numeric = await fetch(`${baseUrl}/api/me/claim-guest`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie },
+      body: JSON.stringify({ guestId: 42 }),
+    });
+    expect(numeric.status).toBe(400);
+    expect((await numeric.json()).error.code).toBe('INVALID_BODY');
+  });
+
+  it('POST /api/me/claim-guest races resolve to exactly one 200 + one 409', async () => {
+    // Two distinct signed-in users racing on the same guestId. Pre-check
+    // guards can both pass, so this exercises the catch-on-unique-violation
+    // path in the handler's transaction.
+    const a = await signUp('a@e.com', 'correct-horse-battery-staple', 'A');
+    const b = await signUp('b@e.com', 'correct-horse-battery-staple', 'B');
+
+    const fire = (cookie: string) =>
+      fetch(`${baseUrl}/api/me/claim-guest`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', cookie },
+        body: JSON.stringify({ guestId: 'guest_shared' }),
+      });
+    const [r1, r2] = await Promise.all([fire(a.cookie), fire(b.cookie)]);
+    const statuses = [r1.status, r2.status].sort();
+    expect(statuses).toEqual([200, 409]);
+    const loser = r1.status === 409 ? r1 : r2;
+    expect((await loser.json()).error.code).toBe('GUEST_ALREADY_CLAIMED');
+  });
+
   it('GET /api/leaderboard returns top-N sorted desc', async () => {
     const a = await signUp('a@e.com', 'correct-horse-battery-staple', 'A');
     const b = await signUp('b@e.com', 'correct-horse-battery-staple', 'B');

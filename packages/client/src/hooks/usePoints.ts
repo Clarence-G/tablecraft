@@ -43,6 +43,11 @@ export function usePoints(): UsePointsResult {
 
     apiFetch<PointsSummary | { points: PointsSummary }>(path, { signal: controller.signal })
       .then((resp) => {
+        // Defensive abort guard: fetch rejects aborted requests today, so this
+        // path isn't reached, but a future refactor (e.g. swapping the client,
+        // synchronous stubs in tests) could cause a resolved `.then` to race
+        // with unmount.
+        if (controller.signal.aborted) return;
         // /api/me wraps the summary in { user, points, recentGames };
         // /api/guest/:id/points returns the summary directly.
         const summary =
@@ -52,6 +57,7 @@ export function usePoints(): UsePointsResult {
         setData(summary);
       })
       .catch((err) => {
+        if (controller.signal.aborted) return;
         if (err.name === 'AbortError') return;
         setError(err instanceof Error ? err : new Error(String(err)));
         setData(null);

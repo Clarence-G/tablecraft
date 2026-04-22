@@ -17,6 +17,34 @@ function sendError(res: Response, status: number, code: string, message: string)
   res.status(status).json({ ok: false, error: { code, message } });
 }
 
+/**
+ * Detect a PG unique-violation (SQLSTATE 23505) on the `user.claimed_guest_id`
+ * column. PGlite's pg-protocol errors expose `code` and `constraint` fields
+ * directly; some wrapper layers nest the original on `cause`. We check both,
+ * then fall back to a message substring as belt-and-suspenders.
+ */
+function isClaimedGuestIdUniqueViolation(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as { code?: unknown; constraint?: unknown; message?: unknown; cause?: unknown };
+  const matchesConstraint = (code: unknown, constraint: unknown): boolean =>
+    code === '23505' &&
+    (constraint === 'user_claimed_guest_id_unique' || constraint === 'claimed_guest_id');
+  if (matchesConstraint(e.code, e.constraint)) return true;
+  if (e.cause && typeof e.cause === 'object') {
+    const c = e.cause as { code?: unknown; constraint?: unknown };
+    if (matchesConstraint(c.code, c.constraint)) return true;
+  }
+  // Fallback: message mentions both the SQLSTATE hallmark phrase and our column.
+  if (
+    typeof e.message === 'string' &&
+    e.message.includes('duplicate key value violates unique constraint') &&
+    e.message.includes('claimed_guest_id')
+  ) {
+    return true;
+  }
+  return false;
+}
+
 interface PointsSummary {
   global: number;
   byGame: Record<string, number>;
@@ -130,15 +158,33 @@ export function registerPointsRoutes(router: Router): void {
     }
 
     // Transactional merge. PGlite's drizzle adapter supports `db.transaction`.
-    const result = await db.transaction(async (tx) => {
-      const updated = await tx
-        .update(pointsLedger)
-        .set({ userId, guestId: null })
-        .where(and(eq(pointsLedger.guestId, guestId), isNull(pointsLedger.userId)))
-        .returning({ id: pointsLedger.id });
-      await tx.update(user).set({ claimedGuestId: guestId }).where(eq(user.id, userId));
-      return updated.length;
-    });
+    // The pre-checks above race: two concurrent requests can both pass them,
+    // then one hits the `user.claimed_guest_id` UNIQUE constraint inside the
+    // tx. Catch PG 23505 on that specific constraint and surface it as a 409
+    // instead of letting it bubble to the default 500 handler.
+    let result: number;
+    try {
+      result = await db.transaction(async (tx) => {
+        const updated = await tx
+          .update(pointsLedger)
+          .set({ userId, guestId: null })
+          .where(and(eq(pointsLedger.guestId, guestId), isNull(pointsLedger.userId)))
+          .returning({ id: pointsLedger.id });
+        await tx.update(user).set({ claimedGuestId: guestId }).where(eq(user.id, userId));
+        return updated.length;
+      });
+    } catch (err) {
+      if (isClaimedGuestIdUniqueViolation(err)) {
+        sendError(
+          res,
+          409,
+          'GUEST_ALREADY_CLAIMED',
+          'This guest has been merged into another account',
+        );
+        return;
+      }
+      throw err;
+    }
 
     res.json({ ok: true, data: { mergedRows: result } });
   });
