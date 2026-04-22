@@ -327,4 +327,39 @@ describe('points REST routes', () => {
     // total counts only scored users.
     expect(body.data.total).toBe(1);
   });
+
+  it('smoke: guest wins a game → signs up → claim merges → leaderboard reflects', async () => {
+    // 1. Guest "wins" two rooms' worth of points while unauthenticated.
+    await db.insert(schema.pointsLedger).values([
+      { userId: null, guestId: 'g_smoke', gameId: 'gomoku', reason: 'win', points: 10 },
+      { userId: null, guestId: 'g_smoke', gameId: 'uno', reason: 'win', points: 10 },
+    ]);
+
+    // 2. Guest signs up.
+    const { cookie, userId } = await signUp(
+      'smoke@e.com',
+      'correct-horse-battery-staple',
+      'Smoke',
+    );
+
+    // 3. Sign-up-time claim merges the guest rows onto the new user.
+    const claim = await fetch(`${baseUrl}/api/me/claim-guest`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie },
+      body: JSON.stringify({ guestId: 'g_smoke' }),
+    });
+    expect(claim.status).toBe(200);
+
+    // 4. /api/me reports the merged points.
+    const meResp = await fetch(`${baseUrl}/api/me`, { headers: { cookie } });
+    const me = await meResp.json();
+    expect(me.data.points.global).toBe(20);
+    expect(me.data.points.byGame).toEqual({ gomoku: 10, uno: 10 });
+
+    // 5. Leaderboard ranks the new user.
+    const lbResp = await fetch(`${baseUrl}/api/leaderboard`);
+    const lb = await lbResp.json();
+    expect(lb.data.entries.some((e: { userId: string }) => e.userId === userId)).toBe(true);
+    expect(lb.data.total).toBe(1);
+  });
 });
