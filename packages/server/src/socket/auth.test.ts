@@ -1,3 +1,5 @@
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
@@ -5,10 +7,8 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
-import type { AddressInfo } from 'node:net';
-import { createServer } from 'node:http';
 import { Server } from 'socket.io';
-import { io as ioClient, type Socket } from 'socket.io-client';
+import { type Socket, io as ioClient } from 'socket.io-client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as schema from '../db/schema.js';
 import { setupAuth } from './auth.js';

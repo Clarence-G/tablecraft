@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Socket } from 'socket.io-client';
 import { clientRegistry } from '../../../../games/client-registry';
+import { usePoints } from '../hooks/usePoints';
 import type { useRoom } from '../hooks/useRoom';
 import { useSession } from '../hooks/useSession';
 
@@ -48,6 +49,7 @@ export function Lobby({
   const { t, i18n } = useTranslation('common');
   const session = useSession();
   const authedUser = session.data?.user ?? null;
+  const { data: points } = usePoints();
   const gt = (gameId: string, key: string) => i18n.t(key, { ns: gameId });
 
   // Build tag translation: Chinese tag -> translated tag
@@ -162,7 +164,11 @@ export function Lobby({
           <div className="flex items-center gap-2">
             <LocaleSwitch />
             {authedUser ? (
-              <UserChip userName={authedUser.name} avatarSeed={authedUser.email ?? authedUser.id} />
+              <UserChip
+                userName={authedUser.name}
+                avatarSeed={authedUser.email ?? authedUser.id}
+                points={points?.global}
+              />
             ) : (
               <>
                 {/* Guest: avatar + inline rename + sign-in CTA */}

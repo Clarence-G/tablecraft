@@ -27,11 +27,14 @@ interface PointsSummary {
  * (user_id vs guest_id) both benefit from the existing indexes
  * `idx_points_user_created` / `idx_points_guest`.
  */
-async function fetchPointsSummary(filter: { userId?: string; guestId?: string }): Promise<PointsSummary> {
+async function fetchPointsSummary(filter: {
+  userId?: string;
+  guestId?: string;
+}): Promise<PointsSummary> {
   const whereClause =
     filter.userId !== undefined
       ? eq(pointsLedger.userId, filter.userId)
-      : eq(pointsLedger.guestId, filter.guestId!);
+      : eq(pointsLedger.guestId, filter.guestId ?? '');
 
   const rows = await db
     .select({
@@ -117,7 +120,12 @@ export function registerPointsRoutes(router: Router): void {
       .where(eq(user.claimedGuestId, guestId))
       .limit(1);
     if (other) {
-      sendError(res, 409, 'GUEST_ALREADY_CLAIMED', 'This guest has been merged into another account');
+      sendError(
+        res,
+        409,
+        'GUEST_ALREADY_CLAIMED',
+        'This guest has been merged into another account',
+      );
       return;
     }
 
@@ -206,9 +214,10 @@ export function registerPointsRoutes(router: Router): void {
 
     const gameScope = gameId ? eq(pointsLedger.gameId, gameId) : undefined;
 
-    const ownerWhere = ownerFilter.userId !== undefined
-      ? and(eq(pointsLedger.userId, ownerFilter.userId), gameScope)
-      : and(eq(pointsLedger.guestId, ownerFilter.guestId!), gameScope);
+    const ownerWhere =
+      ownerFilter.userId !== undefined
+        ? and(eq(pointsLedger.userId, ownerFilter.userId), gameScope)
+        : and(eq(pointsLedger.guestId, ownerFilter.guestId ?? ''), gameScope);
 
     const [pointsRow] = await db
       .select({ total: sql<number>`COALESCE(SUM(${pointsLedger.points}), 0)::int` })

@@ -3,6 +3,8 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useIdentity } from '../hooks/useIdentity';
+import { claimGuest } from '../lib/api';
 import { authClient } from '../lib/authClient';
 
 function GithubIcon({ className }: { className?: string }) {
@@ -21,6 +23,7 @@ interface LoginProps {
 
 export function Login({ onSuccess, onGoToRegister, onBack }: LoginProps) {
   const { t } = useTranslation('common');
+  const { guestId } = useIdentity();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +44,9 @@ export function Login({ onSuccess, onGoToRegister, onBack }: LoginProps) {
         return;
       }
       if (data) {
+        // Fire-and-forget merge of the guest's ledger rows. Errors are
+        // swallowed inside claimGuest (409s are expected on repeat logins).
+        await claimGuest(guestId);
         onSuccess();
       }
     } catch {
@@ -172,10 +178,7 @@ function mapAuthError(
   ) {
     return t('auth.errorInvalidCredentials');
   }
-  if (
-    (code.includes('EMAIL') && code.includes('IN_USE')) ||
-    code.includes('USER_ALREADY_EXISTS')
-  ) {
+  if ((code.includes('EMAIL') && code.includes('IN_USE')) || code.includes('USER_ALREADY_EXISTS')) {
     return t('auth.errorEmailInUse');
   }
   return authError.message ?? t('auth.errorGeneric');

@@ -1,11 +1,11 @@
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { toNodeHandler } from 'better-auth/node';
-import type { AddressInfo } from 'node:net';
-import { createServer } from 'node:http';
 import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
 import express from 'express';
@@ -85,7 +85,9 @@ describe('points REST routes', () => {
     });
     expect(resp.status).toBe(200);
     const body = await resp.json();
-    const cookie = resp.headers.get('set-cookie')!.split(',')
+    const cookie = resp.headers
+      .get('set-cookie')!
+      .split(',')
       .map((c) => c.split(';')[0])
       .join('; ');
     return { cookie, userId: body.user.id as string };
@@ -238,9 +240,7 @@ describe('points REST routes', () => {
     expect(body.data.entries[2]).toMatchObject({ rank: 3, userId: c.userId, points: 10 });
     expect(body.data.total).toBe(3);
     // Guest rows must not appear.
-    expect(
-      body.data.entries.some((e: { points: number }) => e.points === 9999),
-    ).toBe(false);
+    expect(body.data.entries.some((e: { points: number }) => e.points === 9999)).toBe(false);
   });
 
   it('GET /api/leaderboard respects gameId filter', async () => {
@@ -275,9 +275,9 @@ describe('points REST routes', () => {
   it('GET /api/leaderboard/me returns null rank for zero-point user', async () => {
     const a = await signUp('a@e.com', 'correct-horse-battery-staple', 'A');
     const b = await signUp('b@e.com', 'correct-horse-battery-staple', 'B');
-    await db.insert(schema.pointsLedger).values([
-      { userId: a.userId, gameId: 'g', reason: 'win', points: 50 },
-    ]);
+    await db
+      .insert(schema.pointsLedger)
+      .values([{ userId: a.userId, gameId: 'g', reason: 'win', points: 50 }]);
 
     const resp = await fetch(`${baseUrl}/api/leaderboard/me`, { headers: { cookie: b.cookie } });
     const body = await resp.json();

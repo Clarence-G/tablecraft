@@ -3,6 +3,8 @@ import { Input } from '@/components/ui/input';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useIdentity } from '../hooks/useIdentity';
+import { claimGuest } from '../lib/api';
 import { authClient } from '../lib/authClient';
 
 function GithubIcon({ className }: { className?: string }) {
@@ -21,6 +23,7 @@ interface RegisterProps {
 
 export function Register({ onSuccess, onGoToLogin, onBack }: RegisterProps) {
   const { t } = useTranslation('common');
+  const { guestId } = useIdentity();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,6 +46,10 @@ export function Register({ onSuccess, onGoToLogin, onBack }: RegisterProps) {
         return;
       }
       if (data) {
+        // Fire-and-forget merge of the guest's ledger rows. This is the
+        // "first sign-up" moment where the guestId in localStorage still
+        // matches the one used in past games — the ideal time to claim.
+        await claimGuest(guestId);
         onSuccess();
       }
     } catch {
@@ -186,10 +193,7 @@ function mapAuthError(
   ) {
     return t('auth.errorInvalidCredentials');
   }
-  if (
-    (code.includes('EMAIL') && code.includes('IN_USE')) ||
-    code.includes('USER_ALREADY_EXISTS')
-  ) {
+  if ((code.includes('EMAIL') && code.includes('IN_USE')) || code.includes('USER_ALREADY_EXISTS')) {
     return t('auth.errorEmailInUse');
   }
   return authError.message ?? t('auth.errorGeneric');

@@ -4,29 +4,33 @@ import { type Socket, io } from 'socket.io-client';
 
 type AppSocket = Socket<ServerEvents, ClientEvents>;
 
+type SocketAuth = {
+  userId: string;
+  userName: string;
+  isGuest: boolean;
+};
+
 let socketInstance: AppSocket | null = null;
 
-export function useSocket(userId: string, userName: string, isGuest: boolean = true) {
+export function useSocket(userId: string, userName: string, isGuest = true) {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
 
     if (!socketInstance) {
+      const authBag: SocketAuth = { userId, userName, isGuest };
       socketInstance = io({
-        auth: { userId, userName, isGuest },
+        auth: authBag,
         autoConnect: true,
       });
     } else {
       // If the auth identity changed (guest→user, user→guest, or user swap),
       // reconnect so the server middleware re-validates against the session
       // cookie with the new claim.
-      const current = (socketInstance as any).auth as {
-        userId?: string;
-        isGuest?: boolean;
-      };
-      if (current?.userId !== userId || current?.isGuest !== isGuest) {
-        (socketInstance as any).auth = { userId, userName, isGuest };
+      const current = (socketInstance.auth ?? {}) as Partial<SocketAuth>;
+      if (current.userId !== userId || current.isGuest !== isGuest) {
+        socketInstance.auth = { userId, userName, isGuest } as SocketAuth;
         socketInstance.disconnect();
         socketInstance.connect();
       }
@@ -50,7 +54,7 @@ export function useSocket(userId: string, userName: string, isGuest: boolean = t
   // Keep socket auth in sync with current userName (for reconnections after rename)
   useEffect(() => {
     if (socketInstance) {
-      (socketInstance as any).auth = { ...(socketInstance as any).auth, userName };
+      socketInstance.auth = { ...(socketInstance.auth as SocketAuth), userName };
     }
   }, [userName]);
 
