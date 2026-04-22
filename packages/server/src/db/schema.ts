@@ -1,5 +1,7 @@
+import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   index,
   integer,
   pgTable,
@@ -163,3 +165,36 @@ export const botTokens = pgTable('bot_tokens', {
   lastUsedAt: timestamp('last_used_at', { withTimezone: true, mode: 'date' }),
   revokedAt: timestamp('revoked_at', { withTimezone: true, mode: 'date' }),
 });
+
+// ---------------------------------------------------------------------------
+// Points ledger (spec §3.2). Append-only record of point awards. Owner is
+// either a BetterAuth user (userId) or an anonymous guest (guestId); the
+// CHECK constraint requires exactly one of them to be set. `reason` is a
+// free-form string constrained at the application layer to one of
+// 'win' | 'draw' | 'loss' | 'daily_checkin' | 'admin_grant'.
+// ---------------------------------------------------------------------------
+
+export const pointsLedger = pgTable(
+  'points_ledger',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => nanoid()),
+    userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+    guestId: text('guest_id'),
+    gameId: text('game_id').notNull(),
+    roomId: text('room_id'),
+    reason: text('reason').notNull(),
+    points: integer('points').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index('idx_points_user_created').on(t.userId, t.createdAt),
+    gameIdx: index('idx_points_game_created').on(t.gameId, t.createdAt),
+    guestIdx: index('idx_points_guest').on(t.guestId),
+    ownerCheck: check(
+      'points_ledger_owner_check',
+      sql`user_id IS NOT NULL OR guest_id IS NOT NULL`,
+    ),
+  }),
+);
