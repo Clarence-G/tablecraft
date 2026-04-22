@@ -3,6 +3,16 @@
     "title": "桌游大全",
     "slogan": "和朋友一起，随时随地玩桌游"
   },
+  "hero": {
+    "welcomeBack": "欢迎回来，{{name}}",
+    "guestWelcome": "你好，{{name}}",
+    "guestCta": "登录保存你的战绩",
+    "pointsLabel": "积分",
+    "rankLabel": "排名",
+    "summary": "{{games}} 个游戏 · {{rooms}} 个房间进行中",
+    "continueLast": "继续上一局",
+    "roomCodePlaceholder": "房间码"
+  },
   "lobby": {
     "selectGame": "选择游戏",
     "all": "全部",
@@ -20,7 +30,14 @@
     "allRooms": "所有房间",
     "refresh": "刷新",
     "players": "人",
-    "minutes": "分钟"
+    "minutes": "分钟",
+    "activeRooms": "进行中的房间",
+    "recentlyPlayed": "最近玩过",
+    "allGames": "所有游戏",
+    "viewAll": "查看全部",
+    "noActiveRooms": "暂无进行中的房间，去下面创建一个吧。",
+    "comingSoon": "即将上线",
+    "backToLobby": "返回大厅"
   },
   "room": {
     "connecting": "连接中...",

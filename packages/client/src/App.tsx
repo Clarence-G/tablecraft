@@ -4,13 +4,14 @@ import { useIdentity } from './hooks/useIdentity';
 import { useRoom } from './hooks/useRoom';
 import { useSession } from './hooks/useSession';
 import { useSocket } from './hooks/useSocket';
+import { ComingSoon } from './pages/ComingSoon';
 import { Game } from './pages/Game';
 import { Lobby } from './pages/Lobby';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Room } from './pages/Room';
 
-type Page = 'lobby' | 'room' | 'game' | 'login' | 'register';
+type Page = 'lobby' | 'room' | 'game' | 'login' | 'register' | 'gamesAll' | 'roomsAll';
 
 export function App() {
   const { userId, userName, rename } = useIdentity();
@@ -72,6 +73,10 @@ export function App() {
     );
   }
 
+  if (page === 'gamesAll' || page === 'roomsAll') {
+    return <ComingSoon onBack={() => setPage('lobby')} />;
+  }
+
   if (page === 'lobby') {
     return (
       <Lobby
@@ -80,6 +85,8 @@ export function App() {
         rename={rename}
         roomCtx={roomCtx}
         onGoToLogin={() => setPage('login')}
+        onGoToAllGames={() => setPage('gamesAll')}
+        onGoToAllRooms={() => setPage('roomsAll')}
         onRoomCreated={(id) => {
           setRoomId(id);
           setPage('room');

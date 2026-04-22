@@ -3,6 +3,16 @@
     "title": "TableCraft",
     "slogan": "Play board games with friends, anytime, anywhere"
   },
+  "hero": {
+    "welcomeBack": "Welcome back, {{name}}",
+    "guestWelcome": "Welcome, {{name}}",
+    "guestCta": "Sign in to save your stats",
+    "pointsLabel": "Points",
+    "rankLabel": "Rank",
+    "summary": "{{games}} games · {{rooms}} active rooms",
+    "continueLast": "Continue last game",
+    "roomCodePlaceholder": "Room code"
+  },
   "lobby": {
     "selectGame": "Select Game",
     "all": "All",
@@ -20,7 +30,14 @@
     "allRooms": "All Rooms",
     "refresh": "Refresh",
     "players": "players",
-    "minutes": "min"
+    "minutes": "min",
+    "activeRooms": "Active rooms",
+    "recentlyPlayed": "Recently played",
+    "allGames": "All games",
+    "viewAll": "View all",
+    "noActiveRooms": "No active rooms. Create one below.",
+    "comingSoon": "Coming soon",
+    "backToLobby": "Back to lobby"
   },
   "room": {
     "connecting": "Connecting...",

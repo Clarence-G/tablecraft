@@ -1,18 +1,21 @@
 import { GameIcon } from '@/components/GameIcon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { QuickJoinInput } from '@repo/game-ui/input';
+import { ViewAllRow } from '@repo/game-ui/layout';
+import { SectionHead } from '@repo/game-ui/section';
 import { UserChip } from '@repo/game-ui/user';
 import type { ClientEvents, RoomSummary, ServerEvents } from '@repo/shared';
 import Avatar from 'boring-avatars';
-import { Clock, Pencil, Plus, RefreshCw, Sofa, Users } from 'lucide-react';
-import { useState } from 'react';
+import { Clock, Pencil, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Socket } from 'socket.io-client';
 import { clientRegistry } from '../../../../games/client-registry';
 import { usePoints } from '../hooks/usePoints';
 import type { useRoom } from '../hooks/useRoom';
 import { useSession } from '../hooks/useSession';
+import { apiFetch } from '../lib/api';
+import { HeroGuest, HeroLoggedIn, RoomCard } from './lobby/sections';
 
 type AppSocket = Socket<ServerEvents, ClientEvents>;
 type RoomCtx = ReturnType<typeof useRoom>;
@@ -25,6 +28,8 @@ interface LobbyProps {
   onRoomCreated: (roomId: string) => void;
   onRoomJoined: (roomId: string) => void;
   onGoToLogin: () => void;
+  onGoToAllGames: () => void;
+  onGoToAllRooms: () => void;
 }
 
 const TAG_COLORS: Record<string, string> = {
@@ -38,13 +43,15 @@ const TAG_COLORS: Record<string, string> = {
 };
 
 export function Lobby({
-  socket,
+  socket: _socket,
   userName,
   rename,
   roomCtx,
   onRoomCreated,
   onRoomJoined,
   onGoToLogin,
+  onGoToAllGames,
+  onGoToAllRooms,
 }: LobbyProps) {
   const { t, i18n } = useTranslation('common');
   const session = useSession();
@@ -52,7 +59,7 @@ export function Lobby({
   const { data: points } = usePoints();
   const gt = (gameId: string, key: string) => i18n.t(key, { ns: gameId });
 
-  // Build tag translation: Chinese tag -> translated tag
+  // Translate Chinese tags (source of truth) to whatever locale is active.
   const tagTranslation = new Map<string, string>();
   for (const g of Object.values(clientRegistry)) {
     const zhTags: string[] = g.meta.tags ?? [];
@@ -65,56 +72,53 @@ export function Lobby({
   const translateTag = (zhTag: string) => tagTranslation.get(zhTag) ?? zhTag;
 
   const { create, join, listRooms } = roomCtx;
-  const [joinCode, setJoinCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState(userName);
 
-  const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
-  const [activeTag, setActiveTag] = useState<string | null>(null);
   const [rooms, setRooms] = useState<RoomSummary[]>([]);
-  const [loadingRooms, setLoadingRooms] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [myRank, setMyRank] = useState<number | null>(null);
 
   const games = Object.values(clientRegistry);
+  const featured = games.slice(0, 8);
 
-  // Collect all unique tags across all games
-  const allTags = Array.from(new Set(games.flatMap((g) => g.meta.tags ?? [])));
+  // Fetch rank once when signed in. Swallow failures — rank is a nice-to-have.
+  useEffect(() => {
+    if (!authedUser) {
+      setMyRank(null);
+      return;
+    }
+    let cancelled = false;
+    apiFetch<{ rank: number | null }>('/api/leaderboard/me')
+      .then((data) => {
+        if (!cancelled) setMyRank(data?.rank ?? null);
+      })
+      .catch(() => {
+        if (!cancelled) setMyRank(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authedUser]);
 
-  // Filter games by active tag
-  const visibleGames = activeTag ? games.filter((g) => g.meta.tags?.includes(activeTag)) : games;
+  // Initial room list. Subsequent refreshes come from user actions (join/create).
+  useEffect(() => {
+    let cancelled = false;
+    listRooms('').then((result) => {
+      if (!cancelled) setRooms(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [listRooms]);
 
   function confirmRename() {
     const trimmed = nameDraft.trim();
     if (trimmed && trimmed !== userName) rename(trimmed);
     setEditingName(false);
   }
-
-  async function fetchRooms(gameId?: string) {
-    // First load: show skeleton. Subsequent: just spin the refresh icon.
-    const isFirstLoad = loadingRooms;
-    if (!isFirstLoad) setRefreshing(true);
-    try {
-      const result = await listRooms(gameId ?? '');
-      setRooms(result);
-    } finally {
-      if (isFirstLoad) setLoadingRooms(false);
-      else setRefreshing(false);
-    }
-  }
-
-  function selectGame(gameId: string) {
-    const next = selectedGameId === gameId ? null : gameId;
-    setSelectedGameId(next);
-    setError(null);
-    fetchRooms(next ?? undefined);
-  }
-
-  useState(() => {
-    fetchRooms();
-  });
 
   async function handleCreate(gameId: string) {
     setError(null);
@@ -142,19 +146,13 @@ export function Lobby({
     }
   }
 
-  async function handleJoinByCode() {
-    if (!joinCode.trim()) return;
-    await handleJoinRoom(joinCode.trim().toUpperCase());
-  }
-
-  // Count rooms per game for the game cards
-  function roomCountForGame(gameId: string) {
-    return rooms.filter((r) => r.gameId === gameId).length;
+  function handleQuickJoin(code: string) {
+    handleJoinRoom(code.trim().toUpperCase());
   }
 
   return (
     <div className="min-h-screen">
-      {/* Top nav bar */}
+      {/* Top nav */}
       <nav className="sticky top-0 z-50 bg-background border-b-[2.5px] border-foreground px-4 sm:px-6 py-3">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -171,7 +169,6 @@ export function Lobby({
               />
             ) : (
               <>
-                {/* Guest: avatar + inline rename + sign-in CTA */}
                 <Avatar
                   name={userName}
                   size={32}
@@ -213,226 +210,123 @@ export function Lobby({
         </div>
       </nav>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
-        {/* Slogan */}
-        <p className="text-center text-muted-foreground mb-6">{t('app.slogan')}</p>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-8">
+        {authedUser ? (
+          <HeroLoggedIn
+            points={points?.global ?? 0}
+            rank={myRank}
+            onQuickJoin={handleQuickJoin}
+            pointsLabel={t('hero.pointsLabel')}
+            rankLabel={t('hero.rankLabel')}
+            welcome={t('hero.welcomeBack', { name: authedUser.name })}
+            placeholder={t('hero.roomCodePlaceholder')}
+            joinLabel={t('lobby.join')}
+          />
+        ) : (
+          <HeroGuest
+            welcome={t('hero.guestWelcome', { name: userName })}
+            cta={t('hero.guestCta')}
+            summary={t('hero.summary', { games: games.length, rooms: rooms.length })}
+            onSignIn={onGoToLogin}
+            onSignUp={onGoToLogin}
+            onQuickJoin={handleQuickJoin}
+            signInLabel={t('auth.signIn')}
+            signUpLabel={t('auth.signUp')}
+            placeholder={t('hero.roomCodePlaceholder')}
+            joinLabel={t('lobby.join')}
+          />
+        )}
 
-        {/* Game selector header + tag filters */}
-        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-          <h2 className="text-lg font-semibold">{t('lobby.selectGame')}</h2>
-          <div className="flex gap-1.5 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setActiveTag(null)}
-              className={`text-xs font-semibold border rounded-full px-2.5 py-0.5 transition-all ${
-                activeTag === null
-                  ? 'bg-foreground text-background border-foreground'
-                  : 'bg-card border-border text-muted-foreground hover:border-foreground'
-              }`}
-            >
-              {t('lobby.all')}
-            </button>
-            {allTags.map((tag) => (
-              <button
-                type="button"
-                key={tag}
-                onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-                className={`text-xs font-semibold border rounded-full px-2.5 py-0.5 transition-all ${
-                  activeTag === tag
-                    ? `${TAG_COLORS[tag] ?? 'bg-secondary text-foreground border-foreground'} shadow-[2px_2px_0px_0px_#3d2e1e]`
-                    : 'bg-card border-border text-muted-foreground hover:border-foreground'
-                }`}
-              >
-                {translateTag(tag)}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-          {visibleGames.map((plugin) => {
-            const m = plugin.meta;
-            const active = selectedGameId === m.id;
-            const count = roomCountForGame(m.id);
-            return (
-              <button
-                type="button"
-                key={m.id}
-                onClick={() => selectGame(m.id)}
-                data-testid={`game-card-${m.id}`}
-                className={`border-thick rounded-[16px] p-4 text-left transition-all duration-200 hover:-translate-y-1 hover:-rotate-[1.5deg] hover:shadow-card-hover active:translate-y-0 active:rotate-0 active:shadow-card-active ${
-                  active
-                    ? 'bg-[#fef3e0] border-warning shadow-[#7a4006_-6px_6px_0px,rgba(61,46,30,0.08)_0px_2px_8px] -translate-y-0.5'
-                    : 'bg-card border-foreground shadow-card'
-                }`}
-              >
-                {/* Icon + name */}
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-foreground">
-                    <GameIcon name={m.icon ?? 'rolling-dices'} className="size-5" />
-                  </span>
-                  <span className="text-base font-bold leading-tight">{gt(m.id, 'name')}</span>
-                </div>
-                {/* Description */}
-                <div className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                  {gt(m.id, 'description')}
-                </div>
-                {/* Meta row */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-0.5 text-xs text-[#6b5744] bg-[#f0e8d8] border border-border rounded-full px-2 py-0.5">
-                    <Users className="size-3" />
-                    {m.minPlayers === m.maxPlayers
-                      ? m.minPlayers
-                      : `${m.minPlayers}-${m.maxPlayers}`}
-                    {t('lobby.players')}
-                  </span>
-                  {m.estimatedMinutes && (
+        {/* Active rooms */}
+        <section>
+          <SectionHead
+            title={t('lobby.activeRooms')}
+            onViewAll={onGoToAllRooms}
+            viewAllLabel={t('lobby.viewAll')}
+          />
+          {rooms.length === 0 ? (
+            <div className="bg-card border-2 border-border rounded-[12px] p-6 text-center text-muted-foreground text-sm">
+              {t('lobby.noActiveRooms')}
+            </div>
+          ) : (
+            <ViewAllRow>
+              {rooms.slice(0, 5).map((r) => (
+                <RoomCard
+                  key={r.roomId}
+                  room={r}
+                  onJoin={() => handleJoinRoom(r.roomId)}
+                  joinLabel={t('lobby.join')}
+                  disabled={loading}
+                />
+              ))}
+            </ViewAllRow>
+          )}
+        </section>
+
+        {/* All games */}
+        <section>
+          <SectionHead
+            title={t('lobby.allGames')}
+            onViewAll={onGoToAllGames}
+            viewAllLabel={t('lobby.viewAll')}
+          />
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            {featured.map((plugin) => {
+              const m = plugin.meta;
+              return (
+                <button
+                  type="button"
+                  key={m.id}
+                  onClick={() => handleCreate(m.id)}
+                  disabled={loading}
+                  data-testid={`game-card-${m.id}`}
+                  className="border-thick rounded-[16px] p-4 text-left transition-all duration-200 hover:-translate-y-1 hover:-rotate-[1.5deg] hover:shadow-card-hover active:translate-y-0 active:rotate-0 active:shadow-card-active bg-card border-foreground shadow-card disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:rotate-0 disabled:hover:shadow-card"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-foreground">
+                      <GameIcon name={m.icon ?? 'rolling-dices'} className="size-5" />
+                    </span>
+                    <span className="text-base font-bold leading-tight">{gt(m.id, 'name')}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                    {gt(m.id, 'description')}
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="inline-flex items-center gap-0.5 text-xs text-[#6b5744] bg-[#f0e8d8] border border-border rounded-full px-2 py-0.5">
-                      <Clock className="size-3" />
-                      {m.estimatedMinutes}
-                      {t('lobby.minutes')}
+                      <Users className="size-3" />
+                      {m.minPlayers === m.maxPlayers
+                        ? m.minPlayers
+                        : `${m.minPlayers}-${m.maxPlayers}`}
+                      {t('lobby.players')}
                     </span>
-                  )}
-                  {m.tags?.map((tag) => (
-                    <span
-                      key={tag}
-                      className={`text-xs font-semibold border rounded-full px-2 py-0.5 ${TAG_COLORS[tag] ?? 'bg-secondary text-muted-foreground border-border'}`}
-                    >
-                      {translateTag(tag)}
-                    </span>
-                  ))}
-                </div>
-                {/* Room count */}
-                {count > 0 && (
-                  <div className="mt-2 text-xs text-success font-medium">
-                    {t('lobby.roomsActive', { count })}
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Room list */}
-        <div className="bg-card border-thick border-foreground rounded-[16px] shadow-card overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b-2 border-border flex-wrap gap-2">
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-semibold">
-                {selectedGameId
-                  ? `${gt(selectedGameId, 'name')} - ${t('lobby.rooms')}`
-                  : t('lobby.allRooms')}
-              </h2>
-              <button
-                type="button"
-                onClick={() => fetchRooms(selectedGameId ?? undefined)}
-                disabled={refreshing}
-                className="p-1 rounded-[6px] border border-border hover:border-foreground transition-colors"
-                aria-label={t('lobby.refresh')}
-              >
-                <RefreshCw className={`size-3.5 ${refreshing ? 'animate-spin' : ''}`} />
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <Input
-                type="text"
-                placeholder={t('lobby.roomCode')}
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                maxLength={6}
-                data-testid="room-code-input"
-                className="w-20 uppercase tracking-widest border-2 border-border bg-card shadow-inset rounded-[8px] text-center text-xs h-7 focus-visible:border-foreground"
-                onKeyDown={(e) => e.key === 'Enter' && handleJoinByCode()}
-              />
-              <Button
-                onClick={handleJoinByCode}
-                disabled={loading || !joinCode.trim()}
-                data-testid="join-room-btn"
-                size="sm"
-                className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[8px] px-2 font-semibold text-xs h-7"
-              >
-                {t('lobby.join')}
-              </Button>
-              <Button
-                onClick={() => selectedGameId && handleCreate(selectedGameId)}
-                disabled={loading || !selectedGameId}
-                className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[8px] px-3 font-semibold text-xs h-7 gap-1"
-                size="sm"
-              >
-                <Plus className="size-3.5" />
-                {t('lobby.createRoom')}
-              </Button>
-            </div>
-          </div>
-
-          {/* Room list body */}
-          <div className="px-4 sm:px-5 py-3 min-h-[120px]">
-            {loadingRooms ? (
-              <div className="text-center text-muted-foreground py-8">{t('lobby.loading')}</div>
-            ) : rooms.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Sofa className="size-10 text-[#c4b8a8] mb-3" />
-                <p className="text-muted-foreground mb-1">
-                  {selectedGameId ? t('lobby.noRooms') : t('lobby.noRoomsYet')}
-                </p>
-                <p className="text-xs text-[#9c8b78] mb-4">
-                  {selectedGameId ? t('lobby.createInvite') : t('lobby.selectAndCreate')}
-                </p>
-                {selectedGameId && (
-                  <Button
-                    onClick={() => handleCreate(selectedGameId)}
-                    disabled={loading}
-                    className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[12px] px-6 font-semibold gap-1"
-                  >
-                    <Plus className="size-4" />
-                    {t('lobby.createRoomShort')}
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {rooms.map((r) => (
-                  <div
-                    key={r.roomId}
-                    className="flex items-center justify-between bg-secondary border-2 border-border rounded-[10px] px-3 py-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono tracking-wider font-semibold text-sm">
-                        {r.roomId}
+                    {m.estimatedMinutes && (
+                      <span className="inline-flex items-center gap-0.5 text-xs text-[#6b5744] bg-[#f0e8d8] border border-border rounded-full px-2 py-0.5">
+                        <Clock className="size-3" />
+                        {m.estimatedMinutes}
+                        {t('lobby.minutes')}
                       </span>
-                      {!selectedGameId && (
-                        <span className="text-xs font-semibold bg-[#fef3e0] text-[#7a4006] border border-warning rounded-full px-1.5 py-0.5">
-                          {r.gameName}
-                        </span>
-                      )}
-                      <span className="text-sm text-muted-foreground">{r.hostName}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground flex items-center gap-0.5">
-                        <Users className="size-3" />
-                        {r.playerCount}/{r.maxPlayers}
-                      </span>
-                      <Button
-                        onClick={() => handleJoinRoom(r.roomId)}
-                        disabled={loading}
-                        className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-[#1a1108] rounded-[8px] px-2.5 font-semibold text-xs h-7"
-                        size="sm"
+                    )}
+                    {m.tags?.map((tag) => (
+                      <span
+                        key={tag}
+                        className={`text-xs font-semibold border rounded-full px-2 py-0.5 ${TAG_COLORS[tag] ?? 'bg-secondary text-muted-foreground border-border'}`}
                       >
-                        {t('lobby.join')}
-                      </Button>
-                    </div>
+                        {translateTag(tag)}
+                      </span>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </section>
 
         {error && (
-          <div className="mt-4 bg-[#fde8e8] border-2 border-destructive rounded-[12px] p-3 text-destructive font-medium">
+          <div className="bg-[#fde8e8] border-2 border-destructive rounded-[12px] p-3 text-destructive font-medium">
             {error}
           </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }
