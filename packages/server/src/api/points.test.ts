@@ -61,7 +61,7 @@ describe('points REST routes', () => {
     // BetterAuth catch-all must precede any body parser.
     app.all('/api/auth/*', toNodeHandler(auth));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    app.use('/api', createSessionMiddleware(auth as any));
+    app.use('/api', createSessionMiddleware(auth as any, { dailyCheckin: false }));
     const router = Router();
     router.use(express.json());
     registerPointsRoutes(router);

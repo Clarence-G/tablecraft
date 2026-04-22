@@ -9,6 +9,7 @@ import { GamesAll } from './pages/GamesAll';
 import { Leaderboard } from './pages/Leaderboard';
 import { Lobby } from './pages/Lobby';
 import { Login } from './pages/Login';
+import { Me } from './pages/Me';
 import { Register } from './pages/Register';
 import { Room } from './pages/Room';
 import { RoomsAll } from './pages/RoomsAll';
@@ -21,7 +22,8 @@ type Page =
   | 'register'
   | 'gamesAll'
   | 'roomsAll'
-  | 'leaderboard';
+  | 'leaderboard'
+  | 'me';
 
 export function App() {
   const { userId, userName, rename } = useIdentity();
@@ -121,6 +123,15 @@ export function App() {
     return <Leaderboard onBack={() => setPage('lobby')} />;
   }
 
+  if (page === 'me') {
+    return (
+      <Me
+        onBack={() => setPage('lobby')}
+        onSignedOut={() => setPage('lobby')}
+      />
+    );
+  }
+
   if (page === 'lobby') {
     return (
       <Lobby
@@ -133,6 +144,7 @@ export function App() {
         onGoToAllGames={() => setPage('gamesAll')}
         onGoToAllRooms={() => setPage('roomsAll')}
         onGoToLeaderboard={() => setPage('leaderboard')}
+        onGoToMe={() => setPage('me')}
         onRoomCreated={(id) => {
           setRoomId(id);
           setPage('room');

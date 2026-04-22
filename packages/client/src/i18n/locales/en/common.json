@@ -95,5 +95,12 @@
     "empty": "No rankings yet",
     "youLabel": "You",
     "ptsSuffix": "pts"
+  },
+  "me": {
+    "navLink": "Profile",
+    "pointsByGame": "Points by game",
+    "noPointsYet": "No points yet. Win a game to start your ledger.",
+    "dailyCheckin": "Daily check-in",
+    "signedOutNotice": "You're signed out."
   }
 }

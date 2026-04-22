@@ -1,5 +1,6 @@
 import type { IncomingHttpHeaders } from 'node:http';
 import type { NextFunction, Request, Response } from 'express';
+import { ensureDailyCheckin } from '../lib/ledger.js';
 import type { Auth } from '../lib/auth.js';
 
 export type Session = Awaited<ReturnType<Auth['api']['getSession']>>;
@@ -35,13 +36,27 @@ function toFetchHeaders(nodeHeaders: IncomingHttpHeaders): Headers {
  * to `req.session`. Never throws — a missing/invalid cookie produces
  * `req.session = undefined` so downstream routes can simply check the value.
  */
-export function createSessionMiddleware(auth: Auth) {
+export interface SessionMiddlewareOptions {
+  /** When true (default), the first authenticated request of the day inserts
+   *  a `daily_checkin` ledger row. Tests should pass `false` to keep the
+   *  ledger deterministic. */
+  dailyCheckin?: boolean;
+}
+
+export function createSessionMiddleware(
+  auth: Auth,
+  options: SessionMiddlewareOptions = {},
+) {
+  const dailyCheckin = options.dailyCheckin ?? true;
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {
       const session = await auth.api.getSession({
         headers: toFetchHeaders(req.headers),
       });
       req.session = session ?? undefined;
+      if (dailyCheckin && session?.user?.id) {
+        void ensureDailyCheckin(session.user.id);
+      }
     } catch {
       req.session = undefined;
     }

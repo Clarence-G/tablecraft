@@ -105,3 +105,40 @@ describe('recordPoints', () => {
     spy.mockRestore();
   });
 });
+
+describe('ensureDailyCheckin', () => {
+  let db: ReturnType<typeof drizzle<typeof schema>>;
+  let ensureDailyCheckin: typeof import('./ledger.js').ensureDailyCheckin;
+
+  beforeEach(async () => {
+    const client = new PGlite();
+    db = drizzle({ client, schema });
+    await migrate(db, { migrationsFolder: MIGRATIONS });
+
+    vi.resetModules();
+    vi.doMock('../db/index.js', () => ({ db }));
+    ({ ensureDailyCheckin } = await import('./ledger.js'));
+
+    await db.insert(schema.user).values({
+      id: 'user_dc',
+      name: 'Dan',
+      email: 'dan@example.com',
+    });
+  });
+
+  it('inserts daily_checkin row on first call', async () => {
+    await ensureDailyCheckin('user_dc');
+    const rows = await db.select().from(schema.pointsLedger);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.reason).toBe('daily_checkin');
+    expect(rows[0]?.points).toBe(5);
+    expect(rows[0]?.gameId).toBe('daily');
+  });
+
+  it('is idempotent — second call same day inserts nothing', async () => {
+    await ensureDailyCheckin('user_dc');
+    await ensureDailyCheckin('user_dc');
+    const rows = await db.select().from(schema.pointsLedger);
+    expect(rows).toHaveLength(1);
+  });
+});

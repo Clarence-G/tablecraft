@@ -32,6 +32,7 @@ interface LobbyProps {
   onGoToAllGames: () => void;
   onGoToAllRooms: () => void;
   onGoToLeaderboard: () => void;
+  onGoToMe: () => void;
 }
 
 export function Lobby({
@@ -46,6 +47,7 @@ export function Lobby({
   onGoToAllGames,
   onGoToAllRooms,
   onGoToLeaderboard,
+  onGoToMe,
 }: LobbyProps) {
   const { t, i18n } = useTranslation('common');
   const session = useSession();
@@ -161,6 +163,7 @@ export function Lobby({
                 userName={authedUser.name}
                 avatarSeed={authedUser.email ?? authedUser.id}
                 points={points?.global}
+                onClick={onGoToMe}
               />
             ) : (
               <>

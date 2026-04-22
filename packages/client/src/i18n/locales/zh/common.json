@@ -95,5 +95,12 @@
     "empty": "暂无排名数据",
     "youLabel": "我",
     "ptsSuffix": "分"
+  },
+  "me": {
+    "navLink": "个人",
+    "pointsByGame": "各游戏积分",
+    "noPointsYet": "还没有积分。赢一局开启你的积分账本。",
+    "dailyCheckin": "每日签到",
+    "signedOutNotice": "你尚未登录。"
   }
 }
