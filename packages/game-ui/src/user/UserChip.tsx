@@ -40,18 +40,34 @@ export function UserChip({
     );
   }
 
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-2 text-xs font-semibold border-2 border-border bg-card rounded-full pl-1 pr-2.5 py-0.5 hover:border-foreground hover:-translate-y-0.5 transition-all"
-      aria-label={userName}
-    >
+  const signedInClasses =
+    'inline-flex items-center gap-2 text-xs font-semibold border-2 border-border bg-card rounded-full pl-1 pr-2.5 py-0.5';
+  const signedInContent = (
+    <>
       <Avatar size={20} name={avatarSeed ?? userName ?? ''} variant="beam" />
       <span className="max-w-[8rem] truncate">{userName}</span>
       {typeof points === 'number' && (
         <span className="border-l border-border pl-2 text-muted-foreground">{points} pts</span>
       )}
-    </button>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className={`${signedInClasses} hover:border-foreground hover:-translate-y-0.5 transition-all`}
+        aria-label={userName}
+      >
+        {signedInContent}
+      </button>
+    );
+  }
+
+  return (
+    <div className={signedInClasses} aria-label={userName}>
+      {signedInContent}
+    </div>
   );
 }

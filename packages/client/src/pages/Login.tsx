@@ -28,6 +28,7 @@ export function Login({ onSuccess, onGoToRegister, onBack }: LoginProps) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError(null);
     try {
@@ -50,6 +51,8 @@ export function Login({ onSuccess, onGoToRegister, onBack }: LoginProps) {
   }
 
   async function githubSignIn() {
+    if (loading) return;
+    setLoading(true);
     setError(null);
     try {
       await authClient.signIn.social({
@@ -58,6 +61,8 @@ export function Login({ onSuccess, onGoToRegister, onBack }: LoginProps) {
       });
     } catch {
       setError(t('auth.errorGeneric'));
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -75,7 +80,13 @@ export function Login({ onSuccess, onGoToRegister, onBack }: LoginProps) {
         <div className="bg-card border-2 border-border rounded-xl shadow-[4px_4px_0_var(--border)] p-6">
           <h1 className="text-xl font-bold mb-4 text-foreground">{t('auth.signIn')}</h1>
 
-          <Button type="button" onClick={githubSignIn} variant="outline" className="w-full mb-4">
+          <Button
+            type="button"
+            onClick={githubSignIn}
+            variant="outline"
+            className="w-full mb-4"
+            disabled={loading}
+          >
             <GithubIcon className="size-4 mr-2" />
             {t('auth.continueWithGithub')}
           </Button>
@@ -122,7 +133,11 @@ export function Login({ onSuccess, onGoToRegister, onBack }: LoginProps) {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            {error && <p className="text-xs text-destructive">{error}</p>}
+            {error && (
+              <p role="alert" className="text-xs text-destructive">
+                {error}
+              </p>
+            )}
             <Button type="submit" className="w-full" disabled={loading}>
               {t('auth.signIn')}
             </Button>
