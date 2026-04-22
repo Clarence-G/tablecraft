@@ -8,7 +8,9 @@
     "./player": "./src/player/index.ts",
     "./feedback": "./src/feedback/index.ts",
     "./table": "./src/table/index.ts",
-    "./card": "./src/card/index.ts"
+    "./card": "./src/card/index.ts",
+    "./log": "./src/log/index.ts",
+    "./side-panel": "./src/side-panel/index.ts"
   },
   "dependencies": {
     "@repo/shared": "workspace:*",

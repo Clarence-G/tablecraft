@@ -4,3 +4,5 @@ export * from './feedback/index';
 export * from './header/index';
 export * from './table/index';
 export * from './card/index';
+export * from './log/index';
+export * from './side-panel/index';

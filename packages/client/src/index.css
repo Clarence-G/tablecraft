@@ -47,6 +47,7 @@
   --color-board-line: var(--board-line);
 
   /* Surface tokens (play-area backdrops) */
+  --color-cream: var(--background);
   --color-felt: var(--felt);
   --color-felt-line: var(--felt-line);
   --color-water: var(--water);
@@ -120,7 +121,7 @@
   --board: #d4a056;
   --board-line: #6b5744;
 
-  /* Play-area surfaces */
+  /* Play-area surfaces (cream inherits from --background, matching the lobby) */
   --felt: #1f4d3a;
   --felt-line: rgba(255, 255, 255, 0.04);
   --water: #1a3a5c;

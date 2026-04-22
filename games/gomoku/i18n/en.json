@@ -7,5 +7,13 @@
   "yourTurn": "Your Turn",
   "waiting": "Waiting",
   "playBlack": "You play Black",
-  "playWhite": "You play White"
+  "playWhite": "You play White",
+  "stone": {
+    "black": "Black",
+    "white": "White"
+  },
+  "log": {
+    "move": "placed {{stone}} at ({{row}}, {{col}})",
+    "win": "{{player}} wins the match"
+  }
 }

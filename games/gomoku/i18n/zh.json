@@ -7,5 +7,13 @@
   "yourTurn": "你的回合",
   "waiting": "等待",
   "playBlack": "你执黑子",
-  "playWhite": "你执白子"
+  "playWhite": "你执白子",
+  "stone": {
+    "black": "黑子",
+    "white": "白子"
+  },
+  "log": {
+    "move": "在 ({{row}}, {{col}}) 落下{{stone}}",
+    "win": "{{player}} 获胜"
+  }
 }

@@ -1,9 +1,9 @@
 import { useGameHeaderStatus } from '@repo/game-ui';
-import { PlayingCard } from '@repo/game-ui/card';
+import { HandStrip, PlayingCard } from '@repo/game-ui/card';
 import { GameOverModal } from '@repo/game-ui/feedback';
-import { PlayerBadge } from '@repo/game-ui/player';
+import { useGameLog } from '@repo/game-ui/log';
 import type { BoardProps } from '@repo/shared';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type Action, COLORS, type PlayerView, type UnoColor, deserializeCard } from './shared';
 
@@ -14,12 +14,9 @@ function getCardStyle(color: string): { className: string; style?: React.CSSProp
   if (color === 'blue') return { className: 'bg-[#2563eb] border-[#2563eb] text-card' };
   if (color === 'green') return { className: 'bg-[#16a34a] border-[#16a34a] text-card' };
   if (color === 'yellow') return { className: 'bg-[#d97706] border-[#d97706] text-card' };
-  // wild
   return {
     className: 'border-foreground text-card',
-    style: {
-      background: 'linear-gradient(135deg, #d94040, #2563eb, #16a34a, #d97706)',
-    },
+    style: { background: 'linear-gradient(135deg, #d94040, #2563eb, #16a34a, #d97706)' },
   };
 }
 
@@ -30,6 +27,19 @@ function getCardLabel(serialized: string): string {
   if (card.type === 'number') return String(card.value);
   if (card.action === 'skip') return 'SKIP';
   if (card.action === 'reverse') return 'REV';
+  if (card.action === 'draw_two') return '+2';
+  return '?';
+}
+
+// Compact, mirror-safe corner glyph. Multi-letter words render garbled at 180deg,
+// so action cards use a single symbol / short form in the corners.
+function getCornerGlyph(serialized: string): string {
+  if (serialized === 'wild') return '★';
+  if (serialized === 'wild_draw_four') return '+4';
+  const card = deserializeCard(serialized);
+  if (card.type === 'number') return String(card.value);
+  if (card.action === 'skip') return '⊘';
+  if (card.action === 'reverse') return '⇄';
   if (card.action === 'draw_two') return '+2';
   return '?';
 }
@@ -59,12 +69,13 @@ function UnoCardFace({
   const color = getCardColor(serialized);
   const { className: colorClass, style: colorStyle } = getCardStyle(color);
   const label = getCardLabel(serialized);
+  const cornerGlyph = getCornerGlyph(serialized);
 
   return (
     <PlayingCard
       size={size === 'small' ? 'sm' : 'md'}
       backgroundClass={`${colorClass} text-card`}
-      corner={label}
+      corner={cornerGlyph}
       center={label}
       selected={selected}
       disabled={disabled}
@@ -112,12 +123,23 @@ function ColorPickerModal({ onChoose }: { onChoose: (c: UnoColor) => void }) {
   );
 }
 
+// ---- Log helpers ----
+
+function describeCard(serialized: string, t: (k: string) => string): string {
+  if (!serialized) return '';
+  const color = getCardColor(serialized);
+  const label = getCardLabel(serialized);
+  const colorLabel = color === 'wild' ? t('color.wild') : t(`color.${color}`);
+  return `${colorLabel} ${label}`;
+}
+
 // ---- Main Board ----
 
 export function Board({ state, myId, players, sendAction }: BoardProps<PlayerView, Action>) {
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [pendingWild, setPendingWild] = useState<number | null>(null);
   const { t } = useTranslation('uno');
+  const { push } = useGameLog();
 
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = state.phase === 'finished';
@@ -126,6 +148,61 @@ export function Board({ state, myId, players, sendAction }: BoardProps<PlayerVie
 
   const topCard = state.topCard;
   const topCardIsWild = topCard === 'wild' || topCard === 'wild_draw_four';
+  const selectedKey = selectedCardIndex !== null ? `${selectedCardIndex}` : null;
+
+  const prev = useRef<PlayerView | null>(null);
+  const loggedWinner = useRef<string | null>(null);
+  useEffect(() => {
+    const p = prev.current;
+    if (p) {
+      const moverId = p.currentPlayer;
+      const moverName = playerNames[moverId] ?? moverId;
+      if (p.topCard && state.topCard && state.topCard !== p.topCard) {
+        push({
+          kind: 'action',
+          actorId: moverName,
+          messageKey: 'uno.log.play',
+          messageParams: { card: describeCard(state.topCard, t) },
+        });
+      } else if (p.drawPileCount > state.drawPileCount) {
+        const drew = p.drawPileCount - state.drawPileCount;
+        push({
+          kind: 'action',
+          actorId: moverName,
+          messageKey: drew === 1 ? 'uno.log.draw' : 'uno.log.drawMany',
+          messageParams: { count: drew },
+        });
+      }
+      if (p.direction !== state.direction) {
+        push({ kind: 'system', messageKey: 'uno.log.reverse' });
+      }
+      const wildInvolved =
+        p.topCard === 'wild' ||
+        p.topCard === 'wild_draw_four' ||
+        state.topCard === 'wild' ||
+        state.topCard === 'wild_draw_four';
+      if (wildInvolved && p.activeColor !== state.activeColor) {
+        push({
+          kind: 'system',
+          actorId: moverName,
+          messageKey: 'uno.log.wild',
+          messageParams: { color: t(`color.${state.activeColor}`) },
+        });
+      }
+    }
+    prev.current = state;
+  }, [state, playerNames, push, t]);
+
+  useEffect(() => {
+    if (state.winner && loggedWinner.current !== state.winner) {
+      loggedWinner.current = state.winner;
+      push({
+        kind: 'system',
+        messageKey: 'uno.log.win',
+        messageParams: { player: playerNames[state.winner] ?? state.winner },
+      });
+    }
+  }, [state.winner, playerNames, push]);
 
   function handleCardClick(idx: number) {
     if (!isMyTurn) return;
@@ -163,108 +240,161 @@ export function Board({ state, myId, players, sendAction }: BoardProps<PlayerVie
 
   return (
     <div
-      className="flex-1 text-foreground flex flex-col p-3 sm:p-4 max-w-lg mx-auto w-full"
+      className="flex-1 text-foreground flex flex-col p-3 sm:p-6 max-w-3xl mx-auto w-full min-w-0"
       data-testid="game-board"
     >
-      {/* Color picker modal */}
       {pendingWild !== null && <ColorPickerModal onChoose={handleColorChosen} />}
 
-      {/* Players */}
-      <div className="flex flex-wrap gap-2 justify-center mb-3">
-        {players.map((p) => {
-          const info = state.players.find((sp) => sp.id === p.id);
-          return (
-            <div key={p.id} className="flex flex-col items-center gap-1">
-              <PlayerBadge
-                player={p}
-                isCurrentTurn={state.currentPlayer === p.id}
-                isMe={p.id === myId}
-              />
-              <div className="text-xs text-muted-foreground">
-                {info?.cardCount ?? 0} {t('cards')}
+      {/* Felt table: players strip on top, then draw/discard/meta */}
+      <div
+        className="bg-felt text-card rounded-[16px] border-2 border-foreground shadow-card p-3 sm:p-5 mb-4"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 50% 20%, rgba(255,255,255,0.08), transparent 60%), repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 6px)',
+        }}
+      >
+        {/* Player strip (inside felt) */}
+        <div className="flex flex-wrap gap-1.5 justify-center mb-4 pb-3 border-b border-card/15">
+          {players.map((p) => {
+            const info = state.players.find((sp) => sp.id === p.id);
+            const isCurrent = state.currentPlayer === p.id;
+            const isMe = p.id === myId;
+            return (
+              <div
+                key={p.id}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 text-xs font-semibold transition-all ${
+                  isCurrent
+                    ? 'bg-[#fef3e0] border-warning text-[#7a4006] shadow-button'
+                    : 'bg-card/15 border-card/40 text-card'
+                }`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    p.connected ? 'bg-success' : 'bg-muted-foreground'
+                  }`}
+                />
+                <span className="truncate max-w-[80px]">
+                  {p.name}
+                  {isMe ? ` · ${t('you', { ns: 'game-ui', defaultValue: '你' })}` : ''}
+                </span>
+                <span
+                  className={`font-mono text-[10px] ${
+                    isCurrent ? 'text-[#7a4006]' : 'text-card/70'
+                  }`}
+                >
+                  {info?.cardCount ?? 0}
+                </span>
               </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Winner banner (turn state lives in header) */}
-      {gameOver && (
-        <div className="text-center text-sm text-card font-semibold mb-3">
-          {`${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`}
-        </div>
-      )}
-
-      {/* Center area: discard pile + color indicator */}
-      <div className="flex items-center justify-center gap-6 mb-4">
-        {/* Draw pile */}
-        <div className="flex flex-col items-center gap-1">
-          <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-[10px] border-2 border-card/40 bg-card/20 backdrop-blur-sm flex items-center justify-center text-card font-bold text-xs shadow-[4px_4px_0px_0px_#1a1108]">
-            {state.drawPileCount}
-          </div>
-          <span className="text-xs text-card/70">{t('drawPile')}</span>
+            );
+          })}
         </div>
 
-        {/* Discard pile top card */}
-        <div className="flex flex-col items-center gap-1">
-          {topCard !== '' ? (
-            <UnoCardFace serialized={topCard} size="normal" />
-          ) : (
-            <div className="w-16 h-24 sm:w-20 sm:h-28 rounded-[10px] border-2 border-card/30 bg-card/10 backdrop-blur-sm" />
-          )}
-          <span className="text-xs text-card/70">{t('discardPile')}</span>
-        </div>
-
-        {/* Active color (shown when top card is wild) */}
-        {topCardIsWild && (
-          <div className="flex flex-col items-center gap-1">
-            <ColorDot color={state.activeColor} />
-            <span className="text-xs text-card/70">{t('currentColor')}</span>
+        {gameOver && (
+          <div className="text-center text-sm text-card font-semibold mb-3">
+            {`${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`}
           </div>
         )}
+        <div className="flex items-center justify-center gap-4 sm:gap-10">
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-14 h-20 sm:w-20 sm:h-28 rounded-[10px] border-2 border-card/40 bg-card/20 backdrop-blur-sm flex items-center justify-center text-card font-bold text-xs shadow-[#1a1108_-3px_3px_0px]">
+              {state.drawPileCount}
+            </div>
+            <span className="text-[10px] sm:text-xs text-card/70">{t('drawPile')}</span>
+          </div>
 
-        {/* Direction indicator */}
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-lg font-bold text-card">{state.direction === 1 ? '>' : '<'}</span>
-          <span className="text-xs text-card/70">{t('direction')}</span>
+          <div className="flex flex-col items-center gap-1">
+            {topCard !== '' ? (
+              <UnoCardFace serialized={topCard} size="normal" />
+            ) : (
+              <div className="w-14 h-20 sm:w-20 sm:h-28 rounded-[10px] border-2 border-card/30 bg-card/10 backdrop-blur-sm" />
+            )}
+            <span className="text-[10px] sm:text-xs text-card/70">{t('discardPile')}</span>
+          </div>
+
+          <div className="flex flex-col items-center gap-2 sm:gap-3">
+            {topCardIsWild && (
+              <div className="flex flex-col items-center gap-0.5">
+                <div className="w-7 h-7 rounded-full border-2 border-card/40 flex items-center justify-center bg-card/10">
+                  <ColorDot color={state.activeColor} />
+                </div>
+                <span className="text-[10px] text-card/70">{t('currentColor')}</span>
+              </div>
+            )}
+            <div className="flex flex-col items-center gap-0.5">
+              <div className="w-7 h-7 rounded-full border-2 border-card/40 flex items-center justify-center bg-card/10 text-card text-base font-bold">
+                {state.direction === 1 ? '↻' : '↺'}
+              </div>
+              <span className="text-[10px] text-card/70">{t('direction')}</span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* My Hand */}
       {!gameOver && (
-        <div className="bg-card/90 backdrop-blur-sm text-foreground rounded-[12px] border-2 border-card/40 p-3 shadow-[4px_4px_0px_0px_#1a1108] mb-3">
-          <div className="text-xs font-medium text-muted-foreground mb-2">
-            {t('yourHand')} ({state.myHand.length} {t('cards')})
+        <div className="bg-card text-foreground rounded-[16px] border-2 border-foreground shadow-card p-3 sm:p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs font-semibold text-muted-foreground">
+              {t('yourHand')} · {state.myHand.length} {t('cards')}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2 justify-center mb-3 overflow-x-auto py-1">
-            {state.myHand.map((serialized, idx) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: card hand positions are index-keyed
-              <div key={idx} className="flex flex-col items-center gap-1">
+          <span className="sm:hidden">
+            <HandStrip
+              cards={state.myHand.map((serialized, idx) => ({ serialized, idx }))}
+              getKey={(c) => String(c.idx)}
+              selectedKey={selectedKey}
+              onSelect={(_k, c) => handleCardClick(c.idx)}
+              isDisabled={() => !isMyTurn}
+              overlapThreshold={6}
+              maxOverlap={14}
+              emptyLabel={t('noCards')}
+              renderCard={(c, { selected, disabled, onSelect }) => (
                 <UnoCardFace
-                  serialized={serialized}
-                  selected={selectedCardIndex === idx}
-                  disabled={!isMyTurn}
-                  onClick={() => handleCardClick(idx)}
+                  serialized={c.serialized}
+                  size="small"
+                  selected={selected}
+                  disabled={disabled}
+                  onClick={onSelect}
                 />
-                {isMyTurn && selectedCardIndex === idx && (
-                  <button
-                    type="button"
-                    onClick={() => handlePlayCard(idx)}
-                    className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-[6px] font-semibold"
-                  >
-                    {t('playCard')}
-                  </button>
-                )}
-              </div>
-            ))}
-            {state.myHand.length === 0 && (
-              <span className="text-xs text-muted-foreground">{t('noCards')}</span>
-            )}
-          </div>
+              )}
+            />
+          </span>
+          <span className="hidden sm:block">
+            <HandStrip
+              cards={state.myHand.map((serialized, idx) => ({ serialized, idx }))}
+              getKey={(c) => String(c.idx)}
+              selectedKey={selectedKey}
+              onSelect={(_k, c) => handleCardClick(c.idx)}
+              isDisabled={() => !isMyTurn}
+              overlapThreshold={11}
+              maxOverlap={28}
+              emptyLabel={t('noCards')}
+              renderCard={(c, { selected, disabled, onSelect }) => (
+                <UnoCardFace
+                  serialized={c.serialized}
+                  size="normal"
+                  selected={selected}
+                  disabled={disabled}
+                  onClick={onSelect}
+                />
+              )}
+            />
+          </span>
 
-          {/* Action buttons */}
+          {isMyTurn && selectedCardIndex !== null && (
+            <div className="flex justify-center mt-2">
+              <button
+                type="button"
+                onClick={() => handlePlayCard(selectedCardIndex)}
+                className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-[6px] font-semibold shadow-button hover:-translate-y-0.5 transition-transform"
+              >
+                {t('playCard')}
+              </button>
+            </div>
+          )}
+
           {isMyTurn && (
-            <div className="flex gap-2 justify-center">
+            <div className="flex gap-2 justify-center mt-3">
               {!state.hasDrawnThisTurn && (
                 <button
                   type="button"
@@ -288,7 +418,6 @@ export function Board({ state, myId, players, sendAction }: BoardProps<PlayerVie
         </div>
       )}
 
-      {/* Game Over */}
       {gameOver && (
         <GameOverModal
           rankings={[

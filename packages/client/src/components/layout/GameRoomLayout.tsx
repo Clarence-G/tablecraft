@@ -8,6 +8,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { GameHeader, GameHeaderProvider, GameTable, useHeaderStatus } from '@repo/game-ui';
+import { GameLogProvider } from '@repo/game-ui/log';
+import { SidePanel } from '@repo/game-ui/side-panel';
 import type { PlayerInfo, SurfaceKind } from '@repo/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -67,7 +69,10 @@ function Inner({
         onBack={onReturnToLobby}
         onExit={() => setConfirming(true)}
       />
-      <GameTable surface={surface}>{children}</GameTable>
+      <div className="flex-1 min-h-0 flex flex-row">
+        <GameTable surface={surface}>{children}</GameTable>
+        <SidePanel />
+      </div>
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent>
@@ -104,7 +109,9 @@ function Inner({
 export function GameRoomLayout(props: GameRoomLayoutProps) {
   return (
     <GameHeaderProvider>
-      <Inner {...props} />
+      <GameLogProvider>
+        <Inner {...props} />
+      </GameLogProvider>
     </GameHeaderProvider>
   );
 }

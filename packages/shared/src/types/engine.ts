@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 
 /** Visual surface of the play area (Zone C backdrop). */
-export type SurfaceKind = 'felt' | 'water' | 'wood' | 'marble' | 'parchment';
+export type SurfaceKind = 'cream' | 'felt' | 'water' | 'wood' | 'marble' | 'parchment';
 
 /** 游戏元信息 */
 export interface GameMeta {

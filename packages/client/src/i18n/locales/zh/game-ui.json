@@ -17,5 +17,20 @@
     "exitConfirmBody": "房间开放时你仍可以从大厅重新加入。",
     "exitConfirmCancel": "留下",
     "exitConfirmOk": "离开"
+  },
+  "sidepanel": {
+    "tab": {
+      "log": "动态",
+      "chat": "聊天"
+    },
+    "log": {
+      "empty": "还没有任何动态。"
+    },
+    "chat": {
+      "comingSoon": "聊天功能即将上线。",
+      "placeholder": "输入消息…"
+    },
+    "expand": "展开侧栏",
+    "collapse": "收起侧栏"
   }
 }

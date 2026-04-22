@@ -16,5 +16,21 @@
   "playCard": "Play",
   "drawCard": "Draw",
   "pass": "Pass",
-  "chooseColor": "Choose Color"
+  "chooseColor": "Choose Color",
+  "log": {
+    "play": "played {{card}}",
+    "draw": "drew {{count}} card",
+    "drawMany": "drew {{count}} cards",
+    "skip": "was skipped",
+    "reverse": "reversed direction",
+    "wild": "chose color {{color}}",
+    "win": "{{player}} wins the match"
+  },
+  "color": {
+    "red": "Red",
+    "blue": "Blue",
+    "green": "Green",
+    "yellow": "Yellow",
+    "wild": "Wild"
+  }
 }

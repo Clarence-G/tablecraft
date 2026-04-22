@@ -1,0 +1,68 @@
+import { act, render } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { type GameLogContextValue, GameLogProvider, useGameLog } from './index';
+
+function Capture({ holder }: { holder: { current: GameLogContextValue | null } }) {
+  holder.current = useGameLog();
+  return null;
+}
+
+describe('useGameLog', () => {
+  it('returns noop API outside a provider', () => {
+    const holder: { current: GameLogContextValue | null } = { current: null };
+    render(<Capture holder={holder} />);
+    expect(holder.current).toBeTruthy();
+    expect(holder.current?.entries).toEqual([]);
+    expect(() => holder.current?.push({ kind: 'action', messageKey: 'x' })).not.toThrow();
+  });
+
+  it('push appends entries when inside a provider', () => {
+    const holder: { current: GameLogContextValue | null } = { current: null };
+    render(
+      <GameLogProvider>
+        <Capture holder={holder} />
+      </GameLogProvider>,
+    );
+    act(() => {
+      holder.current?.push({ kind: 'action', messageKey: 'a' });
+      holder.current?.push({ kind: 'system', messageKey: 'b' });
+    });
+    expect(holder.current?.entries.length).toBe(2);
+    expect(holder.current?.entries[0]?.messageKey).toBe('a');
+    expect(holder.current?.entries[1]?.kind).toBe('system');
+  });
+
+  it('caps at 200 entries (FIFO)', () => {
+    const holder: { current: GameLogContextValue | null } = { current: null };
+    render(
+      <GameLogProvider>
+        <Capture holder={holder} />
+      </GameLogProvider>,
+    );
+    act(() => {
+      for (let i = 0; i < 250; i++) {
+        holder.current?.push({ kind: 'action', messageKey: `k${i}` });
+      }
+    });
+    expect(holder.current?.entries.length).toBe(200);
+    expect(holder.current?.entries[0]?.messageKey).toBe('k50');
+    expect(holder.current?.entries[199]?.messageKey).toBe('k249');
+  });
+
+  it('ingestNotifications dedupes by object identity', () => {
+    const holder: { current: GameLogContextValue | null } = { current: null };
+    render(
+      <GameLogProvider>
+        <Capture holder={holder} />
+      </GameLogProvider>,
+    );
+    const notifs: unknown[] = [{ type: 'joined', actorId: 'alice' }];
+    act(() => {
+      holder.current?.ingestNotifications(notifs);
+      holder.current?.ingestNotifications(notifs);
+    });
+    expect(holder.current?.entries.length).toBe(1);
+    expect(holder.current?.entries[0]?.messageKey).toBe('notification.joined');
+    expect(holder.current?.entries[0]?.actorId).toBe('alice');
+  });
+});

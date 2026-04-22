@@ -18,11 +18,22 @@ export interface IntersectionBoardProps {
   previewStone?: Stone;
   /** Render extra content on top of a cell (e.g. territory markers in Go) */
   renderOverlay?: (row: number, col: number) => ReactNode;
+  /** Show column letters + row numbers in the gutters (Go/Gomoku convention). */
+  showCoordinates?: boolean;
   className?: string;
 }
 
 /** Ideal cell size used for the SVG coordinate system. Actual size scales via viewBox. */
 const CELL = 36;
+/** Extra SVG space reserved on each side for coordinate labels when enabled. */
+const LABEL_GUTTER = 18;
+
+/** Go/Gomoku column letter — A, B, C, D, E, F, G, H, J (skip I), K, L, M, N, O, P, ... */
+function columnLetter(i: number): string {
+  // Skip 'I' to avoid confusion with '1' (Go standard).
+  const base = 'ABCDEFGHJKLMNOPQRSTUVWXYZ';
+  return base[i] ?? String(i + 1);
+}
 
 function StoneView({ stone }: { stone: Stone }) {
   return (
@@ -47,26 +58,30 @@ export function IntersectionBoard({
   canPlace,
   previewStone,
   renderOverlay,
+  showCoordinates,
   className,
 }: IntersectionBoardProps) {
   const [hovered, setHovered] = useState<[number, number] | null>(null);
   const boardPx = size * CELL;
+  const gutter = showCoordinates ? LABEL_GUTTER : 0;
+  const svgSize = boardPx + 2 * gutter;
+  const insetPct = gutter === 0 ? '0' : `${(gutter / svgSize) * 100}%`;
 
   return (
     <div
-      className={`bg-board rounded-[16px] border-[2.5px] border-[#3d2e1e] shadow-card ${className ?? ''}`}
+      className={`bg-board rounded-[10px] border-2 border-foreground shadow-card overflow-hidden ${className ?? ''}`}
       style={{
-        padding: 'clamp(8px, 2vw, 18px)',
-        width: `min(${boardPx + 36}px, calc(100vw - 32px))`,
+        width: '100%',
+        maxWidth: `${svgSize + 10}px`,
         aspectRatio: '1',
       }}
     >
       <div className="relative w-full h-full">
-        {/* Grid lines */}
+        {/* Grid lines + labels */}
         <svg
           aria-hidden="true"
           className="absolute inset-0 w-full h-full"
-          viewBox={`0 0 ${boardPx} ${boardPx}`}
+          viewBox={`${-gutter} ${-gutter} ${svgSize} ${svgSize}`}
           preserveAspectRatio="xMidYMid meet"
           style={{ pointerEvents: 'none' }}
         >
@@ -100,12 +115,49 @@ export function IntersectionBoard({
               fill="var(--board-line)"
             />
           ))}
+          {showCoordinates &&
+            Array.from({ length: size }, (_, i) => {
+              const letter = columnLetter(i);
+              const rowNumber = String(size - i); // Go convention: 1 at bottom
+              const linePos = i * CELL + CELL / 2;
+              // Label sits at the visual middle of the full wood band (outer edge to first grid line).
+              // Band spans from -gutter to CELL/2, so its center is (CELL/2 - gutter) / 2.
+              const topY = (CELL / 2 - gutter) / 2;
+              const bottomY = boardPx - (CELL / 2 - gutter) / 2;
+              const leftX = (CELL / 2 - gutter) / 2;
+              const rightX = boardPx - (CELL / 2 - gutter) / 2;
+              return (
+                <g
+                  key={`lbl-${letter}-${rowNumber}`}
+                  fill="var(--board-line)"
+                  fontSize="12"
+                  fontWeight="600"
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  style={{ fontFamily: 'inherit', letterSpacing: '0.02em', opacity: 0.72 }}
+                >
+                  <text x={linePos} y={topY}>
+                    {letter}
+                  </text>
+                  <text x={linePos} y={bottomY}>
+                    {letter}
+                  </text>
+                  <text x={leftX} y={linePos}>
+                    {rowNumber}
+                  </text>
+                  <text x={rightX} y={linePos}>
+                    {rowNumber}
+                  </text>
+                </g>
+              );
+            })}
         </svg>
 
         {/* Interactive cells */}
         <div
-          className="absolute inset-0 grid"
+          className="absolute grid"
           style={{
+            inset: insetPct,
             gridTemplateRows: `repeat(${size}, 1fr)`,
             gridTemplateColumns: `repeat(${size}, 1fr)`,
           }}

@@ -3,13 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { GameTable } from './GameTable';
 
 describe('GameTable', () => {
-  it('defaults to marble surface when surface omitted', () => {
+  it('defaults to cream surface when surface omitted', () => {
     const { getByTestId } = render(
       <GameTable>
         <span>child</span>
       </GameTable>,
     );
-    expect(getByTestId('game-table').getAttribute('data-surface')).toBe('marble');
+    expect(getByTestId('game-table').getAttribute('data-surface')).toBe('cream');
   });
 
   it('applies the felt background class when surface="felt"', () => {

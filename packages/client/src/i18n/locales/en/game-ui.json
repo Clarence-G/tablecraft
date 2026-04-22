@@ -17,5 +17,20 @@
     "exitConfirmBody": "You can rejoin from the lobby if the room is still open.",
     "exitConfirmCancel": "Stay",
     "exitConfirmOk": "Leave"
+  },
+  "sidepanel": {
+    "tab": {
+      "log": "Log",
+      "chat": "Chat"
+    },
+    "log": {
+      "empty": "No events yet."
+    },
+    "chat": {
+      "comingSoon": "Chat is coming soon.",
+      "placeholder": "Type a message…"
+    },
+    "expand": "Expand panel",
+    "collapse": "Collapse panel"
   }
 }

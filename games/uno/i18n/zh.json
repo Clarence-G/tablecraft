@@ -16,5 +16,21 @@
   "playCard": "出牌",
   "drawCard": "摸牌",
   "pass": "跳过",
-  "chooseColor": "选择颜色"
+  "chooseColor": "选择颜色",
+  "log": {
+    "play": "打出 {{card}}",
+    "draw": "摸了 {{count}} 张牌",
+    "drawMany": "摸了 {{count}} 张牌",
+    "skip": "被跳过",
+    "reverse": "改变方向",
+    "wild": "选择 {{color}}",
+    "win": "{{player}} 获胜"
+  },
+  "color": {
+    "red": "红色",
+    "blue": "蓝色",
+    "green": "绿色",
+    "yellow": "黄色",
+    "wild": "变色"
+  }
 }

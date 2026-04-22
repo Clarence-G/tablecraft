@@ -160,7 +160,7 @@ export function GameHeader({
           data-testid="room-code-chip"
           onClick={copyCode}
           aria-label={t('header.copyRoomCode', { defaultValue: 'Copy room code' })}
-          className="font-mono text-xs font-bold tracking-widest bg-secondary border-2 border-foreground text-foreground rounded-[8px] px-2.5 py-1 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active transition-all"
+          className="font-mono text-xs font-bold tracking-widest bg-secondary border-2 border-foreground text-foreground rounded-[10px] px-2.5 py-1 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active transition-all"
         >
           {copied ? t('header.copied', { defaultValue: 'Copied' }) : roomId}
         </button>
@@ -190,7 +190,7 @@ export function GameHeader({
             {phase}
           </span>
         )}
-        <span className="hidden sm:inline-flex items-center gap-1.5 bg-[#f0e8d8] border-2 border-border rounded-full px-2.5 py-0.5 text-xs font-mono font-bold text-[#6b5744] tabular-nums shrink-0">
+        <span className="hidden sm:inline-flex items-center gap-1.5 bg-secondary border-2 border-foreground rounded-[10px] px-2.5 py-1 text-xs font-mono font-bold text-foreground tabular-nums shrink-0 shadow-[#3d2e1e_-2px_2px_0px]">
           {formatElapsed(elapsedSeconds)}
         </span>
       </div>

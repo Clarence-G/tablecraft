@@ -22,6 +22,7 @@ export interface GameTableProps {
  * must stay on its own cream card background.
  */
 const SURFACE_BG: Record<SurfaceKind, string> = {
+  cream: 'bg-cream text-foreground',
   felt: 'bg-felt text-card',
   water: 'bg-water text-card',
   wood: 'bg-wood text-foreground',
@@ -30,6 +31,10 @@ const SURFACE_BG: Record<SurfaceKind, string> = {
 };
 
 const SURFACE_PATTERN: Record<SurfaceKind, React.CSSProperties> = {
+  cream: {
+    backgroundImage:
+      'radial-gradient(circle at 50% 0%, rgba(61,46,30,0.04), transparent 55%), repeating-linear-gradient(0deg, rgba(61,46,30,0.015) 0 1px, transparent 1px 3px)',
+  },
   felt: {
     backgroundImage:
       'radial-gradient(circle at 50% 30%, rgba(255,255,255,0.05), transparent 60%), repeating-linear-gradient(135deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 6px)',
@@ -52,7 +57,7 @@ const SURFACE_PATTERN: Record<SurfaceKind, React.CSSProperties> = {
   },
 };
 
-export function GameTable({ surface = 'marble', className, children }: GameTableProps) {
+export function GameTable({ surface = 'cream', className, children }: GameTableProps) {
   return (
     <div
       data-testid="game-table"
