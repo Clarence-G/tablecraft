@@ -36,11 +36,12 @@ setupHandlers(io, roomManager, serverRegistry);
 // REST API for bots
 app.use('/api', createApiRouter(roomManager, serverRegistry, tokenStore));
 
-// Generate default bot token for development.
-// Each dev restart inserts a fresh default token row; old rows remain until
-// manually revoked. Acceptable dev-only noise — avoids stashing plaintext on disk.
-const defaultBot = await tokenStore.generate('DefaultBot');
-console.log(`Bot token: ${defaultBot.token} (userId: ${defaultBot.userId})`);
+// Dev-only: gated to skip in production to avoid leaking plaintext tokens to
+// prod logs and accumulating stale rows across restarts.
+if (process.env.NODE_ENV !== 'production') {
+  const defaultBot = await tokenStore.generate('DefaultBot');
+  console.log(`Bot token: ${defaultBot.token} (userId: ${defaultBot.userId})`);
+}
 
 // Serve static in production
 if (process.env.NODE_ENV === 'production') {
