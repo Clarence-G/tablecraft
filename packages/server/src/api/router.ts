@@ -70,7 +70,7 @@ export function createApiRouter(
 
   // --- Authenticated endpoints ---
 
-  router.post('/auth/login', auth, (req, res) => {
+  router.get('/bot/whoami', auth, (req, res) => {
     res.json({ ok: true, data: { userId: req.botUserId, name: req.botUserName } });
   });
 
