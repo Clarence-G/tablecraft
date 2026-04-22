@@ -49,7 +49,7 @@ export function setupHandlers(
       );
       bindRoomEmitters(room, io, socket);
 
-      const joinResult = room.join(userId, playerName);
+      const joinResult = room.join(userId, playerName, false, socket.data.isGuest ?? true);
       if (!joinResult.ok) return ack({ ok: false, error: joinResult.error });
 
       roomManager.onPlayerJoin(room.roomId, userId);
@@ -64,7 +64,7 @@ export function setupHandlers(
       if (!room) return ack({ ok: false, error: 'Room not found' });
 
       bindRoomEmitters(room, io, socket);
-      const result = room.join(userId, playerName);
+      const result = room.join(userId, playerName, false, socket.data.isGuest ?? true);
       if (!result.ok) return ack({ ok: false, error: result.error });
 
       roomManager.onPlayerJoin(roomId, userId);

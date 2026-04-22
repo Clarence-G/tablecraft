@@ -34,7 +34,7 @@ const io = new Server<ClientEvents, ServerEvents>(httpServer, {
 const roomManager = new RoomManager();
 const tokenStore = new TokenStore();
 
-setupAuth(io);
+setupAuth(io, auth);
 setupHandlers(io, roomManager, serverRegistry);
 
 // Express CORS — must accept credentials so the auth cookie flows from Vite dev.

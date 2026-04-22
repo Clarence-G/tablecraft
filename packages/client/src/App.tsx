@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useGame } from './hooks/useGame';
 import { useIdentity } from './hooks/useIdentity';
 import { useRoom } from './hooks/useRoom';
+import { useSession } from './hooks/useSession';
 import { useSocket } from './hooks/useSocket';
 import { Game } from './pages/Game';
 import { Lobby } from './pages/Lobby';
@@ -13,7 +14,14 @@ type Page = 'lobby' | 'room' | 'game' | 'login' | 'register';
 
 export function App() {
   const { userId, userName, rename } = useIdentity();
-  const { socket } = useSocket(userId, userName);
+  const session = useSession();
+  // `isGuest` must flip atomically when the session loads so the socket
+  // reconnects with a verifiable identity. Treat session.isPending as guest —
+  // the socket will reconnect once the session resolves.
+  const actorUserId = session.data?.user?.id ?? userId;
+  const actorUserName = session.data?.user?.name ?? userName;
+  const isGuest = !session.data?.user;
+  const { socket } = useSocket(actorUserId, actorUserName, isGuest);
   const [page, setPage] = useState<Page>('lobby');
   const [roomId, setRoomId] = useState<string | null>(null);
   const pageRef = useRef(page);
@@ -68,7 +76,7 @@ export function App() {
     return (
       <Lobby
         socket={socket}
-        userName={userName}
+        userName={actorUserName}
         rename={rename}
         roomCtx={roomCtx}
         onGoToLogin={() => setPage('login')}
@@ -88,7 +96,7 @@ export function App() {
     return (
       <Room
         roomId={roomId}
-        userId={userId}
+        userId={actorUserId}
         roomCtx={roomCtx}
         onGameStart={() => setPage('game')}
         onLeave={() => {
@@ -102,7 +110,7 @@ export function App() {
   if (page === 'game') {
     return (
       <Game
-        userId={userId}
+        userId={actorUserId}
         room={roomCtx.room}
         game={game}
         onReturnToLobby={() => {

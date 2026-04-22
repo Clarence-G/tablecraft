@@ -28,6 +28,7 @@
     "@types/node": "^20.0.0",
     "@types/seedrandom": "^3.0.8",
     "drizzle-kit": "^0.30.0",
+    "socket.io-client": "^4.7.0",
     "tsx": "^4.11.0",
     "typescript": "^5.4.0",
     "vitest": "^1.6.0"
