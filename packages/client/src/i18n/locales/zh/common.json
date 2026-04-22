@@ -36,7 +36,6 @@
     "allGames": "所有游戏",
     "viewAll": "查看全部",
     "noActiveRooms": "暂无进行中的房间，去下面创建一个吧。",
-    "comingSoon": "即将上线",
     "backToLobby": "返回大厅"
   },
   "room": {
@@ -74,5 +73,27 @@
     "errorEmailInUse": "该邮箱已注册。",
     "guestChip": "访客",
     "signInCta": "登录"
+  },
+  "gamesAll": {
+    "title": "所有游戏",
+    "searchPlaceholder": "搜索游戏...",
+    "allTags": "全部标签",
+    "noMatches": "没有符合条件的游戏"
+  },
+  "roomsAll": {
+    "title": "所有房间",
+    "gameFilter": "游戏",
+    "anyGame": "所有游戏",
+    "empty": "暂无进行中的房间",
+    "createCta": "去创建房间",
+    "refresh": "刷新"
+  },
+  "leaderboard": {
+    "title": "排行榜",
+    "navLink": "排行榜",
+    "overall": "总榜",
+    "empty": "暂无排名数据",
+    "youLabel": "我",
+    "ptsSuffix": "分"
   }
 }

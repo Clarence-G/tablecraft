@@ -17,7 +17,8 @@
     "./input": "./src/input/index.ts",
     "./resume": "./src/resume/index.ts",
     "./points": "./src/points/index.ts",
-    "./layout": "./src/layout/index.ts"
+    "./layout": "./src/layout/index.ts",
+    "./leaderboard": "./src/leaderboard/index.ts"
   },
   "dependencies": {
     "@repo/shared": "workspace:*",

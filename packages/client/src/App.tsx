@@ -4,14 +4,24 @@ import { useIdentity } from './hooks/useIdentity';
 import { useRoom } from './hooks/useRoom';
 import { useSession } from './hooks/useSession';
 import { useSocket } from './hooks/useSocket';
-import { ComingSoon } from './pages/ComingSoon';
 import { Game } from './pages/Game';
+import { GamesAll } from './pages/GamesAll';
+import { Leaderboard } from './pages/Leaderboard';
 import { Lobby } from './pages/Lobby';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { Room } from './pages/Room';
+import { RoomsAll } from './pages/RoomsAll';
 
-type Page = 'lobby' | 'room' | 'game' | 'login' | 'register' | 'gamesAll' | 'roomsAll';
+type Page =
+  | 'lobby'
+  | 'room'
+  | 'game'
+  | 'login'
+  | 'register'
+  | 'gamesAll'
+  | 'roomsAll'
+  | 'leaderboard';
 
 export function App() {
   const { userId, userName, rename } = useIdentity();
@@ -53,6 +63,19 @@ export function App() {
     }
   }, [roomCtx.room]);
 
+  // Create-and-navigate helper used by GamesAll (and could be shared with Lobby).
+  async function createRoomAndNavigate(gameId: string) {
+    const { roomId: newRoomId } = await roomCtx.create(gameId, actorUserName);
+    setRoomId(newRoomId);
+    setPage('room');
+  }
+
+  async function joinRoomAndNavigate(targetRoomId: string) {
+    await roomCtx.join(targetRoomId, actorUserName);
+    setRoomId(targetRoomId);
+    setPage('room');
+  }
+
   if (page === 'login') {
     return (
       <Login
@@ -73,8 +96,29 @@ export function App() {
     );
   }
 
-  if (page === 'gamesAll' || page === 'roomsAll') {
-    return <ComingSoon onBack={() => setPage('lobby')} />;
+  if (page === 'gamesAll') {
+    return (
+      <GamesAll
+        userName={actorUserName}
+        onBack={() => setPage('lobby')}
+        onCreateRoom={createRoomAndNavigate}
+      />
+    );
+  }
+
+  if (page === 'roomsAll') {
+    return (
+      <RoomsAll
+        listRooms={roomCtx.listRooms}
+        onBack={() => setPage('lobby')}
+        onGoToAllGames={() => setPage('gamesAll')}
+        onJoinRoom={joinRoomAndNavigate}
+      />
+    );
+  }
+
+  if (page === 'leaderboard') {
+    return <Leaderboard onBack={() => setPage('lobby')} />;
   }
 
   if (page === 'lobby') {
@@ -88,6 +132,7 @@ export function App() {
         onGoToRegister={() => setPage('register')}
         onGoToAllGames={() => setPage('gamesAll')}
         onGoToAllRooms={() => setPage('roomsAll')}
+        onGoToLeaderboard={() => setPage('leaderboard')}
         onRoomCreated={(id) => {
           setRoomId(id);
           setPage('room');

@@ -36,7 +36,6 @@
     "allGames": "All games",
     "viewAll": "View all",
     "noActiveRooms": "No active rooms. Create one below.",
-    "comingSoon": "Coming soon",
     "backToLobby": "Back to lobby"
   },
   "room": {
@@ -74,5 +73,27 @@
     "errorEmailInUse": "That email is already registered.",
     "guestChip": "Guest",
     "signInCta": "Sign in"
+  },
+  "gamesAll": {
+    "title": "All games",
+    "searchPlaceholder": "Search games...",
+    "allTags": "All tags",
+    "noMatches": "No games match your filters"
+  },
+  "roomsAll": {
+    "title": "All rooms",
+    "gameFilter": "Game",
+    "anyGame": "Any game",
+    "empty": "No active rooms",
+    "createCta": "Create a room",
+    "refresh": "Refresh"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "navLink": "Leaderboard",
+    "overall": "Overall",
+    "empty": "No rankings yet",
+    "youLabel": "You",
+    "ptsSuffix": "pts"
   }
 }

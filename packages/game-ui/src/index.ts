@@ -13,3 +13,4 @@ export * from './input/index';
 export * from './resume/index';
 export * from './points/index';
 export * from './layout/index';
+export * from './leaderboard/index';

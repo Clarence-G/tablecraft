@@ -5,7 +5,7 @@ import { SectionHead } from '@repo/game-ui/section';
 import { UserChip } from '@repo/game-ui/user';
 import type { ClientEvents, RoomSummary, ServerEvents } from '@repo/shared';
 import Avatar from 'boring-avatars';
-import { Clock, Pencil, Users } from 'lucide-react';
+import { Clock, Pencil, Trophy, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Socket } from 'socket.io-client';
@@ -14,6 +14,7 @@ import { usePoints } from '../hooks/usePoints';
 import type { useRoom } from '../hooks/useRoom';
 import { useSession } from '../hooks/useSession';
 import { apiFetch } from '../lib/api';
+import { TAG_COLORS, buildTagTranslation } from '../lib/tags';
 import { HeroGuest, HeroLoggedIn, RoomCard } from './lobby/sections';
 
 type AppSocket = Socket<ServerEvents, ClientEvents>;
@@ -30,17 +31,8 @@ interface LobbyProps {
   onGoToRegister: () => void;
   onGoToAllGames: () => void;
   onGoToAllRooms: () => void;
+  onGoToLeaderboard: () => void;
 }
-
-const TAG_COLORS: Record<string, string> = {
-  策略: 'bg-[#e8f0fe] text-[#1a3a8a] border-[#2563eb]',
-  棋类: 'bg-[#e8f8ee] text-[#0a5c2a] border-[#16a34a]',
-  推理: 'bg-[#f0e8fe] text-[#4a1a8a] border-[#7c3aed]',
-  卡牌: 'bg-[#fef3e0] text-[#7a4006] border-[#d97706]',
-  派对: 'bg-[#fde8ec] text-[#8a1a30] border-[#e8556d]',
-  休闲: 'bg-[#fde8e8] text-[#7a1a1a] border-[#d94040]',
-  骰子: 'bg-[#fde8e8] text-[#7a1a1a] border-[#d94040]',
-};
 
 export function Lobby({
   socket: _socket,
@@ -53,6 +45,7 @@ export function Lobby({
   onGoToRegister,
   onGoToAllGames,
   onGoToAllRooms,
+  onGoToLeaderboard,
 }: LobbyProps) {
   const { t, i18n } = useTranslation('common');
   const session = useSession();
@@ -61,15 +54,7 @@ export function Lobby({
   const gt = (gameId: string, key: string) => i18n.t(key, { ns: gameId });
 
   // Translate Chinese tags (source of truth) to whatever locale is active.
-  const tagTranslation = new Map<string, string>();
-  for (const g of Object.values(clientRegistry)) {
-    const zhTags: string[] = g.meta.tags ?? [];
-    const translatedTags: string[] =
-      (i18n.t('tags', { ns: g.meta.id, returnObjects: true }) as string[]) ?? [];
-    zhTags.forEach((zh, i) => {
-      if (translatedTags[i]) tagTranslation.set(zh, translatedTags[i]);
-    });
-  }
+  const tagTranslation = buildTagTranslation(i18n);
   const translateTag = (zhTag: string) => tagTranslation.get(zhTag) ?? zhTag;
 
   const { create, join, listRooms } = roomCtx;
@@ -161,6 +146,15 @@ export function Lobby({
             <span className="text-xl font-bold text-[#1a1108]">{t('app.title')}</span>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onGoToLeaderboard}
+              className="inline-flex items-center gap-1 text-xs font-semibold border-2 border-border bg-card rounded-full px-2.5 py-1 hover:border-foreground hover:-translate-y-0.5 transition-all"
+              aria-label={t('leaderboard.navLink')}
+            >
+              <Trophy className="size-3.5" />
+              <span className="hidden sm:inline">{t('leaderboard.navLink')}</span>
+            </button>
             <LocaleSwitch />
             {authedUser ? (
               <UserChip
