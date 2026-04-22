@@ -2,6 +2,8 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ClientEvents, ServerEvents } from '@repo/shared';
+import { toNodeHandler } from 'better-auth/node';
+import cors from 'cors';
 import express from 'express';
 import { Server } from 'socket.io';
 import { serverRegistry } from '../../../games/server-registry.js';
@@ -9,6 +11,8 @@ import { createApiRouter } from './api/router.js';
 import { TokenStore } from './api/token-store.js';
 import { initDb } from './db/index.js';
 import { RoomManager } from './engine/RoomManager.js';
+import { auth } from './lib/auth.js';
+import { createSessionMiddleware } from './middleware/session.js';
 import { setupAuth } from './socket/auth.js';
 import { setupHandlers } from './socket/handlers.js';
 
@@ -33,7 +37,23 @@ const tokenStore = new TokenStore();
 setupAuth(io);
 setupHandlers(io, roomManager, serverRegistry);
 
-// REST API for bots
+// Express CORS — must accept credentials so the auth cookie flows from Vite dev.
+if (process.env.NODE_ENV !== 'production') {
+  app.use(cors({ origin: ['http://localhost:5173'], credentials: true }));
+}
+
+// BetterAuth catch-all. Must come BEFORE express.json() — BetterAuth parses
+// the body itself (see https://better-auth.com/docs/integrations/express).
+app.all('/api/auth/*', toNodeHandler(auth));
+
+// Session middleware runs for all /api/* routes after the auth handler.
+// It attaches `req.session` (or undefined) so REST endpoints in future stages
+// can branch on logged-in vs. anonymous callers. Existing bot-token routes
+// ignore this and keep using their bearer middleware.
+app.use('/api', createSessionMiddleware(auth));
+
+// REST API (bots + humans). `createApiRouter` installs its own `express.json`
+// internally, which is safe because the BetterAuth handler already ran.
 app.use('/api', createApiRouter(roomManager, serverRegistry, tokenStore));
 
 // Dev-only: gated to skip in production to avoid leaking plaintext tokens to

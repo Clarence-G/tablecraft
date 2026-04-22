@@ -15,6 +15,13 @@
       "when": 1776845350190,
       "tag": "0001_massive_devos",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776846210181,
+      "tag": "0002_safe_captain_cross",
+      "breakpoints": true
     }
   ]
 }
