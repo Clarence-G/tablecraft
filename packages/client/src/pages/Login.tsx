@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { authClient } from '../lib/authClient';
@@ -68,7 +69,8 @@ export function Login({ onSuccess, onGoToRegister, onBack }: LoginProps) {
           onClick={onBack}
           className="text-sm text-muted-foreground mb-4 hover:text-foreground"
         >
-          {'←'} {t('auth.backToLobby')}
+          <ArrowLeft className="size-3.5 inline-block mr-1" />
+          {t('auth.backToLobby')}
         </button>
         <div className="bg-card border-2 border-border rounded-xl shadow-[4px_4px_0_var(--border)] p-6">
           <h1 className="text-xl font-bold mb-4 text-foreground">{t('auth.signIn')}</h1>
