@@ -5,6 +5,7 @@ import express from 'express';
 import type { GameRoom } from '../engine/GameRoom.js';
 import type { RoomManager } from '../engine/RoomManager.js';
 import { createApiAuth } from './auth.js';
+import { registerPointsRoutes } from './points.js';
 import type { TokenStore } from './token-store.js';
 
 function gameStateResponse(room: GameRoom, userId: string) {
@@ -27,6 +28,12 @@ export function createApiRouter(
   const auth = createApiAuth(tokenStore);
 
   router.use(express.json());
+
+  // Points, leaderboard, and guest-merge routes (Stage 4b). Session-based;
+  // kept in a separate module to keep this file focused on the bot-bearer
+  // room/game routes. Registered before the bot-auth routes so session
+  // middleware (mounted globally in `index.ts` on `/api`) is in scope.
+  registerPointsRoutes(router);
 
   // --- Admin endpoints (dev only) ---
 
