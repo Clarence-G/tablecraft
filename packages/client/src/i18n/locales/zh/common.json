@@ -38,5 +38,24 @@
   "game": {
     "loading": "加载中...",
     "unknownGame": "未知游戏"
+  },
+  "auth": {
+    "signIn": "登录",
+    "signUp": "注册",
+    "signOut": "登出",
+    "email": "邮箱",
+    "password": "密码",
+    "nickname": "昵称",
+    "continueWithGithub": "使用 GitHub 继续",
+    "orDivider": "或",
+    "noAccount": "还没有账号？",
+    "haveAccount": "已有账号？",
+    "createAccount": "创建账号",
+    "backToLobby": "返回游戏",
+    "errorGeneric": "出错了，请重试。",
+    "errorInvalidCredentials": "邮箱或密码错误。",
+    "errorEmailInUse": "该邮箱已注册。",
+    "guestChip": "访客",
+    "signInCta": "登录"
   }
 }

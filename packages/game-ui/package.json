@@ -10,7 +10,8 @@
     "./table": "./src/table/index.ts",
     "./card": "./src/card/index.ts",
     "./log": "./src/log/index.ts",
-    "./side-panel": "./src/side-panel/index.ts"
+    "./side-panel": "./src/side-panel/index.ts",
+    "./user": "./src/user/index.ts"
   },
   "dependencies": {
     "@repo/shared": "workspace:*",

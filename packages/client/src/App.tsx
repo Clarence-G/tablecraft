@@ -5,9 +5,11 @@ import { useRoom } from './hooks/useRoom';
 import { useSocket } from './hooks/useSocket';
 import { Game } from './pages/Game';
 import { Lobby } from './pages/Lobby';
+import { Login } from './pages/Login';
+import { Register } from './pages/Register';
 import { Room } from './pages/Room';
 
-type Page = 'lobby' | 'room' | 'game';
+type Page = 'lobby' | 'room' | 'game' | 'login' | 'register';
 
 export function App() {
   const { userId, userName, rename } = useIdentity();
@@ -42,6 +44,26 @@ export function App() {
     }
   }, [roomCtx.room]);
 
+  if (page === 'login') {
+    return (
+      <Login
+        onSuccess={() => setPage('lobby')}
+        onGoToRegister={() => setPage('register')}
+        onBack={() => setPage('lobby')}
+      />
+    );
+  }
+
+  if (page === 'register') {
+    return (
+      <Register
+        onSuccess={() => setPage('lobby')}
+        onGoToLogin={() => setPage('login')}
+        onBack={() => setPage('lobby')}
+      />
+    );
+  }
+
   if (page === 'lobby') {
     return (
       <Lobby
@@ -49,6 +71,7 @@ export function App() {
         userName={userName}
         rename={rename}
         roomCtx={roomCtx}
+        onGoToLogin={() => setPage('login')}
         onRoomCreated={(id) => {
           setRoomId(id);
           setPage('room');

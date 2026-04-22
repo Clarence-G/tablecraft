@@ -2,6 +2,7 @@ import { GameIcon } from '@/components/GameIcon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { UserChip } from '@repo/game-ui/user';
 import type { ClientEvents, RoomSummary, ServerEvents } from '@repo/shared';
 import Avatar from 'boring-avatars';
 import { Clock, Pencil, Plus, RefreshCw, Sofa, Users } from 'lucide-react';
@@ -10,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import type { Socket } from 'socket.io-client';
 import { clientRegistry } from '../../../../games/client-registry';
 import type { useRoom } from '../hooks/useRoom';
+import { useSession } from '../hooks/useSession';
 
 type AppSocket = Socket<ServerEvents, ClientEvents>;
 type RoomCtx = ReturnType<typeof useRoom>;
@@ -21,6 +23,7 @@ interface LobbyProps {
   roomCtx: RoomCtx;
   onRoomCreated: (roomId: string) => void;
   onRoomJoined: (roomId: string) => void;
+  onGoToLogin: () => void;
 }
 
 const TAG_COLORS: Record<string, string> = {
@@ -40,8 +43,11 @@ export function Lobby({
   roomCtx,
   onRoomCreated,
   onRoomJoined,
+  onGoToLogin,
 }: LobbyProps) {
   const { t, i18n } = useTranslation('common');
+  const session = useSession();
+  const authedUser = session.data?.user ?? null;
   const gt = (gameId: string, key: string) => i18n.t(key, { ns: gameId });
 
   // Build tag translation: Chinese tag -> translated tag
@@ -155,40 +161,47 @@ export function Lobby({
           </div>
           <div className="flex items-center gap-2">
             <LocaleSwitch />
-            {/* User avatar + name */}
-            <Avatar
-              name={userName}
-              size={32}
-              variant="beam"
-              colors={['#d94040', '#2563eb', '#16a34a', '#d97706', '#7c3aed']}
-            />
-            {editingName ? (
-              <input
-                className="border-2 border-foreground bg-card shadow-inset rounded-[8px] px-2 py-0.5 text-foreground font-semibold w-28 text-center outline-none text-sm"
-                value={nameDraft}
-                onChange={(e) => setNameDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') confirmRename();
-                  if (e.key === 'Escape') {
-                    setNameDraft(userName);
-                    setEditingName(false);
-                  }
-                }}
-                onBlur={confirmRename}
-                maxLength={12}
-              />
+            {authedUser ? (
+              <UserChip userName={authedUser.name} avatarSeed={authedUser.email ?? authedUser.id} />
             ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setNameDraft(userName);
-                  setEditingName(true);
-                }}
-                className="font-semibold text-sm text-foreground inline-flex items-center gap-1 hover:text-muted-foreground transition-colors"
-              >
-                {userName}
-                <Pencil className="size-3 text-[#9c8b78]" />
-              </button>
+              <>
+                {/* Guest: avatar + inline rename + sign-in CTA */}
+                <Avatar
+                  name={userName}
+                  size={32}
+                  variant="beam"
+                  colors={['#d94040', '#2563eb', '#16a34a', '#d97706', '#7c3aed']}
+                />
+                {editingName ? (
+                  <input
+                    className="border-2 border-foreground bg-card shadow-inset rounded-[8px] px-2 py-0.5 text-foreground font-semibold w-28 text-center outline-none text-sm"
+                    value={nameDraft}
+                    onChange={(e) => setNameDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') confirmRename();
+                      if (e.key === 'Escape') {
+                        setNameDraft(userName);
+                        setEditingName(false);
+                      }
+                    }}
+                    onBlur={confirmRename}
+                    maxLength={12}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNameDraft(userName);
+                      setEditingName(true);
+                    }}
+                    className="font-semibold text-sm text-foreground inline-flex items-center gap-1 hover:text-muted-foreground transition-colors"
+                  >
+                    {userName}
+                    <Pencil className="size-3 text-[#9c8b78]" />
+                  </button>
+                )}
+                <UserChip guestLabel={t('auth.signInCta')} onSignInClick={onGoToLogin} />
+              </>
             )}
           </div>
         </div>

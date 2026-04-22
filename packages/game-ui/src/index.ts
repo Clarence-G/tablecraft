@@ -6,3 +6,4 @@ export * from './table/index';
 export * from './card/index';
 export * from './log/index';
 export * from './side-panel/index';
+export * from './user/index';
