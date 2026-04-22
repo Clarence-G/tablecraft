@@ -85,6 +85,7 @@ export function App() {
         rename={rename}
         roomCtx={roomCtx}
         onGoToLogin={() => setPage('login')}
+        onGoToRegister={() => setPage('register')}
         onGoToAllGames={() => setPage('gamesAll')}
         onGoToAllRooms={() => setPage('roomsAll')}
         onRoomCreated={(id) => {

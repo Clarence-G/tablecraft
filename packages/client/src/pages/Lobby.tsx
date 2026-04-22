@@ -1,6 +1,5 @@
 import { GameIcon } from '@/components/GameIcon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
-import { QuickJoinInput } from '@repo/game-ui/input';
 import { ViewAllRow } from '@repo/game-ui/layout';
 import { SectionHead } from '@repo/game-ui/section';
 import { UserChip } from '@repo/game-ui/user';
@@ -28,6 +27,7 @@ interface LobbyProps {
   onRoomCreated: (roomId: string) => void;
   onRoomJoined: (roomId: string) => void;
   onGoToLogin: () => void;
+  onGoToRegister: () => void;
   onGoToAllGames: () => void;
   onGoToAllRooms: () => void;
 }
@@ -50,6 +50,7 @@ export function Lobby({
   onRoomCreated,
   onRoomJoined,
   onGoToLogin,
+  onGoToRegister,
   onGoToAllGames,
   onGoToAllRooms,
 }: LobbyProps) {
@@ -228,7 +229,7 @@ export function Lobby({
             cta={t('hero.guestCta')}
             summary={t('hero.summary', { games: games.length, rooms: rooms.length })}
             onSignIn={onGoToLogin}
-            onSignUp={onGoToLogin}
+            onSignUp={onGoToRegister}
             onQuickJoin={handleQuickJoin}
             signInLabel={t('auth.signIn')}
             signUpLabel={t('auth.signUp')}
