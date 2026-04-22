@@ -65,3 +65,15 @@ export const actionLog = pgTable(
     uniqRoomUserSeq: uniqueIndex('uniq_action_room_user_seq').on(t.roomId, t.userId, t.seq),
   }),
 );
+
+export const botTokens = pgTable('bot_tokens', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  userId: text('user_id').notNull().unique(),
+  name: text('name').notNull(),
+  tokenHash: text('token_hash').notNull().unique(),
+  createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true, mode: 'date' }),
+  revokedAt: timestamp('revoked_at', { withTimezone: true, mode: 'date' }),
+});

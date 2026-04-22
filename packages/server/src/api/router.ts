@@ -30,9 +30,9 @@ export function createApiRouter(
 
   // --- Admin endpoints (dev only) ---
 
-  router.post('/admin/token', (req, res) => {
+  router.post('/admin/token', async (req, res) => {
     const name = req.body?.name || 'Bot';
-    const result = tokenStore.generate(name);
+    const result = await tokenStore.generate(name);
     res.status(201).json({ ok: true, data: result });
   });
 

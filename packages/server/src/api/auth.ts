@@ -11,7 +11,7 @@ declare global {
 }
 
 export function createApiAuth(tokenStore: TokenStore) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     const header = req.headers.authorization;
     if (!header || !header.startsWith('Bearer ')) {
       res.status(401).json({
@@ -24,7 +24,7 @@ export function createApiAuth(tokenStore: TokenStore) {
     }
 
     const token = header.slice(7);
-    const identity = tokenStore.verify(token);
+    const identity = await tokenStore.verify(token);
     if (!identity) {
       res.status(401).json({
         ok: false,
