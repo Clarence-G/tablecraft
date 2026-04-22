@@ -61,10 +61,15 @@ export function Login({ onSuccess, onGoToRegister, onBack }: LoginProps) {
     setLoading(true);
     setError(null);
     try {
-      await authClient.signIn.social({
+      const { error: authError } = await authClient.signIn.social({
         provider: 'github',
         callbackURL: window.location.origin,
       });
+      if (authError) {
+        setError(mapAuthError(authError, t));
+        return;
+      }
+      // success → BetterAuth redirects; if we're still here with no error, do nothing.
     } catch {
       setError(t('auth.errorGeneric'));
     } finally {

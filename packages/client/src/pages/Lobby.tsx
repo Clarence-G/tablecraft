@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import type { Socket } from 'socket.io-client';
 import { clientRegistry } from '../../../../games/client-registry';
 import { usePoints } from '../hooks/usePoints';
+import { useRecentGames } from '../hooks/useRecentGames';
 import type { useRoom } from '../hooks/useRoom';
 import { useSession } from '../hooks/useSession';
 import { apiFetch } from '../lib/api';
@@ -53,6 +54,7 @@ export function Lobby({
   const session = useSession();
   const authedUser = session.data?.user ?? null;
   const { data: points } = usePoints();
+  const { data: recentGames } = useRecentGames();
   const gt = (gameId: string, key: string) => i18n.t(key, { ns: gameId });
 
   // Translate Chinese tags (source of truth) to whatever locale is active.
@@ -260,6 +262,49 @@ export function Lobby({
             </ViewAllRow>
           )}
         </section>
+
+        {/* Recently played (signed-in only; hidden when empty) */}
+        {authedUser && recentGames.length > 0 && (
+          <section>
+            <SectionHead
+              title={t('lobby.recentlyPlayed')}
+              onViewAll={onGoToMe}
+              viewAllLabel={t('lobby.viewAll')}
+            />
+            <ViewAllRow>
+              {recentGames.map((rg) => {
+                const plugin = clientRegistry[rg.gameId];
+                const gameName = plugin ? gt(rg.gameId, 'name') : rg.gameId;
+                return (
+                  <button
+                    type="button"
+                    key={`${rg.roomId}-${rg.endedAt}`}
+                    onClick={() => handleCreate(rg.gameId)}
+                    disabled={loading || !plugin}
+                    className="snap-start shrink-0 w-[180px] border-2 border-foreground bg-card rounded-[12px] shadow-card p-3 text-left hover:-translate-y-0.5 hover:shadow-card-hover transition-all disabled:opacity-60"
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <GameIcon
+                        name={plugin?.meta.icon ?? 'rolling-dices'}
+                        className="size-4"
+                      />
+                      <span className="text-sm font-bold leading-tight truncate">
+                        {gameName}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {rg.result === 'win'
+                        ? t('lobby.resultWin')
+                        : rg.result === 'loss'
+                          ? t('lobby.resultLoss')
+                          : t('lobby.resultDraw')}
+                    </div>
+                  </button>
+                );
+              })}
+            </ViewAllRow>
+          </section>
+        )}
 
         {/* All games */}
         <section>

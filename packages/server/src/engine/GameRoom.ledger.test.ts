@@ -87,14 +87,18 @@ describe('GameRoom END_GAME → points_ledger integration', () => {
     // ledger writes are fire-and-forget — wait a microtask tick
     await new Promise((r) => setImmediate(r));
 
-    const rows = await db.select().from(schema.pointsLedger);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]?.userId).toBe('userA');
-    expect(rows[0]?.guestId).toBeNull();
-    expect(rows[0]?.reason).toBe('win');
-    expect(rows[0]?.gameId).toBe('test');
-    expect(rows[0]?.roomId).toBe(room.roomId);
-    expect(rows[0]?.points).toBe(10);
+    const rows = await db.select().from(schema.pointsLedger).orderBy(schema.pointsLedger.reason);
+    // 2 rows: winner userA (win, 10) + loser guestB (loss, 0). Bot is skipped.
+    expect(rows).toHaveLength(2);
+    const win = rows.find((r) => r.reason === 'win');
+    const loss = rows.find((r) => r.reason === 'loss');
+    expect(win?.userId).toBe('userA');
+    expect(win?.guestId).toBeNull();
+    expect(win?.points).toBe(10);
+    expect(win?.roomId).toBe(room.roomId);
+    expect(loss?.userId).toBeNull();
+    expect(loss?.guestId).toBe('guestB');
+    expect(loss?.points).toBe(0);
   });
 
   it('writes no rows when rankings is empty', async () => {

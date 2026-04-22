@@ -63,16 +63,23 @@ describe('recordPoints', () => {
     expect(rows[0]?.points).toBe(3);
   });
 
-  it('skips loss reason (zero points → no row)', async () => {
+  it('writes a loss row (zero points) so the ledger doubles as a play log', async () => {
+    await db.insert(schema.user).values({
+      id: 'user_loss',
+      name: 'L',
+      email: 'l@example.com',
+    });
     await recordPoints({
-      userId: null,
-      guestId: 'guest_xyz',
+      userId: 'user_loss',
+      guestId: null,
       gameId: 'gomoku',
       roomId: 'room_1',
       reason: 'loss',
     });
     const rows = await db.select().from(schema.pointsLedger);
-    expect(rows).toHaveLength(0);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.points).toBe(0);
+    expect(rows[0]?.reason).toBe('loss');
   });
 
   it('writes daily_checkin row with null roomId', async () => {

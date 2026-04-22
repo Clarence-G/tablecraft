@@ -36,7 +36,10 @@
     "allGames": "所有游戏",
     "viewAll": "查看全部",
     "noActiveRooms": "暂无进行中的房间，去下面创建一个吧。",
-    "backToLobby": "返回大厅"
+    "backToLobby": "返回大厅",
+    "resultWin": "赢了",
+    "resultLoss": "输了",
+    "resultDraw": "平局"
   },
   "room": {
     "connecting": "连接中...",

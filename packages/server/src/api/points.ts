@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
+import { and, desc, eq, isNotNull, isNull, ne, sql } from 'drizzle-orm';
 import type { Request, Response, Router } from 'express';
 import { db } from '../db/index.js';
 import { pointsLedger, user } from '../db/schema.js';
@@ -99,9 +99,33 @@ export function registerPointsRoutes(router: Router): void {
       name: session.user.name,
       image: session.user.image ?? null,
     };
-    // recentGames is a stub for Stage 7 — surface the key so clients can
-    // code against the final shape without branching.
-    res.json({ ok: true, data: { user: safeUser, points, recentGames: [] } });
+    // Recently played: last 5 distinct rooms the user participated in. Each
+    // ledger row maps 1:1 to one game outcome for that user, so taking the
+    // newest row per (gameId, roomId) is the simplest stable ordering.
+    const recentRows = await db
+      .select({
+        gameId: pointsLedger.gameId,
+        roomId: pointsLedger.roomId,
+        reason: pointsLedger.reason,
+        endedAt: pointsLedger.createdAt,
+      })
+      .from(pointsLedger)
+      .where(
+        and(
+          eq(pointsLedger.userId, session.user.id),
+          ne(pointsLedger.reason, 'daily_checkin'),
+          isNotNull(pointsLedger.roomId),
+        ),
+      )
+      .orderBy(desc(pointsLedger.createdAt))
+      .limit(5);
+    const recentGames = recentRows.map((r) => ({
+      gameId: r.gameId,
+      roomId: r.roomId,
+      result: r.reason, // 'win' | 'loss' | 'draw'
+      endedAt: r.endedAt,
+    }));
+    res.json({ ok: true, data: { user: safeUser, points, recentGames } });
   });
 
   // GET /api/guest/:guestId/points — public read of a guest's summary.
@@ -208,6 +232,7 @@ export function registerPointsRoutes(router: Router): void {
       .from(pointsLedger)
       .where(whereClause)
       .groupBy(pointsLedger.userId)
+      .having(sql`SUM(${pointsLedger.points}) > 0`)
       .as('sub');
 
     const rows = await db
@@ -221,11 +246,15 @@ export function registerPointsRoutes(router: Router): void {
       .orderBy(desc(pointsSubquery.total))
       .limit(limit);
 
-    // total = number of distinct scored users (matches "Unranked out of N" UX).
-    const totalRows = await db
-      .select({ total: sql<number>`COUNT(DISTINCT ${pointsLedger.userId})::int` })
+    // total = number of distinct users with > 0 earned points (loss-only rows excluded).
+    const totalSub = db
+      .select({ userId: pointsLedger.userId })
       .from(pointsLedger)
-      .where(whereClause);
+      .where(whereClause)
+      .groupBy(pointsLedger.userId)
+      .having(sql`SUM(${pointsLedger.points}) > 0`)
+      .as('scored');
+    const totalRows = await db.select({ total: sql<number>`COUNT(*)::int` }).from(totalSub);
     const total = Number(totalRows[0]?.total ?? 0);
 
     const entries = rows.map((r, i) => ({
@@ -271,16 +300,20 @@ export function registerPointsRoutes(router: Router): void {
       .where(ownerWhere);
     const myPoints = Number(pointsRow?.total ?? 0);
 
-    // Leaderboard only ranks real users; guest callers never have a rank.
+    // Leaderboard only ranks real users with > 0 earned points.
     if (!isUser || myPoints === 0) {
-      const totalRows = await db
-        .select({ total: sql<number>`COUNT(DISTINCT ${pointsLedger.userId})::int` })
+      const scoredSub = db
+        .select({ userId: pointsLedger.userId })
         .from(pointsLedger)
         .where(
           gameId
             ? and(isNotNull(pointsLedger.userId), eq(pointsLedger.gameId, gameId))
             : isNotNull(pointsLedger.userId),
-        );
+        )
+        .groupBy(pointsLedger.userId)
+        .having(sql`SUM(${pointsLedger.points}) > 0`)
+        .as('scored_me');
+      const totalRows = await db.select({ total: sql<number>`COUNT(*)::int` }).from(scoredSub);
       res.json({
         ok: true,
         data: { rank: null, points: myPoints, total: Number(totalRows[0]?.total ?? 0) },
@@ -288,7 +321,7 @@ export function registerPointsRoutes(router: Router): void {
       return;
     }
 
-    // Count distinct users with a strictly higher sum.
+    // Count distinct users with a strictly higher sum (and > 0 earned points).
     const rankRows = await db
       .select({
         userId: pointsLedger.userId,
@@ -300,7 +333,8 @@ export function registerPointsRoutes(router: Router): void {
           ? and(isNotNull(pointsLedger.userId), eq(pointsLedger.gameId, gameId))
           : isNotNull(pointsLedger.userId),
       )
-      .groupBy(pointsLedger.userId);
+      .groupBy(pointsLedger.userId)
+      .having(sql`SUM(${pointsLedger.points}) > 0`);
 
     const totalUsers = rankRows.length;
     const aboveMe = rankRows.filter((r) => Number(r.total) > myPoints).length;

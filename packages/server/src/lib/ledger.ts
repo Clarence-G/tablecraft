@@ -17,12 +17,12 @@ export interface LedgerEntry {
  * points row. Returns a promise the caller MAY await in tests; production
  * callers should NOT await (fire-and-forget).
  *
- * Zero-point reasons (e.g. 'loss') short-circuit and write no row — keeps the
- * table small and lets callers pass through every participant uniformly.
+ * All entries are written — including zero-point `loss` rows — so the ledger
+ * doubles as a "recently played" log. Aggregation queries that want real
+ * earnings use `HAVING SUM(points) > 0` (see leaderboard).
  */
 export async function recordPoints(entry: LedgerEntry): Promise<void> {
   const points = POINTS[entry.reason];
-  if (points <= 0) return;
   try {
     await db.insert(pointsLedger).values({
       userId: entry.userId,

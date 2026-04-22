@@ -36,7 +36,10 @@
     "allGames": "All games",
     "viewAll": "View all",
     "noActiveRooms": "No active rooms. Create one below.",
-    "backToLobby": "Back to lobby"
+    "backToLobby": "Back to lobby",
+    "resultWin": "Won",
+    "resultLoss": "Lost",
+    "resultDraw": "Draw"
   },
   "room": {
     "connecting": "Connecting...",
