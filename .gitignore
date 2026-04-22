@@ -11,6 +11,7 @@ playwright-report/
 .dev.pid
 .DS_Store
 .ace-tool/
+.superpowers/
 
 # Build artifacts in games/
 games/**/*.js
