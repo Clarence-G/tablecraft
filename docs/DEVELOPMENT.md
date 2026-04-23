@@ -669,7 +669,7 @@ All under `/api/*`. Auth via `Authorization: Bearer <token>` header.
 | Method | Path | Description |
 |--------|------|-------------|
 | POST | /api/admin/token | Generate bot token |
-| POST | /api/auth/login | Verify identity |
+| GET | /api/bot/whoami | Verify bot identity |
 | GET | /api/games | List all game types |
 | GET | /api/games/:gameId | Game detail: `rules`, `agentRules`, `actionSchema` (JSON Schema auto-derived from Zod) |
 | GET | /api/rooms | List joinable rooms |

@@ -30,7 +30,7 @@
     "typecheck": "tsc --noEmit -p packages/shared/tsconfig.json && tsc --noEmit -p packages/game-ui/tsconfig.json && tsc --noEmit -p packages/client/tsconfig.json"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@biomejs/biome", "better-sqlite3", "esbuild"]
+    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
   },
   "dependencies": {
     "@games/battleship": "workspace:*",

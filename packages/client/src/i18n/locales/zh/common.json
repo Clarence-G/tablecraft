@@ -3,6 +3,16 @@
     "title": "桌游大全",
     "slogan": "和朋友一起，随时随地玩桌游"
   },
+  "hero": {
+    "welcomeBack": "欢迎回来，{{name}}",
+    "guestWelcome": "你好，{{name}}",
+    "guestCta": "登录保存你的战绩",
+    "pointsLabel": "积分",
+    "rankLabel": "排名",
+    "summary": "{{games}} 个游戏 · {{rooms}} 个房间进行中",
+    "continueLast": "继续上一局",
+    "roomCodePlaceholder": "房间码"
+  },
   "lobby": {
     "selectGame": "选择游戏",
     "all": "全部",
@@ -20,7 +30,19 @@
     "allRooms": "所有房间",
     "refresh": "刷新",
     "players": "人",
-    "minutes": "分钟"
+    "minutes": "分钟",
+    "activeRooms": "进行中的房间",
+    "recentlyPlayed": "最近玩过",
+    "allGames": "所有游戏",
+    "viewAll": "查看全部",
+    "noActiveRooms": "暂无进行中的房间，去下面创建一个吧。",
+    "noRoomsForGame": "还没有人开 {{game}} 的房间。",
+    "filterAllGames": "全部游戏",
+    "createForGame": "创建 {{game}} 房间",
+    "backToLobby": "返回大厅",
+    "resultWin": "赢了",
+    "resultLoss": "输了",
+    "resultDraw": "平局"
   },
   "room": {
     "connecting": "连接中...",
@@ -38,5 +60,53 @@
   "game": {
     "loading": "加载中...",
     "unknownGame": "未知游戏"
+  },
+  "auth": {
+    "signIn": "登录",
+    "signUp": "注册",
+    "signOut": "登出",
+    "email": "邮箱",
+    "password": "密码",
+    "nickname": "昵称",
+    "continueWithGithub": "使用 GitHub 继续",
+    "orDivider": "或",
+    "noAccount": "还没有账号？",
+    "haveAccount": "已有账号？",
+    "createAccount": "创建账号",
+    "backToLobby": "返回游戏",
+    "errorGeneric": "出错了，请重试。",
+    "errorInvalidCredentials": "邮箱或密码错误。",
+    "errorEmailInUse": "该邮箱已注册。",
+    "guestChip": "访客",
+    "signInCta": "登录"
+  },
+  "gamesAll": {
+    "title": "所有游戏",
+    "searchPlaceholder": "搜索游戏...",
+    "allTags": "全部标签",
+    "noMatches": "没有符合条件的游戏"
+  },
+  "roomsAll": {
+    "title": "所有房间",
+    "gameFilter": "游戏",
+    "anyGame": "所有游戏",
+    "empty": "暂无进行中的房间",
+    "createCta": "去创建房间",
+    "refresh": "刷新"
+  },
+  "leaderboard": {
+    "title": "排行榜",
+    "navLink": "排行榜",
+    "overall": "总榜",
+    "empty": "暂无排名数据",
+    "youLabel": "我",
+    "ptsSuffix": "分"
+  },
+  "me": {
+    "navLink": "个人",
+    "pointsByGame": "各游戏积分",
+    "noPointsYet": "还没有积分。赢一局开启你的积分账本。",
+    "dailyCheckin": "每日签到",
+    "signedOutNotice": "你尚未登录。"
   }
 }

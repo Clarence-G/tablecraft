@@ -24,7 +24,7 @@ export async function loginCommand(args: string[]): Promise<unknown> {
 
   server = server.replace(/\/+$/, '');
   const client = new ApiClient({ server, token });
-  const result = (await client.post('/auth/login')) as any;
+  const result = (await client.get('/bot/whoami')) as any;
 
   if (result.ok) {
     saveConfig({ server, token });
@@ -33,7 +33,7 @@ export async function loginCommand(args: string[]): Promise<unknown> {
 }
 
 export async function whoamiCommand(client: ApiClient, server: string): Promise<unknown> {
-  const result = (await client.post('/auth/login')) as any;
+  const result = (await client.get('/bot/whoami')) as any;
   if (!result.ok) return result;
   return { ok: true, data: { ...result.data, server } };
 }

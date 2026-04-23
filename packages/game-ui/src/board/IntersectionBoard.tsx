@@ -20,6 +20,8 @@ export interface IntersectionBoardProps {
   renderOverlay?: (row: number, col: number) => ReactNode;
   /** Show column letters + row numbers in the gutters (Go/Gomoku convention). */
   showCoordinates?: boolean;
+  /** Disable all placement (e.g. while an action is in flight). Hides preview. */
+  disabled?: boolean;
   className?: string;
 }
 
@@ -59,6 +61,7 @@ export function IntersectionBoard({
   previewStone,
   renderOverlay,
   showCoordinates,
+  disabled,
   className,
 }: IntersectionBoardProps) {
   const [hovered, setHovered] = useState<[number, number] | null>(null);
@@ -164,7 +167,7 @@ export function IntersectionBoard({
         >
           {stones.map((row, r) =>
             row.map((cell, c) => {
-              const placeable = canPlace?.(r, c) ?? false;
+              const placeable = !disabled && (canPlace?.(r, c) ?? false);
               const isHovered = hovered?.[0] === r && hovered?.[1] === c;
               return (
                 <button
@@ -183,7 +186,7 @@ export function IntersectionBoard({
                 >
                   <AnimatePresence>
                     {cell && <StoneView key={`s-${r}-${c}`} stone={cell} />}
-                    {!cell && isHovered && previewStone && (
+                    {!cell && !disabled && isHovered && previewStone && (
                       <motion.div
                         key="preview"
                         initial={{ opacity: 0 }}

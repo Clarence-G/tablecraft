@@ -10,7 +10,16 @@
     "./table": "./src/table/index.ts",
     "./card": "./src/card/index.ts",
     "./log": "./src/log/index.ts",
-    "./side-panel": "./src/side-panel/index.ts"
+    "./chat": "./src/chat/index.ts",
+    "./side-panel": "./src/side-panel/index.ts",
+    "./user": "./src/user/index.ts",
+    "./stat": "./src/stat/index.ts",
+    "./section": "./src/section/index.ts",
+    "./input": "./src/input/index.ts",
+    "./resume": "./src/resume/index.ts",
+    "./points": "./src/points/index.ts",
+    "./layout": "./src/layout/index.ts",
+    "./leaderboard": "./src/leaderboard/index.ts"
   },
   "dependencies": {
     "@repo/shared": "workspace:*",

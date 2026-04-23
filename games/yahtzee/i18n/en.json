@@ -28,9 +28,18 @@
   "selectCategory": "Select a scoring category",
   "rollAgain": "Roll again ({{n}} left)",
   "myScorecard": "My Scorecard",
+  "opponentScorecard": "{{name}}'s Scorecard",
+  "viewScorecard": "View {{name}}'s scorecard",
   "collapse": "Collapse",
   "expand": "Expand",
   "points": "pts",
+  "log": {
+    "roll": "rolled {{dice}} ({{rolls}} left)",
+    "score": "{{category}}: {{score}}",
+    "zeroScore": "{{category}}: crossed out",
+    "yahtzeeBonus": "Yahtzee bonus +100",
+    "win": "{{player}} won! Total {{total}}"
+  },
   "categories": {
     "0": "Ones",
     "1": "Twos",
@@ -45,5 +54,20 @@
     "10": "Large Straight",
     "11": "Yahtzee",
     "12": "Chance"
+  },
+  "categoryHints": {
+    "0": "Sum of all 1s",
+    "1": "Sum of all 2s",
+    "2": "Sum of all 3s",
+    "3": "Sum of all 4s",
+    "4": "Sum of all 5s",
+    "5": "Sum of all 6s",
+    "6": "3+ matching, sum all dice",
+    "7": "4+ matching, sum all dice",
+    "8": "3+2 matching, 25 pts",
+    "9": "4 in a row, 30 pts",
+    "10": "5 in a row, 40 pts",
+    "11": "All 5 same, 50 pts",
+    "12": "Sum of all dice"
   }
 }

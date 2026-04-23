@@ -77,7 +77,7 @@ describe('SidePanel', () => {
     expect(panel.getByText('hello')).toBeInTheDocument();
   });
 
-  it('switches to chat tab and shows placeholder', () => {
+  it('switches to chat tab and shows empty state', () => {
     const { getByTestId, getAllByTitle } = render(
       <GameLogProvider>
         <SidePanel />
@@ -86,7 +86,8 @@ describe('SidePanel', () => {
     expandPanel(getAllByTitle);
     const panel = within(getByTestId('side-panel-desktop'));
     fireEvent.click(panel.getByText('sidepanel.tab.chat'));
-    expect(panel.getByText('sidepanel.chat.comingSoon')).toBeInTheDocument();
+    expect(panel.getByText('sidepanel.chat.empty')).toBeInTheDocument();
+    expect(panel.getByPlaceholderText('sidepanel.chat.placeholder')).toBeInTheDocument();
   });
 
   it('persists collapse state to localStorage', () => {

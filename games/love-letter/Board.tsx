@@ -48,9 +48,11 @@ export function Board({
   state,
   myId,
   players,
-  sendAction,
+  sendAction: rawSendAction,
+  isSending,
   notifications,
 }: BoardProps<PlayerView, Action>) {
+  const sendAction = isSending ? () => {} : rawSendAction;
   const { t } = useTranslation('love-letter');
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);

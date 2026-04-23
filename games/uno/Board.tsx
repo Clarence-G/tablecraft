@@ -135,7 +135,16 @@ function describeCard(serialized: string, t: (k: string) => string): string {
 
 // ---- Main Board ----
 
-export function Board({ state, myId, players, sendAction }: BoardProps<PlayerView, Action>) {
+export function Board({
+  state,
+  myId,
+  players,
+  sendAction: rawSendAction,
+  isSending,
+}: BoardProps<PlayerView, Action>) {
+  // Swallow every action while one is already in flight. Prevents duplicate
+  // emits during the server round-trip so slow connections don't double-tap.
+  const sendAction = isSending ? () => {} : rawSendAction;
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [pendingWild, setPendingWild] = useState<number | null>(null);
   const { t } = useTranslation('uno');

@@ -176,19 +176,20 @@ async function shootGame(
   const botCount = Math.max(0, game.minPlayers - 1);
 
   try {
-    await page.goto(CLIENT);
+    // Go directly to /games — every game card is listed there (lobby only
+    // surfaces 8 featured games). Clicking a card in /games creates a room
+    // immediately and navigates to the waiting room, so we can skip the
+    // lobby's filter-then-create flow entirely.
+    await page.goto(`${CLIENT}/games`);
     await page.waitForSelector(`[data-testid="game-card-${game.id}"]`, { timeout: 10_000 });
-    await page.click(`[data-testid="game-card-${game.id}"]`);
 
-    // "创建新房间" is the main button; exact text match avoids the smaller "创建房间".
     // Click-then-wait is flaky under load (a stale click can land before React has
     // set selectedGameId, so the createRoom POST never fires and we hang on the
     // room-code selector). Retry the click once if navigation doesn't happen.
-    const createBtn = 'button:text-is("创建新房间"):not([disabled])';
-    await page.waitForSelector(createBtn, { timeout: 5_000 });
+    const cardSel = `[data-testid="game-card-${game.id}"]:not([disabled])`;
     let roomCode: string | undefined;
     for (let attempt = 0; attempt < 2 && !roomCode; attempt++) {
-      await page.click(createBtn);
+      await page.click(cardSel);
       try {
         await page.waitForSelector('[data-testid="room-code"]', { timeout: 8_000 });
         roomCode = (await page.textContent('[data-testid="room-code"]'))?.trim();

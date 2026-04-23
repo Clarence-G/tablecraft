@@ -37,6 +37,10 @@ function initPlayerState(id: string): PlayerYahtzeeState {
   };
 }
 
+function rollAllDice(ctx: GameContext): number[] {
+  return Array.from({ length: NUM_DICE }, () => ctx.random.int(1, 6));
+}
+
 function hasRolled(state: YahtzeeState): boolean {
   return state.rollsLeft < MAX_ROLLS;
 }
@@ -45,15 +49,17 @@ export const logic: GameLogic<YahtzeeState, Action, PlayerView> = {
   actions: ActionSchema,
 
   setup(ctx: GameContext): YahtzeeState {
+    // Auto-roll for the first player so the turn starts with dice on the table
+    // — saves a redundant click since every turn always begins with a roll.
     return {
       players: ctx.players.map(initPlayerState),
       turnOrder: ctx.players,
       currentPlayerIdx: 0,
-      dice: Array(NUM_DICE).fill(0),
+      dice: rollAllDice(ctx),
       heldDice: Array(NUM_DICE).fill(false),
-      rollsLeft: MAX_ROLLS,
+      rollsLeft: MAX_ROLLS - 1,
       roundNumber: 1,
-      phase: 'rolling',
+      phase: 'scoring',
       winner: null,
     };
   },
@@ -205,10 +211,10 @@ export const logic: GameLogic<YahtzeeState, Action, PlayerView> = {
           players: newPlayers,
           currentPlayerIdx: nextPlayerIdx,
           roundNumber: newRoundNumber,
-          dice: Array(NUM_DICE).fill(0),
+          dice: rollAllDice(ctx),
           heldDice: Array(NUM_DICE).fill(false),
-          rollsLeft: MAX_ROLLS,
-          phase: 'rolling',
+          rollsLeft: MAX_ROLLS - 1,
+          phase: 'scoring',
         },
       };
     }

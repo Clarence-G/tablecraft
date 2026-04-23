@@ -24,6 +24,9 @@ export function setupHandlers(
         const view = existingRoom.logic.getPlayerView(existingRoom.state, userId);
         socket.emit('game:state', view);
       }
+      if (existingRoom.chatHistory.length > 0) {
+        socket.emit('chat:history', existingRoom.chatHistory);
+      }
     }
 
     // room:create
@@ -49,13 +52,14 @@ export function setupHandlers(
       );
       bindRoomEmitters(room, io, socket);
 
-      const joinResult = room.join(userId, playerName);
+      const joinResult = room.join(userId, playerName, false, socket.data.isGuest ?? true);
       if (!joinResult.ok) return ack({ ok: false, error: joinResult.error });
 
       roomManager.onPlayerJoin(room.roomId, userId);
       socket.join(room.roomId);
       ack({ ok: true, data: { roomId: room.roomId } });
       io.to(room.roomId).emit('room:state', room.toRoomState());
+      io.emit('rooms:updated');
     });
 
     // room:join
@@ -64,13 +68,17 @@ export function setupHandlers(
       if (!room) return ack({ ok: false, error: 'Room not found' });
 
       bindRoomEmitters(room, io, socket);
-      const result = room.join(userId, playerName);
+      const result = room.join(userId, playerName, false, socket.data.isGuest ?? true);
       if (!result.ok) return ack({ ok: false, error: result.error });
 
       roomManager.onPlayerJoin(roomId, userId);
       socket.join(roomId);
       ack({ ok: true, data: undefined });
       io.to(roomId).emit('room:state', room.toRoomState());
+      if (room.chatHistory.length > 0) {
+        socket.emit('chat:history', room.chatHistory);
+      }
+      io.emit('rooms:updated');
     });
 
     // room:leave
@@ -80,7 +88,11 @@ export function setupHandlers(
       room.leave(userId);
       roomManager.onPlayerLeave(userId);
       socket.leave(room.roomId);
-      io.to(room.roomId).emit('room:state', room.toRoomState());
+      socket.emit('room:left');
+      if (!roomManager.removeIfEmpty(room.roomId)) {
+        io.to(room.roomId).emit('room:state', room.toRoomState());
+      }
+      io.emit('rooms:updated');
     });
 
     // room:ready
@@ -102,6 +114,8 @@ export function setupHandlers(
 
       ack({ ok: true, data: undefined });
       io.to(room.roomId).emit('room:state', room.toRoomState());
+      // Room leaves the waiting list once it starts.
+      io.emit('rooms:updated');
 
       // Send each player their initial view
       const socketsInRoom = io.sockets.adapter.rooms.get(room.roomId);
@@ -122,7 +136,20 @@ export function setupHandlers(
       if (!room || room.hostId !== userId) return;
       room.leave(playerId);
       roomManager.onPlayerLeave(playerId);
-      io.to(room.roomId).emit('room:state', room.toRoomState());
+      const socketsInRoom = io.sockets.adapter.rooms.get(room.roomId);
+      if (socketsInRoom) {
+        for (const socketId of socketsInRoom) {
+          const s = io.sockets.sockets.get(socketId);
+          if (s && s.data.userId === playerId) {
+            s.leave(room.roomId);
+            s.emit('room:left');
+          }
+        }
+      }
+      if (!roomManager.removeIfEmpty(room.roomId)) {
+        io.to(room.roomId).emit('room:state', room.toRoomState());
+      }
+      io.emit('rooms:updated');
     });
 
     // room:restart
@@ -131,6 +158,8 @@ export function setupHandlers(
       if (!room) return;
       room.restart();
       io.to(room.roomId).emit('room:state', room.toRoomState());
+      // restart flips status back to waiting → reappears in the list.
+      io.emit('rooms:updated');
     });
 
     // game:action
@@ -144,6 +173,38 @@ export function setupHandlers(
     socket.on('room:list', (gameId, ack) => {
       const rooms = roomManager.listWaitingRooms(gameId || undefined);
       ack(rooms);
+    });
+
+    // chat:send — broadcast a text message to everyone in the sender's room.
+    // No persistence beyond in-memory chatHistory on the GameRoom.
+    const chatRateLimit: { last: number; tokens: number } = { last: Date.now(), tokens: 5 };
+    socket.on('chat:send', (rawText) => {
+      if (typeof rawText !== 'string') return;
+      const text = rawText.trim().slice(0, 500);
+      if (!text) return;
+
+      // Simple token-bucket: 5 messages refill at 1/sec.
+      const now = Date.now();
+      const refill = Math.floor((now - chatRateLimit.last) / 1000);
+      if (refill > 0) {
+        chatRateLimit.tokens = Math.min(5, chatRateLimit.tokens + refill);
+        chatRateLimit.last = now;
+      }
+      if (chatRateLimit.tokens <= 0) return;
+      chatRateLimit.tokens -= 1;
+
+      const room = roomManager.findRoomByUser(userId);
+      if (!room) return;
+      const player = room.players.get(userId);
+      const msg = {
+        id: `${now}-${Math.random().toString(36).slice(2, 8)}`,
+        from: userId,
+        fromName: player?.name ?? userId,
+        text,
+        at: now,
+      };
+      room.appendChatMessage(msg);
+      io.to(room.roomId).emit('chat:message', msg);
     });
 
     // disconnect

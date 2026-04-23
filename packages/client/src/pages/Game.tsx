@@ -25,7 +25,7 @@ function Loading() {
 
 export function Game({ userId, room, game, onReturnToLobby }: GamePageProps) {
   const { t } = useTranslation('common');
-  const { state, sendAction, lastReject, notifications, matchStartedAt } = game;
+  const { state, sendAction, lastReject, notifications, matchStartedAt, isSending } = game;
 
   if (!room || !state) return <Loading />;
 
@@ -64,6 +64,7 @@ export function Game({ userId, room, game, onReturnToLobby }: GamePageProps) {
           myId={userId}
           players={room.players}
           sendAction={sendAction}
+          isSending={isSending}
           lastReject={lastReject}
           notifications={notifications}
         />

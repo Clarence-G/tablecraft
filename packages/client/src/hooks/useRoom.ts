@@ -9,10 +9,13 @@ export function useRoom(socket: AppSocket | null) {
 
   useEffect(() => {
     if (!socket) return;
-    const handler = (r: RoomState) => setRoom(r);
-    socket.on('room:state', handler);
+    const onState = (r: RoomState) => setRoom(r);
+    const onLeft = () => setRoom(null);
+    socket.on('room:state', onState);
+    socket.on('room:left', onLeft);
     return () => {
-      socket.off('room:state', handler);
+      socket.off('room:state', onState);
+      socket.off('room:left', onLeft);
     };
   }, [socket]);
 
@@ -31,7 +34,11 @@ export function useRoom(socket: AppSocket | null) {
   const join = useCallback(
     (roomId: string, playerName: string) => {
       return new Promise<void>((resolve, reject) => {
-        socket?.emit('room:join', roomId, playerName, (result) => {
+        if (!socket) {
+          reject(new Error('Socket not connected'));
+          return;
+        }
+        socket.emit('room:join', roomId, playerName, (result) => {
           if (result.ok) resolve();
           else reject(new Error(result.error));
         });

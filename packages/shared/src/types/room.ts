@@ -7,6 +7,12 @@ export interface PlayerInfo {
   connected: boolean;
   seatIndex: number;
   isBot: boolean;
+  /**
+   * Distinguishes anonymous guests from authenticated users.
+   * Optional for backwards compatibility — absent means "guest" (safer default
+   * for the points ledger, which has separate user_id/guest_id columns).
+   */
+  isGuest?: boolean;
 }
 
 export interface RoomState {

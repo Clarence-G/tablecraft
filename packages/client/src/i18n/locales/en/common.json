@@ -3,6 +3,16 @@
     "title": "TableCraft",
     "slogan": "Play board games with friends, anytime, anywhere"
   },
+  "hero": {
+    "welcomeBack": "Welcome back, {{name}}",
+    "guestWelcome": "Welcome, {{name}}",
+    "guestCta": "Sign in to save your stats",
+    "pointsLabel": "Points",
+    "rankLabel": "Rank",
+    "summary": "{{games}} games · {{rooms}} active rooms",
+    "continueLast": "Continue last game",
+    "roomCodePlaceholder": "Room code"
+  },
   "lobby": {
     "selectGame": "Select Game",
     "all": "All",
@@ -20,7 +30,19 @@
     "allRooms": "All Rooms",
     "refresh": "Refresh",
     "players": "players",
-    "minutes": "min"
+    "minutes": "min",
+    "activeRooms": "Active rooms",
+    "recentlyPlayed": "Recently played",
+    "allGames": "All games",
+    "viewAll": "View all",
+    "noActiveRooms": "No active rooms. Create one below.",
+    "noRoomsForGame": "No open rooms for {{game}} yet.",
+    "filterAllGames": "All games",
+    "createForGame": "Create {{game}} room",
+    "backToLobby": "Back to lobby",
+    "resultWin": "Won",
+    "resultLoss": "Lost",
+    "resultDraw": "Draw"
   },
   "room": {
     "connecting": "Connecting...",
@@ -38,5 +60,53 @@
   "game": {
     "loading": "Loading...",
     "unknownGame": "Unknown game"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signUp": "Sign up",
+    "signOut": "Sign out",
+    "email": "Email",
+    "password": "Password",
+    "nickname": "Nickname",
+    "continueWithGithub": "Continue with GitHub",
+    "orDivider": "or",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "createAccount": "Create account",
+    "backToLobby": "Back to games",
+    "errorGeneric": "Something went wrong. Please try again.",
+    "errorInvalidCredentials": "Incorrect email or password.",
+    "errorEmailInUse": "That email is already registered.",
+    "guestChip": "Guest",
+    "signInCta": "Sign in"
+  },
+  "gamesAll": {
+    "title": "All games",
+    "searchPlaceholder": "Search games...",
+    "allTags": "All tags",
+    "noMatches": "No games match your filters"
+  },
+  "roomsAll": {
+    "title": "All rooms",
+    "gameFilter": "Game",
+    "anyGame": "Any game",
+    "empty": "No active rooms",
+    "createCta": "Create a room",
+    "refresh": "Refresh"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "navLink": "Leaderboard",
+    "overall": "Overall",
+    "empty": "No rankings yet",
+    "youLabel": "You",
+    "ptsSuffix": "pts"
+  },
+  "me": {
+    "navLink": "Profile",
+    "pointsByGame": "Points by game",
+    "noPointsYet": "No points yet. Win a game to start your ledger.",
+    "dailyCheckin": "Daily check-in",
+    "signedOutNotice": "You're signed out."
   }
 }

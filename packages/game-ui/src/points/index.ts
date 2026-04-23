@@ -1,0 +1,1 @@
+export { PointsBadge } from './PointsBadge';

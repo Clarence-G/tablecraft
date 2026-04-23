@@ -1,6 +1,7 @@
 import type {
   Ack,
   ActionResult,
+  ChatMessage,
   EngineEvent,
   GameContext,
   GameLogic,
@@ -11,6 +12,7 @@ import type {
   RoomSummary,
 } from '@repo/shared';
 import { customAlphabet, nanoid } from 'nanoid';
+import { recordPoints } from '../lib/ledger.js';
 import { RandomProvider } from './RandomProvider';
 import { TimerManager } from './TimerManager';
 
@@ -50,6 +52,9 @@ export class GameRoom {
   createdAt: number;
   seq = 0;
   rankings: string[] | null = null;
+  /** Last N chat messages in this room. Not persisted across server restarts. */
+  chatHistory: ChatMessage[] = [];
+  private static readonly CHAT_HISTORY_LIMIT = 50;
   private waiters: Array<(seq: number) => void> = [];
 
   private broadcast: BroadcastFn | null = null;
@@ -76,16 +81,26 @@ export class GameRoom {
     this.broadcast = fn;
   }
 
+  appendChatMessage(msg: ChatMessage): void {
+    this.chatHistory.push(msg);
+    if (this.chatHistory.length > GameRoom.CHAT_HISTORY_LIMIT) {
+      this.chatHistory.splice(0, this.chatHistory.length - GameRoom.CHAT_HISTORY_LIMIT);
+    }
+    this.lastActivityAt = Date.now();
+  }
+
   get hostId(): string {
     return [...this.players.values()][0]?.id ?? '';
   }
 
-  join(playerID: string, name: string, isBot = false): Ack<void> {
-    if (this.status !== 'waiting') {
-      return { ok: false, error: 'Game already started' };
-    }
+  join(playerID: string, name: string, isBot = false, isGuest = true): Ack<void> {
+    // Idempotent for existing members — allows URL-driven rejoin after refresh
+    // even when the game is already in progress.
     if (this.players.has(playerID)) {
       return { ok: true, data: undefined };
+    }
+    if (this.status !== 'waiting') {
+      return { ok: false, error: 'Game already started' };
     }
     const seatIndex = this.players.size;
     this.players.set(playerID, {
@@ -95,6 +110,7 @@ export class GameRoom {
       connected: true,
       seatIndex,
       isBot,
+      isGuest,
     });
     this.lastActivityAt = Date.now();
     return { ok: true, data: undefined };
@@ -388,8 +404,34 @@ export class GameRoom {
           for (const pid of this.players.keys()) {
             this.emitToPlayer(pid, 'game:end', event.rankings);
           }
+          this.writePointsLedger(event.rankings);
           break;
       }
+    }
+  }
+
+  /**
+   * Fire-and-forget ledger writes for every human finisher. Spec §4.4:
+   * - Bots are skipped (no bot ranking in this release).
+   * - Winner = rankings[0] (single winner). Others get 'loss' (0 points → skipped).
+   * - PlayerInfo.isGuest routes the row to user_id vs guest_id; missing field
+   *   defaults to guest (conservative — writing to the unique user_id column
+   *   requires a real FK target).
+   */
+  private writePointsLedger(rankings: string[]): void {
+    if (rankings.length === 0) return;
+    const winnerId = rankings[0];
+    for (const [pid, info] of this.players) {
+      if (info.isBot) continue;
+      const isGuest = info.isGuest ?? true;
+      const reason: 'win' | 'loss' = pid === winnerId ? 'win' : 'loss';
+      void recordPoints({
+        userId: isGuest ? null : pid,
+        guestId: isGuest ? pid : null,
+        gameId: this.gameId,
+        roomId: this.roomId,
+        reason,
+      });
     }
   }
 

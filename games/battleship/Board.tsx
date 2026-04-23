@@ -229,7 +229,14 @@ function SunkIndicator({
 
 // ---- Main Board ----
 
-export function Board({ state, myId, players, sendAction }: BoardProps<PlayerView, Action>) {
+export function Board({
+  state,
+  myId,
+  players,
+  sendAction: rawSendAction,
+  isSending,
+}: BoardProps<PlayerView, Action>) {
+  const sendAction = isSending ? () => {} : rawSendAction;
   const [selectedShipIdx, setSelectedShipIdx] = useState<number | null>(null);
   const [rotation, setRotation] = useState(0);
   const [hoverCell, setHoverCell] = useState<{ row: number; col: number } | null>(null);
