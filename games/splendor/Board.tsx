@@ -420,9 +420,11 @@ export function Board({
   state,
   myId,
   players,
-  sendAction,
+  sendAction: rawSendAction,
+  isSending,
   lastReject,
 }: BoardProps<PlayerView, Action>) {
+  const sendAction = isSending ? () => {} : rawSendAction;
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = !!state.winner;
   useGameHeaderStatus(gameOver ? undefined : state.currentPlayer);

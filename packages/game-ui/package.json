@@ -10,6 +10,7 @@
     "./table": "./src/table/index.ts",
     "./card": "./src/card/index.ts",
     "./log": "./src/log/index.ts",
+    "./chat": "./src/chat/index.ts",
     "./side-panel": "./src/side-panel/index.ts",
     "./user": "./src/user/index.ts",
     "./stat": "./src/stat/index.ts",

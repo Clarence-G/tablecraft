@@ -3,7 +3,7 @@ import { IntersectionBoard } from '@repo/game-ui/board';
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { useGameLog } from '@repo/game-ui/log';
 import type { BoardProps } from '@repo/shared';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Action, PlayerView, Stone } from './shared';
 import { BOARD_SIZE } from './shared';
@@ -16,13 +16,47 @@ const STAR_POINTS: [number, number][] = [
   [11, 11],
 ];
 
-export function Board({ state, myId, players, sendAction }: BoardProps<PlayerView, Action>) {
+export function Board({
+  state,
+  myId,
+  players,
+  sendAction,
+  isSending,
+  lastReject,
+}: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('gomoku');
   const { push } = useGameLog();
-  const isMyTurn = state.currentPlayer === myId;
   const gameOver = !!state.winner;
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
   const loserPlayer = players.find((p) => p.id !== state.winner);
+
+  // Optimistic move: show the stone we just placed immediately, without waiting
+  // for the server round-trip. Cleared once `isSending` flips to false — at that
+  // point the server has either acked (state.board will show our stone) or
+  // rejected (lastReject will have fired) or the send timeout expired. In all
+  // three cases we stop showing the optimistic overlay.
+  const [pendingMove, setPendingMove] = useState<{ r: number; c: number; stone: Stone } | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!isSending) setPendingMove(null);
+  }, [isSending]);
+  // Roll back immediately on server reject (don't wait for isSending transition).
+  useEffect(() => {
+    if (lastReject) setPendingMove(null);
+  }, [lastReject]);
+
+  // Apply optimistic move on top of server board for display only.
+  const displayBoard = useMemo(() => {
+    if (!pendingMove) return state.board;
+    const rows = state.board.map((row) => [...row]);
+    rows[pendingMove.r][pendingMove.c] = pendingMove.stone;
+    return rows;
+  }, [state.board, pendingMove]);
+
+  // Optimistic "turn" — once we've placed a pending stone, act as if it's not
+  // our turn so the board reflects "waiting for opponent" visually.
+  const isMyTurn = state.currentPlayer === myId && !pendingMove;
 
   useGameHeaderStatus(state.winner ? undefined : state.currentPlayer);
 
@@ -77,11 +111,14 @@ export function Board({ state, myId, players, sendAction }: BoardProps<PlayerVie
 
       <IntersectionBoard
         size={BOARD_SIZE}
-        stones={state.board}
+        stones={displayBoard}
         starPoints={STAR_POINTS}
         previewStone={isMyTurn && !gameOver ? state.myStone : undefined}
-        canPlace={(r, c) => isMyTurn && !gameOver && !state.board[r][c]}
-        onPlace={(r, c) => sendAction({ type: 'place', row: r, col: c })}
+        canPlace={(r, c) => isMyTurn && !gameOver && !displayBoard[r][c]}
+        onPlace={(r, c) => {
+          setPendingMove({ r, c, stone: state.myStone });
+          sendAction({ type: 'place', row: r, col: c });
+        }}
         showCoordinates
       />
       <div className="flex items-center gap-2 text-sm font-semibold bg-card border-2 border-foreground rounded-[10px] px-3 py-1.5 shadow-button">

@@ -5,8 +5,8 @@ import { SectionHead } from '@repo/game-ui/section';
 import { UserChip } from '@repo/game-ui/user';
 import type { ClientEvents, RoomSummary, ServerEvents } from '@repo/shared';
 import Avatar from 'boring-avatars';
-import { Clock, Pencil, Trophy, Users } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Clock, Pencil, Plus, Trophy, Users } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Socket } from 'socket.io-client';
 import { clientRegistry } from '../../../../games/client-registry';
@@ -37,7 +37,7 @@ interface LobbyProps {
 }
 
 export function Lobby({
-  socket: _socket,
+  socket,
   userName,
   rename,
   roomCtx,
@@ -69,10 +69,15 @@ export function Lobby({
   const [nameDraft, setNameDraft] = useState(userName);
 
   const [rooms, setRooms] = useState<RoomSummary[]>([]);
+  const [gameFilter, setGameFilter] = useState<string>('');
   const [myRank, setMyRank] = useState<number | null>(null);
+  const roomsSectionRef = useRef<HTMLElement | null>(null);
 
   const games = Object.values(clientRegistry);
   const featured = games.slice(0, 8);
+  const filteredGameName = gameFilter
+    ? String(gt(gameFilter, 'name'))
+    : '';
 
   // Fetch rank once when signed in. Swallow failures — rank is a nice-to-have.
   useEffect(() => {
@@ -93,16 +98,35 @@ export function Lobby({
     };
   }, [authedUser]);
 
-  // Initial room list. Subsequent refreshes come from user actions (join/create).
+  // Refresh room list whenever the game filter changes. Subsequent refreshes
+  // also happen after user-initiated join/create via the route navigation.
   useEffect(() => {
     let cancelled = false;
-    listRooms('').then((result) => {
+    listRooms(gameFilter).then((result) => {
       if (!cancelled) setRooms(result);
     });
     return () => {
       cancelled = true;
     };
-  }, [listRooms]);
+  }, [listRooms, gameFilter]);
+
+  // Reactive refresh: the server emits `rooms:updated` whenever any waiting-
+  // room state changes (create / join / leave / start / kick / restart).
+  // No polling needed; lobby stays in sync without 30s lag.
+  useEffect(() => {
+    if (!socket) return;
+    let cancelled = false;
+    const handler = () => {
+      listRooms(gameFilter).then((result) => {
+        if (!cancelled) setRooms(result);
+      });
+    };
+    socket.on('rooms:updated', handler);
+    return () => {
+      cancelled = true;
+      socket.off('rooms:updated', handler);
+    };
+  }, [socket, listRooms, gameFilter]);
 
   function confirmRename() {
     const trimmed = nameDraft.trim();
@@ -138,6 +162,17 @@ export function Lobby({
 
   function handleQuickJoin(code: string) {
     handleJoinRoom(code.trim().toUpperCase());
+  }
+
+  // Clicking a game card filters the room list to that game and scrolls the
+  // list into view. Creating a room is then a deliberate second click on the
+  // section's "Create <game> room" CTA, so we never spawn ghost rooms.
+  function handlePickGame(gameId: string) {
+    setGameFilter(gameId);
+    // Wait a tick so the new filter renders before scrolling.
+    requestAnimationFrame(() => {
+      roomsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
   return (
@@ -238,28 +273,77 @@ export function Lobby({
         )}
 
         {/* Active rooms */}
-        <section>
+        <section ref={roomsSectionRef} className="scroll-mt-20">
           <SectionHead
             title={t('lobby.activeRooms')}
             onViewAll={onGoToAllRooms}
             viewAllLabel={t('lobby.viewAll')}
           />
+
+          {/* Game filter chips: All + each game */}
+          <div className="flex gap-2 overflow-x-auto pb-2 mb-3 -mx-1 px-1">
+            <FilterChip
+              active={gameFilter === ''}
+              label={t('lobby.filterAllGames')}
+              onClick={() => setGameFilter('')}
+            />
+            {games.map((g) => (
+              <FilterChip
+                key={g.meta.id}
+                active={gameFilter === g.meta.id}
+                label={String(gt(g.meta.id, 'name'))}
+                icon={g.meta.icon}
+                onClick={() => setGameFilter(g.meta.id)}
+              />
+            ))}
+          </div>
+
           {rooms.length === 0 ? (
-            <div className="bg-card border-2 border-border rounded-[12px] p-6 text-center text-muted-foreground text-sm">
-              {t('lobby.noActiveRooms')}
+            <div className="bg-card border-2 border-border rounded-[12px] p-6 text-center space-y-3">
+              <div className="text-sm text-muted-foreground">
+                {gameFilter
+                  ? t('lobby.noRoomsForGame', { game: filteredGameName })
+                  : t('lobby.noActiveRooms')}
+              </div>
+              {gameFilter && (
+                <button
+                  type="button"
+                  onClick={() => handleCreate(gameFilter)}
+                  disabled={loading}
+                  className="inline-flex items-center gap-1 text-sm font-semibold border-2 border-foreground bg-card rounded-[10px] px-3 py-1.5 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active disabled:opacity-60 transition-all"
+                >
+                  <Plus className="size-3.5" />
+                  {t('lobby.createForGame', { game: filteredGameName })}
+                </button>
+              )}
             </div>
           ) : (
-            <ViewAllRow>
-              {rooms.slice(0, 5).map((r) => (
-                <RoomCard
-                  key={r.roomId}
-                  room={r}
-                  onJoin={() => handleJoinRoom(r.roomId)}
-                  joinLabel={t('lobby.join')}
-                  disabled={loading}
-                />
-              ))}
-            </ViewAllRow>
+            <>
+              <ViewAllRow>
+                {rooms.slice(0, 5).map((r) => (
+                  <RoomCard
+                    key={r.roomId}
+                    room={r}
+                    onJoin={() => handleJoinRoom(r.roomId)}
+                    joinLabel={t('lobby.join')}
+                    disabled={loading}
+                  />
+                ))}
+              </ViewAllRow>
+              {gameFilter && (
+                <div className="mt-3 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => handleCreate(gameFilter)}
+                    disabled={loading}
+                    className="inline-flex items-center gap-1 text-sm font-semibold border-2 border-foreground bg-card rounded-[10px] px-3 py-1.5 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active disabled:opacity-60 transition-all"
+                  >
+                    <Plus className="size-3.5" />
+                    {t('lobby.createForGame', { game: filteredGameName })}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </section>
 
@@ -320,7 +404,7 @@ export function Lobby({
                 <button
                   type="button"
                   key={m.id}
-                  onClick={() => handleCreate(m.id)}
+                  onClick={() => handlePickGame(m.id)}
                   disabled={loading}
                   data-testid={`game-card-${m.id}`}
                   className="border-thick rounded-[16px] p-4 text-left transition-all duration-200 hover:-translate-y-1 hover:-rotate-[1.5deg] hover:shadow-card-hover active:translate-y-0 active:rotate-0 active:shadow-card-active bg-card border-foreground shadow-card disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:rotate-0 disabled:hover:shadow-card"
@@ -371,5 +455,33 @@ export function Lobby({
         )}
       </main>
     </div>
+  );
+}
+
+function FilterChip({
+  active,
+  label,
+  icon,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  icon?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`snap-start shrink-0 inline-flex items-center gap-1 text-xs font-semibold rounded-full px-3 py-1 border-2 transition-all ${
+        active
+          ? 'bg-[#fef3e0] border-warning text-[#7a4006] shadow-[2px_2px_0px_0px_#d97706]'
+          : 'bg-card border-border text-foreground hover:border-foreground hover:-translate-y-0.5'
+      }`}
+    >
+      {icon && <GameIcon name={icon} className="size-3.5" />}
+      <span className="whitespace-nowrap">{label}</span>
+    </button>
   );
 }

@@ -303,9 +303,11 @@ export function Board({
   state,
   myId,
   players,
-  sendAction,
+  sendAction: rawSendAction,
+  isSending,
   lastReject,
 }: BoardProps<PlayerView, Action>) {
+  const sendAction = isSending ? () => {} : rawSendAction;
   const { t } = useTranslation('texas-holdem');
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
   const isMyTurn = state.handPhase === 'betting' && state.currentPlayer === myId;

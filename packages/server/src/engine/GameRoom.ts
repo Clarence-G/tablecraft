@@ -1,6 +1,7 @@
 import type {
   Ack,
   ActionResult,
+  ChatMessage,
   EngineEvent,
   GameContext,
   GameLogic,
@@ -51,6 +52,9 @@ export class GameRoom {
   createdAt: number;
   seq = 0;
   rankings: string[] | null = null;
+  /** Last N chat messages in this room. Not persisted across server restarts. */
+  chatHistory: ChatMessage[] = [];
+  private static readonly CHAT_HISTORY_LIMIT = 50;
   private waiters: Array<(seq: number) => void> = [];
 
   private broadcast: BroadcastFn | null = null;
@@ -77,16 +81,26 @@ export class GameRoom {
     this.broadcast = fn;
   }
 
+  appendChatMessage(msg: ChatMessage): void {
+    this.chatHistory.push(msg);
+    if (this.chatHistory.length > GameRoom.CHAT_HISTORY_LIMIT) {
+      this.chatHistory.splice(0, this.chatHistory.length - GameRoom.CHAT_HISTORY_LIMIT);
+    }
+    this.lastActivityAt = Date.now();
+  }
+
   get hostId(): string {
     return [...this.players.values()][0]?.id ?? '';
   }
 
   join(playerID: string, name: string, isBot = false, isGuest = true): Ack<void> {
-    if (this.status !== 'waiting') {
-      return { ok: false, error: 'Game already started' };
-    }
+    // Idempotent for existing members — allows URL-driven rejoin after refresh
+    // even when the game is already in progress.
     if (this.players.has(playerID)) {
       return { ok: true, data: undefined };
+    }
+    if (this.status !== 'waiting') {
+      return { ok: false, error: 'Game already started' };
     }
     const seatIndex = this.players.size;
     this.players.set(playerID, {

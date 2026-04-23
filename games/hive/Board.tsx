@@ -115,12 +115,21 @@ function HexTile({ x, y, size, tile, selected, isMoveable, onClick }: HexTilePro
 
 // ============ Board Component ============
 
-export function Board({ state, myId, players, sendAction }: BoardProps<PlayerView, Action>) {
+export function Board({
+  state,
+  myId,
+  players,
+  sendAction,
+  isSending,
+}: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('hive');
   const [selectedPieceType, setSelectedPieceType] = useState<HivePieceType | null>(null);
   const [selectedTileCoord, setSelectedTileCoord] = useState<HexCoord | null>(null);
 
-  const isMyTurn = state.currentPlayer === myId;
+  // Treat "sending" as "not your turn" so every tile / target / pass click
+  // that gates on isMyTurn is paused until the server round-trips. Cheap
+  // one-liner guard without having to touch the 4 individual sendAction sites.
+  const isMyTurn = state.currentPlayer === myId && !isSending;
   const gameOver = state.phase === 'finished';
   useGameHeaderStatus(gameOver ? undefined : state.currentPlayer);
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));

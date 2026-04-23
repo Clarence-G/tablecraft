@@ -1,18 +1,22 @@
 import { Button } from '@/components/ui/button';
-import type { RoomSummary } from '@repo/shared';
+import type { ClientEvents, RoomSummary, ServerEvents } from '@repo/shared';
 import { ArrowLeft, Plus, Users } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { Socket } from 'socket.io-client';
 import { clientRegistry } from '../../../../games/client-registry';
 
+type AppSocket = Socket<ServerEvents, ClientEvents>;
+
 interface RoomsAllProps {
+  socket: AppSocket | null;
   listRooms: (gameId: string) => Promise<RoomSummary[]>;
   onBack: () => void;
   onGoToAllGames: () => void;
   onJoinRoom: (roomId: string) => Promise<void>;
 }
 
-export function RoomsAll({ listRooms, onBack, onGoToAllGames, onJoinRoom }: RoomsAllProps) {
+export function RoomsAll({ socket, listRooms, onBack, onGoToAllGames, onJoinRoom }: RoomsAllProps) {
   const { t, i18n } = useTranslation('common');
   const gt = (id: string, key: string) => i18n.t(key, { ns: id });
 
@@ -43,6 +47,20 @@ export function RoomsAll({ listRooms, onBack, onGoToAllGames, onJoinRoom }: Room
       clearInterval(id);
     };
   }, [refresh]);
+
+  // Reactive refresh on `rooms:updated`. Server fires this on any waiting-
+  // room state change so the list is up-to-date without waiting for the 30s
+  // poll tick.
+  useEffect(() => {
+    if (!socket) return;
+    const handler = () => {
+      refresh();
+    };
+    socket.on('rooms:updated', handler);
+    return () => {
+      socket.off('rooms:updated', handler);
+    };
+  }, [socket, refresh]);
 
   async function handleJoin(roomId: string) {
     setError(null);

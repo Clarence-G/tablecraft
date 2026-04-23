@@ -17,15 +17,16 @@ function createGame(players = ['Alice', 'Bob'], seed = 'test') {
 
 describe('Yahtzee Logic', () => {
   describe('setup', () => {
-    it('initializes correct initial state', () => {
+    it('auto-rolls dice for the first player', () => {
       const h = createGame();
       const view = h.view('Alice');
       expect(view.dice).toHaveLength(NUM_DICE);
-      expect(view.dice.every((d: number) => d === 0)).toBe(true);
+      // Every turn starts with dice already rolled — first roll is free.
+      expect(view.dice.every((d: number) => d >= 1 && d <= 6)).toBe(true);
       expect(view.heldDice.every((h: boolean) => !h)).toBe(true);
-      expect(view.rollsLeft).toBe(3);
+      expect(view.rollsLeft).toBe(2);
       expect(view.roundNumber).toBe(1);
-      expect(view.phase).toBe('rolling');
+      expect(view.phase).toBe('scoring');
       expect(view.currentPlayer).toBe('Alice');
       expect(view.winner).toBeNull();
     });
@@ -45,7 +46,7 @@ describe('Yahtzee Logic', () => {
     it('decrements rollsLeft', () => {
       const h = createGame();
       h.action('Alice', { type: 'roll' });
-      expect(h.view('Alice').rollsLeft).toBe(2);
+      expect(h.view('Alice').rollsLeft).toBe(1);
     });
 
     it('changes dice values after rolling', () => {
@@ -63,58 +64,42 @@ describe('Yahtzee Logic', () => {
 
     it('rejects roll when rollsLeft is 0', () => {
       const h = createGame();
-      h.action('Alice', { type: 'roll' });
+      // Setup auto-rolled once, 2 rolls remaining
       h.action('Alice', { type: 'roll' });
       h.action('Alice', { type: 'roll' });
       const result = h.action('Alice', { type: 'roll' });
       expect(result.ok).toBe(false);
     });
 
-    it('sets phase to scoring after first roll', () => {
-      const h = createGame();
-      h.action('Alice', { type: 'roll' });
-      expect(h.view('Alice').phase).toBe('scoring');
-    });
-
     it('does not re-roll held dice', () => {
       const h = createGame();
-      h.action('Alice', { type: 'roll' });
-      const diceAfterFirstRoll = [...h.view('Alice').dice];
-      // Hold die 0
+      // Setup auto-rolled. Hold die 0, then re-roll.
+      const diceAfterAutoRoll = [...h.view('Alice').dice];
       h.action('Alice', { type: 'hold', diceIndex: 0 });
       h.action('Alice', { type: 'roll' });
       const diceAfterSecondRoll = h.view('Alice').dice;
-      // Die 0 should remain same
-      expect(diceAfterSecondRoll[0]).toBe(diceAfterFirstRoll[0]);
+      expect(diceAfterSecondRoll[0]).toBe(diceAfterAutoRoll[0]);
     });
   });
 
   describe('hold action', () => {
     it('toggles held state', () => {
       const h = createGame();
-      h.action('Alice', { type: 'roll' });
       h.action('Alice', { type: 'hold', diceIndex: 2 });
       expect(h.view('Alice').heldDice[2]).toBe(true);
       h.action('Alice', { type: 'hold', diceIndex: 2 });
       expect(h.view('Alice').heldDice[2]).toBe(false);
     });
 
-    it('rejects hold before any roll', () => {
-      const h = createGame();
-      const result = h.action('Alice', { type: 'hold', diceIndex: 0 });
-      expect(result.ok).toBe(false);
-    });
-
     it('rejects hold from non-current player', () => {
       const h = createGame();
-      h.action('Alice', { type: 'roll' });
       const result = h.action('Bob', { type: 'hold', diceIndex: 0 });
       expect(result.ok).toBe(false);
     });
 
     it('rejects hold when rollsLeft is 0', () => {
       const h = createGame();
-      h.action('Alice', { type: 'roll' });
+      // Setup auto-rolled (1 initial), then 2 manual rolls exhaust rollsLeft.
       h.action('Alice', { type: 'roll' });
       h.action('Alice', { type: 'roll' });
       const result = h.action('Alice', { type: 'hold', diceIndex: 0 });
@@ -125,7 +110,7 @@ describe('Yahtzee Logic', () => {
   describe('score action', () => {
     it('fills a category and advances turn', () => {
       const h = createGame();
-      h.action('Alice', { type: 'roll' });
+      // Dice already rolled by setup — score immediately.
       h.action('Alice', { type: 'score', category: 12 }); // chance
       const view = h.view('Alice');
       expect(view.currentPlayer).toBe('Bob');
@@ -133,39 +118,28 @@ describe('Yahtzee Logic', () => {
       expect(aliceScore?.scores[12]).toBeGreaterThanOrEqual(0);
     });
 
-    it('resets dice for next player', () => {
+    it('auto-rolls dice for the next player', () => {
       const h = createGame();
-      h.action('Alice', { type: 'roll' });
       h.action('Alice', { type: 'score', category: 12 });
       const view = h.view('Bob');
-      expect(view.dice.every((d: number) => d === 0)).toBe(true);
+      expect(view.dice.every((d: number) => d >= 1 && d <= 6)).toBe(true);
       expect(view.heldDice.every((hd: boolean) => !hd)).toBe(true);
-      expect(view.rollsLeft).toBe(3);
+      expect(view.rollsLeft).toBe(2);
+      expect(view.phase).toBe('scoring');
     });
 
     it('rejects scoring already-filled category', () => {
       const h = createGame();
-      h.action('Alice', { type: 'roll' });
       h.action('Alice', { type: 'score', category: 12 });
-      h.action('Bob', { type: 'roll' });
       h.action('Bob', { type: 'score', category: 12 });
       // Alice's turn again
-      h.action('Alice', { type: 'roll' });
-      const result = h.action('Alice', { type: 'score', category: 12 });
-      expect(result.ok).toBe(false);
-    });
-
-    it('rejects scoring without rolling first', () => {
-      const h = createGame();
       const result = h.action('Alice', { type: 'score', category: 12 });
       expect(result.ok).toBe(false);
     });
 
     it('increments roundNumber after all players score', () => {
       const h = createGame();
-      h.action('Alice', { type: 'roll' });
       h.action('Alice', { type: 'score', category: 0 }); // ones
-      h.action('Bob', { type: 'roll' });
       h.action('Bob', { type: 'score', category: 0 });
       expect(h.view('Alice').roundNumber).toBe(2);
     });
@@ -174,10 +148,9 @@ describe('Yahtzee Logic', () => {
   describe('game end', () => {
     it('finishes after 13 rounds (2 players)', () => {
       const h = createGame(['Alice', 'Bob']);
-      // Each player scores one category per round, 13 rounds total
+      // Each player scores one category per round; dice are pre-rolled.
       for (let round = 0; round < 13; round++) {
         for (const player of ['Alice', 'Bob']) {
-          h.action(player, { type: 'roll' });
           h.action(player, { type: 'score', category: round });
         }
       }
@@ -188,7 +161,6 @@ describe('Yahtzee Logic', () => {
       const h = createGame(['Alice', 'Bob']);
       for (let round = 0; round < 13; round++) {
         for (const player of ['Alice', 'Bob']) {
-          h.action(player, { type: 'roll' });
           h.action(player, { type: 'score', category: round });
         }
       }

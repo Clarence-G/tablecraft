@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@repo/shared": "workspace:*",
-    "@repo/game-ui": "workspace:*"
+    "@repo/game-ui": "workspace:*",
+    "framer-motion": "^11.0.0"
   },
   "devDependencies": {
     "vitest": "^1.6.0",

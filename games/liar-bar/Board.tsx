@@ -87,7 +87,14 @@ function RevolverDisplay({ chamber, alive }: { chamber: number; alive: boolean }
 
 // ---- Main Board ----
 
-export function Board({ state, myId, players, sendAction }: BoardProps<PlayerView, Action>) {
+export function Board({
+  state,
+  myId,
+  players,
+  sendAction: rawSendAction,
+  isSending,
+}: BoardProps<PlayerView, Action>) {
+  const sendAction = isSending ? () => {} : rawSendAction;
   const { t } = useTranslation('liar-bar');
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
 

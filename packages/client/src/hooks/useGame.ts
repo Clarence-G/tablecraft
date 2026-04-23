@@ -9,14 +9,18 @@ interface GameSnapshot {
   lastReject: string | null;
   notifications: unknown[];
   matchStartedAt: number | null;
+  isSending: boolean;
 }
 
-// Stable empty snapshot — singleton so Object.is() stays true when nothing changed
+// 3s保底超时:服务端丢包/挂了时也要放行下一次点击
+const SEND_TIMEOUT_MS = 3000;
+
 const EMPTY_SNAPSHOT: GameSnapshot = {
   state: null,
   lastReject: null,
   notifications: [],
   matchStartedAt: null,
+  isSending: false,
 };
 const noop = () => {};
 const noopUnsub = () => noop;
@@ -26,6 +30,7 @@ class GameStore {
   private listeners = new Set<() => void>();
   private seq = 0;
   private rejectTimer: ReturnType<typeof setTimeout> | null = null;
+  private sendTimer: ReturnType<typeof setTimeout> | null = null;
   private socket: AppSocket;
 
   constructor(socket: AppSocket) {
@@ -33,12 +38,19 @@ class GameStore {
 
     socket.on('game:state', (view) => {
       const matchStartedAt = this._snapshot.matchStartedAt ?? Date.now();
-      this._snapshot = { ...this._snapshot, state: view, matchStartedAt };
+      this.clearSendTimer();
+      this._snapshot = {
+        ...this._snapshot,
+        state: view,
+        matchStartedAt,
+        isSending: false,
+      };
       this.notify();
     });
 
     socket.on('game:reject', (reason) => {
-      this._snapshot = { ...this._snapshot, lastReject: reason };
+      this.clearSendTimer();
+      this._snapshot = { ...this._snapshot, lastReject: reason, isSending: false };
       this.notify();
       if (this.rejectTimer) clearTimeout(this.rejectTimer);
       this.rejectTimer = setTimeout(() => {
@@ -66,15 +78,32 @@ class GameStore {
   getSnapshot = (): GameSnapshot => this._snapshot;
 
   sendAction = (action: unknown) => {
+    if (this._snapshot.isSending) return;
+    this._snapshot = { ...this._snapshot, isSending: true };
+    this.notify();
     this.socket.emit('game:action', action, ++this.seq);
+    this.sendTimer = setTimeout(() => {
+      this.sendTimer = null;
+      if (!this._snapshot.isSending) return;
+      this._snapshot = { ...this._snapshot, isSending: false };
+      this.notify();
+    }, SEND_TIMEOUT_MS);
   };
 
   destroy() {
     if (this.rejectTimer) clearTimeout(this.rejectTimer);
+    this.clearSendTimer();
     this.socket.off('game:state');
     this.socket.off('game:reject');
     this.socket.off('game:notify');
     this._snapshot = EMPTY_SNAPSHOT;
+  }
+
+  private clearSendTimer() {
+    if (this.sendTimer) {
+      clearTimeout(this.sendTimer);
+      this.sendTimer = null;
+    }
   }
 
   private notify() {

@@ -6,6 +6,8 @@ export interface BoardProps<TView, TAction = unknown> {
   myId: string;
   players: PlayerInfo[];
   sendAction: (action: TAction) => void;
+  /** True while an action is in flight (awaiting server ack). Board UI should disable input. */
+  isSending: boolean;
   lastReject: string | null;
   notifications: unknown[];
 }

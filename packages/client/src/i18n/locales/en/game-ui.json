@@ -27,8 +27,10 @@
       "empty": "No events yet."
     },
     "chat": {
-      "comingSoon": "Chat is coming soon.",
-      "placeholder": "Type a message…"
+      "empty": "No messages yet — say hi!",
+      "placeholder": "Type a message…",
+      "send": "Send",
+      "newMessages": "New messages"
     },
     "expand": "Expand panel",
     "collapse": "Collapse panel"

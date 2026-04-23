@@ -27,8 +27,10 @@
       "empty": "还没有任何动态。"
     },
     "chat": {
-      "comingSoon": "聊天功能即将上线。",
-      "placeholder": "输入消息…"
+      "empty": "还没有消息，打个招呼吧。",
+      "placeholder": "输入消息…",
+      "send": "发送",
+      "newMessages": "新消息"
     },
     "expand": "展开侧栏",
     "collapse": "收起侧栏"

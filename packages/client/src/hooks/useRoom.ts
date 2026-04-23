@@ -31,7 +31,11 @@ export function useRoom(socket: AppSocket | null) {
   const join = useCallback(
     (roomId: string, playerName: string) => {
       return new Promise<void>((resolve, reject) => {
-        socket?.emit('room:join', roomId, playerName, (result) => {
+        if (!socket) {
+          reject(new Error('Socket not connected'));
+          return;
+        }
+        socket.emit('room:join', roomId, playerName, (result) => {
           if (result.ok) resolve();
           else reject(new Error(result.error));
         });
