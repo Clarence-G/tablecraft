@@ -116,6 +116,7 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
               leave();
               onLeave();
             }}
+            data-testid="leave-btn"
             className="w-full py-3 bg-card border-2 border-foreground shadow-[#3d2e1e_-4px_4px_0px] hover:-translate-y-0.5 hover:shadow-[#3d2e1e_-5px_6px_0px] active:translate-y-px active:shadow-[#3d2e1e_-2px_2px_0px] rounded-[12px] font-semibold"
             size="lg"
           >

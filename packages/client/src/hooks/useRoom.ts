@@ -9,10 +9,13 @@ export function useRoom(socket: AppSocket | null) {
 
   useEffect(() => {
     if (!socket) return;
-    const handler = (r: RoomState) => setRoom(r);
-    socket.on('room:state', handler);
+    const onState = (r: RoomState) => setRoom(r);
+    const onLeft = () => setRoom(null);
+    socket.on('room:state', onState);
+    socket.on('room:left', onLeft);
     return () => {
-      socket.off('room:state', handler);
+      socket.off('room:state', onState);
+      socket.off('room:left', onLeft);
     };
   }, [socket]);
 

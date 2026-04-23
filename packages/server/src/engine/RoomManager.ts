@@ -52,6 +52,20 @@ export class RoomManager {
     this.userToRoom.delete(userId);
   }
 
+  /**
+   * Destroy the room if nobody is left. Called on every leave/kick from both
+   * the socket handler and the REST endpoint so empty rooms don't sit in the
+   * lobby list for up to 10 minutes waiting for the periodic cleanup sweep.
+   * Returns true if the room was removed.
+   */
+  removeIfEmpty(roomId: string): boolean {
+    const room = this.rooms.get(roomId);
+    if (!room) return false;
+    if (room.players.size > 0) return false;
+    this.removeRoom(roomId);
+    return true;
+  }
+
   listRooms(): GameRoom[] {
     return [...this.rooms.values()];
   }

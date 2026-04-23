@@ -42,6 +42,12 @@ export interface ClientEvents {
 /** 服务端 → 客户端 */
 export interface ServerEvents {
   'room:state': (room: RoomState) => void;
+  /**
+   * Sent to a socket after it leaves or is kicked from a room. Signals the
+   * client to drop any cached room state so lobby navigation doesn't bounce
+   * the user back into the room they just left.
+   */
+  'room:left': () => void;
   'game:state': (view: unknown) => void;
   'game:reject': (reason: string) => void;
   'game:notify': (payload: unknown) => void;

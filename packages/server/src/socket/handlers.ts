@@ -88,7 +88,10 @@ export function setupHandlers(
       room.leave(userId);
       roomManager.onPlayerLeave(userId);
       socket.leave(room.roomId);
-      io.to(room.roomId).emit('room:state', room.toRoomState());
+      socket.emit('room:left');
+      if (!roomManager.removeIfEmpty(room.roomId)) {
+        io.to(room.roomId).emit('room:state', room.toRoomState());
+      }
       io.emit('rooms:updated');
     });
 
@@ -133,7 +136,19 @@ export function setupHandlers(
       if (!room || room.hostId !== userId) return;
       room.leave(playerId);
       roomManager.onPlayerLeave(playerId);
-      io.to(room.roomId).emit('room:state', room.toRoomState());
+      const socketsInRoom = io.sockets.adapter.rooms.get(room.roomId);
+      if (socketsInRoom) {
+        for (const socketId of socketsInRoom) {
+          const s = io.sockets.sockets.get(socketId);
+          if (s && s.data.userId === playerId) {
+            s.leave(room.roomId);
+            s.emit('room:left');
+          }
+        }
+      }
+      if (!roomManager.removeIfEmpty(room.roomId)) {
+        io.to(room.roomId).emit('room:state', room.toRoomState());
+      }
       io.emit('rooms:updated');
     });
 

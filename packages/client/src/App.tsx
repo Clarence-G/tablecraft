@@ -1,6 +1,6 @@
+import { GameChatProvider } from '@repo/game-ui/chat';
 import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { GameChatProvider } from '@repo/game-ui/chat';
 import { useChat } from './hooks/useChat';
 import { useGame } from './hooks/useGame';
 import { useIdentity } from './hooks/useIdentity';
@@ -39,128 +39,123 @@ export function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Keep the URL in sync with server-driven room status changes.
+  // Keep the URL in sync with server-driven room status changes for users
+  // already inside a room route:
   //   - waiting → playing: /rooms/:id → /rooms/:id/play
   //   - playing → waiting: /rooms/:id/play → /rooms/:id
-  //   - server auto-rejoin on connect while user is on lobby → pull them into the room
+  // Auto-entering a room from the lobby is intentionally NOT handled here —
+  // RoomRoute's useAutoJoinRoom drives URL → room, not the other way around.
+  // Letting room state pull users into /rooms/:id from anywhere would race
+  // with `leave()` + navigate('/') (stale room state bounces them back).
   const roomId = roomCtx.room?.roomId ?? null;
   const roomStatus = roomCtx.room?.status ?? null;
   useEffect(() => {
     if (!roomId || !roomStatus) return;
     const path = location.pathname;
-    const target =
-      roomStatus === 'playing' ? `/rooms/${roomId}/play` : `/rooms/${roomId}`;
-    const isInRoomRoute = path.startsWith(`/rooms/${roomId}`);
-    if (!isInRoomRoute) {
-      // Don't yank the user away from wherever they chose to navigate;
-      // only auto-enter the room if they're sitting on the lobby landing page.
-      if (path === '/') navigate(target, { replace: true });
-      return;
-    }
+    if (!path.startsWith(`/rooms/${roomId}`)) return;
+    const target = roomStatus === 'playing' ? `/rooms/${roomId}/play` : `/rooms/${roomId}`;
     if (path !== target) navigate(target, { replace: true });
   }, [roomId, roomStatus, location.pathname, navigate]);
 
   return (
-    <GameChatProvider
-      value={{ messages: chat.messages, send: chat.send, myId: actorUserId }}
-    >
+    <GameChatProvider value={{ messages: chat.messages, send: chat.send, myId: actorUserId }}>
       <Routes>
-      <Route
-        path="/"
-        element={
-          <Lobby
-            socket={socket}
-            userName={actorUserName}
-            rename={rename}
-            roomCtx={roomCtx}
-            onGoToLogin={() => navigate('/login')}
-            onGoToRegister={() => navigate('/register')}
-            onGoToAllGames={() => navigate('/games')}
-            onGoToAllRooms={() => navigate('/rooms')}
-            onGoToLeaderboard={() => navigate('/leaderboard')}
-            onGoToMe={() => navigate('/me')}
-            onRoomCreated={(id) => navigate(`/rooms/${id}`)}
-            onRoomJoined={(id) => navigate(`/rooms/${id}`)}
-          />
-        }
-      />
-      <Route
-        path="/login"
-        element={
-          <Login
-            onSuccess={() => navigate('/')}
-            onGoToRegister={() => navigate('/register')}
-            onBack={() => navigate('/')}
-          />
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <Register
-            onSuccess={() => navigate('/')}
-            onGoToLogin={() => navigate('/login')}
-            onBack={() => navigate('/')}
-          />
-        }
-      />
-      <Route
-        path="/me"
-        element={<Me onBack={() => navigate('/')} onSignedOut={() => navigate('/')} />}
-      />
-      <Route
-        path="/games"
-        element={
-          <GamesAll
-            userName={actorUserName}
-            onBack={() => navigate('/')}
-            onCreateRoom={async (gameId) => {
-              const { roomId: newRoomId } = await roomCtx.create(gameId, actorUserName);
-              navigate(`/rooms/${newRoomId}`);
-            }}
-          />
-        }
-      />
-      <Route
-        path="/rooms"
-        element={
-          <RoomsAll
-            socket={socket}
-            listRooms={roomCtx.listRooms}
-            onBack={() => navigate('/')}
-            onGoToAllGames={() => navigate('/games')}
-            onJoinRoom={async (targetRoomId) => {
-              await roomCtx.join(targetRoomId, actorUserName);
-              navigate(`/rooms/${targetRoomId}`);
-            }}
-          />
-        }
-      />
-      <Route path="/leaderboard" element={<Leaderboard onBack={() => navigate('/')} />} />
-      <Route
-        path="/rooms/:roomId"
-        element={
-          <RoomRoute
-            userId={actorUserId}
-            userName={actorUserName}
-            roomCtx={roomCtx}
-            socketReady={connected}
-          />
-        }
-      />
-      <Route
-        path="/rooms/:roomId/play"
-        element={
-          <GameRoute
-            userId={actorUserId}
-            userName={actorUserName}
-            roomCtx={roomCtx}
-            game={game}
-            socketReady={connected}
-          />
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          path="/"
+          element={
+            <Lobby
+              socket={socket}
+              userName={actorUserName}
+              rename={rename}
+              roomCtx={roomCtx}
+              onGoToLogin={() => navigate('/login')}
+              onGoToRegister={() => navigate('/register')}
+              onGoToAllGames={() => navigate('/games')}
+              onGoToAllRooms={() => navigate('/rooms')}
+              onGoToLeaderboard={() => navigate('/leaderboard')}
+              onGoToMe={() => navigate('/me')}
+              onRoomCreated={(id) => navigate(`/rooms/${id}`)}
+              onRoomJoined={(id) => navigate(`/rooms/${id}`)}
+            />
+          }
+        />
+        <Route
+          path="/login"
+          element={
+            <Login
+              onSuccess={() => navigate('/')}
+              onGoToRegister={() => navigate('/register')}
+              onBack={() => navigate('/')}
+            />
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <Register
+              onSuccess={() => navigate('/')}
+              onGoToLogin={() => navigate('/login')}
+              onBack={() => navigate('/')}
+            />
+          }
+        />
+        <Route
+          path="/me"
+          element={<Me onBack={() => navigate('/')} onSignedOut={() => navigate('/')} />}
+        />
+        <Route
+          path="/games"
+          element={
+            <GamesAll
+              userName={actorUserName}
+              onBack={() => navigate('/')}
+              onCreateRoom={async (gameId) => {
+                const { roomId: newRoomId } = await roomCtx.create(gameId, actorUserName);
+                navigate(`/rooms/${newRoomId}`);
+              }}
+            />
+          }
+        />
+        <Route
+          path="/rooms"
+          element={
+            <RoomsAll
+              socket={socket}
+              listRooms={roomCtx.listRooms}
+              onBack={() => navigate('/')}
+              onGoToAllGames={() => navigate('/games')}
+              onJoinRoom={async (targetRoomId) => {
+                await roomCtx.join(targetRoomId, actorUserName);
+                navigate(`/rooms/${targetRoomId}`);
+              }}
+            />
+          }
+        />
+        <Route path="/leaderboard" element={<Leaderboard onBack={() => navigate('/')} />} />
+        <Route
+          path="/rooms/:roomId"
+          element={
+            <RoomRoute
+              userId={actorUserId}
+              userName={actorUserName}
+              roomCtx={roomCtx}
+              socketReady={connected}
+            />
+          }
+        />
+        <Route
+          path="/rooms/:roomId/play"
+          element={
+            <GameRoute
+              userId={actorUserId}
+              userName={actorUserName}
+              roomCtx={roomCtx}
+              game={game}
+              socketReady={connected}
+            />
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </GameChatProvider>
   );
