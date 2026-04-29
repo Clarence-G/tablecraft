@@ -7,10 +7,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { GameHeader, GameHeaderProvider, GameTable, useHeaderStatus } from '@repo/game-ui';
+import {
+  GameHeader,
+  GameHeaderProvider,
+  GameScene,
+  GameTable,
+  useHeaderStatus,
+} from '@repo/game-ui';
 import { GameLogProvider } from '@repo/game-ui/log';
 import { SidePanel } from '@repo/game-ui/side-panel';
-import type { PlayerInfo, SurfaceKind } from '@repo/shared';
+import type { GameScene as GameSceneConfig, PlayerInfo, SurfaceKind } from '@repo/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -25,6 +31,8 @@ export interface GameRoomLayoutProps {
   myId?: string;
   /** Visual surface for the Zone C play area. Defaults to 'marble'. */
   surface?: SurfaceKind;
+  /** Optional per-game theming for the inner Play Surface. */
+  scene?: GameSceneConfig;
   onReturnToLobby: () => void;
   children: React.ReactNode;
 }
@@ -47,6 +55,7 @@ function Inner({
   players,
   myId,
   surface,
+  scene,
   onReturnToLobby,
   children,
 }: Omit<GameRoomLayoutProps, 'gameId'>) {
@@ -70,7 +79,9 @@ function Inner({
         onExit={() => setConfirming(true)}
       />
       <div className="flex-1 min-h-0 flex flex-row">
-        <GameTable surface={surface}>{children}</GameTable>
+        <GameTable surface={surface}>
+          <GameScene scene={scene}>{children}</GameScene>
+        </GameTable>
         <SidePanel />
       </div>
 

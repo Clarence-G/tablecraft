@@ -19,7 +19,8 @@
     "./resume": "./src/resume/index.ts",
     "./points": "./src/points/index.ts",
     "./layout": "./src/layout/index.ts",
-    "./leaderboard": "./src/leaderboard/index.ts"
+    "./leaderboard": "./src/leaderboard/index.ts",
+    "./scene": "./src/scene/index.ts"
   },
   "dependencies": {
     "@repo/shared": "workspace:*",

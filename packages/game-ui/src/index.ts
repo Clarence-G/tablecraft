@@ -15,3 +15,4 @@ export * from './resume/index';
 export * from './points/index';
 export * from './layout/index';
 export * from './leaderboard/index';
+export * from './scene/index';

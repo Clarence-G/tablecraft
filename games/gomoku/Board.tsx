@@ -3,7 +3,8 @@ import { IntersectionBoard } from '@repo/game-ui/board';
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { useGameLog } from '@repo/game-ui/log';
 import type { BoardProps } from '@repo/shared';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Action, PlayerView, Stone } from './shared';
 import { BOARD_SIZE } from './shared';
@@ -15,6 +16,33 @@ const STAR_POINTS: [number, number][] = [
   [11, 3],
   [11, 11],
 ];
+
+const DIRECTIONS: Array<[number, number]> = [
+  [0, 1],
+  [1, 0],
+  [1, 1],
+  [1, -1],
+];
+
+function findWinningLine(board: (Stone | null)[][], stone: Stone): [number, number][] | null {
+  for (let r = 0; r < board.length; r++) {
+    for (let c = 0; c < board[r].length; c++) {
+      if (board[r][c] !== stone) continue;
+      for (const [dr, dc] of DIRECTIONS) {
+        const cells: [number, number][] = [];
+        for (let i = 0; i < 5; i++) {
+          const nr = r + dr * i;
+          const nc = c + dc * i;
+          if (nr < 0 || nr >= BOARD_SIZE || nc < 0 || nc >= BOARD_SIZE) break;
+          if (board[nr][nc] !== stone) break;
+          cells.push([nr, nc]);
+        }
+        if (cells.length === 5) return cells;
+      }
+    }
+  }
+  return null;
+}
 
 export function Board({
   state,
@@ -30,23 +58,16 @@ export function Board({
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
   const loserPlayer = players.find((p) => p.id !== state.winner);
 
-  // Optimistic move: show the stone we just placed immediately, without waiting
-  // for the server round-trip. Cleared once `isSending` flips to false — at that
-  // point the server has either acked (state.board will show our stone) or
-  // rejected (lastReject will have fired) or the send timeout expired. In all
-  // three cases we stop showing the optimistic overlay.
   const [pendingMove, setPendingMove] = useState<{ r: number; c: number; stone: Stone } | null>(
     null,
   );
   useEffect(() => {
     if (!isSending) setPendingMove(null);
   }, [isSending]);
-  // Roll back immediately on server reject (don't wait for isSending transition).
   useEffect(() => {
     if (lastReject) setPendingMove(null);
   }, [lastReject]);
 
-  // Apply optimistic move on top of server board for display only.
   const displayBoard = useMemo(() => {
     if (!pendingMove) return state.board;
     const rows = state.board.map((row) => [...row]);
@@ -54,12 +75,11 @@ export function Board({
     return rows;
   }, [state.board, pendingMove]);
 
-  // Optimistic "turn" — once we've placed a pending stone, act as if it's not
-  // our turn so the board reflects "waiting for opponent" visually.
   const isMyTurn = state.currentPlayer === myId && !pendingMove;
 
   useGameHeaderStatus(state.winner ? undefined : state.currentPlayer);
 
+  const [lastMove, setLastMove] = useState<[number, number] | null>(null);
   const prevBoard = useRef<(Stone | null)[][] | null>(null);
   const loggedWinner = useRef<string | null>(null);
   useEffect(() => {
@@ -70,6 +90,7 @@ export function Board({
           const now = state.board[r][c];
           const was = prev[r]?.[c] ?? null;
           if (now && !was) {
+            setLastMove([r, c]);
             const moverId =
               now === state.myStone
                 ? myId
@@ -98,17 +119,96 @@ export function Board({
     }
   }, [state.winner, playerNames, push]);
 
+  const winningCells = useMemo<[number, number][] | null>(() => {
+    if (!state.winner) return null;
+    const winnerStone: Stone =
+      state.winner === myId ? state.myStone : state.myStone === 'black' ? 'white' : 'black';
+    return findWinningLine(state.board, winnerStone);
+  }, [state.winner, state.board, state.myStone, myId]);
+
+  // Delay the GameOverModal so players can see the winning line glow first.
+  const [showModal, setShowModal] = useState(false);
+  useEffect(() => {
+    if (!state.winner) {
+      setShowModal(false);
+      return;
+    }
+    const id = setTimeout(() => setShowModal(true), 1200);
+    return () => clearTimeout(id);
+  }, [state.winner]);
+
+  const currentPlayerName = playerNames[state.currentPlayer] ?? state.currentPlayer;
+  const currentIsBot = !gameOver && !isMyTurn && currentPlayerName.startsWith('Bot');
+
+  const turnLabel: string = gameOver
+    ? `${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`
+    : isMyTurn
+      ? t('yourTurn')
+      : currentIsBot
+        ? t('botThinking', {
+            name: currentPlayerName,
+            defaultValue: `${currentPlayerName} is thinking...`,
+          })
+        : t('opponentTurn', {
+            name: currentPlayerName,
+            defaultValue: `Waiting for ${currentPlayerName}`,
+          });
+
+  const renderCellOverlay = (r: number, c: number): ReactNode => {
+    const overlays: ReactNode[] = [];
+    if (winningCells?.some(([wr, wc]) => wr === r && wc === c)) {
+      overlays.push(
+        <div
+          key="win"
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        >
+          <motion.div
+            className="w-[82%] h-[82%] rounded-full"
+            animate={{
+              boxShadow: [
+                '0 0 0 2px rgba(217,119,6,0.75), 0 0 10px 2px rgba(217,119,6,0.45)',
+                '0 0 0 3px rgba(217,119,6,1), 0 0 22px 6px rgba(217,119,6,0.75)',
+                '0 0 0 2px rgba(217,119,6,0.75), 0 0 10px 2px rgba(217,119,6,0.45)',
+              ],
+            }}
+            transition={{ duration: 1.4, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }}
+          />
+        </div>,
+      );
+    }
+    if (!winningCells && lastMove && lastMove[0] === r && lastMove[1] === c) {
+      overlays.push(
+        <div
+          key="last"
+          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        >
+          <div
+            className="w-[18%] h-[18%] rounded-full bg-[#d94040]"
+            style={{ boxShadow: '0 0 0 1.5px rgba(255,255,255,0.9)' }}
+          />
+        </div>,
+      );
+    }
+    return overlays.length ? <>{overlays}</> : null;
+  };
+
+  const turnCardAnimate =
+    isMyTurn && !gameOver
+      ? {
+          boxShadow: [
+            '#1a1108 -4px 4px 0px, 0 0 0 0 rgba(217,119,6,0)',
+            '#1a1108 -4px 4px 0px, 0 0 0 4px rgba(217,119,6,0.45)',
+            '#1a1108 -4px 4px 0px, 0 0 0 0 rgba(217,119,6,0)',
+          ],
+          opacity: [1, 0.92, 1],
+        }
+      : { boxShadow: '#1a1108 -4px 4px 0px', opacity: 1 };
+
   return (
     <div
       className="flex-1 text-foreground flex flex-col items-center justify-center gap-4 p-4 sm:p-6 w-full min-h-0"
       data-testid="game-board"
     >
-      {state.winner && (
-        <div className="text-sm font-semibold text-warning">
-          {`${playerNames[state.winner] ?? state.winner} ${t('won')}`}
-        </div>
-      )}
-
       <IntersectionBoard
         size={BOARD_SIZE}
         stones={displayBoard}
@@ -119,18 +219,33 @@ export function Board({
           setPendingMove({ r, c, stone: state.myStone });
           sendAction({ type: 'place', row: r, col: c });
         }}
+        renderOverlay={renderCellOverlay}
         showCoordinates
       />
-      <div className="flex items-center gap-2 text-sm font-semibold bg-card border-2 border-foreground rounded-[10px] px-3 py-1.5 shadow-button">
+      <motion.div
+        className="flex items-center gap-2 text-sm font-semibold bg-card border-2 border-foreground rounded-[10px] px-3 py-1.5"
+        animate={turnCardAnimate}
+        transition={
+          isMyTurn && !gameOver
+            ? { duration: 2.2, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }
+            : { duration: 0.2 }
+        }
+      >
         <div
           className={`w-4 h-4 rounded-full border-2 ${state.myStone === 'black' ? 'bg-[#1a1108] border-foreground' : 'bg-card border-foreground'}`}
         />
         <span className="text-foreground">
           {state.myStone === 'black' ? t('playBlack') : t('playWhite')}
         </span>
-      </div>
+        <span className="mx-1 text-border" aria-hidden>
+          ·
+        </span>
+        <span className={isMyTurn && !gameOver ? 'text-warning' : 'text-muted-foreground'}>
+          {turnLabel}
+        </span>
+      </motion.div>
 
-      {state.winner && loserPlayer && (
+      {state.winner && loserPlayer && showModal && (
         <GameOverModal
           rankings={[state.winner, loserPlayer.id]}
           playerNames={playerNames}

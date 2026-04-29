@@ -51,6 +51,7 @@ export function Game({ userId, room, game, onReturnToLobby }: GamePageProps) {
       players={room.players}
       myId={userId}
       surface={meta.surface}
+      scene={meta.scene}
       onReturnToLobby={onReturnToLobby}
     >
       {lastReject && (

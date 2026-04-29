@@ -6,6 +6,8 @@
   "won": "You Win!",
   "yourTurn": "Your Turn",
   "waiting": "Waiting",
+  "botThinking": "{{name}} is thinking...",
+  "opponentTurn": "Waiting for {{name}}",
   "playBlack": "You play Black",
   "playWhite": "You play White",
   "stone": {

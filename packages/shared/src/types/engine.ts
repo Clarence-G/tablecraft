@@ -3,6 +3,29 @@ import type { z } from 'zod';
 /** Visual surface of the play area (Zone C backdrop). */
 export type SurfaceKind = 'cream' | 'felt' | 'water' | 'wood' | 'marble' | 'parchment';
 
+/** Per-game theming for the Play Surface (Zone C). All fields optional; omitting
+ * the whole field keeps the default platform cream look. */
+export type SceneTexture = 'wood' | 'felt' | 'velvet' | 'leather' | 'paper' | null;
+export type SceneAmbienceKind = 'spotlight' | 'ambient' | 'none';
+export type SceneAmbienceWarmth = 'warm' | 'cool' | 'neutral';
+
+export interface GameScene {
+  surface?: {
+    /** CSS color for the play surface background. */
+    color?: string;
+    /** Subtle CSS-gradient overlay applied on top of the surface color. */
+    texture?: SceneTexture;
+    /** Accent color used by the surface for highlights (e.g. spotlight tint). */
+    accent?: string;
+  };
+  ambience?: {
+    type?: SceneAmbienceKind;
+    warmth?: SceneAmbienceWarmth;
+    /** 0..1 controlling spotlight opacity/spread. */
+    intensity?: number;
+  };
+}
+
 /** 游戏元信息 */
 export interface GameMeta {
   id: string;
@@ -24,6 +47,9 @@ export interface GameMeta {
   agentRules?: string;
   /** Visual surface for the play area. Defaults to 'marble' if omitted. */
   surface?: SurfaceKind;
+  /** Optional per-game theming of the Play Surface (colors, texture, ambience).
+   * Backward compatible: omitting this keeps the default cream look. */
+  scene?: GameScene;
 }
 
 /** 引擎提供给游戏逻辑的上下文 */
@@ -87,6 +113,7 @@ export interface ClientGamePlugin {
     | 'icon'
     | 'estimatedMinutes'
     | 'surface'
+    | 'scene'
   >;
   Board: React.LazyExoticComponent<React.ComponentType<any>> | React.ComponentType<any>;
 }

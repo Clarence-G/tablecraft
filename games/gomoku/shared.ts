@@ -25,6 +25,10 @@ PlayerView fields:
 
 Win condition: five consecutive stones in a line (horizontal, vertical, diagonal).
 Invalid moves: placing on an occupied cell, acting when not your turn.`,
+  scene: {
+    surface: { color: '#4a3528', texture: 'wood', accent: '#d4a056' },
+    ambience: { type: 'spotlight', warmth: 'warm', intensity: 0.35 },
+  },
 };
 
 export const BOARD_SIZE = 15;
