@@ -1,3 +1,4 @@
 export * from './types/index';
 export * from './utils/pending-phase';
 export * from './plugin-meta';
+export * from './logging/index';

@@ -14,7 +14,6 @@ import {
   GameTable,
   useHeaderStatus,
 } from '@repo/game-ui';
-import { GameLogProvider } from '@repo/game-ui/log';
 import { SidePanel } from '@repo/game-ui/side-panel';
 import type { GameScene as GameSceneConfig, PlayerInfo } from '@repo/shared';
 import { useEffect, useState } from 'react';
@@ -135,9 +134,7 @@ function Inner({
 export function GameRoomLayout(props: GameRoomLayoutProps) {
   return (
     <GameHeaderProvider>
-      <GameLogProvider>
-        <Inner {...props} />
-      </GameLogProvider>
+      <Inner {...props} />
     </GameHeaderProvider>
   );
 }

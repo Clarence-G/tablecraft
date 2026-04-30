@@ -1,4 +1,4 @@
-import type { ActionResult, GameContext, GameLogic } from '@repo/shared';
+import { type ActionResult, type GameContext, type GameLogic, logAction, logSystem } from '@repo/shared';
 import { type Action, ActionSchema, BOARD_SIZE, type PlayerView, type Stone } from './shared';
 
 interface GomokuState {
@@ -91,16 +91,26 @@ export const logic: GameLogic<GomokuState, Action, PlayerView> = {
       winner: won ? playerID : null,
     };
 
+    const moveLog = logAction(
+      playerID,
+      stone === 'black' ? 'log.moveBlack' : 'log.moveWhite',
+      { row: row + 1, col: col + 1 },
+    );
+
     if (won) {
       const loser = state.players.find((p) => p !== playerID)!;
       return {
         ok: true,
         state: newState,
-        events: [{ type: 'END_GAME', rankings: [playerID, loser] }],
+        events: [
+          moveLog,
+          logSystem('log.win', { actorId: playerID }),
+          { type: 'END_GAME', rankings: [playerID, loser] },
+        ],
       };
     }
 
-    return { ok: true, state: newState, events: [] };
+    return { ok: true, state: newState, events: [moveLog] };
   },
 
   getPlayerView(state, playerID): PlayerView {

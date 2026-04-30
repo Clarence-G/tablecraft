@@ -15,7 +15,8 @@
     "white": "白子"
   },
   "log": {
-    "move": "在 ({{row}}, {{col}}) 落下{{stone}}",
-    "win": "{{player}} 获胜"
+    "moveBlack": "落下黑子 ({{row}}, {{col}})",
+    "moveWhite": "落下白子 ({{row}}, {{col}})",
+    "win": "连成五子,获胜!"
   }
 }

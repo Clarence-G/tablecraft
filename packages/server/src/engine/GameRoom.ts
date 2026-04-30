@@ -55,6 +55,14 @@ export class GameRoom {
   /** Last N chat messages in this room. Not persisted across server restarts. */
   chatHistory: ChatMessage[] = [];
   private static readonly CHAT_HISTORY_LIMIT = 50;
+  /**
+   * Last N Activity Log entries (notifications on `channel: 'log'`). Kept for
+   * HTTP /state consumers (CLI bots, JSON clients) that don't subscribe to
+   * live socket events. Socket clients build their own log from `game:notify`.
+   * Not persisted across server restarts.
+   */
+  logHistory: unknown[] = [];
+  private static readonly LOG_HISTORY_LIMIT = 100;
   private waiters: Array<(seq: number) => void> = [];
 
   private broadcast: BroadcastFn | null = null;
@@ -87,6 +95,20 @@ export class GameRoom {
       this.chatHistory.splice(0, this.chatHistory.length - GameRoom.CHAT_HISTORY_LIMIT);
     }
     this.lastActivityAt = Date.now();
+  }
+
+  /**
+   * Append a notification payload to the Activity Log history — but only if
+   * it's on the 'log' sub-channel. Game-specific UI payloads (e.g. private
+   * card reveals) don't belong in the log. See docs/ACTIVITY_LOG.md.
+   */
+  private appendToLogHistory(payload: unknown): void {
+    if (payload === null || typeof payload !== 'object') return;
+    if ((payload as Record<string, unknown>).channel !== 'log') return;
+    this.logHistory.push(payload);
+    if (this.logHistory.length > GameRoom.LOG_HISTORY_LIMIT) {
+      this.logHistory.splice(0, this.logHistory.length - GameRoom.LOG_HISTORY_LIMIT);
+    }
   }
 
   get hostId(): string {
@@ -389,9 +411,11 @@ export class GameRoom {
           this.timerManager.clear(event.name);
           break;
         case 'NOTIFY':
+          this.appendToLogHistory(event.payload);
           this.emitToPlayer(event.to, 'game:notify', event.payload);
           break;
         case 'NOTIFY_ALL':
+          this.appendToLogHistory(event.payload);
           for (const pid of this.players.keys()) {
             this.emitToPlayer(pid, 'game:notify', event.payload);
           }

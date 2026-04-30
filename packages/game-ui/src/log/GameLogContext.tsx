@@ -38,23 +38,28 @@ export function GameLogProvider({ children }: { children: ReactNode }) {
     if (!Array.isArray(notifications) || notifications.length === 0) return;
     const fresh: PushLogEntry[] = [];
     for (const n of notifications) {
-      if (n !== null && typeof n === 'object') {
-        if (seenNotifications.current.has(n as object)) continue;
-        seenNotifications.current.add(n as object);
-      }
-      const record = (n ?? {}) as Record<string, unknown>;
-      const messageKey =
-        typeof record.messageKey === 'string'
-          ? record.messageKey
-          : typeof record.type === 'string'
-            ? `notification.${record.type}`
-            : 'notification.generic';
+      // Only ingest entries on the 'log' sub-channel. Game-specific UI
+      // payloads (e.g. private card reveals) flow through the same
+      // `notifications` array but are consumed by the Board component.
+      if (n === null || typeof n !== 'object') continue;
+      const record = n as Record<string, unknown>;
+      if (record.channel !== 'log') continue;
+      if (typeof record.messageKey !== 'string') continue;
+
+      // Dedupe by object identity so repeated re-renders of the same
+      // notifications array don't double-append.
+      if (seenNotifications.current.has(n as object)) continue;
+      seenNotifications.current.add(n as object);
+
+      const kindRaw = typeof record.kind === 'string' ? record.kind : 'system';
+      const kind: PushLogEntry['kind'] =
+        kindRaw === 'action' || kindRaw === 'info' ? kindRaw : 'system';
       const messageParams =
         record.messageParams && typeof record.messageParams === 'object'
           ? (record.messageParams as Record<string, string | number>)
           : undefined;
       const actorId = typeof record.actorId === 'string' ? record.actorId : undefined;
-      fresh.push({ kind: 'system', actorId, messageKey, messageParams });
+      fresh.push({ kind, actorId, messageKey: record.messageKey, messageParams });
     }
     if (fresh.length === 0) return;
     setEntries((prev) => {

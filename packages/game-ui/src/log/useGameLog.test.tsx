@@ -49,20 +49,27 @@ describe('useGameLog', () => {
     expect(holder.current?.entries[199]?.messageKey).toBe('k249');
   });
 
-  it('ingestNotifications dedupes by object identity', () => {
+  it('ingestNotifications ignores non-log payloads and dedupes by object identity', () => {
     const holder: { current: GameLogContextValue | null } = { current: null };
     render(
       <GameLogProvider>
         <Capture holder={holder} />
       </GameLogProvider>,
     );
-    const notifs: unknown[] = [{ type: 'joined', actorId: 'alice' }];
+    const notifs: unknown[] = [
+      // UI side-channel payload (e.g. a private card reveal for the Board) —
+      // must not appear in the Activity Log.
+      { type: 'priest_peek', target: 'bob', card: 5 },
+      // Proper log entry.
+      { channel: 'log', messageKey: 'log.joined', actorId: 'alice', kind: 'system' },
+    ];
     act(() => {
       holder.current?.ingestNotifications(notifs);
       holder.current?.ingestNotifications(notifs);
     });
     expect(holder.current?.entries.length).toBe(1);
-    expect(holder.current?.entries[0]?.messageKey).toBe('notification.joined');
+    expect(holder.current?.entries[0]?.messageKey).toBe('log.joined');
     expect(holder.current?.entries[0]?.actorId).toBe('alice');
+    expect(holder.current?.entries[0]?.kind).toBe('system');
   });
 });

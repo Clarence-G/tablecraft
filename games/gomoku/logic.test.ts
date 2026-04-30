@@ -140,4 +140,55 @@ describe('Gomoku Logic', () => {
       expect(h.isFinished).toBe(false);
     });
   });
+
+  describe('activity log notifications', () => {
+    it('emits a NOTIFY_ALL with log.moveBlack when black plays', () => {
+      const h = createGame();
+      h.action('Alice', { type: 'place', row: 7, col: 7 });
+      const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+      expect(notify).toBeDefined();
+      expect((notify as any).payload).toMatchObject({
+        messageKey: 'log.moveBlack',
+        messageParams: { row: 8, col: 8 },
+        actorId: 'Alice',
+        kind: 'action',
+      });
+    });
+
+    it('emits a NOTIFY_ALL with log.moveWhite when white plays', () => {
+      const h = createGame();
+      h.action('Alice', { type: 'place', row: 0, col: 0 });
+      h.action('Bob', { type: 'place', row: 1, col: 1 });
+      const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+      expect((notify as any).payload).toMatchObject({
+        messageKey: 'log.moveWhite',
+        actorId: 'Bob',
+      });
+    });
+
+    it('emits log.win NOTIFY_ALL before END_GAME on winning move', () => {
+      const h = createGame();
+      const moves: [string, number, number][] = [
+        ['Alice', 7, 0],
+        ['Bob', 8, 0],
+        ['Alice', 7, 1],
+        ['Bob', 8, 1],
+        ['Alice', 7, 2],
+        ['Bob', 8, 2],
+        ['Alice', 7, 3],
+        ['Bob', 8, 3],
+        ['Alice', 7, 4],
+      ];
+      for (const [p, r, c] of moves) h.action(p, { type: 'place', row: r, col: c });
+      const types = h.lastEvents.map((e) => e.type);
+      // Order: the move NOTIFY_ALL, then the win NOTIFY_ALL, then END_GAME.
+      expect(types).toEqual(['NOTIFY_ALL', 'NOTIFY_ALL', 'END_GAME']);
+      const winNotify = h.lastEvents[1];
+      expect((winNotify as any).payload).toMatchObject({
+        messageKey: 'log.win',
+        actorId: 'Alice',
+        kind: 'system',
+      });
+    });
+  });
 });

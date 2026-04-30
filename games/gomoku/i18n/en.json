@@ -15,7 +15,8 @@
     "white": "White"
   },
   "log": {
-    "move": "placed {{stone}} at ({{row}}, {{col}})",
-    "win": "{{player}} wins the match"
+    "moveBlack": "played Black at ({{row}}, {{col}})",
+    "moveWhite": "played White at ({{row}}, {{col}})",
+    "win": "connected five — wins!"
   }
 }

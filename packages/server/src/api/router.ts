@@ -16,7 +16,12 @@ function gameStateResponse(room: GameRoom, userId: string) {
   const result = room.rankings
     ? { rankings: room.rankings, myRank: room.rankings.indexOf(userId) + 1 }
     : null;
-  return { view, roomStatus: room.status, seq: room.seq, result };
+  // Expose the room-wide Activity Log history so CLI bots and JSON clients
+  // can inspect public events without subscribing to socket `game:notify`.
+  // Only entries on the 'log' sub-channel end up in logHistory — private UI
+  // payloads stay out of HTTP responses.
+  const notifications = room.logHistory;
+  return { view, roomStatus: room.status, seq: room.seq, result, notifications };
 }
 
 export function createApiRouter(

@@ -1,4 +1,4 @@
-import type { ActionResult, GameContext, GameLogic } from '@repo/shared';
+import { type ActionResult, type GameContext, type GameLogic, logAction } from '@repo/shared';
 import { type Action, ActionSchema, type PlayerView } from './shared';
 
 // ---- Internal State (never sent to clients) ----
@@ -23,13 +23,25 @@ export const logic: GameLogic<TState, Action, PlayerView> = {
 
     if (action.type === 'example_action') {
       // TODO: implement action logic
-      return { ok: true, state };
+      //
+      // Activity Log: emit one NOTIFY_ALL per user-visible event so the
+      // SidePanel's "Log" tab has something to render. Use logAction for
+      // player actions, logSystem for neutral events. Add the matching
+      // i18n key to games/<id>/i18n/{zh,en}.json under the "log" object.
+      // See docs/ACTIVITY_LOG.md for the full contract.
+      return {
+        ok: true,
+        state,
+        events: [
+          logAction(playerID, 'log.exampleAction', { /* messageParams */ }),
+        ],
+      };
     }
 
     return { ok: false, reason: 'Unknown action' };
   },
 
-  getPlayerView(state, playerID): PlayerView {
+  getPlayerView(state, _playerID): PlayerView {
     return {
       currentPlayer: state.currentPlayer,
     };
