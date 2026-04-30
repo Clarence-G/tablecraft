@@ -43,7 +43,8 @@
     "resultWin": "Won",
     "resultLoss": "Lost",
     "resultDraw": "Draw",
-    "comingSoon": "More games coming soon"
+    "comingSoon": "More games coming soon",
+    "connectingHint": "Connecting to server…"
   },
   "room": {
     "connecting": "Connecting...",

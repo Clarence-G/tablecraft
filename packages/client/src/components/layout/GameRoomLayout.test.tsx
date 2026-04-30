@@ -58,4 +58,52 @@ describe('GameRoomLayout', () => {
     fireEvent.click(screen.getByLabelText(/back/i));
     expect(onReturnToLobby).toHaveBeenCalledTimes(1);
   });
+
+  it('renders rules button when rulesText is provided', () => {
+    render(
+      <GameRoomLayout
+        gameId="gomoku"
+        gameName="五子棋"
+        roomId="A3F2"
+        matchStartedAt={null}
+        rulesText="Place stones to win."
+        onReturnToLobby={() => {}}
+      >
+        <div />
+      </GameRoomLayout>,
+    );
+    expect(screen.getByLabelText(/rules/i)).toBeInTheDocument();
+  });
+
+  it('hides rules button when rulesText is undefined', () => {
+    render(
+      <GameRoomLayout
+        gameId="gomoku"
+        gameName="五子棋"
+        roomId="A3F2"
+        matchStartedAt={null}
+        onReturnToLobby={() => {}}
+      >
+        <div />
+      </GameRoomLayout>,
+    );
+    expect(screen.queryByLabelText(/rules/i)).not.toBeInTheDocument();
+  });
+
+  it('clicking rules button opens dialog with rules text', () => {
+    render(
+      <GameRoomLayout
+        gameId="gomoku"
+        gameName="五子棋"
+        roomId="A3F2"
+        matchStartedAt={null}
+        rulesText="Place stones to win."
+        onReturnToLobby={() => {}}
+      >
+        <div />
+      </GameRoomLayout>,
+    );
+    fireEvent.click(screen.getByLabelText(/rules/i));
+    expect(screen.getByText('Place stones to win.')).toBeInTheDocument();
+  });
 });

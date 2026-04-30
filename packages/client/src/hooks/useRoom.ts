@@ -22,7 +22,16 @@ export function useRoom(socket: AppSocket | null) {
   const create = useCallback(
     (gameId: string, playerName: string, config?: unknown) => {
       return new Promise<{ roomId: string }>((resolve, reject) => {
-        socket?.emit('room:create', gameId, playerName, config, (result) => {
+        if (!socket || !socket.connected) {
+          reject(new Error('Socket not connected'));
+          return;
+        }
+        // socket.io ack timeout: if server doesn't respond in 10s, reject.
+        socket.timeout(10000).emit('room:create', gameId, playerName, config, (timeoutErr, result) => {
+          if (timeoutErr) {
+            reject(new Error('Server did not respond. Please try again.'));
+            return;
+          }
           if (result.ok) resolve(result.data);
           else reject(new Error(result.error));
         });
@@ -34,11 +43,15 @@ export function useRoom(socket: AppSocket | null) {
   const join = useCallback(
     (roomId: string, playerName: string) => {
       return new Promise<void>((resolve, reject) => {
-        if (!socket) {
+        if (!socket || !socket.connected) {
           reject(new Error('Socket not connected'));
           return;
         }
-        socket.emit('room:join', roomId, playerName, (result) => {
+        socket.timeout(10000).emit('room:join', roomId, playerName, (timeoutErr, result) => {
+          if (timeoutErr) {
+            reject(new Error('Server did not respond. Please try again.'));
+            return;
+          }
           if (result.ok) resolve();
           else reject(new Error(result.error));
         });

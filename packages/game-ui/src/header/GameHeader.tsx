@@ -215,7 +215,7 @@ export function GameHeader({
             type="button"
             aria-label={t('header.rules', { defaultValue: 'Rules' })}
             onClick={onRules}
-            className={`${iconBtn} hidden sm:inline-flex`}
+            className={`${iconBtn} inline-flex`}
           >
             <ScrollText className="size-4" />
           </button>

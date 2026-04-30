@@ -22,7 +22,7 @@ play. Every polish layer is additive.
 |-----------|--------------|--------|
 | **Spatial** | A sense of place -- the table, the room, the lighting | Shipped (`<GameScene>`) |
 | **Alive** | Breathing, timers, bot-thinking cues | Partial |
-| **Thematic** | Each game owns a mood (wood / felt / velvet / leather) | In progress |
+| **Thematic** | Each game owns a mood (wood / felt / velvet / leather / paper) | Shipped (all 11 games themed) |
 
 Each section below is a recipe a contributor (human or agent) can follow
 without a round of design review.

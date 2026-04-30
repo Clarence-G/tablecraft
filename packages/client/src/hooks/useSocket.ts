@@ -23,6 +23,14 @@ export function useSocket(userId: string, userName: string, isGuest = true) {
       socketInstance = io({
         auth: authBag,
         autoConnect: true,
+        // Dev-friendly reconnection: short initial delay so `pnpm dev`
+        // server restarts reconnect quickly, cap backoff at 2s so stale
+        // tabs don't wait up to 5s (the socket.io default max).
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 300,
+        reconnectionDelayMax: 2000,
+        timeout: 10000,
       });
     } else {
       // If the auth identity changed (guest→user, user→guest, or user swap),

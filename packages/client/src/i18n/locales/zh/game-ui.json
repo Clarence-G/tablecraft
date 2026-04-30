@@ -17,6 +17,8 @@
     "exitConfirmBody": "房间开放时你仍可以从大厅重新加入。",
     "exitConfirmCancel": "留下",
     "exitConfirmOk": "离开",
+    "rulesTitle": "游戏规则",
+    "rulesClose": "知道了",
     "yourTurn": "你的回合",
     "playerTurn": "{{name}} 的回合"
   },

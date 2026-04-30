@@ -13,7 +13,7 @@
   "bugs": "https://github.com/Clarence-G/tablecraft/issues",
   "keywords": ["board-games", "ai-agents", "multiplayer", "typescript", "react", "socket-io"],
   "engines": {
-    "node": ">=20",
+    "node": ">=20 <25",
     "pnpm": ">=9"
   },
   "scripts": {

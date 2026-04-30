@@ -410,7 +410,16 @@ Engine events in `events[]`:
    pnpm gen:registry
    ```
 
-2. **Edit `games/<your-game>/shared.ts`** — fill in the rest of `meta` (name, description, minPlayers, maxPlayers, tags, icon, estimatedMinutes, rules, agentRules) and define `ActionSchema` / `PlayerView`.
+2. **Edit `games/<your-game>/shared.ts`** — fill in the rest of `meta` (name, description, minPlayers, maxPlayers, tags, icon, estimatedMinutes, rules, agentRules, **`scene`**) and define `ActionSchema` / `PlayerView`.
+
+   The `scene` field themes the Play Surface (Zone C). Example:
+   ```ts
+   scene: {
+     surface: { color: '#1f5233', texture: 'felt', accent: '#d4a056' },
+     ambience: { type: 'spotlight', warmth: 'warm', intensity: 0.6 },
+   }
+   ```
+   Textures: `wood | felt | velvet | leather | paper | null`. See `docs/LAYOUT.md` §5 for the full schema and texture → game mapping. Omit `scene` to fall through to the cream platform look.
 
 3. **Edit `games/<your-game>/logic.ts`** — implement `setup`, `onAction`, `getPlayerView`.
 

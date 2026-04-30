@@ -65,6 +65,7 @@ export function App() {
           element={
             <Lobby
               socket={socket}
+              socketReady={connected}
               userName={actorUserName}
               rename={rename}
               roomCtx={roomCtx}

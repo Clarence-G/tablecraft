@@ -24,6 +24,7 @@ type RoomCtx = ReturnType<typeof useRoom>;
 
 interface LobbyProps {
   socket: AppSocket | null;
+  socketReady: boolean;
   userName: string;
   rename: (name: string) => void;
   roomCtx: RoomCtx;
@@ -38,6 +39,7 @@ interface LobbyProps {
 
 export function Lobby({
   socket,
+  socketReady,
   userName,
   rename,
   roomCtx,
@@ -129,6 +131,10 @@ export function Lobby({
 
   async function handleCreate(gameId: string) {
     setError(null);
+    if (!socketReady) {
+      setError(t('lobby.connectingHint', { defaultValue: 'Connecting to server…' }));
+      return;
+    }
     setLoading(true);
     try {
       const { roomId } = await create(gameId, userName);
@@ -142,6 +148,10 @@ export function Lobby({
 
   async function handleJoinRoom(roomId: string) {
     setError(null);
+    if (!socketReady) {
+      setError(t('lobby.connectingHint', { defaultValue: 'Connecting to server…' }));
+      return;
+    }
     setLoading(true);
     try {
       await join(roomId, userName);
@@ -270,7 +280,7 @@ export function Lobby({
                 <button
                   type="button"
                   onClick={() => handleCreate(gameFilter)}
-                  disabled={loading}
+                  disabled={loading || !socketReady}
                   className="inline-flex items-center gap-1 text-sm font-semibold border-2 border-foreground bg-card rounded-[10px] px-3 py-1.5 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active disabled:opacity-60 transition-all"
                 >
                   <Plus className="size-3.5" />
@@ -287,7 +297,7 @@ export function Lobby({
                     room={r}
                     onJoin={() => handleJoinRoom(r.roomId)}
                     joinLabel={t('lobby.join')}
-                    disabled={loading}
+                    disabled={loading || !socketReady}
                   />
                 ))}
               </ViewAllRow>
@@ -296,7 +306,7 @@ export function Lobby({
                   <button
                     type="button"
                     onClick={() => handleCreate(gameFilter)}
-                    disabled={loading}
+                    disabled={loading || !socketReady}
                     className="inline-flex items-center gap-1 text-sm font-semibold border-2 border-foreground bg-card rounded-[10px] px-3 py-1.5 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active disabled:opacity-60 transition-all"
                   >
                     <Plus className="size-3.5" />
@@ -325,7 +335,7 @@ export function Lobby({
                     type="button"
                     key={`${rg.roomId}-${rg.endedAt}`}
                     onClick={() => handleCreate(rg.gameId)}
-                    disabled={loading || !plugin}
+                    disabled={loading || !socketReady || !plugin}
                     className="snap-start shrink-0 w-[180px] border-2 border-foreground bg-card rounded-[12px] shadow-card p-3 text-left hover:-translate-y-0.5 hover:shadow-card-hover transition-all disabled:opacity-60"
                   >
                     <div className="flex items-center gap-2 mb-1.5">
@@ -362,7 +372,7 @@ export function Lobby({
                   type="button"
                   key={m.id}
                   onClick={() => handlePickGame(m.id)}
-                  disabled={loading}
+                  disabled={loading || !socketReady}
                   data-testid={`game-card-${m.id}`}
                   className="border-thick rounded-[16px] p-4 text-left transition-all duration-200 hover:-translate-y-1 hover:-rotate-[1.5deg] hover:shadow-card-hover active:translate-y-0 active:rotate-0 active:shadow-card-active bg-card border-foreground shadow-card disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:rotate-0 disabled:hover:shadow-card"
                 >
@@ -413,6 +423,12 @@ export function Lobby({
             </div>
           </div>
         </section>
+
+        {!socketReady && (
+          <div className="bg-[#fff7e0] border-2 border-[#d4a056] rounded-[12px] p-3 text-foreground/80 text-sm">
+            {t('lobby.connectingHint', { defaultValue: 'Connecting to server…' })}
+          </div>
+        )}
 
         {error && (
           <div className="bg-[#fde8e8] border-2 border-destructive rounded-[12px] p-3 text-destructive font-medium">

@@ -31,6 +31,7 @@ export interface GameRoomLayoutProps {
   myId?: string;
   /** Optional per-game theming for the inner Play Surface. */
   scene?: GameSceneConfig;
+  rulesText?: string;
   onReturnToLobby: () => void;
   children: React.ReactNode;
 }
@@ -53,12 +54,14 @@ function Inner({
   players,
   myId,
   scene,
+  rulesText,
   onReturnToLobby,
   children,
 }: Omit<GameRoomLayoutProps, 'gameId'>) {
   const { t } = useTranslation('game-ui');
   const elapsed = useElapsed(matchStartedAt);
   const [confirming, setConfirming] = useState(false);
+  const [rulesOpen, setRulesOpen] = useState(false);
   const { currentPlayerId, phase } = useHeaderStatus();
 
   return (
@@ -74,6 +77,7 @@ function Inner({
         myId={myId}
         onBack={onReturnToLobby}
         onExit={() => setConfirming(true)}
+        onRules={rulesText ? () => setRulesOpen(true) : undefined}
       />
       <div className="flex-1 min-h-0 flex flex-row">
         <GameTable>
@@ -106,6 +110,20 @@ function Inner({
               }}
             >
               {t('header.exitConfirmOk', { defaultValue: 'Leave' })}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={rulesOpen} onOpenChange={setRulesOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('header.rulesTitle', { defaultValue: 'How to play' })}</DialogTitle>
+          </DialogHeader>
+          <div className="whitespace-pre-wrap text-sm leading-relaxed">{rulesText}</div>
+          <DialogFooter>
+            <Button onClick={() => setRulesOpen(false)}>
+              {t('header.rulesClose', { defaultValue: 'Got it' })}
             </Button>
           </DialogFooter>
         </DialogContent>

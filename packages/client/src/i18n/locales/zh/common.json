@@ -43,7 +43,8 @@
     "resultWin": "赢了",
     "resultLoss": "输了",
     "resultDraw": "平局",
-    "comingSoon": "更多游戏即将上线"
+    "comingSoon": "更多游戏即将上线",
+    "connectingHint": "正在连接服务器…"
   },
   "room": {
     "connecting": "连接中...",

@@ -91,7 +91,7 @@ This copies `_template/`, rewrites `package.json` / `vitest.config.ts` / `shared
 
 | File | What to do |
 |------|-----------|
-| `shared.ts` | Fill out `meta: GameMeta` (description, minPlayers, maxPlayers, tags, icon, estimatedMinutes, rules, agentRules), `ActionSchema` (Zod), `Action` type, `PlayerView` interface. `meta.id` is already set by the scaffold. |
+| `shared.ts` | Fill out `meta: GameMeta` — `description`, `minPlayers`, `maxPlayers`, `tags`, `icon`, `estimatedMinutes`, `rules`, `agentRules`, **`scene`** (play-surface theme: `{ surface: { color, texture, accent }, ambience: { type, warmth, intensity } }` — see `docs/LAYOUT.md` §5 and existing `games/*/shared.ts` for recipes). Also define `ActionSchema` (Zod), `Action` type, `PlayerView` interface. `meta.id` is already set by the scaffold. |
 | `logic.ts` | Implement `GameLogic<TState, Action, PlayerView>` — `setup`, `onAction`, `getPlayerView`, optional `getSpectatorView`/`onTimer`/`onPlayerDisconnect` |
 | `Board.tsx` | React component: `export function Board(props: BoardProps<PlayerView, Action>)` |
 | `logic.test.ts` | Tests using `GameTestHarness` from `@repo/shared/testing` |

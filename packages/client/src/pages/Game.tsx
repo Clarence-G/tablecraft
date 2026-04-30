@@ -40,6 +40,7 @@ export function Game({ userId, room, game, onReturnToLobby }: GamePageProps) {
   const Board = plugin.Board;
   const meta = plugin.meta;
   const localizedName = t(`${room.gameId}:name`, { defaultValue: meta.name });
+  const rulesText = t(`${room.gameId}:rules`, { defaultValue: '' });
 
   return (
     <GameRoomLayout
@@ -51,6 +52,7 @@ export function Game({ userId, room, game, onReturnToLobby }: GamePageProps) {
       players={room.players}
       myId={userId}
       scene={meta.scene}
+      rulesText={rulesText || undefined}
       onReturnToLobby={onReturnToLobby}
     >
       {lastReject && (

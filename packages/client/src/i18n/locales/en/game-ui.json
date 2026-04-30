@@ -17,6 +17,8 @@
     "exitConfirmBody": "You can rejoin from the lobby if the room is still open.",
     "exitConfirmCancel": "Stay",
     "exitConfirmOk": "Leave",
+    "rulesTitle": "How to play",
+    "rulesClose": "Got it",
     "yourTurn": "Your turn",
     "playerTurn": "{{name}}'s turn"
   },
