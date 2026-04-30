@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull, isNull, ne, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, isNotNull, isNull, ne, sql } from 'drizzle-orm';
 import type { Request, Response, Router } from 'express';
 import { db } from '../db/index.js';
 import { pointsLedger, user } from '../db/schema.js';
@@ -214,15 +214,27 @@ export function registerPointsRoutes(router: Router): void {
   });
 
   // GET /api/leaderboard — public top-N by points (sum per user). Optionally
-  // scoped to a gameId. Excludes guest-only rows (user_id IS NULL).
+  // scoped to a gameId and/or a rolling time window (period=all|week|day).
+  // Excludes guest-only rows (user_id IS NULL).
   router.get('/leaderboard', async (req: Request, res: Response) => {
     const gameId = typeof req.query.gameId === 'string' ? req.query.gameId : undefined;
     const limitParam = Number(req.query.limit ?? 50);
     const limit = Math.min(Math.max(Number.isFinite(limitParam) ? limitParam : 50, 1), 100);
 
-    const whereClause = gameId
-      ? and(isNotNull(pointsLedger.userId), eq(pointsLedger.gameId, gameId))
-      : isNotNull(pointsLedger.userId);
+    // period: 'all' (default) | 'week' (last 7d) | 'day' (last 24h).
+    // Rolling windows (not ISO calendar weeks) so the board feels live —
+    // e.g. a win at 23:50 still counts 23:50 next day's "24h" window.
+    const rawPeriod = typeof req.query.period === 'string' ? req.query.period : 'all';
+    const period = rawPeriod === 'week' || rawPeriod === 'day' ? rawPeriod : 'all';
+    const now = Date.now();
+    const sinceMs =
+      period === 'week' ? now - 7 * 24 * 60 * 60 * 1000 : period === 'day' ? now - 24 * 60 * 60 * 1000 : null;
+    const since = sinceMs !== null ? new Date(sinceMs) : null;
+
+    const conditions = [isNotNull(pointsLedger.userId)];
+    if (gameId) conditions.push(eq(pointsLedger.gameId, gameId));
+    if (since) conditions.push(gte(pointsLedger.createdAt, since));
+    const whereClause = conditions.length === 1 ? conditions[0] : and(...conditions);
 
     const pointsSubquery = db
       .select({

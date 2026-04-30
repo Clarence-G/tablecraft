@@ -37,6 +37,14 @@ PlayerView fields:
 
 Play rules: card must match activeColor or top card's value. Wild can always be played. Skip/Reverse/Draw Two have special effects.
 Invalid: playing a card that doesn't match, passing without drawing first.`,
+  scene: {
+    // Burgundy / wine-red — deeper and less saturated than the previous
+    // "#b4322c" which read as a raw pink-orange "惨红". Hue pulled from
+    // orange-red toward wine to avoid clashing with the UNO red cards, and
+    // lightness dropped so the cream accent + card faces pop cleanly.
+    surface: { color: '#5e1f27', texture: 'paper', accent: '#f4d9a8' },
+    ambience: { type: 'ambient', warmth: 'warm', intensity: 0.18 },
+  },
 };
 
 // ---- Card Types ----

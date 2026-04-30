@@ -46,17 +46,6 @@
   --color-board: var(--board);
   --color-board-line: var(--board-line);
 
-  /* Surface tokens (play-area backdrops) */
-  --color-cream: var(--background);
-  --color-felt: var(--felt);
-  --color-felt-line: var(--felt-line);
-  --color-water: var(--water);
-  --color-water-line: var(--water-line);
-  --color-wood: var(--wood);
-  --color-wood-line: var(--wood-line);
-  --color-marble: var(--marble);
-  --color-parchment: var(--parchment);
-
   /* Six game colors */
   --color-dice-red: #d94040;
   --color-royal-blue: #2563eb;
@@ -120,16 +109,6 @@
   /* Gomoku board */
   --board: #d4a056;
   --board-line: #6b5744;
-
-  /* Play-area surfaces (cream inherits from --background, matching the lobby) */
-  --felt: #1f4d3a;
-  --felt-line: rgba(255, 255, 255, 0.04);
-  --water: #1a3a5c;
-  --water-line: rgba(255, 255, 255, 0.06);
-  --wood: #d4a056;
-  --wood-line: rgba(61, 46, 30, 0.12);
-  --marble: #f2ede0;
-  --parchment: #e8dcc4;
 }
 
 @layer base {

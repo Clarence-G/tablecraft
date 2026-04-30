@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "桌游大全",
+    "title": "TableCraft",
     "slogan": "和朋友一起，随时随地玩桌游"
   },
   "hero": {
@@ -42,7 +42,8 @@
     "backToLobby": "返回大厅",
     "resultWin": "赢了",
     "resultLoss": "输了",
-    "resultDraw": "平局"
+    "resultDraw": "平局",
+    "comingSoon": "更多游戏即将上线"
   },
   "room": {
     "connecting": "连接中...",
@@ -108,5 +109,49 @@
     "noPointsYet": "还没有积分。赢一局开启你的积分账本。",
     "dailyCheckin": "每日签到",
     "signedOutNotice": "你尚未登录。"
+  },
+  "lobbyPanel": {
+    "tab": {
+      "leaderboard": "排行榜",
+      "profile": "个人",
+      "recent": "最近"
+    },
+    "expand": "展开面板",
+    "collapse": "收起面板",
+    "leaderboard": {
+      "empty": "暂无排名数据",
+      "viewFull": "查看完整榜单",
+      "periodAll": "总榜",
+      "periodWeek": "周榜",
+      "periodDay": "日榜"
+    },
+    "recent": {
+      "empty": "还没有最近对局",
+      "emptyGuest": "登录后查看最近对局",
+      "viewAll": "查看全部"
+    },
+    "profile": {
+      "guestTitle": "访客模式",
+      "guestHint": "你的昵称可以随时修改，登录后会保留积分与战绩。",
+      "renameLabel": "昵称",
+      "saveName": "保存",
+      "signInCta": "登录 / 注册",
+      "loggedInHint": "点击进入个人中心",
+      "signOut": "登出"
+    }
+  },
+  "guest": {
+    "animalPool": [
+      "熊猫",
+      "狐狸",
+      "兔子",
+      "老虎",
+      "猫咪",
+      "企鹅",
+      "狼",
+      "鹿",
+      "猫头鹰",
+      "龙"
+    ]
   }
 }

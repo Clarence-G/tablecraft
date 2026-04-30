@@ -111,19 +111,34 @@ All three must fire together. A single signal is easy to miss; triple-redundancy
 
 ## 4. The Play Surface (Zone C)
 
-This is the single most important layout decision for each game. The Play Surface replaces the old `bg-card` white box. It has two properties: a **surface material** and a **content region**.
+This is the single most important layout decision for each game. The Play Surface replaces the old `bg-card` white box. It has two properties: a **scene config** and a **content region**.
 
-### Surface Materials
+### Scene Config
 
-| Token | Appearance | Games |
-|-------|-----------|-------|
-| `bg-wood` (`--board`) | Warm amber wood grain | Gomoku, Go, Hive, Connect Four |
-| `bg-felt` | Dark green felt, subtle weave | Texas Hold'em, Blackjack, Liar's Bar, Love Letter |
-| `bg-water` | Deep blue, faint grid | Battleship |
-| `bg-marble` | Cool cream with faint veins | Splendor, Yahtzee |
-| `bg-parchment` | Aged paper, ink edges | Werewolf, deduction games |
+Each game declares its tabletop via `meta.scene: GameScene`. The `<GameScene>` component composes four stacked layers over the Zone C wrapper:
 
-Each game picks one by setting `meta.surface: SurfaceKind`. The `<GameTable>` component reads this and paints the Zone C background.
+1. **Base color** — `scene.surface.color` painted as the CSS `background-color`.
+2. **Texture** — `scene.surface.texture` dispatches to one of five SVG texture components: `wood`, `felt`, `velvet`, `leather`, `paper`. Each is a program-generated `<svg>` of turbulence/gradient layers (no image assets). Pass `null` for pure color with no grain.
+3. **Ambience** — `scene.ambience.{type, warmth, intensity}` adds a CSS radial-gradient lighting pass. `type: spotlight` centers an elliptical pool, `ambient` lifts one corner softly, `none` disables. `warmth: warm | cool | neutral` tints the light; `intensity: 0..1` controls strength (auto-scaled × 0.7 on mobile).
+4. **Content** — game Board children, `z-index: 10`.
+
+### Texture Reference
+
+| Texture | Appearance | Used by |
+|---------|-----------|---------|
+| `wood` | Anisotropic grain + partial tree rings + knots + grazing light | Gomoku, Hive, Connect Four |
+| `felt` | Fine fiber grain + directional nap + sheen + corner vignette | Texas Hold'em, Blackjack |
+| `leather` | Pore grain + patina mottling + anisotropic sheen + edge burn | Liar's Bar, Yahtzee (leather variant) |
+| `velvet` | Deep mottle + plum shadow + warm sheen + pink-kiss bloom + edge vignette | Splendor, Love Letter (velvet variant) |
+| `paper` | Long-fiber noise + foxing specks + edge vignette; adapts to light/dark base | UNO, Love Letter, Battleship (map paper) |
+
+Omit `meta.scene` entirely to fall through to the platform cream — the container paints nothing.
+
+Omit `scene.surface.texture` (or pass `null`) if you want the `color` alone with ambience but no texture grain.
+
+### Authoring Tip
+
+Use `scene-gallery.html` at the repo root to preview real `<TextureLayer>` SVG output on a mock game surface. Click swatches to test colors, tweak ambience live, and save rating/notes per texture to localStorage. Every change there maps 1:1 to what a game sees after a dev-server hot reload.
 
 ### Content Region
 
@@ -299,7 +314,7 @@ The lobby is the only screen that does not use the 5-zone anatomy. It has its ow
 ```
 ┌──────────────────────────────────────────────────────────┐
 │  Platform Header (lobby variant, 64px)                   │
-│    桌游大全 logo                    EN | avatar | name   │
+│    TableCraft logo                   EN | avatar | name   │
 ├──────────────────────────────────────────────────────────┤
 │                                                          │
 │  Hero (140px, cream)                                     │
@@ -330,14 +345,17 @@ The lobby is the only screen that does not use the 5-zone anatomy. It has its ow
 
 ## 11. Game-Specific Layout Metadata
 
-Each game's `meta` gains three new fields:
+Each game's `meta` gains these fields:
 
 ```ts
 export const meta: GameMeta = {
   // ... existing fields
-  surface: 'felt',              // SurfaceKind
-  playLayout: 'centered-board', // PlayLayoutKind
-  statusSlots: ['chips', 'handCount'], // keys the PlayerBadge renders
+  scene: {
+    surface: { color: '#1f5233', texture: 'felt', accent: '#d4a056' },
+    ambience: { type: 'spotlight', warmth: 'warm', intensity: 0.24 },
+  },
+  playLayout: 'centered-board',           // PlayLayoutKind
+  statusSlots: ['chips', 'handCount'],    // keys the PlayerBadge renders
 }
 ```
 

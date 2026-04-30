@@ -1,8 +1,8 @@
 import { useGameHeaderStatus } from '@repo/game-ui';
 import { PlayingCard } from '@repo/game-ui/card';
 import { GameOverModal } from '@repo/game-ui/feedback';
-import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -48,9 +48,14 @@ function CardBack() {
 
 function CardPlaceholder() {
   return (
-    <div className="w-14 h-20 rounded-[10px] border-2 border-dashed border-card/50 bg-card/5 flex items-center justify-center shrink-0">
-      <span className="text-card/50 text-base">·</span>
-    </div>
+    <div
+      className="w-14 h-20 rounded-[10px] border shrink-0"
+      style={{
+        borderColor: 'rgba(244, 217, 168, 0.22)',
+        background: 'rgba(0, 0, 0, 0.16)',
+        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.25)',
+      }}
+    />
   );
 }
 
@@ -86,15 +91,22 @@ function PlayerSeat({
   return (
     <div
       className={[
-        'flex items-center justify-between px-3 py-2 rounded-[8px] border-2',
-        isActive ? 'border-[#d97706] bg-[#fef3e0]' : 'border-border bg-card',
-        isMe ? 'border-foreground' : '',
+        'flex items-center justify-between px-3 py-2 rounded-[8px] border-2 transition-colors',
+        isActive
+          ? 'border-[var(--scene-accent)] bg-card shadow-[0_0_0_3px_rgba(212,160,86,0.25)]'
+          : 'border-border bg-card',
+        isMe && !isActive ? 'border-foreground' : '',
         player.status === 'folded' || player.status === 'eliminated' ? 'opacity-60' : '',
       ].join(' ')}
     >
       <div className="flex items-center gap-2 min-w-0">
         {isDealer && (
-          <span className="text-xs bg-[#d97706] text-card px-1 rounded font-bold shrink-0">D</span>
+          <span
+            className="text-[10px] w-5 h-5 inline-flex items-center justify-center rounded-full bg-[#f5ecd6] text-[#4a3528] border border-[#8b6f3d] font-bold shrink-0"
+            style={{ boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.2), 0 1px 1px rgba(0,0,0,0.25)' }}
+          >
+            D
+          </span>
         )}
         <span className="text-sm font-semibold truncate text-foreground">{name}</span>
         {isMe && <span className="text-xs text-muted-foreground shrink-0">({t('me')})</span>}
@@ -106,8 +118,11 @@ function PlayerSeat({
           </span>
         )}
         {player.currentBet > 0 && (
-          <span className="text-xs text-[#d97706]">
-            {t('bet')}
+          <span className="text-xs font-semibold text-[#8b6f3d] inline-flex items-center gap-1">
+            <span
+              aria-hidden
+              className="inline-block w-2 h-2 rounded-full bg-[var(--scene-accent,#d4a056)] ring-1 ring-[#8b6f3d]"
+            />
             {player.currentBet}
           </span>
         )}
@@ -325,13 +340,28 @@ export function Board({
     ? [...state.players].sort((a, b) => b.chips - a.chips).map((p) => p.id)
     : null;
 
+  const reduced = useReducedMotion();
+  const turnPulse =
+    isMyTurn && !reduced
+      ? {
+          boxShadow: [
+            '0 0 0 0 rgba(212,160,86,0)',
+            '0 0 0 6px rgba(212,160,86,0.35)',
+            '0 0 0 0 rgba(212,160,86,0)',
+          ],
+        }
+      : { boxShadow: '0 0 0 0 rgba(212,160,86,0)' };
+
   return (
     <div
       className="flex-1 text-card flex flex-col p-3 sm:p-4 max-w-2xl mx-auto w-full gap-3"
       data-testid="game-board"
     >
       {/* Status row */}
-      <div className="text-center text-xs text-card/80 font-semibold uppercase tracking-wider">
+      <div
+        className="text-center text-xs font-semibold uppercase tracking-wider"
+        style={{ color: 'rgba(244, 217, 168, 0.85)' }}
+      >
         {t('hand', { n: state.handNumber })} ·{' '}
         {t(ROUND_KEYS[state.bettingRound] ?? state.bettingRound)}
       </div>
@@ -345,8 +375,30 @@ export function Board({
 
       {/* Community cards + pot — floating on felt */}
       <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-4">
-        <div className="text-xs text-card/80 font-semibold">
-          {t('pot')} <span className="text-base text-card font-bold ml-1">{state.pot}</span>
+        <div
+          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[11px] font-semibold uppercase tracking-wider"
+          style={{
+            borderColor: 'rgba(244, 217, 168, 0.35)',
+            background: 'rgba(0, 0, 0, 0.22)',
+            color: 'rgba(244, 217, 168, 0.9)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
+          }}
+        >
+          <span
+            aria-hidden
+            className="inline-block w-2.5 h-2.5 rounded-full"
+            style={{
+              background: 'var(--scene-accent, #d4a056)',
+              boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.3), 0 0 0 1px #8b6f3d',
+            }}
+          />
+          {t('pot')}
+          <span
+            className="text-base font-bold ml-0.5"
+            style={{ color: 'var(--scene-accent, #d4a056)' }}
+          >
+            {state.pot}
+          </span>
         </div>
         <div className="flex gap-2 justify-center flex-wrap">
           {state.communityCards.map((card, i) => (
@@ -362,7 +414,10 @@ export function Board({
         {/* My hole cards */}
         {state.myHoleCards && (
           <div className="flex flex-col items-center gap-1">
-            <div className="text-[11px] text-card/70 font-semibold uppercase tracking-wider">
+            <div
+              className="text-[11px] font-semibold uppercase tracking-wider"
+              style={{ color: 'rgba(244, 217, 168, 0.75)' }}
+            >
               {t('myHand')}
             </div>
             <div className="flex gap-2">
@@ -393,7 +448,15 @@ export function Board({
 
       {/* Action area */}
       {isMyTurn && (
-        <div className="border-2 border-card/40 rounded-[12px] bg-card/90 backdrop-blur-sm text-foreground shadow-[4px_4px_0px_0px_#1a1108] p-4 mb-3">
+        <motion.div
+          className="border-2 border-foreground rounded-[12px] bg-card text-foreground shadow-[4px_4px_0px_0px_#1a1108] p-4 mb-3"
+          animate={turnPulse}
+          transition={
+            isMyTurn && !reduced
+              ? { duration: 2.2, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }
+              : { duration: 0.2 }
+          }
+        >
           <ActionPanel
             canCheck={canCheck}
             canCall={canCall}
@@ -410,16 +473,23 @@ export function Board({
             onAllIn={() => sendAction({ type: 'all_in' })}
             t={t}
           />
-        </div>
+        </motion.div>
       )}
       {!isMyTurn && state.handPhase === 'betting' && (
-        <div className="border-2 border-card/30 rounded-[12px] bg-card/20 backdrop-blur-sm p-3 mb-3 text-center text-sm text-card">
+        <div
+          className="rounded-[12px] p-3 mb-3 text-center text-sm border"
+          style={{
+            borderColor: 'rgba(244, 217, 168, 0.3)',
+            background: 'rgba(0, 0, 0, 0.18)',
+            color: 'rgba(244, 217, 168, 0.85)',
+          }}
+        >
           {t(ROUND_KEYS[state.bettingRound] ?? state.bettingRound)}
         </div>
       )}
 
       {/* Players list */}
-      <div className="border-2 border-card/40 rounded-[12px] bg-card/80 backdrop-blur-sm text-foreground shadow-[4px_4px_0px_0px_#1a1108] p-3 mb-3">
+      <div className="border-2 border-foreground rounded-[12px] bg-card text-foreground shadow-[4px_4px_0px_0px_#1a1108] p-3 mb-3">
         <div className="text-xs text-muted-foreground font-semibold mb-2">{t('playerStatus')}</div>
         <div className="flex flex-col gap-1">
           {state.players.map((p, i) => (

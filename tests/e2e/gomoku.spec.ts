@@ -9,7 +9,7 @@ async function createPlayer(context: BrowserContext, name: string): Promise<Page
   }, name);
   await page.reload();
   // Wait for the page to fully load and socket to connect
-  await page.waitForSelector('text=桌游大全', { timeout: 10000 });
+  await page.waitForSelector('text=TableCraft', { timeout: 10000 });
   await page.waitForTimeout(1500); // Give socket time to connect
   return page;
 }

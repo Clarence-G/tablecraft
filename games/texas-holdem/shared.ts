@@ -10,7 +10,14 @@ export const meta: GameMeta = {
   tags: ['卡牌', '策略'],
   icon: 'poker-hand',
   estimatedMinutes: 30,
-  surface: 'felt',
+  scene: {
+    // Spotlight tightened but NOT over-corrected. v1 was 0.4 (too strong).
+    // v2 was 0.16 + neutral (too weak, lost the poker-table warmth).
+    // Settling at 0.24 + warm keeps the subtle centre-lift + table-light
+    // feel without stage-spotlight overkill — per vision review.
+    surface: { color: '#1f5233', texture: 'felt', accent: '#d4a056' },
+    ambience: { type: 'spotlight', warmth: 'warm', intensity: 0.24 },
+  },
   rules:
     '每人发 2 张底牌，配合 5 张公共牌组成最佳 5 张牌型。经过四轮下注（翻牌前、翻牌、转牌、河牌），最佳牌型或逼退所有对手者赢取底池。',
   agentRules: `Texas Hold'em poker. Each player gets 2 hole cards. 5 community cards dealt across 4 betting rounds: preflop(0), flop(3), turn(4), river(5).

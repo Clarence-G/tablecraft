@@ -16,7 +16,9 @@
     "exitConfirmTitle": "确认离开对局？",
     "exitConfirmBody": "房间开放时你仍可以从大厅重新加入。",
     "exitConfirmCancel": "留下",
-    "exitConfirmOk": "离开"
+    "exitConfirmOk": "离开",
+    "yourTurn": "你的回合",
+    "playerTurn": "{{name}} 的回合"
   },
   "sidepanel": {
     "tab": {

@@ -61,10 +61,13 @@ function CompactPlayer({
   player,
   isCurrentTurn,
   isMe,
+  meSuffix,
 }: {
   player: PlayerInfo;
   isCurrentTurn: boolean;
   isMe: boolean;
+  /** Suffix appended to the local viewer's name, e.g. "·You" / "·你". */
+  meSuffix: string;
 }) {
   return (
     <div
@@ -87,7 +90,7 @@ function CompactPlayer({
         }`}
       >
         {player.name}
-        {isMe ? '·你' : ''}
+        {isMe ? `·${meSuffix}` : ''}
       </span>
     </div>
   );
@@ -124,11 +127,8 @@ export function GameHeader({
   const isMyTurn = !!myId && currentPlayerId === myId;
   const turnLabel = currentPlayer
     ? isMyTurn
-      ? t('header.yourTurn', { defaultValue: '你的回合' })
-      : t('header.playerTurn', {
-          defaultValue: '{{name}} 的回合',
-          name: currentPlayer.name,
-        })
+      ? t('header.yourTurn')
+      : t('header.playerTurn', { name: currentPlayer.name })
     : null;
 
   return (
@@ -205,6 +205,7 @@ export function GameHeader({
                 player={p}
                 isCurrentTurn={p.id === currentPlayerId}
                 isMe={p.id === myId}
+                meSuffix={t('you')}
               />
             ))}
           </div>

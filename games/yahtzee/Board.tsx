@@ -3,7 +3,7 @@ import { GameOverModal } from '@repo/game-ui/feedback';
 import { useGameLog } from '@repo/game-ui/log';
 import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -90,13 +90,14 @@ function DieFace({
   const prevValue = useRef(value);
   const [spinKey, setSpinKey] = useState(0);
   const [displayValue, setDisplayValue] = useState(value);
+  const reduced = useReducedMotion();
 
   useEffect(() => {
     const isSpin =
       prevValue.current !== value && value > 0 && prevValue.current > 0;
     prevValue.current = value;
 
-    if (!isSpin) {
+    if (!isSpin || reduced) {
       setDisplayValue(value);
       return;
     }
@@ -113,7 +114,7 @@ function DieFace({
       clearInterval(interval);
       clearTimeout(stop);
     };
-  }, [value]);
+  }, [value, reduced]);
 
   return (
     <button
@@ -124,14 +125,19 @@ function DieFace({
         'w-14 h-14 rounded-[12px] border-2',
         'transition-all duration-150',
         held
-          ? 'bg-[#fef3e0] border-[#d97706] shadow-[2px_2px_0px_0px_#d97706]'
-          : 'bg-card border-foreground shadow-[4px_4px_0px_0px_#3d2e1e]',
+          ? 'bg-[#fff6d9] shadow-[2px_2px_0px_0px_rgba(0,0,0,0.35)]'
+          : 'bg-card border-foreground shadow-[4px_4px_0px_0px_#1a1108]',
         onClick ? 'cursor-pointer active:translate-y-[2px] active:shadow-none' : 'cursor-default',
       ].join(' ')}
+      style={held ? { borderColor: 'var(--scene-accent, #d97706)' } : undefined}
       aria-label={isUnrolled ? t('notRolled') : `${t('dice')}${value}${held ? t('locked') : ''}`}
     >
       {isUnrolled ? (
         <span className="text-muted-foreground text-xs">?</span>
+      ) : reduced ? (
+        <svg viewBox="0 0 512 512" className="w-10 h-10" aria-hidden="true">
+          <image href={DICE_ICON_PATHS[value]} width={512} height={512} />
+        </svg>
       ) : (
         <motion.svg
           key={spinKey}
@@ -151,6 +157,21 @@ function DieFace({
         >
           <image href={DICE_ICON_PATHS[displayValue] ?? DICE_ICON_PATHS[value]} width={512} height={512} />
         </motion.svg>
+      )}
+      {held && (
+        <span
+          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full border-2 border-foreground flex items-center justify-center"
+          style={{
+            backgroundColor: 'var(--scene-accent, #d97706)',
+            boxShadow: '1px 1px 0 0 rgba(0,0,0,0.5)',
+          }}
+          aria-hidden="true"
+        >
+          <span
+            className="block w-1.5 h-1.5 rounded-full"
+            style={{ backgroundColor: '#1a1108' }}
+          />
+        </span>
       )}
     </button>
   );
@@ -233,7 +254,7 @@ function OpponentCard({
         render={
           <button
             type="button"
-            className="w-full text-left border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-3 cursor-pointer transition-transform active:translate-y-[1px] active:shadow-[2px_2px_0px_0px_#3d2e1e] hover:-translate-y-[1px] hover:shadow-[5px_5px_0px_0px_#3d2e1e]"
+            className="w-full text-left border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#0c1a2e] p-3 cursor-pointer transition-transform active:translate-y-[1px] active:shadow-[2px_2px_0px_0px_#0c1a2e] hover:-translate-y-[1px] hover:shadow-[5px_5px_0px_0px_#0c1a2e]"
             aria-label={t('viewScorecard', { name })}
           />
         }
@@ -372,6 +393,7 @@ export function Board({
   const sendAction = isSending ? () => {} : rawSendAction;
   const { t } = useTranslation('yahtzee');
   const { push } = useGameLog();
+  const reducedMotion = useReducedMotion();
   const [showFullScorecard, setShowFullScorecard] = useState(false);
 
   const isMyTurn = state.currentPlayer === myId;
@@ -507,19 +529,21 @@ export function Board({
       </div>
 
       {/* Status (round + rolls info — turn lives in header) */}
-      <div className="text-center text-sm text-muted-foreground mb-3">
-        {gameOver
-          ? `${t('gameOver')} ${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`
-          : isMyTurn
-            ? t('roundInfoMine', {
-                round: state.roundNumber,
-                rolls: state.rollsLeft,
-                defaultValue: '第 {{round}}/13 轮 · 剩余投掷: {{rolls}}',
-              })
-            : t('roundInfoOther', {
-                round: state.roundNumber,
-                defaultValue: '第 {{round}}/13 轮',
-              })}
+      <div className="flex justify-center mb-3">
+        <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium bg-card border-2 border-foreground rounded-full px-3 py-1 shadow-[2px_2px_0px_0px_#0c1a2e] text-foreground">
+          {gameOver
+            ? `${t('gameOver')} ${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`
+            : isMyTurn
+              ? t('roundInfoMine', {
+                  round: state.roundNumber,
+                  rolls: state.rollsLeft,
+                  defaultValue: '第 {{round}}/13 轮 · 剩余投掷: {{rolls}}',
+                })
+              : t('roundInfoOther', {
+                  round: state.roundNumber,
+                  defaultValue: '第 {{round}}/13 轮',
+                })}
+        </span>
       </div>
 
       {/* Opponents (compact) */}
@@ -535,7 +559,15 @@ export function Board({
 
       {/* Dice Area */}
       {!gameOver && (
-        <div className="border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#3d2e1e] p-4 mb-3">
+        <div
+          className="border-2 rounded-[14px] p-4 mb-3"
+          style={{
+            backgroundColor: 'rgba(245, 237, 220, 0.96)',
+            borderColor: '#1a1108',
+            boxShadow:
+              '4px 4px 0px 0px #0c1a2e, inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -2px 6px rgba(40,25,10,0.12)',
+          }}
+        >
           <div className="flex justify-center gap-2 mb-4">
             {state.dice.map((d, i) => (
               <DieFace // biome-ignore lint/suspicious/noArrayIndexKey: dice positions are fixed (always 5 dice in order)
@@ -550,30 +582,60 @@ export function Board({
           {canHold && (
             <div className="text-center text-xs text-muted-foreground mb-3">{t('lockHint')}</div>
           )}
-          <button
+          <motion.button
             type="button"
             disabled={!canRoll}
             onClick={() => sendAction({ type: 'roll' })}
             className={[
-              'w-full py-3 rounded-[8px] font-semibold text-base border-2 transition-all',
+              'w-full py-3 rounded-[8px] font-semibold text-base border-2 transition-colors',
               canRoll
-                ? 'bg-primary text-primary-foreground border-[#1a1108] shadow-[4px_4px_0px_0px_#1a1108] active:translate-y-[2px] active:shadow-none'
+                // Amber/honey-gold CTA driven by scene accent. Contrasts
+                // against both the cream platform chrome and the walnut
+                // scene surface — avoids the "dark button on dark wood"
+                // mud reported by the vision review. Dark-brown text
+                // keeps the on-paper feel.
+                ? 'text-[#2a1f14] border-[#2a1f14] active:translate-y-[2px]'
                 : 'bg-muted text-muted-foreground border-border cursor-not-allowed',
             ].join(' ')}
+            style={
+              canRoll
+                ? { backgroundColor: 'var(--scene-accent, #f4c744)' }
+                : undefined
+            }
+            animate={
+              canRoll && !reducedMotion
+                ? {
+                    boxShadow: [
+                      '4px 4px 0px 0px #2a1f14, 0 0 0 0 rgba(244,199,68,0)',
+                      '4px 4px 0px 0px #2a1f14, 0 0 0 4px rgba(244,199,68,0.55)',
+                      '4px 4px 0px 0px #2a1f14, 0 0 0 0 rgba(244,199,68,0)',
+                    ],
+                  }
+                : {
+                    boxShadow: canRoll
+                      ? '4px 4px 0px 0px #2a1f14'
+                      : '0 0 0 0 rgba(0,0,0,0)',
+                  }
+            }
+            transition={
+              canRoll && !reducedMotion
+                ? { duration: 2.2, repeat: Number.POSITIVE_INFINITY, ease: 'easeInOut' }
+                : { duration: 0.2 }
+            }
           >
             {!hasRolled
               ? t('rollDice')
               : state.rollsLeft === 0
                 ? t('selectCategory')
                 : t('rollAgain', { n: state.rollsLeft })}
-          </button>
+          </motion.button>
         </div>
       )}
 
       {/* My Scorecard */}
       {myPlayerScore && (
         <div
-          className="border-2 border-foreground rounded-[12px] p-3 mb-3 shadow-[4px_4px_0px_0px_#3d2e1e] relative"
+          className="border-2 border-foreground rounded-[12px] p-3 mb-3 shadow-[4px_4px_0px_0px_#0c1a2e] relative"
           style={paperStyle}
         >
           <div className="flex items-center justify-between mb-2">

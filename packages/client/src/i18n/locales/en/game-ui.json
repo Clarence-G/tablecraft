@@ -16,7 +16,9 @@
     "exitConfirmTitle": "Leave the match?",
     "exitConfirmBody": "You can rejoin from the lobby if the room is still open.",
     "exitConfirmCancel": "Stay",
-    "exitConfirmOk": "Leave"
+    "exitConfirmOk": "Leave",
+    "yourTurn": "Your turn",
+    "playerTurn": "{{name}}'s turn"
   },
   "sidepanel": {
     "tab": {

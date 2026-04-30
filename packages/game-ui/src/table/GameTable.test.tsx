@@ -3,32 +3,24 @@ import { describe, expect, it } from 'vitest';
 import { GameTable } from './GameTable';
 
 describe('GameTable', () => {
-  it('defaults to cream surface when surface omitted', () => {
-    const { getByTestId } = render(
+  it('renders children inside a flex-1 play-area wrapper', () => {
+    const { getByTestId, getByText } = render(
       <GameTable>
-        <span>child</span>
-      </GameTable>,
-    );
-    expect(getByTestId('game-table').getAttribute('data-surface')).toBe('cream');
-  });
-
-  it('applies the felt background class when surface="felt"', () => {
-    const { getByTestId } = render(
-      <GameTable surface="felt">
-        <span>child</span>
+        <div>hello</div>
       </GameTable>,
     );
     const el = getByTestId('game-table');
-    expect(el.getAttribute('data-surface')).toBe('felt');
-    expect(el.className).toMatch(/bg-felt/);
+    expect(el.className).toMatch(/flex-1/);
+    expect(el.className).toMatch(/min-h-0/);
+    expect(getByText('hello')).toBeTruthy();
   });
 
-  it('renders children inside the table container', () => {
-    const { getByText } = render(
-      <GameTable surface="water">
-        <span>hello world</span>
+  it('merges caller className', () => {
+    const { getByTestId } = render(
+      <GameTable className="custom-x">
+        <div />
       </GameTable>,
     );
-    expect(getByText('hello world')).toBeTruthy();
+    expect(getByTestId('game-table').className).toMatch(/custom-x/);
   });
 });

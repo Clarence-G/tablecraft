@@ -10,7 +10,14 @@ export const meta: GameMeta = {
   tags: ['骰子', '休闲'],
   icon: 'dice-six-faces-five',
   estimatedMinutes: 30,
-  surface: 'marble',
+  scene: {
+    // Walnut-wood paper scene — replaced the dark navy leather. The user
+    // preferred "paper-ish" over dark backgrounds for Yahtzee, matching the
+    // vintage score-pad feel. Deep warm brown reads like a wood card table
+    // underneath the cream scorecard; honey-gold accent unchanged.
+    surface: { color: '#3d2f24', texture: 'paper', accent: '#f4c744' },
+    ambience: { type: 'ambient', warmth: 'warm', intensity: 0.2 },
+  },
   rules:
     '每回合掷 5 颗骰子，最多掷 3 次（可锁定部分骰子），然后选择一个计分类别填入得分。共 13 轮，总分最高者获胜。',
   agentRules: `5 dice, 13 rounds per player. Each turn: up to 3 rolls, hold/release dice between rolls, then score in one category.

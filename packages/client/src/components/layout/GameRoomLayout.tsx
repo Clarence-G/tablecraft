@@ -16,7 +16,7 @@ import {
 } from '@repo/game-ui';
 import { GameLogProvider } from '@repo/game-ui/log';
 import { SidePanel } from '@repo/game-ui/side-panel';
-import type { GameScene as GameSceneConfig, PlayerInfo, SurfaceKind } from '@repo/shared';
+import type { GameScene as GameSceneConfig, PlayerInfo } from '@repo/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -29,8 +29,6 @@ export interface GameRoomLayoutProps {
   matchStartedAt: number | null;
   players?: PlayerInfo[];
   myId?: string;
-  /** Visual surface for the Zone C play area. Defaults to 'marble'. */
-  surface?: SurfaceKind;
   /** Optional per-game theming for the inner Play Surface. */
   scene?: GameSceneConfig;
   onReturnToLobby: () => void;
@@ -54,7 +52,6 @@ function Inner({
   matchStartedAt,
   players,
   myId,
-  surface,
   scene,
   onReturnToLobby,
   children,
@@ -79,7 +76,7 @@ function Inner({
         onExit={() => setConfirming(true)}
       />
       <div className="flex-1 min-h-0 flex flex-row">
-        <GameTable surface={surface}>
+        <GameTable>
           <GameScene scene={scene}>{children}</GameScene>
         </GameTable>
         <SidePanel />

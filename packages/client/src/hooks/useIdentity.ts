@@ -1,11 +1,21 @@
 import { nanoid } from 'nanoid';
 import { useState } from 'react';
+import i18n from '../i18n';
 import { useSession } from './useSession';
 
-const ANIMALS = ['熊猫', '狐狸', '兔子', '老虎', '猫咪', '企鹅', '狼', '鹿', '猫头鹰', '龙'];
-
+/**
+ * Locale-aware random guest name. Reads the current locale's `guest.animalPool`
+ * string array (zh: "熊猫/狐狸/…", en: "Panda/Fox/…") and appends a 4-char
+ * nanoid for uniqueness. Name is generated once and persisted to localStorage,
+ * so switching locale later doesn't rename the identity.
+ */
 function randomAnimal() {
-  return ANIMALS[Math.floor(Math.random() * ANIMALS.length)] + nanoid(4);
+  const pool = i18n.t('guest.animalPool', {
+    returnObjects: true,
+    defaultValue: ['Guest'],
+  }) as string[];
+  const safe = Array.isArray(pool) && pool.length > 0 ? pool : ['Guest'];
+  return safe[Math.floor(Math.random() * safe.length)] + nanoid(4);
 }
 
 interface Identity {

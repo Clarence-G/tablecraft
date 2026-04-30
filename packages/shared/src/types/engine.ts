@@ -1,8 +1,5 @@
 import type { z } from 'zod';
 
-/** Visual surface of the play area (Zone C backdrop). */
-export type SurfaceKind = 'cream' | 'felt' | 'water' | 'wood' | 'marble' | 'parchment';
-
 /** Per-game theming for the Play Surface (Zone C). All fields optional; omitting
  * the whole field keeps the default platform cream look. */
 export type SceneTexture = 'wood' | 'felt' | 'velvet' | 'leather' | 'paper' | null;
@@ -45,8 +42,6 @@ export interface GameMeta {
   rules?: string;
   /** Machine-readable rules for agents (action format, view schema, error cases) */
   agentRules?: string;
-  /** Visual surface for the play area. Defaults to 'marble' if omitted. */
-  surface?: SurfaceKind;
   /** Optional per-game theming of the Play Surface (colors, texture, ambience).
    * Backward compatible: omitting this keeps the default cream look. */
   scene?: GameScene;
@@ -112,7 +107,6 @@ export interface ClientGamePlugin {
     | 'tags'
     | 'icon'
     | 'estimatedMinutes'
-    | 'surface'
     | 'scene'
   >;
   Board: React.LazyExoticComponent<React.ComponentType<any>> | React.ComponentType<any>;

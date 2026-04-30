@@ -42,7 +42,8 @@
     "backToLobby": "Back to lobby",
     "resultWin": "Won",
     "resultLoss": "Lost",
-    "resultDraw": "Draw"
+    "resultDraw": "Draw",
+    "comingSoon": "More games coming soon"
   },
   "room": {
     "connecting": "Connecting...",
@@ -108,5 +109,49 @@
     "noPointsYet": "No points yet. Win a game to start your ledger.",
     "dailyCheckin": "Daily check-in",
     "signedOutNotice": "You're signed out."
+  },
+  "lobbyPanel": {
+    "tab": {
+      "leaderboard": "Ranks",
+      "profile": "Profile",
+      "recent": "Recent"
+    },
+    "expand": "Expand panel",
+    "collapse": "Collapse panel",
+    "leaderboard": {
+      "empty": "No rankings yet",
+      "viewFull": "View full leaderboard",
+      "periodAll": "All-time",
+      "periodWeek": "This week",
+      "periodDay": "Today"
+    },
+    "recent": {
+      "empty": "No recent games yet",
+      "emptyGuest": "Sign in to see recent games",
+      "viewAll": "View all"
+    },
+    "profile": {
+      "guestTitle": "Guest mode",
+      "guestHint": "Pick any nickname. Sign in to keep points and stats forever.",
+      "renameLabel": "Nickname",
+      "saveName": "Save",
+      "signInCta": "Sign in / Sign up",
+      "loggedInHint": "Open profile",
+      "signOut": "Sign out"
+    }
+  },
+  "guest": {
+    "animalPool": [
+      "Panda",
+      "Fox",
+      "Rabbit",
+      "Tiger",
+      "Kitten",
+      "Penguin",
+      "Wolf",
+      "Deer",
+      "Owl",
+      "Dragon"
+    ]
   }
 }

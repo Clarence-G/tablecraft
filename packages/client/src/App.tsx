@@ -70,7 +70,6 @@ export function App() {
               roomCtx={roomCtx}
               onGoToLogin={() => navigate('/login')}
               onGoToRegister={() => navigate('/register')}
-              onGoToAllGames={() => navigate('/games')}
               onGoToAllRooms={() => navigate('/rooms')}
               onGoToLeaderboard={() => navigate('/leaderboard')}
               onGoToMe={() => navigate('/me')}

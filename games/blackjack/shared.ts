@@ -10,7 +10,10 @@ export const meta: GameMeta = {
   tags: ['卡牌', '休闲'],
   icon: 'card-ace-spades',
   estimatedMinutes: 15,
-  surface: 'felt',
+  scene: {
+    surface: { color: '#1f5233', texture: 'felt', accent: '#d4a056' },
+    ambience: { type: 'ambient', warmth: 'warm', intensity: 0.22 },
+  },
   rules:
     '所有玩家对抗庄家。先下注，然后通过要牌使手牌点数尽量接近 21 点但不超过。A 可算 1 或 11，J/Q/K 算 10。超过 21 点即爆牌出局。',
   agentRules: `Players vs dealer. Multi-round: bet → play → dealer reveals → payout.

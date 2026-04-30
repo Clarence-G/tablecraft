@@ -1,22 +1,23 @@
 import { GameIcon } from '@/components/GameIcon';
+import { LobbySidePanel } from '@/components/layout/LobbySidePanel';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { ViewAllRow } from '@repo/game-ui/layout';
 import { SectionHead } from '@repo/game-ui/section';
 import { UserChip } from '@repo/game-ui/user';
 import type { ClientEvents, RoomSummary, ServerEvents } from '@repo/shared';
-import Avatar from 'boring-avatars';
-import { Clock, Pencil, Plus, Trophy, Users } from 'lucide-react';
+import { Clock, Plus, Users } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Socket } from 'socket.io-client';
 import { clientRegistry } from '../../../../games/client-registry';
+import { authClient } from '../lib/authClient';
 import { usePoints } from '../hooks/usePoints';
 import { useRecentGames } from '../hooks/useRecentGames';
 import type { useRoom } from '../hooks/useRoom';
 import { useSession } from '../hooks/useSession';
 import { apiFetch } from '../lib/api';
 import { TAG_COLORS, buildTagTranslation } from '../lib/tags';
-import { HeroGuest, HeroLoggedIn, RoomCard } from './lobby/sections';
+import { HeroGuest, HeroLoggedIn, QuickJoinBar, RoomCard } from './lobby/sections';
 
 type AppSocket = Socket<ServerEvents, ClientEvents>;
 type RoomCtx = ReturnType<typeof useRoom>;
@@ -30,7 +31,6 @@ interface LobbyProps {
   onRoomJoined: (roomId: string) => void;
   onGoToLogin: () => void;
   onGoToRegister: () => void;
-  onGoToAllGames: () => void;
   onGoToAllRooms: () => void;
   onGoToLeaderboard: () => void;
   onGoToMe: () => void;
@@ -45,7 +45,6 @@ export function Lobby({
   onRoomJoined,
   onGoToLogin,
   onGoToRegister,
-  onGoToAllGames,
   onGoToAllRooms,
   onGoToLeaderboard,
   onGoToMe,
@@ -65,16 +64,12 @@ export function Lobby({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const [editingName, setEditingName] = useState(false);
-  const [nameDraft, setNameDraft] = useState(userName);
-
   const [rooms, setRooms] = useState<RoomSummary[]>([]);
   const [gameFilter, setGameFilter] = useState<string>('');
   const [myRank, setMyRank] = useState<number | null>(null);
   const roomsSectionRef = useRef<HTMLElement | null>(null);
 
   const games = Object.values(clientRegistry);
-  const featured = games.slice(0, 8);
   const filteredGameName = gameFilter
     ? String(gt(gameFilter, 'name'))
     : '';
@@ -128,10 +123,8 @@ export function Lobby({
     };
   }, [socket, listRooms, gameFilter]);
 
-  function confirmRename() {
-    const trimmed = nameDraft.trim();
-    if (trimmed && trimmed !== userName) rename(trimmed);
-    setEditingName(false);
+  function handleQuickJoin(code: string) {
+    handleJoinRoom(code.trim().toUpperCase());
   }
 
   async function handleCreate(gameId: string) {
@@ -160,10 +153,6 @@ export function Lobby({
     }
   }
 
-  function handleQuickJoin(code: string) {
-    handleJoinRoom(code.trim().toUpperCase());
-  }
-
   // Clicking a game card filters the room list to that game and scrolls the
   // list into view. Creating a room is then a deliberate second click on the
   // section's "Create <game> room" CTA, so we never spawn ghost rooms.
@@ -173,6 +162,21 @@ export function Lobby({
     requestAnimationFrame(() => {
       roomsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
+  }
+
+  // Hero "Create room" CTA: scroll to the All Games section so the user
+  // picks a game first, then the card click kicks off room creation.
+  const allGamesSectionRef = useRef<HTMLElement | null>(null);
+  function handleCreateRoomCta() {
+    allGamesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  async function handleSignOut() {
+    try {
+      await authClient.signOut();
+    } catch {
+      /* ignore — user can retry */
+    }
   }
 
   return (
@@ -185,15 +189,6 @@ export function Lobby({
             <span className="text-xl font-bold text-[#1a1108]">{t('app.title')}</span>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onGoToLeaderboard}
-              className="inline-flex items-center gap-1 text-xs font-semibold border-2 border-border bg-card rounded-full px-2.5 py-1 hover:border-foreground hover:-translate-y-0.5 transition-all"
-              aria-label={t('leaderboard.navLink')}
-            >
-              <Trophy className="size-3.5" />
-              <span className="hidden sm:inline">{t('leaderboard.navLink')}</span>
-            </button>
             <LocaleSwitch />
             {authedUser ? (
               <UserChip
@@ -203,72 +198,31 @@ export function Lobby({
                 onClick={onGoToMe}
               />
             ) : (
-              <>
-                <Avatar
-                  name={userName}
-                  size={32}
-                  variant="beam"
-                  colors={['#d94040', '#2563eb', '#16a34a', '#d97706', '#7c3aed']}
-                />
-                {editingName ? (
-                  <input
-                    className="border-2 border-foreground bg-card shadow-inset rounded-[8px] px-2 py-0.5 text-foreground font-semibold w-28 text-center outline-none text-sm"
-                    value={nameDraft}
-                    onChange={(e) => setNameDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') confirmRename();
-                      if (e.key === 'Escape') {
-                        setNameDraft(userName);
-                        setEditingName(false);
-                      }
-                    }}
-                    onBlur={confirmRename}
-                    maxLength={12}
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNameDraft(userName);
-                      setEditingName(true);
-                    }}
-                    className="font-semibold text-sm text-foreground inline-flex items-center gap-1 hover:text-muted-foreground transition-colors"
-                  >
-                    {userName}
-                    <Pencil className="size-3 text-[#9c8b78]" />
-                  </button>
-                )}
-                <UserChip guestLabel={t('auth.signInCta')} onSignInClick={onGoToLogin} />
-              </>
+              <UserChip guestLabel={t('auth.signInCta')} onSignInClick={onGoToLogin} />
             )}
           </div>
         </div>
       </nav>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-8">
+      <div className="flex flex-row items-stretch">
+        <main className="flex-1 min-w-0">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-8">
         {authedUser ? (
           <HeroLoggedIn
             points={points?.global ?? 0}
             rank={myRank}
-            onQuickJoin={handleQuickJoin}
+            onCreateRoom={handleCreateRoomCta}
             pointsLabel={t('hero.pointsLabel')}
             rankLabel={t('hero.rankLabel')}
             welcome={t('hero.welcomeBack', { name: authedUser.name })}
-            placeholder={t('hero.roomCodePlaceholder')}
-            joinLabel={t('lobby.join')}
+            createRoomLabel={t('lobby.createRoomShort')}
           />
         ) : (
           <HeroGuest
             welcome={t('hero.guestWelcome', { name: userName })}
             cta={t('hero.guestCta')}
-            summary={t('hero.summary', { games: games.length, rooms: rooms.length })}
-            onSignIn={onGoToLogin}
-            onSignUp={onGoToRegister}
-            onQuickJoin={handleQuickJoin}
-            signInLabel={t('auth.signIn')}
-            signUpLabel={t('auth.signUp')}
-            placeholder={t('hero.roomCodePlaceholder')}
-            joinLabel={t('lobby.join')}
+            onCreateRoom={handleCreateRoomCta}
+            createRoomLabel={t('lobby.createRoomShort')}
           />
         )}
 
@@ -278,10 +232,17 @@ export function Lobby({
             title={t('lobby.activeRooms')}
             onViewAll={onGoToAllRooms}
             viewAllLabel={t('lobby.viewAll')}
+            actions={
+              <QuickJoinBar
+                onQuickJoin={handleQuickJoin}
+                placeholder={t('hero.roomCodePlaceholder')}
+                joinLabel={t('lobby.join')}
+              />
+            }
           />
 
-          {/* Game filter chips: All + each game */}
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-3 -mx-1 px-1">
+          {/* Game filter chips: wrap to 2 rows on desktop, scroll on small screens */}
+          <div className="flex flex-wrap gap-2 pb-2 mb-3">
             <FilterChip
               active={gameFilter === ''}
               label={t('lobby.filterAllGames')}
@@ -391,14 +352,10 @@ export function Lobby({
         )}
 
         {/* All games */}
-        <section>
-          <SectionHead
-            title={t('lobby.allGames')}
-            onViewAll={onGoToAllGames}
-            viewAllLabel={t('lobby.viewAll')}
-          />
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            {featured.map((plugin) => {
+        <section ref={allGamesSectionRef} className="scroll-mt-20">
+          <SectionHead title={t('lobby.allGames')} />
+          <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]">
+            {games.map((plugin) => {
               const m = plugin.meta;
               return (
                 <button
@@ -445,6 +402,15 @@ export function Lobby({
                 </button>
               );
             })}
+            {/* "Coming soon" placeholder so the grid feels curated, not sparse.
+                Also serves as a subtle roadmap hint. */}
+            <div
+              aria-hidden="true"
+              className="border-2 border-dashed border-border rounded-[16px] p-4 flex flex-col items-center justify-center text-center gap-2 text-muted-foreground bg-card/40 min-h-[120px]"
+            >
+              <Plus className="size-5 opacity-60" />
+              <span className="text-xs font-semibold">{t('lobby.comingSoon')}</span>
+            </div>
           </div>
         </section>
 
@@ -453,7 +419,22 @@ export function Lobby({
             {error}
           </div>
         )}
-      </main>
+          </div>
+        </main>
+        <LobbySidePanel
+          authedUser={authedUser}
+          userName={userName}
+          rename={rename}
+          points={points?.global ?? 0}
+          myRank={myRank}
+          onGoToLogin={onGoToLogin}
+          onGoToRegister={onGoToRegister}
+          onGoToLeaderboard={onGoToLeaderboard}
+          onGoToMe={onGoToMe}
+          onGoToAllRooms={onGoToAllRooms}
+          onSignOut={authedUser ? handleSignOut : undefined}
+        />
+      </div>
     </div>
   );
 }

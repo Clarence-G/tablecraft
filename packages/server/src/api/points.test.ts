@@ -297,6 +297,48 @@ describe('points REST routes', () => {
     expect(body.data.entries[0].userId).toBe(a.userId);
   });
 
+  it('GET /api/leaderboard respects period filter (week/day)', async () => {
+    const a = await signUp('a@e.com', 'correct-horse-battery-staple', 'A');
+    const b = await signUp('b@e.com', 'correct-horse-battery-staple', 'B');
+
+    const now = Date.now();
+    const longAgo = new Date(now - 30 * 24 * 60 * 60 * 1000); // 30 days ago
+    const threeDaysAgo = new Date(now - 3 * 24 * 60 * 60 * 1000);
+    const twoHoursAgo = new Date(now - 2 * 60 * 60 * 1000);
+    await db.insert(schema.pointsLedger).values([
+      // A: 100pts old, 5pts this week, 1pt today
+      { userId: a.userId, gameId: 'g', reason: 'win', points: 100, createdAt: longAgo },
+      { userId: a.userId, gameId: 'g', reason: 'win', points: 5, createdAt: threeDaysAgo },
+      { userId: a.userId, gameId: 'g', reason: 'win', points: 1, createdAt: twoHoursAgo },
+      // B: 20pts this week only
+      { userId: b.userId, gameId: 'g', reason: 'win', points: 20, createdAt: threeDaysAgo },
+    ]);
+
+    // All-time: A=106, B=20 → A leads
+    const allResp = await fetch(`${baseUrl}/api/leaderboard?period=all`);
+    const allBody = await allResp.json();
+    expect(allBody.data.entries[0]).toMatchObject({ userId: a.userId, points: 106 });
+    expect(allBody.data.entries[1]).toMatchObject({ userId: b.userId, points: 20 });
+
+    // Week (7d rolling): A=6 (5+1), B=20 → B leads, old 100pt row excluded
+    const wkResp = await fetch(`${baseUrl}/api/leaderboard?period=week`);
+    const wkBody = await wkResp.json();
+    expect(wkBody.data.entries).toHaveLength(2);
+    expect(wkBody.data.entries[0]).toMatchObject({ userId: b.userId, points: 20 });
+    expect(wkBody.data.entries[1]).toMatchObject({ userId: a.userId, points: 6 });
+
+    // Day (24h): only A has 1pt from 2h ago
+    const dayResp = await fetch(`${baseUrl}/api/leaderboard?period=day`);
+    const dayBody = await dayResp.json();
+    expect(dayBody.data.entries).toHaveLength(1);
+    expect(dayBody.data.entries[0]).toMatchObject({ userId: a.userId, points: 1 });
+
+    // Invalid period falls back to all-time
+    const badResp = await fetch(`${baseUrl}/api/leaderboard?period=month`);
+    const badBody = await badResp.json();
+    expect(badBody.data.entries[0]).toMatchObject({ userId: a.userId, points: 106 });
+  });
+
   it('GET /api/leaderboard/me returns rank + total for session user', async () => {
     const a = await signUp('a@e.com', 'correct-horse-battery-staple', 'A');
     const b = await signUp('b@e.com', 'correct-horse-battery-staple', 'B');
