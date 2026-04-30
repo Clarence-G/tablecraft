@@ -5,6 +5,8 @@ import type { ClientEvents, ServerEvents } from '@repo/shared';
 import { toNodeHandler } from 'better-auth/node';
 import cors from 'cors';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 import { Server } from 'socket.io';
 import { serverRegistry } from '../../../games/server-registry.js';
 import { createApiRouter } from './api/router.js';
@@ -12,6 +14,7 @@ import { TokenStore } from './api/token-store.js';
 import { closeDb, initDb } from './db/index.js';
 import { RoomManager } from './engine/RoomManager.js';
 import { auth } from './lib/auth.js';
+import { logger } from './lib/logger.js';
 import { createSessionMiddleware } from './middleware/session.js';
 import { setupAuth } from './socket/auth.js';
 import { setupHandlers } from './socket/handlers.js';
@@ -24,10 +27,10 @@ async function main() {
   try {
     await initDb();
   } catch (err) {
-    console.error('\n[fatal] Database initialization failed:');
-    console.error(err);
-    console.error(
-      '\nIf this is pglite WASM abort, check Node version (<25) and ' +
+    logger.fatal({ mod: 'server', err }, '[fatal] Database initialization failed');
+    logger.fatal(
+      { mod: 'server' },
+      'If this is pglite WASM abort, check Node version (<25) and ' +
         '`packages/server/data/pgdata/` integrity. The server did NOT start.',
     );
     process.exit(1);
@@ -54,6 +57,24 @@ async function main() {
     app.use(cors({ origin: ['http://localhost:5173'], credentials: true }));
   }
 
+  // Security headers. contentSecurityPolicy disabled because our SPA assets
+  // and Vite dev server don't align with the default CSP; we rely on origin
+  // checks for API and CORS for cross-origin.
+  app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  }));
+
+  // General API rate limit: 300 req/min per IP. Skip health check.
+  const apiLimiter = rateLimit({
+    windowMs: 60_000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => req.path === '/api/health',
+  });
+  app.use('/api', apiLimiter);
+
   // Liveness/readiness probe. Kept above BetterAuth so it's reachable even if
   // auth middleware is broken. Used by dev tooling, CI smoke tests, and
   // (future) container orchestrators.
@@ -79,7 +100,7 @@ async function main() {
   // prod logs and accumulating stale rows across restarts.
   if (process.env.NODE_ENV !== 'production') {
     const defaultBot = await tokenStore.generate('DefaultBot');
-    console.log(`Bot token: ${defaultBot.token} (userId: ${defaultBot.userId})`);
+    logger.info({ mod: 'server', userId: defaultBot.userId }, `Bot token: ${defaultBot.token}`);
   }
 
   // Serve static in production
@@ -96,7 +117,7 @@ async function main() {
   await new Promise<void>((resolve, reject) => {
     httpServer.once('error', reject);
     httpServer.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      logger.info({ mod: 'server' }, `Server running on port ${PORT}`);
       resolve();
     });
   });
@@ -107,9 +128,9 @@ async function main() {
   async function shutdown(signal: string) {
     if (shuttingDown) return;
     shuttingDown = true;
-    console.log(`\n[shutdown] Received ${signal}, closing server...`);
+    logger.info({ mod: 'server', signal }, '[shutdown] Received signal, closing server...');
     const timeout = setTimeout(() => {
-      console.error('[shutdown] forced exit after 5s timeout');
+      logger.error({ mod: 'server' }, '[shutdown] forced exit after 5s timeout');
       process.exit(1);
     }, 5000);
     try {
@@ -117,10 +138,10 @@ async function main() {
       await new Promise<void>((res) => httpServer.close(() => res()));
       await closeDb();
       clearTimeout(timeout);
-      console.log('[shutdown] clean exit');
+      logger.info({ mod: 'server' }, '[shutdown] clean exit');
       process.exit(0);
     } catch (err) {
-      console.error('[shutdown] error during shutdown:', err);
+      logger.error({ mod: 'server', err }, '[shutdown] error during shutdown');
       clearTimeout(timeout);
       process.exit(1);
     }
@@ -130,6 +151,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('[fatal] server crashed:', err);
+  logger.fatal({ mod: 'server', err }, '[fatal] server crashed');
   process.exit(1);
 });

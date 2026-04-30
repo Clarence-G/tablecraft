@@ -198,3 +198,88 @@ export const pointsLedger = pgTable(
     ),
   }),
 );
+
+// ---------------------------------------------------------------------------
+// Chat messages (persisted). GameRoom keeps a hot in-memory cache but
+// messages are now durable across restarts.
+// ---------------------------------------------------------------------------
+export const chatMessages = pgTable(
+  'chat_messages',
+  {
+    id: text('id').primaryKey().$defaultFn(() => nanoid()),
+    roomId: text('room_id').notNull(),
+    userId: text('user_id').notNull(),
+    userName: text('user_name').notNull(),
+    text: text('text').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+  },
+  (t) => ({
+    roomIdx: index('idx_chat_room_created').on(t.roomId, t.createdAt),
+  }),
+);
+
+// ---------------------------------------------------------------------------
+// User reports (moderation). A reporter flags a target for a reason, with an
+// optional roomId for game-context reports. Status tracks triage state.
+// ---------------------------------------------------------------------------
+export const reports = pgTable(
+  'reports',
+  {
+    id: text('id').primaryKey().$defaultFn(() => nanoid()),
+    reporterId: text('reporter_id').notNull(),
+    targetUserId: text('target_user_id').notNull(),
+    roomId: text('room_id'),
+    reason: text('reason').notNull(),   // 'harassment' | 'cheating' | 'spam' | 'other'
+    detail: text('detail'),              // free-form user-provided text, max 500 chars
+    status: text('status').notNull().default('pending'),  // 'pending' | 'reviewed' | 'actioned' | 'dismissed'
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true, mode: 'date' }),
+  },
+  (t) => ({
+    targetIdx: index('idx_reports_target').on(t.targetUserId),
+    statusIdx: index('idx_reports_status_created').on(t.status, t.createdAt),
+  }),
+);
+
+// ---------------------------------------------------------------------------
+// User blocks (personal blocklist). blocker cannot see blocked user's chat
+// and is auto-matched away from blocked users when matchmaking lands.
+// ---------------------------------------------------------------------------
+export const userBlocks = pgTable(
+  'user_blocks',
+  {
+    blockerId: text('blocker_id').notNull(),
+    blockedId: text('blocked_id').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.blockerId, t.blockedId] }),
+    blockerIdx: index('idx_blocks_blocker').on(t.blockerId),
+  }),
+);
+
+// ---------------------------------------------------------------------------
+// Friendships. Undirected, but stored as a pair where userA < userB
+// lexicographically (normalize at insert). `status`: 'pending' | 'accepted'
+// where `requestedBy` indicates who sent the initial request.
+// ---------------------------------------------------------------------------
+export const friendships = pgTable(
+  'friendships',
+  {
+    userA: text('user_a').notNull(),    // lexicographically smaller id
+    userB: text('user_b').notNull(),    // lexicographically larger id
+    requestedBy: text('requested_by').notNull(),  // either userA or userB
+    status: text('status').notNull().default('pending'),  // 'pending' | 'accepted'
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+    acceptedAt: timestamp('accepted_at', { withTimezone: true, mode: 'date' }),
+  },
+  (t) => ({
+    pk: primaryKey({ columns: [t.userA, t.userB] }),
+    userAIdx: index('idx_friendships_user_a').on(t.userA),
+    userBIdx: index('idx_friendships_user_b').on(t.userB),
+    check: check(
+      'friendships_normalized_check',
+      sql`user_a < user_b`,
+    ),
+  }),
+);
