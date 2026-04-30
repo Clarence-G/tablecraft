@@ -11,7 +11,14 @@
   },
   "homepage": "https://github.com/Clarence-G/tablecraft",
   "bugs": "https://github.com/Clarence-G/tablecraft/issues",
-  "keywords": ["board-games", "ai-agents", "multiplayer", "typescript", "react", "socket-io"],
+  "keywords": [
+    "board-games",
+    "ai-agents",
+    "multiplayer",
+    "typescript",
+    "react",
+    "socket-io"
+  ],
   "engines": {
     "node": ">=20 <25",
     "pnpm": ">=9"
@@ -30,11 +37,15 @@
     "typecheck": "tsc --noEmit -p packages/shared/tsconfig.json && tsc --noEmit -p packages/game-ui/tsconfig.json && tsc --noEmit -p packages/client/tsconfig.json"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
+    "onlyBuiltDependencies": [
+      "@biomejs/biome",
+      "esbuild"
+    ]
   },
   "dependencies": {
     "@games/battleship": "workspace:*",
     "@games/blackjack": "workspace:*",
+    "@games/codenames": "workspace:*",
     "@games/connect-four": "workspace:*",
     "@games/gomoku": "workspace:*",
     "@games/hive": "workspace:*",
@@ -42,20 +53,22 @@
     "@games/love-letter": "workspace:*",
     "@games/splendor": "workspace:*",
     "@games/texas-holdem": "workspace:*",
+    "@games/undercover": "workspace:*",
     "@games/uno": "workspace:*",
     "@games/yahtzee": "workspace:*",
     "@repo/cli": "workspace:*",
-    "@repo/server": "workspace:*",
-    "@repo/client": "workspace:*"
+    "@repo/client": "workspace:*",
+    "@repo/server": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.0",
-    "concurrently": "^8.2.0",
     "@playwright/test": "^1.44.0",
+    "concurrently": "^8.2.0",
+    "seedrandom": "^3.0.5",
+    "tsx": "^4.21.0",
     "typescript": "^5.4.0",
-    "vitest": "^1.6.0",
     "vite": "^5.2.0",
-    "zod": "^3.23.0",
-    "seedrandom": "^3.0.5"
+    "vitest": "^1.6.0",
+    "zod": "^3.23.0"
   }
 }

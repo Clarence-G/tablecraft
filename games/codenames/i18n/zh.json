@@ -1,0 +1,43 @@
+{
+  "name": "行动代码",
+  "description": "两支团队各有间谍头目与特工，凭单词线索找出己方阵营的全部目标",
+  "tags": ["推理", "团队", "派对"],
+  "rules": "两队对抗：每队一名间谍头目和若干特工。间谍头目给出一个单词加数字的线索，特工根据线索猜测棋盘上属于本队的单词。首先猜出所有本队单词的队伍获胜，若不小心翻到刺客格，己方立即失败。",
+  "team": {
+    "red": "红队",
+    "blue": "蓝队"
+  },
+  "role": {
+    "spymaster": "间谍头目",
+    "operative": "特工"
+  },
+  "turn": "行动中",
+  "setup": {
+    "instruction": "选择你的队伍和角色，然后点击开始",
+    "you": "你",
+    "join": "加入",
+    "start": "开始游戏",
+    "unassigned": "未分配"
+  },
+  "clue": {
+    "label": "给出线索",
+    "placeholder": "线索词",
+    "send": "发送"
+  },
+  "endGuessing": "结束猜词",
+  "hint": {
+    "giveClue": "给出一个线索词和数字",
+    "waitClue": "等待 {{team}} 给出线索",
+    "guess": "点击猜测一个单词",
+    "waitGuess": "等待 {{team}} 猜词"
+  },
+  "log": {
+    "joinTeam": "加入了 {{team}} 队 / {{role}}",
+    "gameStart": "游戏开始！先手队伍：{{firstTeam}}",
+    "clue": "给出线索：{{word}} × {{count}}",
+    "guess": "猜测【{{word}}】→ {{result}}",
+    "endGuessing": "结束猜词",
+    "turnEnd": "{{team}} 回合结束",
+    "win": "{{team}} 队获胜！"
+  }
+}

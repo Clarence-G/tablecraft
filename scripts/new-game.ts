@@ -73,6 +73,25 @@ export function scaffoldGame(id: string, opts: ScaffoldOptions = {}): string {
         '[new-game] `pnpm gen:registry` failed — run it manually after fixing the cause.',
       );
     }
+
+    // gen:registry adds a workspace dep to root package.json but doesn't
+    // touch the lockfile. A later `pnpm install --frozen-lockfile` (common
+    // in CI) then fails. Syncing the lockfile here keeps CI green.
+    try {
+      execSync('pnpm install --lockfile-only', { cwd: root, stdio: 'inherit' });
+    } catch (_err) {
+      console.warn(
+        '[new-game] `pnpm install --lockfile-only` failed — run it manually to sync pnpm-lock.yaml.',
+      );
+    }
+
+    // The client-side game registry is a Vite import.meta.glob that is only
+    // evaluated at dev-server startup. A running `pnpm dev` will NOT pick
+    // up the new folder until restarted.
+    console.log('');
+    console.log('⚠️  New game registered. If `pnpm dev` is already running,');
+    console.log('    restart it — Vite only scans games/*/shared.ts at startup');
+    console.log('    so the new game will be invisible in the lobby until then.');
   }
 
   return targetDir;

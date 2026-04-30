@@ -72,8 +72,31 @@ payloads, so you can't accidentally forget `channel: 'log'` or `messageKey`.
 | Helper | When to use |
 |---|---|
 | `logAction(actorId, key, params?)` | A player did something: "Alice played the 5 of Hearts" |
-| `logSystem(key, { actorId?, params? })` | Something happened (round ended, timer fired, game ended) |
+| `logSystem(key, params?)` | Something happened (round ended, timer fired, game ended) |
 | `logPrivate(to, key, { actorId?, params? })` | Only one player should see it (private info reveal) |
+
+### `logSystem` — two call shapes
+
+`logSystem` accepts **either** a flat `messageParams` object **or** an
+options bag — pick whichever reads cleaner at the call site:
+
+```ts
+// Flat: just params, no actor attribution
+logSystem('log.roundStart', { round: 2 });
+
+// Options: attribute to a player
+logSystem('log.win', { actorId: winnerID });
+
+// Options: both
+logSystem('log.win', { actorId: winnerID, messageParams: { score: 42 } });
+
+// Explicit messageParams (also works in flat style)
+logSystem('log.turnEnd', { messageParams: { team: 'red' } });
+```
+
+The flat shape is detected when the object has no `actorId` or
+`messageParams` keys. If you need BOTH an `actorId` AND a param named
+`actorId`, use the explicit options form to disambiguate.
 
 ## Rules for messageKey and params
 

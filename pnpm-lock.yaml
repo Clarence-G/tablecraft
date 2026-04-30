@@ -14,6 +14,9 @@ importers:
       '@games/blackjack':
         specifier: workspace:*
         version: link:games/blackjack
+      '@games/codenames':
+        specifier: workspace:*
+        version: link:games/codenames
       '@games/connect-four':
         specifier: workspace:*
         version: link:games/connect-four
@@ -35,6 +38,9 @@ importers:
       '@games/texas-holdem':
         specifier: workspace:*
         version: link:games/texas-holdem
+      '@games/undercover':
+        specifier: workspace:*
+        version: link:games/undercover
       '@games/uno':
         specifier: workspace:*
         version: link:games/uno
@@ -63,6 +69,9 @@ importers:
       seedrandom:
         specifier: ^3.0.5
         version: 3.0.5
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
       typescript:
         specifier: ^5.4.0
         version: 5.9.3
@@ -122,6 +131,28 @@ importers:
       '@repo/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+    devDependencies:
+      vite:
+        specifier: ^5.2.0
+        version: 5.4.21(@types/node@20.19.39)(lightningcss@1.32.0)
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@20.19.39)(jsdom@29.0.2(@noble/hashes@2.2.0))(lightningcss@1.32.0)
+
+  games/codenames:
+    dependencies:
+      '@repo/game-ui':
+        specifier: workspace:*
+        version: link:../../packages/game-ui
+      '@repo/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      lucide-react:
+        specifier: ^1.8.0
+        version: 1.8.0(react@18.3.1)
+      react:
+        specifier: ^18.3.0
+        version: 18.3.1
     devDependencies:
       vite:
         specifier: ^5.2.0
@@ -246,6 +277,28 @@ importers:
       framer-motion:
         specifier: ^11.0.0
         version: 11.18.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react:
+        specifier: ^18.3.0
+        version: 18.3.1
+    devDependencies:
+      vite:
+        specifier: ^5.2.0
+        version: 5.4.21(@types/node@20.19.39)(lightningcss@1.32.0)
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@20.19.39)(jsdom@29.0.2(@noble/hashes@2.2.0))(lightningcss@1.32.0)
+
+  games/undercover:
+    dependencies:
+      '@repo/game-ui':
+        specifier: workspace:*
+        version: link:../../packages/game-ui
+      '@repo/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      lucide-react:
+        specifier: ^1.8.0
+        version: 1.8.0(react@18.3.1)
       react:
         specifier: ^18.3.0
         version: 18.3.1

@@ -1,0 +1,43 @@
+{
+  "name": "Codenames",
+  "description": "Two teams compete to identify their agents using one-word clues from their spymaster",
+  "tags": ["deduction", "team", "party"],
+  "rules": "Two teams compete. Each team has a spymaster and operatives. The spymaster gives a one-word clue plus a number. Operatives guess which board words match the clue. First team to reveal all their words wins. Touch the assassin and you lose instantly.",
+  "team": {
+    "red": "Red",
+    "blue": "Blue"
+  },
+  "role": {
+    "spymaster": "Spymaster",
+    "operative": "Operative"
+  },
+  "turn": "active",
+  "setup": {
+    "instruction": "Choose your team and role, then click Start",
+    "you": "you",
+    "join": "Join",
+    "start": "Start Game",
+    "unassigned": "Unassigned"
+  },
+  "clue": {
+    "label": "Give a clue",
+    "placeholder": "Clue word",
+    "send": "Send"
+  },
+  "endGuessing": "End guessing",
+  "hint": {
+    "giveClue": "Give a clue word and number",
+    "waitClue": "Waiting for {{team}} to give a clue",
+    "guess": "Click a word to guess",
+    "waitGuess": "Waiting for {{team}} to guess"
+  },
+  "log": {
+    "joinTeam": "joined {{team}} as {{role}}",
+    "gameStart": "Game started! First team: {{firstTeam}}",
+    "clue": "gave clue: {{word}} × {{count}}",
+    "guess": "guessed [{{word}}] → {{result}}",
+    "endGuessing": "ended guessing",
+    "turnEnd": "{{team}} turn ended",
+    "win": "{{team}} wins!"
+  }
+}

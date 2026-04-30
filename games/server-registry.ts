@@ -5,6 +5,8 @@ import { logic as battleshipLogic } from '@games/battleship/logic';
 import { meta as battleshipMeta } from '@games/battleship/shared';
 import { logic as blackjackLogic } from '@games/blackjack/logic';
 import { meta as blackjackMeta } from '@games/blackjack/shared';
+import { logic as codenamesLogic } from '@games/codenames/logic';
+import { meta as codenamesMeta } from '@games/codenames/shared';
 import { logic as connectFourLogic } from '@games/connect-four/logic';
 import { meta as connectFourMeta } from '@games/connect-four/shared';
 import { logic as gomokuLogic } from '@games/gomoku/logic';
@@ -19,6 +21,8 @@ import { logic as splendorLogic } from '@games/splendor/logic';
 import { meta as splendorMeta } from '@games/splendor/shared';
 import { logic as texasHoldemLogic } from '@games/texas-holdem/logic';
 import { meta as texasHoldemMeta } from '@games/texas-holdem/shared';
+import { logic as undercoverLogic } from '@games/undercover/logic';
+import { meta as undercoverMeta } from '@games/undercover/shared';
 import { logic as unoLogic } from '@games/uno/logic';
 import { meta as unoMeta } from '@games/uno/shared';
 import { logic as yahtzeeLogic } from '@games/yahtzee/logic';
@@ -28,6 +32,7 @@ import type { ServerGamePlugin } from '@repo/shared';
 export const serverRegistry: Record<string, ServerGamePlugin> = {
   [battleshipMeta.id]: { meta: battleshipMeta, logic: battleshipLogic },
   [blackjackMeta.id]: { meta: blackjackMeta, logic: blackjackLogic },
+  [codenamesMeta.id]: { meta: codenamesMeta, logic: codenamesLogic },
   [connectFourMeta.id]: { meta: connectFourMeta, logic: connectFourLogic },
   [gomokuMeta.id]: { meta: gomokuMeta, logic: gomokuLogic },
   [hiveMeta.id]: { meta: hiveMeta, logic: hiveLogic },
@@ -35,6 +40,7 @@ export const serverRegistry: Record<string, ServerGamePlugin> = {
   [loveLetterMeta.id]: { meta: loveLetterMeta, logic: loveLetterLogic },
   [splendorMeta.id]: { meta: splendorMeta, logic: splendorLogic },
   [texasHoldemMeta.id]: { meta: texasHoldemMeta, logic: texasHoldemLogic },
+  [undercoverMeta.id]: { meta: undercoverMeta, logic: undercoverLogic },
   [unoMeta.id]: { meta: unoMeta, logic: unoLogic },
   [yahtzeeMeta.id]: { meta: yahtzeeMeta, logic: yahtzeeLogic },
 };

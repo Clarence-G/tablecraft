@@ -1,0 +1,23 @@
+{
+  "name": "@games/codenames",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./shared": "./shared.ts",
+    "./logic": "./logic.ts",
+    "./board": "./Board.tsx"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@repo/shared": "workspace:*",
+    "@repo/game-ui": "workspace:*",
+    "lucide-react": "^1.8.0",
+    "react": "^18.3.0"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.0",
+    "vite": "^5.2.0"
+  }
+}

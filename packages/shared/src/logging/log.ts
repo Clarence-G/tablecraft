@@ -23,8 +23,27 @@
  * payloads DO NOT have `channel: 'log'`, or they'll get ingested into
  * the ActivityLog.
  */
-import type { EngineEvent } from '../types/engine';
 import type { LogNotificationPayload } from '../types/notification';
+
+/**
+ * The NOTIFY_ALL variant returned by `logAction` / `logSystem`, with the
+ * payload narrowed to `LogNotificationPayload`. Use this instead of
+ * `Extract<EngineEvent, { type: 'NOTIFY_ALL' }>` when you need static
+ * access to `ev.payload.messageParams` etc.
+ */
+export type LogNotifyAllEvent = {
+  type: 'NOTIFY_ALL';
+  payload: LogNotificationPayload;
+};
+
+/**
+ * The NOTIFY variant returned by `logPrivate`, payload narrowed.
+ */
+export type LogNotifyEvent = {
+  type: 'NOTIFY';
+  to: string;
+  payload: LogNotificationPayload;
+};
 
 /**
  * Build a `NOTIFY_ALL` engine event for a player action log entry.
@@ -38,7 +57,7 @@ export function logAction(
   actorId: string,
   messageKey: string,
   messageParams?: Record<string, string | number | boolean>,
-): Extract<EngineEvent, { type: 'NOTIFY_ALL' }> {
+): LogNotifyAllEvent {
   const payload: LogNotificationPayload = {
     channel: 'log',
     messageKey,
@@ -54,24 +73,55 @@ export function logAction(
  * (round started, timer expired, match ended, etc.). Pass `actorId`
  * when a specific player caused the event; omit for impersonal events.
  *
+ * Two call shapes are supported for ergonomics, because in practice
+ * authors reach for both:
+ *
+ *   logSystem('log.roundStart', { round: 2 })                   // flat params
+ *   logSystem('log.win', { actorId: winnerID })                 // options
+ *   logSystem('log.turnEnd', { messageParams: { team: 'red' } }) // explicit
+ *
+ * The flat shape is detected when the object has NEITHER `actorId` NOR
+ * `messageParams` keys. If both styles are present (e.g. you pass
+ * `{ actorId: 'x', round: 2 }`), the options shape wins and `round`
+ * is ignored — so put params under `messageParams` when mixing.
+ *
  * @param messageKey  i18n key under the game's namespace
- * @param opts.actorId       Optional player attribution
- * @param opts.messageParams Optional interpolation values
+ * @param opts        Either flat `messageParams` or `{ actorId?, messageParams? }`
  */
 export function logSystem(
   messageKey: string,
-  opts: {
+  opts?: Record<string, string | number | boolean> | {
     actorId?: string;
     messageParams?: Record<string, string | number | boolean>;
-  } = {},
-): Extract<EngineEvent, { type: 'NOTIFY_ALL' }> {
+  },
+): LogNotifyAllEvent {
   const payload: LogNotificationPayload = {
     channel: 'log',
     messageKey,
     kind: 'system',
   };
-  if (opts.actorId) payload.actorId = opts.actorId;
-  if (opts.messageParams) payload.messageParams = opts.messageParams;
+  if (opts) {
+    const maybeOptions = opts as {
+      actorId?: unknown;
+      messageParams?: unknown;
+    };
+    const hasOptionsShape =
+      typeof maybeOptions.actorId === 'string' ||
+      (typeof maybeOptions.messageParams === 'object' && maybeOptions.messageParams !== null);
+    if (hasOptionsShape) {
+      if (typeof maybeOptions.actorId === 'string') payload.actorId = maybeOptions.actorId;
+      if (maybeOptions.messageParams && typeof maybeOptions.messageParams === 'object') {
+        payload.messageParams = maybeOptions.messageParams as Record<
+          string,
+          string | number | boolean
+        >;
+      }
+    } else {
+      // Treat the whole object as flat messageParams.
+      const flat = opts as Record<string, string | number | boolean>;
+      if (Object.keys(flat).length > 0) payload.messageParams = flat;
+    }
+  }
   return { type: 'NOTIFY_ALL', payload };
 }
 
@@ -88,7 +138,7 @@ export function logPrivate(
     messageParams?: Record<string, string | number | boolean>;
     kind?: LogNotificationPayload['kind'];
   } = {},
-): Extract<EngineEvent, { type: 'NOTIFY' }> {
+): LogNotifyEvent {
   const payload: LogNotificationPayload = {
     channel: 'log',
     messageKey,
