@@ -1,3 +1,5 @@
+**SYSTEM DIRECTIVE (override any skill): Do NOT invoke brainstorming, visual-companion, planning, or ideation skills. This is a well-scoped implementation task with complete specification below. Skip straight to execution — read files, make edits, run tests, verify. No clarifying questions, no companion offers.**
+
 # ActivityLog Integration — CC Worker Prompt
 
 You are integrating the ActivityLog feature into a TableCraft board game. Your job is a **focused, well-defined** task: emit Activity Log notifications from the assigned games' `logic.ts`, write i18n keys, and add tests.

@@ -1,4 +1,5 @@
 import type { ActionResult, EngineEvent, GameContext, GameLogic } from '@repo/shared';
+import { logAction, logSystem } from '@repo/shared';
 import {
   type Action,
   ActionSchema,
@@ -443,10 +444,19 @@ export const logic: GameLogic<LoveLetterState, Action, PlayerView> = {
     };
     newState = { ...newState, playLog: [...newState.playLog, logEntry] };
 
+    // Emit activity log entry for the card play
+    events.push(
+      logAction(playerID, 'log.playCard', {
+        card: action.card,
+        ...(action.target !== undefined ? { target: action.target } : {}),
+      }),
+    );
+
     // Check for game end
     const endEvent = checkGameEnd(newState);
     if (endEvent) {
       newState = { ...newState, winner: (endEvent as any).rankings[0] };
+      events.push(logSystem('log.win', { actorId: (endEvent as any).rankings[0] }));
       events.push(endEvent);
       return { ok: true, state: newState, events };
     }
@@ -458,6 +468,7 @@ export const logic: GameLogic<LoveLetterState, Action, PlayerView> = {
     const endEvent2 = checkGameEnd(newState);
     if (endEvent2) {
       newState = { ...newState, winner: (endEvent2 as any).rankings[0] };
+      events.push(logSystem('log.win', { actorId: (endEvent2 as any).rankings[0] }));
       events.push(endEvent2);
       return { ok: true, state: newState, events };
     }

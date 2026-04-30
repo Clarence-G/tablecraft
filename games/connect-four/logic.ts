@@ -1,4 +1,4 @@
-import type { ActionResult, GameContext, GameLogic } from '@repo/shared';
+import { type ActionResult, type GameContext, type GameLogic, logAction, logSystem } from '@repo/shared';
 import { type Action, ActionSchema, COLS, type PlayerView, ROWS } from './shared';
 
 interface ConnectFourState {
@@ -106,12 +106,18 @@ export const logic: GameLogic<ConnectFourState, Action, PlayerView> = {
       isDraw: draw,
     };
 
+    const dropLog = logAction(playerID, 'log.drop', { col: action.col + 1, row: row + 1 });
+
     if (won) {
       const loser = state.players.find((p) => p !== playerID)!;
       return {
         ok: true,
         state: newState,
-        events: [{ type: 'END_GAME', rankings: [playerID, loser] }],
+        events: [
+          dropLog,
+          logSystem('log.win', { actorId: playerID }),
+          { type: 'END_GAME', rankings: [playerID, loser] },
+        ],
       };
     }
 
@@ -119,11 +125,11 @@ export const logic: GameLogic<ConnectFourState, Action, PlayerView> = {
       return {
         ok: true,
         state: newState,
-        events: [{ type: 'END_GAME', rankings: state.players }],
+        events: [dropLog, logSystem('log.draw'), { type: 'END_GAME', rankings: state.players }],
       };
     }
 
-    return { ok: true, state: newState, events: [] };
+    return { ok: true, state: newState, events: [dropLog] };
   },
 
   getPlayerView(state, playerID): PlayerView {

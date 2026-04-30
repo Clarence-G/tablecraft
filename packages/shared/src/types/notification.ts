@@ -32,8 +32,17 @@ export interface LogNotificationPayload {
   channel: 'log';
   /** i18n key resolved against the game's namespace (e.g. "log.move"). */
   messageKey: string;
-  /** Parameters interpolated into the translated template. */
-  messageParams?: Record<string, string | number>;
+  /**
+   * Parameters interpolated into the translated template.
+   *
+   * Allowed types: `string | number | boolean`. `boolean` is permitted so
+   * templates can use ICU `{flag, select, true{...} other{...}}` syntax
+   * directly without callers having to stringify.
+   *
+   * `null`/`undefined` are NOT allowed — if a field is optional, omit it
+   * from the params object entirely rather than passing `undefined`.
+   */
+  messageParams?: Record<string, string | number | boolean>;
   /**
    * The player whose action is described. Display names are resolved by
    * the SidePanel from the live player list — never inline names into

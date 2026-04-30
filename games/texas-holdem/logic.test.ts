@@ -290,4 +290,57 @@ describe("Texas Hold'em Logic", () => {
       expect(result.ok).toBe(false);
     });
   });
+
+  describe('activity log', () => {
+    it('emits log.fold NOTIFY_ALL when player folds', () => {
+      const h = createGame();
+      const state = getState(h);
+      const currentId = state.players[state.currentPlayerIdx].id;
+      h.action(currentId, { type: 'fold' });
+      const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.fold',
+        actorId: currentId,
+        kind: 'action',
+      });
+    });
+
+    it('emits log.call NOTIFY_ALL when player calls', () => {
+      const h = createGame(['Alice', 'Bob'], 'log-call');
+      const state = getState(h);
+      const currentId = state.players[state.currentPlayerIdx].id;
+      const highestBet = Math.max(...state.players.map((p: any) => p.currentBet));
+      const callAmt = highestBet - state.players[state.currentPlayerIdx].currentBet;
+      if (callAmt > 0) {
+        h.action(currentId, { type: 'call' });
+        const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+        expect((notify as any).payload).toMatchObject({
+          channel: 'log',
+          messageKey: 'log.call',
+          actorId: currentId,
+        });
+      }
+    });
+
+    it('emits log.raise NOTIFY_ALL when player raises', () => {
+      const h = createGame(['Alice', 'Bob', 'Carol'], 'log-raise');
+      const state = getState(h);
+      const currentId = state.players[state.currentPlayerIdx].id;
+      const player = state.players[state.currentPlayerIdx];
+      const highestBet = Math.max(...state.players.map((p: any) => p.currentBet));
+      const minRaiseTotal = highestBet + state.minRaise;
+      if (player.chips + player.currentBet >= minRaiseTotal) {
+        h.action(currentId, { type: 'raise', amount: minRaiseTotal });
+        const notify = h.lastEvents.find(
+          (e) => e.type === 'NOTIFY_ALL' && (e as any).payload?.messageKey === 'log.raise',
+        );
+        expect((notify as any).payload).toMatchObject({
+          channel: 'log',
+          messageKey: 'log.raise',
+          actorId: currentId,
+        });
+      }
+    });
+  });
 });

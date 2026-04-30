@@ -1,4 +1,4 @@
-import type { ActionResult, GameContext, GameLogic } from '@repo/shared';
+import { type ActionResult, type GameContext, type GameLogic, logAction, logSystem } from '@repo/shared';
 import {
   type Action,
   ActionSchema,
@@ -94,6 +94,9 @@ export const logic: GameLogic<YahtzeeState, Action, PlayerView> = {
           rollsLeft: newRollsLeft,
           phase: 'scoring',
         },
+        events: [
+          logAction(playerID, 'log.roll', { dice: newDice.join(' '), rolls: newRollsLeft }),
+        ],
       };
     }
 
@@ -189,6 +192,17 @@ export const logic: GameLogic<YahtzeeState, Action, PlayerView> = {
           })
           .map((p) => p.id);
 
+        const scoreEvents = [
+          logAction(
+            playerID,
+            score === 0 ? 'log.zeroScore' : 'log.score',
+            { category, score },
+          ),
+        ];
+        if (newYahtzeeBonus > playerState.yahtzeeBonus) {
+          scoreEvents.push(logAction(playerID, 'log.yahtzeeBonus'));
+        }
+
         return {
           ok: true,
           state: {
@@ -200,8 +214,23 @@ export const logic: GameLogic<YahtzeeState, Action, PlayerView> = {
             heldDice: Array(NUM_DICE).fill(false),
             rollsLeft: MAX_ROLLS,
           },
-          events: [{ type: 'END_GAME', rankings }],
+          events: [
+            ...scoreEvents,
+            logSystem('log.win', { actorId: winnerID! }),
+            { type: 'END_GAME', rankings },
+          ],
         };
+      }
+
+      const scoreEvents = [
+        logAction(
+          playerID,
+          score === 0 ? 'log.zeroScore' : 'log.score',
+          { category, score },
+        ),
+      ];
+      if (newYahtzeeBonus > playerState.yahtzeeBonus) {
+        scoreEvents.push(logAction(playerID, 'log.yahtzeeBonus'));
       }
 
       return {
@@ -216,6 +245,7 @@ export const logic: GameLogic<YahtzeeState, Action, PlayerView> = {
           rollsLeft: MAX_ROLLS - 1,
           phase: 'scoring',
         },
+        events: scoreEvents,
       };
     }
 

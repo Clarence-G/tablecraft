@@ -37,7 +37,7 @@ import type { LogNotificationPayload } from '../types/notification';
 export function logAction(
   actorId: string,
   messageKey: string,
-  messageParams?: Record<string, string | number>,
+  messageParams?: Record<string, string | number | boolean>,
 ): Extract<EngineEvent, { type: 'NOTIFY_ALL' }> {
   const payload: LogNotificationPayload = {
     channel: 'log',
@@ -62,7 +62,7 @@ export function logSystem(
   messageKey: string,
   opts: {
     actorId?: string;
-    messageParams?: Record<string, string | number>;
+    messageParams?: Record<string, string | number | boolean>;
   } = {},
 ): Extract<EngineEvent, { type: 'NOTIFY_ALL' }> {
   const payload: LogNotificationPayload = {
@@ -85,7 +85,7 @@ export function logPrivate(
   messageKey: string,
   opts: {
     actorId?: string;
-    messageParams?: Record<string, string | number>;
+    messageParams?: Record<string, string | number | boolean>;
     kind?: LogNotificationPayload['kind'];
   } = {},
 ): Extract<EngineEvent, { type: 'NOTIFY' }> {

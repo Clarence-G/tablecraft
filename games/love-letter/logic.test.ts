@@ -537,4 +537,36 @@ describe('Love Letter Logic', () => {
       expect(view.players.find((p) => p.id === 'Alice')?.alive).toBe(false);
     });
   });
+
+  describe('activity log', () => {
+    it('emits log.playCard NOTIFY_ALL when a card is played', () => {
+      const h = createGame();
+      setHand(h, 'Alice', [4, 1]);
+      setDeck(h, [2, 1, 1, 1, 1, 1]);
+      h.action('Alice', { type: 'play_card', card: 4 });
+      const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.playCard',
+        actorId: 'Alice',
+        kind: 'action',
+      });
+    });
+
+    it('emits log.win NOTIFY_ALL when last player stands', () => {
+      const h = createGame(['Alice', 'Bob'], 'log-win');
+      setHand(h, 'Alice', [1, 4]);
+      setHand(h, 'Bob', [3]);
+      setDeck(h, [1, 1]);
+      h.action('Alice', { type: 'play_card', card: 1, target: 'Bob', guess: 3 });
+      const notify = h.lastEvents.find(
+        (e) => e.type === 'NOTIFY_ALL' && (e as any).payload?.messageKey === 'log.win',
+      );
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.win',
+        actorId: 'Alice',
+      });
+    });
+  });
 });

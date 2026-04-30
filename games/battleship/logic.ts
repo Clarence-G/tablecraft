@@ -1,4 +1,4 @@
-import type { ActionResult, GameContext, GameLogic } from '@repo/shared';
+import { type ActionResult, type GameContext, type GameLogic, logAction, logSystem } from '@repo/shared';
 import {
   type Action,
   ActionSchema,
@@ -78,7 +78,7 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
       return {
         ok: true,
         state: { ...state, players: newPlayers, phase: newPhase },
-        events: [],
+        events: [logAction(playerID, 'log.placeShips')],
       };
     }
 
@@ -113,6 +113,11 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
       const newPlayers: [PlayerBattleState, PlayerBattleState] =
         attackerIdx === 0 ? [updatedAttacker, defender] : [defender, updatedAttacker];
 
+      const fireLog = logAction(playerID, hit ? 'log.hit' : 'log.miss', {
+        row: row + 1,
+        col: col + 1,
+      });
+
       if (checkAllShipsSunk(defender.grid, newShots)) {
         const loser = defender.id;
         return {
@@ -124,7 +129,11 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
             winner: playerID,
             currentPlayerIdx: attackerIdx,
           },
-          events: [{ type: 'END_GAME', rankings: [playerID, loser] }],
+          events: [
+            fireLog,
+            logSystem('log.win', { actorId: playerID }),
+            { type: 'END_GAME', rankings: [playerID, loser] },
+          ],
         };
       }
 
@@ -135,7 +144,7 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
           players: newPlayers,
           currentPlayerIdx: defenderIdx,
         },
-        events: [],
+        events: [fireLog],
       };
     }
 

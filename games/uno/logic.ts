@@ -1,4 +1,5 @@
 import type { ActionResult, EngineEvent, GameContext, GameLogic } from '@repo/shared';
+import { logAction, logSystem } from '@repo/shared';
 import {
   type Action,
   ActionSchema,
@@ -201,7 +202,7 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
       }
       let s = drawCards(state, playerID, 1, ctx);
       s = { ...s, hasDrawnThisTurn: true };
-      return { ok: true, state: s };
+      return { ok: true, state: s, events: [logAction(playerID, 'log.draw', { count: 1 })] };
     }
 
     if (action.type === 'pass') {
@@ -218,7 +219,7 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
         currentPlayerIdx: nextIdx,
         hasDrawnThisTurn: false,
       };
-      return { ok: true, state: newState };
+      return { ok: true, state: newState, events: [logAction(playerID, 'log.pass')] };
     }
 
     // play_card
@@ -248,6 +249,8 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
       return { ok: false, reason: '万能牌需要选择颜色' };
     }
 
+    const playLog = logAction(playerID, 'log.play', { card: cardSerialized });
+
     // Remove card from hand
     const newHand = [...hand];
     newHand.splice(action.cardIndex, 1);
@@ -263,7 +266,7 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
     if (newHand.length === 0) {
       const rankings = [playerID, ...state.players.filter((p) => p !== playerID)];
       newState = { ...newState, phase: 'finished', winner: playerID };
-      events.push({ type: 'END_GAME', rankings });
+      events.push(playLog, logSystem('log.win', { actorId: playerID }), { type: 'END_GAME', rankings });
       return { ok: true, state: newState, events };
     }
 
@@ -327,6 +330,25 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
       activeColor: newActiveColor,
       currentPlayerIdx: nextIdx,
     };
+
+    events.push(playLog);
+    if (card.type === 'wild') {
+      events.push(logAction(playerID, 'log.wild', { color: newActiveColor }));
+    }
+    if (card.type === 'action' && card.action === 'reverse' && state.players.length > 2) {
+      events.push(logSystem('log.reverse', {}));
+    }
+    if (drawCount > 0) {
+      const targetId = state.players[drawTargetIdx];
+      if (targetId !== undefined) {
+        events.push(logSystem('log.drawMany', { actorId: targetId, messageParams: { count: drawCount } }));
+      }
+    } else if (skipCount > 0) {
+      const skippedId = state.players[drawTargetIdx];
+      if (skippedId !== undefined) {
+        events.push(logSystem('log.skip', { actorId: skippedId }));
+      }
+    }
 
     return { ok: true, state: newState, events };
   },

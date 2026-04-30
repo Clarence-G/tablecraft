@@ -1,4 +1,4 @@
-import type { ActionResult, GameContext, GameLogic } from '@repo/shared';
+import { type ActionResult, type GameContext, type GameLogic, logAction, logSystem } from '@repo/shared';
 import {
   type Action,
   ActionSchema,
@@ -203,10 +203,21 @@ export const logic: GameLogic<BlackjackState, Action, PlayerView> = {
         const stateWithBets = { ...state, players: newPlayers };
         const deck = [...stateWithBets.deck];
         const dealt = dealHands({ ...stateWithBets, deck });
-        return { ok: true, state: dealt };
+        return {
+          ok: true,
+          state: dealt,
+          events: [
+            logAction(playerID, 'log.bet', { amount: action.amount }),
+            logSystem('log.deal'),
+          ],
+        };
       }
 
-      return { ok: true, state: { ...state, players: newPlayers } };
+      return {
+        ok: true,
+        state: { ...state, players: newPlayers },
+        events: [logAction(playerID, 'log.bet', { amount: action.amount })],
+      };
     }
 
     // ---- PLAYER_TURNS phase ----
@@ -233,12 +244,20 @@ export const logic: GameLogic<BlackjackState, Action, PlayerView> = {
         ? advancePlayer({ ...state, players: newPlayers, deck })
         : { ...state, players: newPlayers, deck };
 
+      const hitEvents = busted
+        ? [logAction(playerID, 'log.hit', { card }), logAction(playerID, 'log.bust')]
+        : [logAction(playerID, 'log.hit', { card })];
+
       if (next.phase === 'finished') {
         const rankings = [...next.players].sort((a, b) => b.chips - a.chips).map((p) => p.id);
-        return { ok: true, state: next, events: [{ type: 'END_GAME', rankings }] };
+        return {
+          ok: true,
+          state: next,
+          events: [...hitEvents, logSystem('log.win', { actorId: next.winner! }), { type: 'END_GAME', rankings }],
+        };
       }
 
-      return { ok: true, state: next };
+      return { ok: true, state: next, events: hitEvents };
     }
 
     if (action.type === 'stand') {
@@ -247,10 +266,14 @@ export const logic: GameLogic<BlackjackState, Action, PlayerView> = {
 
       if (next.phase === 'finished') {
         const rankings = [...next.players].sort((a, b) => b.chips - a.chips).map((p) => p.id);
-        return { ok: true, state: next, events: [{ type: 'END_GAME', rankings }] };
+        return {
+          ok: true,
+          state: next,
+          events: [logAction(playerID, 'log.stand'), logSystem('log.win', { actorId: next.winner! }), { type: 'END_GAME', rankings }],
+        };
       }
 
-      return { ok: true, state: next };
+      return { ok: true, state: next, events: [logAction(playerID, 'log.stand')] };
     }
 
     if (action.type === 'double_down') {
@@ -275,12 +298,20 @@ export const logic: GameLogic<BlackjackState, Action, PlayerView> = {
 
       const next = advancePlayer({ ...state, players: newPlayers, deck });
 
+      const ddEvents = busted
+        ? [logAction(playerID, 'log.doubleDown', { card }), logAction(playerID, 'log.bust')]
+        : [logAction(playerID, 'log.doubleDown', { card })];
+
       if (next.phase === 'finished') {
         const rankings = [...next.players].sort((a, b) => b.chips - a.chips).map((p) => p.id);
-        return { ok: true, state: next, events: [{ type: 'END_GAME', rankings }] };
+        return {
+          ok: true,
+          state: next,
+          events: [...ddEvents, logSystem('log.win', { actorId: next.winner! }), { type: 'END_GAME', rankings }],
+        };
       }
 
-      return { ok: true, state: next };
+      return { ok: true, state: next, events: ddEvents };
     }
 
     return { ok: false, reason: '未知操作' };

@@ -17,5 +17,11 @@
   "ourFleet": "我方舰队",
   "destroyed": "已沉没",
   "alive": "存活",
-  "waiting": "等待"
+  "waiting": "等待",
+  "log": {
+    "placeShips": "完成舰队部署",
+    "hit": "炮击 ({{row}}, {{col}}) — 命中！",
+    "miss": "炮击 ({{row}}, {{col}}) — 落空",
+    "win": "击沉所有舰船，获胜！"
+  }
 }

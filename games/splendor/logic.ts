@@ -1,4 +1,5 @@
 import type { ActionResult, EngineEvent, GameContext, GameLogic } from '@repo/shared';
+import { logAction, logSystem } from '@repo/shared';
 import {
   ALL_CARDS,
   ALL_NOBLES,
@@ -206,6 +207,29 @@ function applyDiscard(
   return { ok: true, gems: newGems, supply: newSupply };
 }
 
+// ---- Log helpers ----
+
+function prependLogs(
+  result: ActionResult<SplendorState>,
+  ...logs: EngineEvent[]
+): ActionResult<SplendorState> {
+  if (!result.ok) return result;
+  const events = result.events ?? [];
+  const endIdx = events.findIndex((e) => e.type === 'END_GAME');
+  if (endIdx >= 0) {
+    const winner = (result.state as SplendorState).winner;
+    return {
+      ...result,
+      events: [
+        ...logs,
+        logSystem('log.win', { actorId: winner ?? undefined }),
+        ...events,
+      ],
+    };
+  }
+  return { ...result, events: [...logs, ...events] };
+}
+
 // ---- Action Handlers ----
 
 function handleTakeThree(
@@ -251,7 +275,10 @@ function handleTakeThree(
     supply: discardResult.supply,
     playerStates: { ...state.playerStates, [playerID]: ps },
   };
-  return advanceTurn(newState, playerID);
+  return prependLogs(
+    advanceTurn(newState, playerID),
+    logAction(playerID, 'log.takeThree', { colors: colors.join(', ') }),
+  );
 }
 
 function handleTakeTwo(
@@ -279,7 +306,10 @@ function handleTakeTwo(
     supply: discardResult.supply,
     playerStates: { ...state.playerStates, [playerID]: ps },
   };
-  return advanceTurn(newState, playerID);
+  return prependLogs(
+    advanceTurn(newState, playerID),
+    logAction(playerID, 'log.takeTwo', { color, count: 2 }),
+  );
 }
 
 function handleReserve(
@@ -331,7 +361,10 @@ function handleReserve(
     playerStates: { ...state.playerStates, [playerID]: ps },
   };
   newState = topUpVisible(newState);
-  return advanceTurn(newState, playerID);
+  return prependLogs(
+    advanceTurn(newState, playerID),
+    logAction(playerID, 'log.reserve', { level: lvl }),
+  );
 }
 
 function handleBuy(
@@ -385,11 +418,13 @@ function handleBuy(
   // Check nobles
   const visitable = eligibleNobles(state.nobles, ps.bonuses);
   let remainingNobles = state.nobles;
+  let nobleAcquired = false;
   if (visitable.length === 1) {
     const n = visitable[0];
     ps.nobles.push(n);
     ps.points += n.points;
     remainingNobles = state.nobles.filter((x) => x.id !== n.id);
+    nobleAcquired = true;
   } else if (visitable.length > 1) {
     if (!action.claimNoble) {
       const ids = visitable.map((n) => n.id).join(', ');
@@ -400,6 +435,7 @@ function handleBuy(
     ps.nobles.push(chosen);
     ps.points += chosen.points;
     remainingNobles = state.nobles.filter((x) => x.id !== chosen.id);
+    nobleAcquired = true;
   } else if (action.claimNoble) {
     return { ok: false, reason: '当前无可访问贵族' };
   }
@@ -412,7 +448,11 @@ function handleBuy(
     playerStates: { ...state.playerStates, [playerID]: ps },
   };
   newState = topUpVisible(newState);
-  return advanceTurn(newState, playerID);
+  const buyLog = logAction(playerID, 'log.buy', { points: card.points });
+  const logs: EngineEvent[] = nobleAcquired
+    ? [buyLog, logSystem('log.nobleVisit', { actorId: playerID })]
+    : [buyLog];
+  return prependLogs(advanceTurn(newState, playerID), ...logs);
 }
 
 function advanceTurn(state: SplendorState, playerID: string): ActionResult<SplendorState> {

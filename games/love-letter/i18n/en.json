@@ -46,5 +46,9 @@
     "6": "Trade hands with another player",
     "7": "Must play if holding King or Prince",
     "8": "If discarded, you're out"
+  },
+  "log": {
+    "playCard": "played card {{card}}",
+    "win": "last player standing — wins!"
   }
 }

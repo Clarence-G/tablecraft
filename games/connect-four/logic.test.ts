@@ -223,4 +223,38 @@ describe('Connect Four Logic', () => {
       expect(view.board.every((c) => c !== 0) || h.isFinished).toBe(true);
     });
   });
+
+  describe('activity log', () => {
+    it('emits log.drop NOTIFY_ALL on piece drop', () => {
+      const h = createGame();
+      h.action('Alice', { type: 'drop', col: 3 });
+      const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.drop',
+        actorId: 'Alice',
+        kind: 'action',
+      });
+    });
+
+    it('emits log.win NOTIFY_ALL on win', () => {
+      const h = createGame();
+      h.action('Alice', { type: 'drop', col: 0 });
+      h.action('Bob', { type: 'drop', col: 6 });
+      h.action('Alice', { type: 'drop', col: 1 });
+      h.action('Bob', { type: 'drop', col: 6 });
+      h.action('Alice', { type: 'drop', col: 2 });
+      h.action('Bob', { type: 'drop', col: 6 });
+      h.action('Alice', { type: 'drop', col: 3 });
+      const winNotify = h.lastEvents.find(
+        (e) => e.type === 'NOTIFY_ALL' && (e as any).payload?.messageKey === 'log.win',
+      );
+      expect((winNotify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.win',
+        actorId: 'Alice',
+        kind: 'system',
+      });
+    });
+  });
 });

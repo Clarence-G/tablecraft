@@ -1,4 +1,5 @@
 import type { ActionResult, GameContext, GameLogic } from '@repo/shared';
+import { logAction, logSystem } from '@repo/shared';
 import {
   type Action,
   ActionSchema,
@@ -69,6 +70,7 @@ export const logic: GameLogic<HiveState, Action, PlayerView> = {
 
     const color = colorOf(state.players, playerID);
     let newTiles = [...state.tiles];
+    let actionLog: Extract<ReturnType<typeof logAction>, { type: 'NOTIFY_ALL' }>;
 
     if (action.type === 'place') {
       // Validate placement
@@ -95,6 +97,11 @@ export const logic: GameLogic<HiveState, Action, PlayerView> = {
           stackLevel,
         },
       ];
+      actionLog = logAction(playerID, 'log.place', {
+        pieceType: action.pieceType,
+        q: action.coord.q,
+        r: action.coord.r,
+      });
     } else if (action.type === 'move') {
       // Validate move
       const validActions = getValidActionsForPlayer(state, playerID);
@@ -130,13 +137,18 @@ export const logic: GameLogic<HiveState, Action, PlayerView> = {
       const newStackLevel = targetStack.length > 0 ? targetStack.length : 0;
 
       newTiles = [...newTiles, { ...movingTile, coord: action.to, stackLevel: newStackLevel }];
-    } else if (action.type === 'pass') {
-      // Only valid if player has no valid actions
+      actionLog = logAction(playerID, 'log.move', {
+        pieceType: movingTile.type,
+        q: action.to.q,
+        r: action.to.r,
+      });
+    } else {
+      // pass — only valid if player has no valid actions
       const validActions = getValidActionsForPlayer(state, playerID);
       if (hasAnyValidAction(validActions)) {
         return { ok: false, reason: 'Cannot pass when you have valid actions' };
       }
-      // pass — no tile changes
+      actionLog = logAction(playerID, 'log.pass');
     }
 
     // Check win condition
@@ -171,18 +183,26 @@ export const logic: GameLogic<HiveState, Action, PlayerView> = {
         return {
           ok: true,
           state: newState,
-          events: [{ type: 'END_GAME', rankings: [state.players[0], state.players[1]] }],
+          events: [
+            actionLog,
+            logSystem('log.gameDraw', {}),
+            { type: 'END_GAME', rankings: [state.players[0], state.players[1]] },
+          ],
         };
       }
       const loser = state.players.find((p) => p !== winner);
       return {
         ok: true,
         state: newState,
-        events: [{ type: 'END_GAME', rankings: [winner as string, loser as string] }],
+        events: [
+          actionLog,
+          logSystem('log.win', { actorId: winner as string }),
+          { type: 'END_GAME', rankings: [winner as string, loser as string] },
+        ],
       };
     }
 
-    return { ok: true, state: newState, events: [] };
+    return { ok: true, state: newState, events: [actionLog] };
   },
 
   getPlayerView(state, playerID): PlayerView {

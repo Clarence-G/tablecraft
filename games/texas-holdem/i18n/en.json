@@ -28,5 +28,13 @@
   "waiting": "Waiting",
   "acting": "Acting...",
   "chips": "chips",
-  "me": "Me"
+  "me": "Me",
+  "log": {
+    "fold": "folded",
+    "check": "checked",
+    "call": "called {{amount}} chips",
+    "raise": "raised to {{amount}} chips",
+    "allIn": "went all-in with {{amount}} chips",
+    "win": "wins the game!"
+  }
 }

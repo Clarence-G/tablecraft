@@ -230,4 +230,78 @@ describe('Battleship Logic', () => {
       expect(view.opponentShipsSunk[0]).toBe(false);
     });
   });
+
+  describe('activity log', () => {
+    it('emits log.placeShips NOTIFY_ALL on placement', () => {
+      const h = createGame();
+      h.action('Alice', { type: 'place_ships', placements: buildPlacements() });
+      const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.placeShips',
+        actorId: 'Alice',
+        kind: 'action',
+      });
+    });
+
+    it('emits log.miss NOTIFY_ALL on miss', () => {
+      const h = createGame();
+      placeBoth(h);
+      h.action('Alice', { type: 'fire', row: 9, col: 9 });
+      const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.miss',
+        actorId: 'Alice',
+        kind: 'action',
+      });
+    });
+
+    it('emits log.hit NOTIFY_ALL on hit', () => {
+      const h = createGame();
+      placeBoth(h);
+      h.action('Alice', { type: 'fire', row: 0, col: 0 });
+      const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.hit',
+        actorId: 'Alice',
+        kind: 'action',
+      });
+    });
+
+    it('emits log.win NOTIFY_ALL on winning shot', () => {
+      const h = createGame();
+      placeBoth(h);
+      const shipCells: [number, number][] = [];
+      for (const [shipIdx, ship] of CLASSIC_SHIPS.entries()) {
+        for (let c = 0; c < ship.offsets.length; c++) {
+          shipCells.push([shipIdx, c]);
+        }
+      }
+      const bobTargets: [number, number][] = [];
+      for (let r = 5; r <= 9 && bobTargets.length < 17; r++) {
+        for (let c = 0; c <= 9 && bobTargets.length < 17; c++) {
+          bobTargets.push([r, c]);
+        }
+      }
+      let bobFires = 0;
+      for (const [row, col] of shipCells) {
+        h.action('Alice', { type: 'fire', row, col });
+        if (!h.isFinished) {
+          const target = bobTargets[bobFires++];
+          if (target) h.action('Bob', { type: 'fire', row: target[0], col: target[1] });
+        }
+      }
+      const winNotify = h.lastEvents.find(
+        (e) => e.type === 'NOTIFY_ALL' && (e as any).payload?.messageKey === 'log.win',
+      );
+      expect((winNotify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.win',
+        actorId: 'Alice',
+        kind: 'system',
+      });
+    });
+  });
 });

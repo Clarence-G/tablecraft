@@ -380,4 +380,64 @@ describe('Liar Bar Logic', () => {
       expect(view?.myHand).toEqual([]);
     });
   });
+
+  describe('activity log', () => {
+    it('emits log.playCards NOTIFY_ALL on play_cards', () => {
+      const h = create2p('seed-log-play');
+      h.action('Alice', { type: 'play_cards', cardIndices: [0] });
+      const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.playCards',
+        actorId: 'Alice',
+        kind: 'action',
+      });
+    });
+
+    it('emits log.believe NOTIFY_ALL on believe', () => {
+      const h = create2p('seed-log-believe');
+      h.action('Alice', { type: 'play_cards', cardIndices: [0] });
+      h.action('Bob', { type: 'believe' });
+      const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.believe',
+        actorId: 'Bob',
+      });
+    });
+
+    it('emits log.challengeResult NOTIFY_ALL on challenge', () => {
+      const h = create2p('seed-log-challenge');
+      setDeclaredSuit(h, 'Q');
+      setHand(h, 'Alice', ['K', 'K', 'A', 'A', 'A']);
+      setRevolver(h, 'Alice', 0, 5);
+      h.action('Alice', { type: 'play_cards', cardIndices: [0] });
+      h.action('Bob', { type: 'challenge' });
+      const notify = h.lastEvents.find(
+        (e) => e.type === 'NOTIFY_ALL' && (e as any).payload?.messageKey === 'log.challengeResult',
+      );
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.challengeResult',
+        kind: 'system',
+      });
+    });
+
+    it('emits log.win NOTIFY_ALL when last player survives', () => {
+      const h = create2p('seed-log-win');
+      setDeclaredSuit(h, 'Q');
+      setHand(h, 'Alice', ['K', 'K', 'A', 'A', 'A']);
+      setRevolver(h, 'Alice', 0, 0);
+      h.action('Alice', { type: 'play_cards', cardIndices: [0] });
+      h.action('Bob', { type: 'challenge' });
+      const notify = h.lastEvents.find(
+        (e) => e.type === 'NOTIFY_ALL' && (e as any).payload?.messageKey === 'log.win',
+      );
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.win',
+        actorId: 'Bob',
+      });
+    });
+  });
 });

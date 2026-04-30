@@ -31,5 +31,14 @@
   "lose": "输",
   "push": "平",
   "busted": "爆牌",
-  "cards": "张"
+  "cards": "张",
+  "log": {
+    "bet": "下注 {{amount}} 筹码",
+    "deal": "发牌",
+    "hit": "要牌（{{card}}）",
+    "stand": "停牌",
+    "doubleDown": "加倍要牌（{{card}}）",
+    "bust": "爆牌！",
+    "win": "以最多筹码获胜！"
+  }
 }

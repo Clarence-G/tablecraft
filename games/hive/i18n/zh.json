@@ -17,5 +17,12 @@
   "pieceSpider": "蜘蛛",
   "pieceBeetle": "甲虫",
   "pieceGrasshopper": "蚱蜢",
-  "pieceAnt": "蚂蚁"
+  "pieceAnt": "蚂蚁",
+  "log": {
+    "place": "在 ({{q}}, {{r}}) 放置了 {{pieceType}}",
+    "move": "将 {{pieceType}} 移往 ({{q}}, {{r}})",
+    "pass": "跳过了回合",
+    "win": "获胜——包围了对手的蜂后！",
+    "gameDraw": "双方蜂后同时被包围，平局！"
+  }
 }

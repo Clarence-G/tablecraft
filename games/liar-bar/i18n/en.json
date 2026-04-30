@@ -25,5 +25,11 @@
   "challenge": "Challenge! Liar!",
   "believe": "Believe, continue",
   "eliminatedSpectating": "You are out, spectating",
-  "yourHandView": "Your hand"
+  "yourHandView": "Your hand",
+  "log": {
+    "playCards": "played {{count}} card(s) claiming {{suit}}",
+    "believe": "believed {{target}}'s play",
+    "challengeResult": "challenge: {{wasLying, select, true{liar caught} other{honest play}}}, {{shooterId}} pulls trigger (chamber {{chamberIndex}}), {{died, select, true{eliminated!} other{survived}}}",
+    "win": "last one standing — wins!"
+  }
 }

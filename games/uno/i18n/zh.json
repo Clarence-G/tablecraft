@@ -19,12 +19,13 @@
   "chooseColor": "选择颜色",
   "log": {
     "play": "打出 {{card}}",
-    "draw": "摸了 {{count}} 张牌",
+    "draw": "摸了一张牌",
     "drawMany": "摸了 {{count}} 张牌",
     "skip": "被跳过",
-    "reverse": "改变方向",
-    "wild": "选择 {{color}}",
-    "win": "{{player}} 获胜"
+    "reverse": "方向翻转",
+    "wild": "选择颜色 {{color}}",
+    "pass": "跳过了回合",
+    "win": "赢得了比赛！"
   },
   "color": {
     "red": "红色",

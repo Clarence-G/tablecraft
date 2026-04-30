@@ -232,4 +232,29 @@ describe('Yahtzee Logic', () => {
       expect(CATEGORY_NAMES_ZH).toHaveLength(13);
     });
   });
+
+  describe('activity log', () => {
+    it('emits log.roll NOTIFY_ALL on roll', () => {
+      const h = createGame();
+      h.action('Alice', { type: 'roll' });
+      const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.roll',
+        actorId: 'Alice',
+        kind: 'action',
+      });
+    });
+
+    it('emits log.score NOTIFY_ALL on scoring', () => {
+      const h = createGame();
+      h.action('Alice', { type: 'score', category: 12 });
+      const notify = h.lastEvents.find(
+        (e) => e.type === 'NOTIFY_ALL' && (e as any).payload?.messageKey === 'log.score',
+      );
+      // score could be 0 (log.zeroScore) or positive (log.score)
+      expect((notify as any)?.payload?.channel).toBe('log');
+      expect((notify as any)?.payload?.actorId).toBe('Alice');
+    });
+  });
 });

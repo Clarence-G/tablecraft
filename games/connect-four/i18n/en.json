@@ -8,5 +8,10 @@
   "yourTurn": "Your Turn",
   "waiting": "Waiting",
   "playRed": "You play Red",
-  "playYellow": "You play Yellow"
+  "playYellow": "You play Yellow",
+  "log": {
+    "drop": "dropped in column {{col}} (row {{row}})",
+    "win": "connected four — wins!",
+    "draw": "board is full — draw!"
+  }
 }

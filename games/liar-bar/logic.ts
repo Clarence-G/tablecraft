@@ -1,4 +1,5 @@
 import type { ActionResult, EngineEvent, GameContext, GameLogic } from '@repo/shared';
+import { logAction, logSystem } from '@repo/shared';
 import { type Action, ActionSchema, type Card, type PlayerView, type Suit } from './shared';
 
 // ---- Internal State ----
@@ -206,7 +207,11 @@ export const logic: GameLogic<LiarsBarState, Action, PlayerView> = {
         challengeResult: null,
       };
 
-      return { ok: true, state: newState, events: [] };
+      return {
+        ok: true,
+        state: newState,
+        events: [logAction(playerID, 'log.playCards', { count: playedCards.length, suit: state.declaredSuit })],
+      };
     }
 
     if (action.type === 'challenge' || action.type === 'believe') {
@@ -239,7 +244,11 @@ export const logic: GameLogic<LiarsBarState, Action, PlayerView> = {
         // Check if decider has no cards - reshuffle if needed
         newState = checkAndReshuffleIfNeeded(newState, ctx);
 
-        return { ok: true, state: newState, events: [] };
+        return {
+          ok: true,
+          state: newState,
+          events: [logAction(playerID, 'log.believe', { target: lastPlayerId })],
+        };
       }
 
       // challenge
@@ -252,14 +261,19 @@ export const logic: GameLogic<LiarsBarState, Action, PlayerView> = {
       const { newState: afterShot, died, chamberIndex } = pullTrigger(state, shooterId);
 
       const events: EngineEvent[] = [];
-      const notifyMsg = wasLying
-        ? `${lastPlayerId} 撒谎了！出了 ${cards.join(',')}，${shooterId} 扣动扳机${died ? '，中弹出局！' : '，幸运存活'}`
-        : `${lastPlayerId} 没有撒谎！挑战者 ${shooterId} 扣动扳机${died ? '，中弹出局！' : '，幸运存活'}`;
 
-      events.push({
-        type: 'NOTIFY_ALL',
-        payload: { type: 'challenge_result', message: notifyMsg },
-      });
+      events.push(
+        logSystem('log.challengeResult', {
+          actorId: playerID,
+          messageParams: {
+            target: lastPlayerId,
+            wasLying,
+            shooterId,
+            died,
+            chamberIndex: chamberIndex + 1,
+          },
+        }),
+      );
 
       const challengeResult: ChallengeResult = {
         playedCards: cards,
@@ -285,6 +299,7 @@ export const logic: GameLogic<LiarsBarState, Action, PlayerView> = {
         const winner = alivePlayers[0].id;
         const rankings = [winner, ...state.players.filter((p) => p.id !== winner).map((p) => p.id)];
         newState = { ...newState, winner, phase: 'finished', turnOrder: newTurnOrder };
+        events.push(logSystem('log.win', { actorId: winner }));
         events.push({ type: 'END_GAME', rankings });
         return { ok: true, state: newState, events };
       }

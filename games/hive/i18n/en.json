@@ -17,5 +17,12 @@
   "pieceSpider": "Spider",
   "pieceBeetle": "Beetle",
   "pieceGrasshopper": "Grasshopper",
-  "pieceAnt": "Ant"
+  "pieceAnt": "Ant",
+  "log": {
+    "place": "placed {{pieceType}} at ({{q}}, {{r}})",
+    "move": "moved {{pieceType}} to ({{q}}, {{r}})",
+    "pass": "passed",
+    "win": "wins — opponent's queen bee surrounded!",
+    "gameDraw": "both queens surrounded — it's a draw!"
+  }
 }

@@ -31,5 +31,14 @@
   "lose": "Lose",
   "push": "Push",
   "busted": "Bust",
-  "cards": "cards"
+  "cards": "cards",
+  "log": {
+    "bet": "bet {{amount}} chips",
+    "deal": "cards dealt",
+    "hit": "hits ({{card}})",
+    "stand": "stands",
+    "doubleDown": "doubles down ({{card}})",
+    "bust": "busts!",
+    "win": "wins with the most chips!"
+  }
 }

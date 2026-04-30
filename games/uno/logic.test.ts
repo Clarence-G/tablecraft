@@ -199,6 +199,82 @@ describe('UNO Logic', () => {
     });
   });
 
+  describe('activity log', () => {
+    it('emits log.play NOTIFY_ALL when playing a card', () => {
+      const h = create2p();
+      setCurrentPlayerIdx(h, 0);
+      setTopCard(h, 'red_5', 'red');
+      setHand(h, 'Alice', ['red_3', 'blue_7']);
+      h.action('Alice', { type: 'play_card', cardIndex: 0 });
+      const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.play',
+        actorId: 'Alice',
+      });
+    });
+
+    it('emits log.draw NOTIFY_ALL when drawing a card', () => {
+      const h = create2p();
+      setCurrentPlayerIdx(h, 0);
+      h.action('Alice', { type: 'draw_card' });
+      const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.draw',
+        actorId: 'Alice',
+      });
+    });
+
+    it('emits log.win NOTIFY_ALL when a player wins', () => {
+      const h = create2p();
+      setCurrentPlayerIdx(h, 0);
+      setTopCard(h, 'red_5', 'red');
+      setHand(h, 'Alice', ['red_3']);
+      h.action('Alice', { type: 'play_card', cardIndex: 0 });
+      const notifyAll = h.lastEvents.filter((e) => e.type === 'NOTIFY_ALL');
+      const winNotify = notifyAll.find((e) => (e as any).payload?.messageKey === 'log.win');
+      expect((winNotify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.win',
+        actorId: 'Alice',
+      });
+    });
+
+    it('emits log.skip NOTIFY_ALL when skip card played', () => {
+      const h = createGame(['Alice', 'Bob', 'Carol']);
+      setCurrentPlayerIdx(h, 0);
+      setTopCard(h, 'red_5', 'red');
+      setHand(h, 'Alice', ['red_skip', 'blue_3']);
+      h.action('Alice', { type: 'play_card', cardIndex: 0 });
+      const skipNotify = h.lastEvents.find(
+        (e) => e.type === 'NOTIFY_ALL' && (e as any).payload?.messageKey === 'log.skip',
+      );
+      expect((skipNotify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.skip',
+        actorId: 'Bob',
+      });
+    });
+
+    it('emits log.drawMany NOTIFY_ALL when draw_two played', () => {
+      const h = create2p();
+      setCurrentPlayerIdx(h, 0);
+      setTopCard(h, 'red_5', 'red');
+      setHand(h, 'Alice', ['red_draw_two', 'blue_3']);
+      h.action('Alice', { type: 'play_card', cardIndex: 0 });
+      const drawNotify = h.lastEvents.find(
+        (e) => e.type === 'NOTIFY_ALL' && (e as any).payload?.messageKey === 'log.drawMany',
+      );
+      expect((drawNotify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.drawMany',
+        actorId: 'Bob',
+        messageParams: { count: 2 },
+      });
+    });
+  });
+
   describe('card effects', () => {
     it('skip causes next player to be skipped', () => {
       const h = createGame(['Alice', 'Bob', 'Carol']);

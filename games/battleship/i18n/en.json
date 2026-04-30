@@ -17,5 +17,11 @@
   "ourFleet": "Our Fleet",
   "destroyed": "Destroyed",
   "alive": "Active",
-  "waiting": "Waiting"
+  "waiting": "Waiting",
+  "log": {
+    "placeShips": "deployed their fleet",
+    "hit": "fired at ({{row}}, {{col}}) — hit!",
+    "miss": "fired at ({{row}}, {{col}}) — miss",
+    "win": "sank all ships — wins!"
+  }
 }

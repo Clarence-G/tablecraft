@@ -319,4 +319,68 @@ describe('Blackjack Logic', () => {
       }
     });
   });
+
+  describe('activity log', () => {
+    it('emits log.bet NOTIFY_ALL when player bets', () => {
+      const h = createGame();
+      h.action('Alice', { type: 'bet', amount: 50 });
+      const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.bet',
+        actorId: 'Alice',
+        kind: 'action',
+      });
+    });
+
+    it('emits log.deal NOTIFY_ALL when all players have bet', () => {
+      const h = createGame(['Alice', 'Bob']);
+      h.action('Alice', { type: 'bet', amount: 50 });
+      h.action('Bob', { type: 'bet', amount: 50 });
+      const dealNotify = h.lastEvents.find(
+        (e) => e.type === 'NOTIFY_ALL' && (e as any).payload?.messageKey === 'log.deal',
+      );
+      expect((dealNotify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.deal',
+        kind: 'system',
+      });
+    });
+
+    it('emits log.hit NOTIFY_ALL on hit', () => {
+      const h = createGame(['Alice', 'Bob']);
+      h.action('Alice', { type: 'bet', amount: 50 });
+      h.action('Bob', { type: 'bet', amount: 50 });
+      setHand(h, 'Alice', ['2s', '3h']);
+      setDeck(h, ['5d', '6c', '7h', 'Ks', '9h', 'Ts']);
+      h.action('Alice', { type: 'hit' });
+      const notify = h.lastEvents.find(
+        (e) => e.type === 'NOTIFY_ALL' && (e as any).payload?.messageKey === 'log.hit',
+      );
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.hit',
+        actorId: 'Alice',
+        kind: 'action',
+      });
+    });
+
+    it('emits log.stand NOTIFY_ALL on stand', () => {
+      const h = createGame(['Alice', 'Bob']);
+      h.action('Alice', { type: 'bet', amount: 50 });
+      h.action('Bob', { type: 'bet', amount: 50 });
+      setHand(h, 'Alice', ['Ks', '9h']);
+      setDeck(h, ['2s', '3h']);
+      h.action('Alice', { type: 'stand' });
+      const notify = h.lastEvents.find(
+        (e) => e.type === 'NOTIFY_ALL' && (e as any).payload?.messageKey === 'log.stand',
+      );
+      expect((notify as any).payload).toMatchObject({
+        channel: 'log',
+        messageKey: 'log.stand',
+        actorId: 'Alice',
+        kind: 'action',
+      });
+    });
+  });
 });

@@ -25,5 +25,11 @@
   "challenge": "质疑！骗子！",
   "believe": "相信，继续",
   "eliminatedSpectating": "你已出局，正在观战",
-  "yourHandView": "你的手牌"
+  "yourHandView": "你的手牌",
+  "log": {
+    "playCards": "打出了 {{count}} 张牌（声称为 {{suit}}）",
+    "believe": "相信了 {{target}} 的出牌",
+    "challengeResult": "质疑结果：{{wasLying, select, true{撒谎了} other{没撒谎}}}, {{shooterId}} 扣动扳机第 {{chamberIndex}} 格，{{died, select, true{中弹出局！} other{幸运存活}}}",
+    "win": "最后存活，获胜！"
+  }
 }

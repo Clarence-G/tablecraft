@@ -1,4 +1,5 @@
 import type { ActionResult, EngineEvent, GameContext, GameLogic } from '@repo/shared';
+import { logAction, logSystem } from '@repo/shared';
 import {
   type Action,
   ActionSchema,
@@ -702,11 +703,14 @@ export const logic: GameLogic<HoldemState, Action, PlayerView> = {
     let newMinRaise = state.minRaise;
     let newLastRaise = state.lastRaiseAmount;
 
+    let actionLog: EngineEvent | undefined;
+
     switch (action.type) {
       case 'fold': {
         newPlayers = newPlayers.map((p) =>
           p.id === playerID ? { ...p, status: 'folded', holeCards: null, hasActed: true } : p,
         );
+        actionLog = logAction(playerID, 'log.fold');
         break;
       }
 
@@ -715,6 +719,7 @@ export const logic: GameLogic<HoldemState, Action, PlayerView> = {
           return { ok: false, reason: `需要跟注 ${callAmount}，不能过牌` };
         }
         newPlayers = newPlayers.map((p) => (p.id === playerID ? { ...p, hasActed: true } : p));
+        actionLog = logAction(playerID, 'log.check');
         break;
       }
 
@@ -722,6 +727,7 @@ export const logic: GameLogic<HoldemState, Action, PlayerView> = {
         if (callAmount <= 0) {
           // treat as check
           newPlayers = newPlayers.map((p) => (p.id === playerID ? { ...p, hasActed: true } : p));
+          actionLog = logAction(playerID, 'log.check');
           break;
         }
         const actualCall = Math.min(callAmount, currentPlayer.chips);
@@ -739,6 +745,7 @@ export const logic: GameLogic<HoldemState, Action, PlayerView> = {
               }
             : p,
         );
+        actionLog = logAction(playerID, 'log.call', { amount: actualCall });
         break;
       }
 
@@ -771,6 +778,7 @@ export const logic: GameLogic<HoldemState, Action, PlayerView> = {
           // Others need to act again
           return p.status === 'active' && p.id !== playerID ? { ...p, hasActed: false } : p;
         });
+        actionLog = logAction(playerID, 'log.raise', { amount: raiseTotal });
         break;
       }
 
@@ -811,6 +819,7 @@ export const logic: GameLogic<HoldemState, Action, PlayerView> = {
           );
         }
         newPot = newPot + allInAmount;
+        actionLog = logAction(playerID, 'log.allIn', { amount: allInAmount });
         break;
       }
     }
@@ -834,7 +843,7 @@ export const logic: GameLogic<HoldemState, Action, PlayerView> = {
         newState.players.find((p) => p.status !== 'folded' && p.status !== 'eliminated');
       if (winnerPlayer) {
         const finalState = resolveEarlyWin(newState, winnerPlayer.id, ctx);
-        return buildResult(finalState);
+        return buildResult(finalState, actionLog);
       }
     }
 
@@ -846,23 +855,23 @@ export const logic: GameLogic<HoldemState, Action, PlayerView> = {
         const winnerPlayer = inHand[0];
         if (winnerPlayer) {
           const finalState = resolveEarlyWin(newState, winnerPlayer.id, ctx);
-          return buildResult(finalState);
+          return buildResult(finalState, actionLog);
         }
       }
       // Advance to next round
       const advanced = advanceBettingRound(newState, ctx);
-      return buildResult(advanced);
+      return buildResult(advanced, actionLog);
     }
 
     // Find next active player
     const nextActive = getNextActivePlayerIdx(newState.players, newState.currentPlayerIdx);
     if (nextActive === null) {
       const advanced = advanceBettingRound(newState, ctx);
-      return buildResult(advanced);
+      return buildResult(advanced, actionLog);
     }
 
     newState = { ...newState, currentPlayerIdx: nextActive };
-    return buildResult(newState);
+    return buildResult(newState, actionLog);
   },
 
   getPlayerView(state, playerID): PlayerView {
@@ -900,11 +909,14 @@ export const logic: GameLogic<HoldemState, Action, PlayerView> = {
   },
 };
 
-function buildResult(state: HoldemState): ActionResult<HoldemState> {
+function buildResult(state: HoldemState, actionLog?: EngineEvent): ActionResult<HoldemState> {
   const events: EngineEvent[] = [];
+
+  if (actionLog) events.push(actionLog);
 
   if (state.gamePhase === 'finished' && state.winner) {
     const rankings = [...state.players].sort((a, b) => b.chips - a.chips).map((p) => p.id);
+    events.push(logSystem('log.win', { actorId: state.winner }));
     events.push({ type: 'END_GAME', rankings });
   }
 

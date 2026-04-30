@@ -19,12 +19,13 @@
   "chooseColor": "Choose Color",
   "log": {
     "play": "played {{card}}",
-    "draw": "drew {{count}} card",
+    "draw": "drew a card",
     "drawMany": "drew {{count}} cards",
     "skip": "was skipped",
-    "reverse": "reversed direction",
+    "reverse": "direction reversed",
     "wild": "chose color {{color}}",
-    "win": "{{player}} wins the match"
+    "pass": "passed",
+    "win": "wins the match!"
   },
   "color": {
     "red": "Red",

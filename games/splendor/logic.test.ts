@@ -455,3 +455,76 @@ describe('Win Condition', () => {
     expect(h.rankings?.[0]).toBe('Alice');
   });
 });
+
+describe('Activity Log', () => {
+  it('emits log.takeThree NOTIFY_ALL when taking 3 gems', () => {
+    const h = createGame();
+    h.action('Alice', { type: 'take_three', colors: ['white', 'blue', 'green'] });
+    const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+    expect((notify as any).payload).toMatchObject({
+      channel: 'log',
+      messageKey: 'log.takeThree',
+      actorId: 'Alice',
+    });
+  });
+
+  it('emits log.takeTwo NOTIFY_ALL when taking 2 gems', () => {
+    const h = createGame();
+    h.action('Alice', { type: 'take_two', color: 'white' });
+    const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+    expect((notify as any).payload).toMatchObject({
+      channel: 'log',
+      messageKey: 'log.takeTwo',
+      actorId: 'Alice',
+      messageParams: { color: 'white', count: 2 },
+    });
+  });
+
+  it('emits log.reserve NOTIFY_ALL when reserving a card', () => {
+    const h = createGame();
+    const target = h.view('Alice').visible[1][0]!;
+    h.action('Alice', { type: 'reserve', source: 'visible', level: 1, cardId: target.id });
+    const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+    expect((notify as any).payload).toMatchObject({
+      channel: 'log',
+      messageKey: 'log.reserve',
+      actorId: 'Alice',
+      messageParams: { level: 1 },
+    });
+  });
+
+  it('emits log.buy NOTIFY_ALL when buying a card', () => {
+    const h = createGame();
+    const card = h.view('Alice').visible[1].find((c) => c !== null)!;
+    (h.rawState as any).playerStates.Alice.gems = {
+      white: card.cost.white,
+      blue: card.cost.blue,
+      green: card.cost.green,
+      red: card.cost.red,
+      black: card.cost.black,
+      gold: 0,
+    };
+    h.action('Alice', { type: 'buy', source: 'visible', cardId: card.id });
+    const notify = h.lastEvents.find((e) => e.type === 'NOTIFY_ALL');
+    expect((notify as any).payload).toMatchObject({
+      channel: 'log',
+      messageKey: 'log.buy',
+      actorId: 'Alice',
+    });
+  });
+
+  it('emits log.win NOTIFY_ALL when game ends', () => {
+    const h = createGame(['Alice', 'Bob']);
+    (h.rawState as any).playerStates.Alice.points = WIN_POINTS;
+    h.action('Alice', { type: 'take_three', colors: ['white', 'blue', 'green'] });
+    h.action('Bob', { type: 'take_three', colors: ['white', 'blue', 'green'] });
+    const winNotify = h.lastEvents.find(
+      (e) => e.type === 'NOTIFY_ALL' && (e as any).payload?.messageKey === 'log.win',
+    );
+    expect((winNotify as any).payload).toMatchObject({
+      channel: 'log',
+      messageKey: 'log.win',
+      actorId: 'Alice',
+    });
+  });
+});
