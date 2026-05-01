@@ -147,11 +147,9 @@ export function Board({
       : currentIsBot
         ? t('botThinking', {
             name: currentPlayerName,
-            defaultValue: `${currentPlayerName} is thinking...`,
           })
         : t('opponentTurn', {
             name: currentPlayerName,
-            defaultValue: `Waiting for ${currentPlayerName}`,
           });
 
   const renderCellOverlay = (r: number, c: number): ReactNode => {

@@ -290,14 +290,8 @@ export function Board({
     : isMyTurn
       ? t('yourTurn')
       : currentIsBot
-        ? t('botThinking', {
-            name: currentPlayerName,
-            defaultValue: `${currentPlayerName} is thinking...`,
-          })
-        : t('opponentTurn', {
-            name: currentPlayerName,
-            defaultValue: `Waiting for ${currentPlayerName}`,
-          });
+        ? t('botThinking', { name: currentPlayerName })
+        : t('opponentTurn', { name: currentPlayerName });
 
   const turnCardAnimate =
     !reduced && isMyTurn && !gameOver
@@ -340,7 +334,7 @@ export function Board({
               />
               <span className="truncate max-w-[80px]">
                 {p.name}
-                {isMe ? ` · ${t('you', { ns: 'game-ui', defaultValue: '你' })}` : ''}
+                {isMe ? ` · ${t('you', { ns: 'game-ui' })}` : ''}
               </span>
               <span
                 className={`font-mono text-[10px] ${

@@ -139,7 +139,7 @@ export function GameHeader({
       {/* Left: back + identity */}
       <button
         type="button"
-        aria-label={t('header.back', { defaultValue: 'Back' })}
+        aria-label={t('header.back')}
         onClick={onBack}
         className={iconBtn}
       >
@@ -159,10 +159,10 @@ export function GameHeader({
           type="button"
           data-testid="room-code-chip"
           onClick={copyCode}
-          aria-label={t('header.copyRoomCode', { defaultValue: 'Copy room code' })}
+          aria-label={t('header.copyRoomCode')}
           className="font-mono text-xs font-bold tracking-widest bg-secondary border-2 border-foreground text-foreground rounded-[10px] px-2.5 py-1 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active transition-all"
         >
-          {copied ? t('header.copied', { defaultValue: 'Copied' }) : roomId}
+          {copied ? t('header.copied') : roomId}
         </button>
       </div>
 
@@ -213,7 +213,7 @@ export function GameHeader({
         {onRules && (
           <button
             type="button"
-            aria-label={t('header.rules', { defaultValue: 'Rules' })}
+            aria-label={t('header.rules')}
             onClick={onRules}
             className={`${iconBtn} inline-flex`}
           >
@@ -223,7 +223,7 @@ export function GameHeader({
         {onSettings && (
           <button
             type="button"
-            aria-label={t('header.settings', { defaultValue: 'Settings' })}
+            aria-label={t('header.settings')}
             onClick={onSettings}
             className={`${iconBtn} hidden sm:inline-flex`}
           >
@@ -232,7 +232,7 @@ export function GameHeader({
         )}
         <button
           type="button"
-          aria-label={t('header.exit', { defaultValue: 'Exit' })}
+          aria-label={t('header.exit')}
           onClick={onExit}
           className="flex items-center justify-center size-9 rounded-[10px] border-2 border-destructive bg-[#fde8e8] text-destructive shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active transition-all"
         >

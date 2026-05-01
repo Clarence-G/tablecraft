@@ -6,6 +6,8 @@
   "won": "获胜!",
   "yourTurn": "你的回合",
   "waiting": "等待",
+  "botThinking": "{{name}} 思考中…",
+  "opponentTurn": "等待 {{name}}",
   "drawPile": "摸牌堆",
   "discardPile": "出牌堆",
   "currentColor": "当前色",

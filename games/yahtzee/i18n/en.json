@@ -22,6 +22,8 @@
   "yourTurnRound": "Your turn - Round {{round}}/13 - Rolls left: {{rolls}}",
   "waiting": "Waiting",
   "waitingPlayer": "Waiting for {{name}} - Round {{round}}/13",
+  "roundInfoMine": "Round {{round}}/13 · Rolls left: {{rolls}}",
+  "roundInfoOther": "Round {{round}}/13",
   "round": "Round {{n}}",
   "lockHint": "Click dice to lock/unlock (locked dice won't be re-rolled)",
   "rollDice": "Roll Dice",

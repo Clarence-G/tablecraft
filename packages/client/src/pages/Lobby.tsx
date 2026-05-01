@@ -135,7 +135,7 @@ export function Lobby({
   async function handleCreate(gameId: string) {
     setError(null);
     if (!socketReady) {
-      setError(t('lobby.connectingHint', { defaultValue: 'Connecting to server…' }));
+      setError(t('lobby.connectingHint'));
       return;
     }
     setLoading(true);
@@ -152,7 +152,7 @@ export function Lobby({
   async function handleJoinRoom(roomId: string) {
     setError(null);
     if (!socketReady) {
-      setError(t('lobby.connectingHint', { defaultValue: 'Connecting to server…' }));
+      setError(t('lobby.connectingHint'));
       return;
     }
     setLoading(true);
@@ -434,7 +434,7 @@ export function Lobby({
 
         {!socketReady && (
           <div className="bg-[#fff7e0] border-2 border-[#d4a056] rounded-[12px] p-3 text-foreground/80 text-sm">
-            {t('lobby.connectingHint', { defaultValue: 'Connecting to server…' })}
+            {t('lobby.connectingHint')}
           </div>
         )}
 

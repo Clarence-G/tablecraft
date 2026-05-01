@@ -89,17 +89,15 @@ function Inner({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {t('header.exitConfirmTitle', { defaultValue: 'Leave the match?' })}
+              {t('header.exitConfirmTitle')}
             </DialogTitle>
             <DialogDescription>
-              {t('header.exitConfirmBody', {
-                defaultValue: 'You can rejoin from the lobby if the room is still open.',
-              })}
+              {t('header.exitConfirmBody')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirming(false)}>
-              {t('header.exitConfirmCancel', { defaultValue: 'Stay' })}
+              {t('header.exitConfirmCancel')}
             </Button>
             <Button
               variant="destructive"
@@ -108,7 +106,7 @@ function Inner({
                 onReturnToLobby();
               }}
             >
-              {t('header.exitConfirmOk', { defaultValue: 'Leave' })}
+              {t('header.exitConfirmOk')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -117,12 +115,12 @@ function Inner({
       <Dialog open={rulesOpen} onOpenChange={setRulesOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t('header.rulesTitle', { defaultValue: 'How to play' })}</DialogTitle>
+            <DialogTitle>{t('header.rulesTitle')}</DialogTitle>
           </DialogHeader>
           <div className="whitespace-pre-wrap text-sm leading-relaxed">{rulesText}</div>
           <DialogFooter>
             <Button onClick={() => setRulesOpen(false)}>
-              {t('header.rulesClose', { defaultValue: 'Got it' })}
+              {t('header.rulesClose')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -22,6 +22,8 @@
   "yourTurnRound": "你的回合 · 第 {{round}}/13 轮 · 剩余投掷: {{rolls}}",
   "waiting": "等待",
   "waitingPlayer": "等待 {{name}} · 第 {{round}}/13 轮",
+  "roundInfoMine": "第 {{round}}/13 轮 · 剩余投掷: {{rolls}}",
+  "roundInfoOther": "第 {{round}}/13 轮",
   "round": "第{{n}}轮",
   "lockHint": "点击骰子锁定/解锁（锁定的骰子不会重新投掷）",
   "rollDice": "投掷骰子",

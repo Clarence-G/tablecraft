@@ -57,6 +57,8 @@ export function Game({ userId, room, game, onReturnToLobby }: GamePageProps) {
   const Board = plugin.Board;
   const meta = plugin.meta;
   const localizedName = t(`${room.gameId}:name`, { defaultValue: meta.name });
+  // Per-game optional key: some games may not define `rules` in their i18n bundle.
+  // Empty-string fallback (not a hardcoded UI string) — intentionally kept.
   const rulesText = t(`${room.gameId}:rules`, { defaultValue: '' });
 
   return (

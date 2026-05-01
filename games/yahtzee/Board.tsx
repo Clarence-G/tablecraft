@@ -537,11 +537,9 @@ export function Board({
               ? t('roundInfoMine', {
                   round: state.roundNumber,
                   rolls: state.rollsLeft,
-                  defaultValue: '第 {{round}}/13 轮 · 剩余投掷: {{rolls}}',
                 })
               : t('roundInfoOther', {
                   round: state.roundNumber,
-                  defaultValue: '第 {{round}}/13 轮',
                 })}
         </span>
       </div>
