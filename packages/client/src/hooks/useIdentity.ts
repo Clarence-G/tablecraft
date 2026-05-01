@@ -4,18 +4,46 @@ import i18n from '../i18n';
 import { useSession } from './useSession';
 
 /**
- * Locale-aware random guest name. Reads the current locale's `guest.animalPool`
- * string array (zh: "熊猫/狐狸/…", en: "Panda/Fox/…") and appends a 4-char
- * nanoid for uniqueness. Name is generated once and persisted to localStorage,
+ * Locale-aware random guest name. Combines a locale-specific adjective and
+ * animal from `guest.adjectivePool` / `guest.animalPool`, separated by `#`
+ * plus a 3-char crockford-ish suffix (A–Z minus I/O, 2–9 minus 0/1) so the
+ * display shape is e.g. "神秘熊猫 #A7K" / "Mystic Panda #A7K". zh omits the
+ * space between adjective and animal (Chinese has no inter-word break); en
+ * uses a normal space. Name is generated once and persisted to localStorage,
  * so switching locale later doesn't rename the identity.
  */
-function randomAnimal() {
-  const pool = i18n.t('guest.animalPool', {
+const SUFFIX_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function randomSuffix(len = 3) {
+  let out = '';
+  for (let i = 0; i < len; i++) {
+    out += SUFFIX_ALPHABET[Math.floor(Math.random() * SUFFIX_ALPHABET.length)];
+  }
+  return out;
+}
+
+function randomGuestName() {
+  const adjectives = i18n.t('guest.adjectivePool', {
+    returnObjects: true,
+    defaultValue: [],
+  }) as string[];
+  const animals = i18n.t('guest.animalPool', {
     returnObjects: true,
     defaultValue: ['Guest'],
   }) as string[];
-  const safe = Array.isArray(pool) && pool.length > 0 ? pool : ['Guest'];
-  return safe[Math.floor(Math.random() * safe.length)] + nanoid(4);
+  const safeAnimals = Array.isArray(animals) && animals.length > 0 ? animals : ['Guest'];
+  const safeAdj = Array.isArray(adjectives) && adjectives.length > 0 ? adjectives : null;
+  const animal = safeAnimals[Math.floor(Math.random() * safeAnimals.length)];
+  const suffix = randomSuffix(3);
+  if (!safeAdj) {
+    // Fallback when pool missing (shouldn't happen with bundled locales).
+    return `${animal} #${suffix}`;
+  }
+  const adj = safeAdj[Math.floor(Math.random() * safeAdj.length)];
+  // zh (CJK) joins without space; latin locales use a space. Detect by
+  // presence of a CJK codepoint in the chosen animal.
+  const cjk = /[\u4e00-\u9fff]/.test(animal);
+  const core = cjk ? `${adj}${animal}` : `${adj} ${animal}`;
+  return `${core} #${suffix}`;
 }
 
 interface Identity {
@@ -43,7 +71,7 @@ export function useIdentity() {
         return JSON.parse(stored);
       } catch {}
     }
-    const id: Identity = { userId: nanoid(), userName: randomAnimal() };
+    const id: Identity = { userId: nanoid(), userName: randomGuestName() };
     localStorage.setItem('tabletop:identity', JSON.stringify(id));
     return id;
   });
