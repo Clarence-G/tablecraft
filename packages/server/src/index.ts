@@ -77,10 +77,12 @@ async function main() {
     crossOriginEmbedderPolicy: false,
   }));
 
-  // General API rate limit: 300 req/min per IP. Skip health check.
+  // General API rate limit: 300 req/min per IP in production, 3000 in
+  // development (so e2e suites and dev tooling don't self-throttle). Skip
+  // health check in all envs.
   const apiLimiter = rateLimit({
     windowMs: 60_000,
-    max: 300,
+    max: process.env.NODE_ENV === 'production' ? 300 : 3000,
     standardHeaders: true,
     legacyHeaders: false,
     skip: (req) => req.path === '/api/health',

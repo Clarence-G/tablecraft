@@ -15,10 +15,8 @@ function uniqueUser(prefix: string) {
 }
 
 test.describe('Social — friend request rejection', () => {
-  test.fixme(
+  test(
     'Bob declines Alice request → row deleted → Alice can re-send',
-    // BUG: POST /api/auth/sign-up/email returns HTTP 500 on this dev server instance.
-    // See docs/ISSUE_e2e-stage2b-social-leaderboard.md §Bugs for reproduction steps.
     async ({ browser }) => {
       const alice = uniqueUser('rej-alice');
       const bob = uniqueUser('rej-bob');
@@ -47,7 +45,7 @@ test.describe('Social — friend request rejection', () => {
         .waitFor({ timeout: 3000 });
       // Alice sees outgoing request
       await expect(
-        alicePanel.locator(`text=${zh.lobbyPanel.friends.outgoingHeader}`),
+        alicePanel.locator(`text=${zh.lobbyPanel.friends.outgoingHeader}`).first(),
       ).toBeVisible({ timeout: 5000 });
 
       // ── Bob: see incoming request → decline ───────────────────────────────────
@@ -134,10 +132,8 @@ test.describe('Social — friend request rejection', () => {
     expect(searchResp.status()).toBe(401);
   });
 
-  test.fixme(
+  test(
     'no block-feature UI: decline only removes row, not block',
-    // BUG: POST /api/auth/sign-up/email returns HTTP 500 on this dev server instance.
-    // See docs/ISSUE_e2e-stage2b-social-leaderboard.md §Bugs for reproduction steps.
     async ({ browser }) => {
       const carol = uniqueUser('carol');
       const dave = uniqueUser('dave');
