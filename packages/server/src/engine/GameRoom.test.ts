@@ -184,6 +184,37 @@ describe('GameRoom: markDisconnected still updates player.connected flag', () =>
   });
 });
 
+describe('GameRoom: join capacity enforcement', () => {
+  it('rejects a third player joining a full 2-player room', () => {
+    const room = new GameRoom('test', makeMeta({ maxPlayers: 2 }), undefined, makeLogic());
+    expect(room.join('A', 'Alice')).toEqual({ ok: true, data: undefined });
+    expect(room.join('B', 'Bob')).toEqual({ ok: true, data: undefined });
+    const third = room.join('C', 'Charlie');
+    expect(third).toEqual({ ok: false, error: 'Room is full' });
+    expect(room.players.size).toBe(2);
+    expect(room.players.has('C')).toBe(false);
+  });
+
+  it('allows existing member to rejoin a full room (idempotent)', () => {
+    const room = new GameRoom('test', makeMeta({ maxPlayers: 2 }), undefined, makeLogic());
+    room.join('A', 'Alice');
+    room.join('B', 'Bob');
+    // Alice refreshing/reconnecting must still succeed even though size == max.
+    const rejoin = room.join('A', 'Alice');
+    expect(rejoin).toEqual({ ok: true, data: undefined });
+    expect(room.players.size).toBe(2);
+  });
+
+  it('rejects with "Game already started" before capacity check when game is in progress', () => {
+    const room = new GameRoom('test', makeMeta({ maxPlayers: 2 }), undefined, makeLogic());
+    seatTwoPlayers(room);
+    // Game now 'playing'. A non-member trying to join must hit the
+    // already-started branch, not the full-room branch.
+    const res = room.join('C', 'Charlie');
+    expect(res).toEqual({ ok: false, error: 'Game already started' });
+  });
+});
+
 describe('GameRoom: submitAction (REST) shares pipeline with handleAction', () => {
   function setupRoom() {
     const logic = makeLogic({

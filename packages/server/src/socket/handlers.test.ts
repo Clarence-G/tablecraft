@@ -235,4 +235,64 @@ describe('socket handlers: leave/kick cleanup', () => {
     alice.disconnect();
     lobbyViewer.disconnect();
   });
+
+  it('rejects game:action from a socket that is not a player in any room', async () => {
+    const lonely = await connect('lonely');
+
+    const rejection = new Promise<string>((resolve) => {
+      lonely.once('game:reject', (reason: string) => resolve(reason));
+    });
+    lonely.emit('game:action', { type: 'noop' }, 0);
+    const reason = await Promise.race([
+      rejection,
+      new Promise<string>((_, reject) =>
+        setTimeout(() => reject(new Error('no game:reject received')), 1500),
+      ),
+    ]);
+    expect(reason).toMatch(/not a player/i);
+
+    lonely.disconnect();
+  });
+
+  it('rejects game:action emitted by a spectator socket (no player room)', async () => {
+    const alice = await connect('alice');
+    const bob = await connect('bob');
+    const charlie = await connect('charlie');
+
+    const roomId = await createRoom(alice, 'Alice');
+    await joinRoom(bob, roomId, 'Bob');
+
+    // Ready up + start so the room is actually spectate-able (spectate
+    // refuses rooms still in 'waiting').
+    alice.emit('room:ready');
+    bob.emit('room:ready');
+    await flush();
+    await new Promise<void>((resolve, reject) => {
+      alice.emit('room:start', (res) => (res.ok ? resolve() : reject(new Error(res.error))));
+    });
+    await flush();
+
+    // Charlie spectates — never becomes a player.
+    await new Promise<void>((resolve, reject) => {
+      charlie.emit('room:spectate', roomId, (res) =>
+        res.ok ? resolve() : reject(new Error(res.error)),
+      );
+    });
+
+    const rejection = new Promise<string>((resolve) => {
+      charlie.once('game:reject', (reason: string) => resolve(reason));
+    });
+    charlie.emit('game:action', { type: 'noop' }, 0);
+    const reason = await Promise.race([
+      rejection,
+      new Promise<string>((_, reject) =>
+        setTimeout(() => reject(new Error('spectator got no rejection')), 1500),
+      ),
+    ]);
+    expect(reason).toMatch(/not a player/i);
+
+    alice.disconnect();
+    bob.disconnect();
+    charlie.disconnect();
+  });
 });

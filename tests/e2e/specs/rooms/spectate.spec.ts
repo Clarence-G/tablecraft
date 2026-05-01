@@ -64,7 +64,7 @@ test.describe('Spectator mode — happy path', () => {
 });
 
 test.describe('Spectator mode — negative scenarios', () => {
-  test.fixme('spectator socket emit of a game action is rejected server-side — BLOCKED: server accepts spectator game:action', async ({ browser }) => {
+  test('spectator socket emit of a game action is rejected server-side', async ({ browser }) => {
     const ctx1 = await browser.newContext();
     const ctx2 = await browser.newContext();
     const alice = await ctx1.newPage();
@@ -84,12 +84,13 @@ test.describe('Spectator mode — negative scenarios', () => {
     const charlieSocket = await connectBotSocket({ token, userId: charlieId, botName: 'CharlieSpectBot' });
 
     // Charlie's socket joins as spectator (room:spectate)
+    // socket.io ack is single-arg — the server handler calls ack({ ok, data } | { ok: false, error }).
     await new Promise<void>((resolve, reject) => {
       const t = setTimeout(() => reject(new Error('room:spectate timed out')), 5000);
-      charlieSocket.emit('room:spectate', code, (err: any, result: any) => {
+      charlieSocket.emit('room:spectate', code, (response: { ok: boolean; error?: string }) => {
         clearTimeout(t);
-        if (err) reject(err);
-        else resolve();
+        if (response?.ok) resolve();
+        else reject(new Error(`room:spectate failed: ${response?.error}`));
       });
     });
 

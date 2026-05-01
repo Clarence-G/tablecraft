@@ -170,12 +170,15 @@ export class GameRoom {
 
   join(playerID: string, name: string, isBot = false, isGuest = true): Ack<void> {
     // Idempotent for existing members — allows URL-driven rejoin after refresh
-    // even when the game is already in progress.
+    // even when the game is already in progress, or when the room is full.
     if (this.players.has(playerID)) {
       return { ok: true, data: undefined };
     }
     if (this.status !== 'waiting') {
       return { ok: false, error: 'Game already started' };
+    }
+    if (this.players.size >= this.meta.maxPlayers) {
+      return { ok: false, error: 'Room is full' };
     }
     const seatIndex = this.players.size;
     this.players.set(playerID, {

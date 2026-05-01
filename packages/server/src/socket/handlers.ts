@@ -173,7 +173,10 @@ export function setupHandlers(
     // game:action
     socket.on('game:action', (action, seq) => {
       const room = roomManager.findRoomByUser(userId);
-      if (!room) return;
+      if (!room) {
+        socket.emit('game:reject', 'Not a player in any active room');
+        return;
+      }
       room.handleAction(userId, action, seq);
     });
 

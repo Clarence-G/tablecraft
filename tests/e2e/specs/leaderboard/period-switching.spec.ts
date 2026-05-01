@@ -166,20 +166,22 @@ test.describe('Leaderboard — lobby panel period switching', () => {
     ).toBeVisible({ timeout: 3000 });
   });
 
-  test.fixme(
+  test(
     'leaderboard tab shows rows or empty state (no crash) for authenticated user',
-    // BUG: POST /api/auth/sign-up/email returns HTTP 500 on this dev server instance.
-    // See docs/ISSUE_e2e-stage2b-social-leaderboard.md §Bugs for reproduction steps.
     async ({ page }) => {
       const u = uniqueUser('lb-auth');
       await signUpEmail(page, u);
       await page.goto('/');
       const panel = page.locator('[data-testid="lobby-side-panel-desktop"]');
       await panel.waitFor({ timeout: 8000 });
+      // Activate leaderboard tab explicitly — for authenticated users the
+      // default active tab can be recent / friends.
+      await panel
+        .getByRole('button', { name: zh.lobbyPanel.tab.leaderboard })
+        .click();
       await page.waitForLoadState('networkidle', { timeout: 10000 });
 
-      // Leaderboard tab is already active by default — data loaded
-      const rowCount = await panel.locator('[data-testid="leaderboard-row"]').count();
+      const rowCount = await panel.locator('[data-testid^="leaderboard-row"]').count();
       const emptyVisible = await panel
         .locator(`text=${zh.lobbyPanel.leaderboard.empty}`)
         .isVisible()

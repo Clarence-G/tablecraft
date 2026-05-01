@@ -54,7 +54,7 @@ test.describe('Create and join room — negative scenarios', () => {
     expect(errorVisible).toBe(true);
   });
 
-  test.fixme('third player cannot join a full 2-player gomoku room — BLOCKED: server allows join to full room', async ({ browser }) => {
+  test('third player cannot join a full 2-player gomoku room', async ({ browser }) => {
     const ctx1 = await browser.newContext();
     const ctx2 = await browser.newContext();
     const ctx3 = await browser.newContext();
