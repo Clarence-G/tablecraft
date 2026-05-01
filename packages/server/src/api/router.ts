@@ -44,9 +44,12 @@ export function createApiRouter(
   registerReportsRoutes(router);
   registerFriendsRoutes(router, roomManager);
 
-  // --- Admin endpoints (dev only) ---
+  // --- Admin endpoints (dev only; gated in production) ---
 
   router.post('/admin/token', async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).json({ ok: false, error: 'Not found' });
+    }
     const name = req.body?.name || 'Bot';
     const result = await tokenStore.generate(name);
     res.status(201).json({ ok: true, data: result });

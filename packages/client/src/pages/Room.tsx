@@ -47,7 +47,7 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
         </div>
 
         <div className="bg-card border-thick border-foreground rounded-[16px] p-6 shadow-card mb-6">
-          <h2 className="text-sm text-[#9c8b78] uppercase tracking-wider font-semibold mb-3">
+          <h2 className="text-sm text-muted-foreground uppercase tracking-wider font-semibold mb-3">
             {t('room.playerList')}
           </h2>
           <div className="space-y-2" data-testid="player-list">
@@ -69,7 +69,7 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
                   )}
                 </div>
                 <span
-                  className={`text-sm font-medium ${player.ready ? 'text-success' : 'text-[#9c8b78]'}`}
+                  className={`text-sm font-medium ${player.ready ? 'text-success' : 'text-muted-foreground'}`}
                 >
                   {player.ready ? t('room.ready') : t('room.notReady')}
                 </span>

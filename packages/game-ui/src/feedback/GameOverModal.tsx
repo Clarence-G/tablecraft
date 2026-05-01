@@ -1,4 +1,5 @@
 import { ArrowLeft, Frown, Home, Trophy } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface GameOverModalProps {
@@ -21,9 +22,35 @@ export function GameOverModal({
   const myRank = rankings.indexOf(myId) + 1;
   const won = myRank === 1;
   const { t } = useTranslation('game-ui');
+  const firstActionRef = useRef<HTMLButtonElement | null>(null);
+
+  // Escape closes the modal. Preference order matches the visible button
+  // order so the "primary" dismissal path is chosen.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      const handler = onReturnToLobby ?? onReturnToRoom ?? onRestart;
+      if (handler) {
+        e.preventDefault();
+        handler();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onRestart, onReturnToRoom, onReturnToLobby]);
+
+  // Focus the first action button on mount so keyboard users can act
+  // immediately. Backdrop clicks intentionally do NOT dismiss — users
+  // shouldn't lose the game result by a stray click.
+  useEffect(() => {
+    firstActionRef.current?.focus();
+  }, []);
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="game-over-title"
       className="fixed inset-0 bg-[#1a1108]/50 flex items-center justify-center z-50"
       data-testid="game-over-modal"
     >
@@ -35,7 +62,7 @@ export function GameOverModal({
             <Frown className="size-10 text-muted-foreground" />
           )}
         </div>
-        <h2 className="text-2xl font-bold mb-1 text-[#1a1108]">
+        <h2 id="game-over-title" className="text-2xl font-bold mb-1 text-[#1a1108]">
           {won ? t('youWin') : t('rank', { rank: myRank })}
         </h2>
 
@@ -60,6 +87,7 @@ export function GameOverModal({
           {onRestart && (
             <button
               type="button"
+              ref={firstActionRef}
               onClick={onRestart}
               data-testid="restart-btn"
               className="w-full bg-primary text-primary-foreground border-2 border-[#1a1108] py-2 rounded-[12px] font-semibold shadow-button transition-all hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active"
@@ -70,6 +98,7 @@ export function GameOverModal({
           {onReturnToRoom && (
             <button
               type="button"
+              ref={onRestart ? undefined : firstActionRef}
               onClick={onReturnToRoom}
               className="w-full bg-primary text-primary-foreground border-2 border-[#1a1108] py-2 rounded-[12px] font-semibold shadow-button transition-all hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active flex items-center justify-center gap-2"
             >
@@ -80,6 +109,7 @@ export function GameOverModal({
           {onReturnToLobby && (
             <button
               type="button"
+              ref={onRestart || onReturnToRoom ? undefined : firstActionRef}
               onClick={onReturnToLobby}
               className="w-full bg-card text-foreground border-2 border-foreground py-2 rounded-[12px] font-semibold shadow-[#3d2e1e_-4px_4px_0px] transition-all hover:-translate-y-0.5 hover:shadow-[#3d2e1e_-5px_6px_0px] active:translate-y-px active:shadow-[#3d2e1e_-2px_2px_0px] flex items-center justify-center gap-2"
             >
