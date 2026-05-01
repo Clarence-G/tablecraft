@@ -18,5 +18,6 @@ export default defineWorkspace([
   'packages/client/vitest.config.ts',
   'packages/game-ui/vitest.config.ts',
   'scripts/vitest.config.ts',
+  'tests/e2e/vitest.config.ts',
   ...gameConfigs,
 ]);

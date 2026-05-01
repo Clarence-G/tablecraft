@@ -2,9 +2,13 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
+  // Only pick up *.spec.ts files — exclude vitest helpers.test.ts and configs
+  testMatch: '**/*.spec.ts',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: 0,
+  // Keep at 1 until per-worker DB isolation is implemented in Stage 3.
+  // Parallel workers require each worker to have its own DB + server instance.
   workers: 1,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
