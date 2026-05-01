@@ -10,5 +10,57 @@
     "buy": "bought a card",
     "nobleVisit": "received a noble visit",
     "win": "wins the game!"
+  },
+  "gem": {
+    "white": "White",
+    "blue": "Blue",
+    "green": "Green",
+    "red": "Red",
+    "black": "Black",
+    "gold": "Gold"
+  },
+  "card": {
+    "tierLabel": "Tier",
+    "remaining": "{{count}} left",
+    "noCost": "Free",
+    "detailTitle": "Tier {{level}} development card",
+    "discount": "Grants <g>{{gem}}</g> discount",
+    "prestige": "{{count}} prestige",
+    "netCost": "Net cost:",
+    "goldCover": "Gold covers: {{count}}",
+    "shortfall": "Short by {{count}} gem(s)"
+  },
+  "action": {
+    "buy": "Buy",
+    "reserve": "Reserve",
+    "reserveWithGold": "Reserve (+1 gold)",
+    "nobleSelect": "Multiple nobles can visit after this purchase. Choose one:",
+    "clearSelection": "Clear selection",
+    "reset": "Reset",
+    "confirmTakeGems": "Confirm gems",
+    "reserveFromDeck": "Reserve tier {{level}} deck top"
+  },
+  "status": {
+    "target": "At 15",
+    "winner": "{{winner}} wins",
+    "yourTurn": "Your turn",
+    "waitingFor": "Waiting for {{name}}",
+    "lastRound": "Last round"
+  },
+  "section": {
+    "nobles": "Nobles (auto-visit when qualified)",
+    "gemSupply": "Gem supply",
+    "myRealm": "My tableau",
+    "opponent": "Opponents",
+    "gems": "Gems",
+    "discount": "Discount"
+  },
+  "label": {
+    "myStats": "Gems {{gems}}/{{max}} · Cards {{cards}}",
+    "reserved": "Reserved ({{count}}/{{max}})",
+    "opponentStats": "Cards {{cards}} · Reserved {{reserved}}",
+    "overflow": "Discard {{overflow}} (selected {{selected}})",
+    "gemCountItem": "{{count}} {{gem}}",
+    "cartSummary": "({{items}})"
   }
 }

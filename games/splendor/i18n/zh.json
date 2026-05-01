@@ -10,5 +10,57 @@
     "buy": "购买了一张卡牌",
     "nobleVisit": "吸引了一位贵族",
     "win": "赢得了游戏！"
+  },
+  "gem": {
+    "white": "白",
+    "blue": "蓝",
+    "green": "绿",
+    "red": "红",
+    "black": "黑",
+    "gold": "金"
+  },
+  "card": {
+    "tierLabel": "等级",
+    "remaining": "剩 {{count}} 张",
+    "noCost": "无成本",
+    "detailTitle": "等级 {{level}} 发展卡",
+    "discount": "提供 <g>{{gem}}</g> 折扣",
+    "prestige": "{{count}} 声望",
+    "netCost": "折扣后实付：",
+    "goldCover": "黄金替付：{{count}}",
+    "shortfall": "还缺 {{count}} 颗宝石"
+  },
+  "action": {
+    "buy": "购买",
+    "reserve": "预订",
+    "reserveWithGold": "预订 (+1 金)",
+    "nobleSelect": "购买后多位贵族可访问，选择一位：",
+    "clearSelection": "清空选择",
+    "reset": "重置",
+    "confirmTakeGems": "确认取宝石",
+    "reserveFromDeck": "预订等级 {{level}} 牌堆顶"
+  },
+  "status": {
+    "target": "达 15",
+    "winner": "{{winner}} 获胜",
+    "yourTurn": "你的回合",
+    "waitingFor": "等待 {{name}} 行动",
+    "lastRound": "最后一轮"
+  },
+  "section": {
+    "nobles": "贵族（达标自动访问）",
+    "gemSupply": "宝石供应",
+    "myRealm": "我的领地",
+    "opponent": "对手",
+    "gems": "宝石",
+    "discount": "折扣"
+  },
+  "label": {
+    "myStats": "宝石 {{gems}}/{{max}} · 发展卡 {{cards}}",
+    "reserved": "预订（{{count}}/{{max}}）",
+    "opponentStats": "卡 {{cards}} · 预订 {{reserved}}",
+    "overflow": "需丢弃 {{overflow}} 颗（已选 {{selected}}）",
+    "gemCountItem": "{{count}}{{gem}}",
+    "cartSummary": "（{{items}}）"
   }
 }

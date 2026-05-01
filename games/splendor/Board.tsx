@@ -4,6 +4,7 @@ import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { Coins, Crown, Gem, ShoppingCart, Sparkles, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useTranslation, Trans } from 'react-i18next';
 import {
   type Action,
   type Card,
@@ -41,15 +42,6 @@ const GEM_FG: Record<Token, string> = {
   gold: '#ffffff',
 };
 
-const GEM_LABEL: Record<Token, string> = {
-  white: '白',
-  blue: '蓝',
-  green: '绿',
-  red: '红',
-  black: '黑',
-  gold: '金',
-};
-
 // ---- Presentational components ----
 
 function GemToken({
@@ -67,6 +59,7 @@ function GemToken({
   disabled?: boolean;
   selected?: boolean;
 }) {
+  const { t } = useTranslation('splendor');
   const dims =
     size === 'sm'
       ? 'w-7 h-7 text-[10px]'
@@ -89,14 +82,16 @@ function GemToken({
         borderColor: '#1a1108',
       }}
     >
-      {count === undefined ? GEM_LABEL[color] : count}
+      {count === undefined ? t(`gem.${color}`) : count}
     </Elem>
   );
 }
 
 function CostRow({ cost, bonuses }: { cost: GemCount; bonuses?: GemCount }) {
+  const { t } = useTranslation('splendor');
   const nonZero = GEMS.filter((g) => cost[g] > 0);
-  if (nonZero.length === 0) return <span className="text-xs text-muted-foreground">无成本</span>;
+  if (nonZero.length === 0)
+    return <span className="text-xs text-muted-foreground">{t('card.noCost')}</span>;
   return (
     <div className="flex gap-1 flex-wrap">
       {nonZero.map((g) => {
@@ -174,15 +169,18 @@ function CardFace({
 }
 
 function CardBack({ level, count }: { level: 1 | 2 | 3; count: number }) {
+  const { t } = useTranslation('splendor');
   const levelColor = level === 1 ? '#16a34a' : level === 2 ? '#2563eb' : '#7c3aed';
   return (
     <div
       className="w-20 h-28 sm:w-24 sm:h-32 flex flex-col items-center justify-center rounded-[10px] border-2 border-foreground shadow-[3px_3px_0px_0px_#3d2e1e] text-white"
       style={{ background: levelColor }}
     >
-      <span className="text-xs font-semibold uppercase tracking-wide opacity-90">等级</span>
+      <span className="text-xs font-semibold uppercase tracking-wide opacity-90">
+        {t('card.tierLabel')}
+      </span>
       <span className="text-3xl font-black">{level}</span>
-      <span className="text-[10px] opacity-75 mt-1">剩 {count} 张</span>
+      <span className="text-[10px] opacity-75 mt-1">{t('card.remaining', { count })}</span>
     </div>
   );
 }
@@ -305,6 +303,7 @@ function CardDialog({
   onBuy: () => void;
   onReserve: () => void;
 }) {
+  const { t } = useTranslation('splendor');
   const canReserve = source === 'visible' && reservedCount < MAX_RESERVED;
   const needsNobleChoice = eligibleNobleList.length > 1;
   const buyDisabled = !afford.affordable || (needsNobleChoice && !claimNoble);
@@ -329,12 +328,22 @@ function CardDialog({
       >
         <div className="flex justify-between items-start mb-3">
           <div>
-            <div className="text-xs text-muted-foreground">等级 {card.level} 发展卡</div>
+            <div className="text-xs text-muted-foreground">
+              {t('card.detailTitle', { level: card.level })}
+            </div>
             <div className="text-sm font-semibold">
-              提供 <span style={{ color: GEM_BG[card.bonus] }}>{GEM_LABEL[card.bonus]}</span> 折扣
+              <Trans
+                i18nKey="card.discount"
+                t={t}
+                values={{ gem: t(`gem.${card.bonus}`) }}
+                components={{
+                  g: <span style={{ color: GEM_BG[card.bonus] }} />,
+                }}
+              />
               {card.points > 0 && (
                 <span className="ml-2">
-                  · <Sparkles className="inline w-3 h-3" /> {card.points} 声望
+                  · <Sparkles className="inline w-3 h-3" />{' '}
+                  {t('card.prestige', { count: card.points })}
                 </span>
               )}
             </div>
@@ -347,16 +356,18 @@ function CardDialog({
         <div className="flex gap-3 items-start mb-4">
           <CardFace card={card} bonuses={bonuses} />
           <div className="flex-1 text-xs space-y-1">
-            <div className="text-muted-foreground">折扣后实付：</div>
+            <div className="text-muted-foreground">{t('card.netCost')}</div>
             <CostRow cost={afford.gemsSpent} />
             {afford.goldUsed > 0 && (
               <div className="flex items-center gap-1 text-[#d97706]">
                 <Coins className="w-3 h-3" />
-                黄金替付：{afford.goldUsed}
+                {t('card.goldCover', { count: afford.goldUsed })}
               </div>
             )}
             {!afford.affordable && (
-              <div className="text-destructive text-xs">还缺 {afford.totalShortfall} 颗宝石</div>
+              <div className="text-destructive text-xs">
+                {t('card.shortfall', { count: afford.totalShortfall })}
+              </div>
             )}
           </div>
         </div>
@@ -364,7 +375,7 @@ function CardDialog({
         {needsNobleChoice && afford.affordable && (
           <div className="mb-3 p-2 bg-[#f0e8fe] rounded-[8px] border-2 border-[#7c3aed]">
             <div className="text-xs font-semibold mb-1 text-[#7c3aed]">
-              购买后多位贵族可访问，选择一位：
+              {t('action.nobleSelect')}
             </div>
             <div className="flex gap-2 flex-wrap">
               {eligibleNobleList.map((n) => (
@@ -394,7 +405,7 @@ function CardDialog({
               `}
             >
               <ShoppingCart className="w-3.5 h-3.5" />
-              购买
+              {t('action.buy')}
             </button>
           ) : null}
           {canReserve && (
@@ -405,7 +416,7 @@ function CardDialog({
               className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-[10px] border-2 border-foreground bg-card font-semibold text-sm hover:-translate-y-0.5 transition-all shadow-[3px_3px_0px_0px_#3d2e1e]"
             >
               <Coins className="w-3.5 h-3.5" />
-              预订 {supplyGold > 0 && '(+1 金)'}
+              {supplyGold > 0 ? t('action.reserveWithGold') : t('action.reserve')}
             </button>
           )}
         </div>
@@ -424,6 +435,7 @@ export function Board({
   isSending,
   lastReject,
 }: BoardProps<PlayerView, Action>) {
+  const { t } = useTranslation('splendor');
   const sendAction = isSending ? () => {} : rawSendAction;
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = !!state.winner;
@@ -615,7 +627,9 @@ export function Board({
                     <Sparkles className="w-3 h-3 text-warning" />
                     {info.points}
                     {info.points >= WIN_POINTS && (
-                      <span className="ml-1 text-[10px] uppercase text-warning">达 15</span>
+                      <span className="ml-1 text-[10px] uppercase text-warning">
+                        {t('status.target')}
+                      </span>
                     )}
                   </div>
                 )}
@@ -625,12 +639,16 @@ export function Board({
         </div>
         <div className="text-center text-sm text-muted-foreground">
           {gameOver
-            ? `${playerNames[state.winner ?? ''] ?? state.winner} 获胜`
+            ? t('status.winner', {
+                winner: playerNames[state.winner ?? ''] ?? state.winner,
+              })
             : isMyTurn
-              ? '你的回合'
-              : `等待 ${playerNames[state.currentPlayer] ?? state.currentPlayer} 行动`}
+              ? t('status.yourTurn')
+              : t('status.waitingFor', {
+                  name: playerNames[state.currentPlayer] ?? state.currentPlayer,
+                })}
           {state.lastRoundStartedBy && !gameOver && (
-            <span className="ml-2 text-warning">最后一轮</span>
+            <span className="ml-2 text-warning">{t('status.lastRound')}</span>
           )}
         </div>
         {lastReject && (
@@ -644,7 +662,7 @@ export function Board({
       {state.nobles.length > 0 && (
         <div className="flex flex-col items-center gap-1">
           <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            贵族（达标自动访问）
+            {t('section.nobles')}
           </div>
           <div className="flex gap-2 flex-wrap justify-center">
             {state.nobles.map((n) => (
@@ -663,7 +681,7 @@ export function Board({
         <div className="flex justify-between items-center mb-2">
           <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1">
             <Gem className="w-3 h-3" />
-            宝石供应
+            {t('section.gemSupply')}
           </div>
           {cartTotal > 0 && (
             <button
@@ -671,7 +689,7 @@ export function Board({
               onClick={clearCart}
               className="text-xs text-muted-foreground hover:text-foreground"
             >
-              清空选择
+              {t('action.clearSelection')}
             </button>
           )}
         </div>
@@ -706,25 +724,25 @@ export function Board({
             {overflow > 0 && (
               <div className="mb-2">
                 <div className="text-xs font-semibold text-destructive mb-1">
-                  需丢弃 {overflow} 颗（已选 {discardTotal}）
+                  {t('label.overflow', { overflow, selected: discardTotal })}
                 </div>
                 <div className="flex gap-1 flex-wrap">
-                  {([...GEMS, 'gold'] as Token[]).map((t) => {
+                  {([...GEMS, 'gold'] as Token[]).map((tok) => {
                     const have =
-                      (me?.gems[t] ?? 0) + (t === 'gold' ? 0 : (cart[t as GemColor] ?? 0));
+                      (me?.gems[tok] ?? 0) + (tok === 'gold' ? 0 : (cart[tok as GemColor] ?? 0));
                     if (have === 0) return null;
                     return (
                       <button
-                        key={t}
+                        key={tok}
                         type="button"
-                        onClick={() => handleDiscardToggle(t)}
+                        onClick={() => handleDiscardToggle(tok)}
                         className="flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full border border-border bg-background"
                       >
-                        <GemToken color={t} size="sm" />
+                        <GemToken color={tok} size="sm" />
                         <span>
-                          {have - discard[t]}
-                          {discard[t] > 0 && (
-                            <span className="text-destructive">-{discard[t]}</span>
+                          {have - discard[tok]}
+                          {discard[tok] > 0 && (
+                            <span className="text-destructive">-{discard[tok]}</span>
                           )}
                         </span>
                       </button>
@@ -736,7 +754,7 @@ export function Board({
                       onClick={handleDiscardClear}
                       className="text-xs text-muted-foreground ml-1"
                     >
-                      重置
+                      {t('action.reset')}
                     </button>
                   )}
                 </div>
@@ -748,14 +766,14 @@ export function Board({
               disabled={!isMyTurn || (overflow > 0 && discardTotal !== overflow)}
               className="w-full px-4 py-2 rounded-[10px] border-2 border-[#1a1108] bg-primary text-primary-foreground font-semibold text-sm shadow-[3px_3px_0px_0px_#1a1108] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
             >
-              确认取宝石
+              {t('action.confirmTakeGems')}
               {cartTotal > 0 && (
                 <span className="ml-2 text-xs opacity-80">
-                  （
-                  {GEMS.filter((g) => cart[g] > 0)
-                    .map((g) => `${cart[g]}${GEM_LABEL[g]}`)
-                    .join(' + ')}
-                  ）
+                  {t('label.cartSummary', {
+                    items: GEMS.filter((g) => cart[g] > 0)
+                      .map((g) => t('label.gemCountItem', { count: cart[g], gem: t(`gem.${g}`) }))
+                      .join(' + '),
+                  })}
                 </span>
               )}
             </button>
@@ -778,7 +796,7 @@ export function Board({
                   (me?.reservedCount ?? 0) >= MAX_RESERVED
                 }
                 className="shrink-0 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:-translate-y-0.5 transition-transform"
-                aria-label={`预订等级 ${level} 牌堆顶`}
+                aria-label={t('action.reserveFromDeck', { level })}
               >
                 <CardBack level={level} count={state.deckCounts[level]} />
               </button>
@@ -811,25 +829,29 @@ export function Board({
         <div className="bg-card border-2 border-foreground rounded-[12px] shadow-[4px_4px_0px_0px_#3d2e1e] p-3">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              我的领地
+              {t('section.myRealm')}
             </div>
             <div className="text-xs text-muted-foreground">
-              宝石 {myGemTotal}/{MAX_GEMS} · 发展卡 {me.cardCount}
+              {t('label.myStats', {
+                gems: myGemTotal,
+                max: MAX_GEMS,
+                cards: me.cardCount,
+              })}
             </div>
           </div>
           <div className="flex flex-wrap gap-3 items-start">
             <div className="flex flex-col gap-1">
-              <div className="text-[10px] text-muted-foreground">宝石</div>
+              <div className="text-[10px] text-muted-foreground">{t('section.gems')}</div>
               <div className="flex gap-1">
-                {([...GEMS, 'gold'] as Token[]).map((t) => (
-                  <div key={t} className="flex flex-col items-center">
-                    <GemToken color={t} size="md" count={me.gems[t]} />
+                {([...GEMS, 'gold'] as Token[]).map((tok) => (
+                  <div key={tok} className="flex flex-col items-center">
+                    <GemToken color={tok} size="md" count={me.gems[tok]} />
                   </div>
                 ))}
               </div>
             </div>
             <div className="flex flex-col gap-1">
-              <div className="text-[10px] text-muted-foreground">折扣</div>
+              <div className="text-[10px] text-muted-foreground">{t('section.discount')}</div>
               <div className="flex gap-1">
                 {GEMS.map((g) => (
                   <GemToken key={g} color={g} size="md" count={me.bonuses[g]} />
@@ -841,7 +863,7 @@ export function Board({
           {state.myReserved.length > 0 && (
             <div className="mt-3 pt-3 border-t border-border">
               <div className="text-[10px] text-muted-foreground mb-1">
-                预订（{state.myReserved.length}/{MAX_RESERVED}）
+                {t('label.reserved', { count: state.myReserved.length, max: MAX_RESERVED })}
               </div>
               <div className="flex gap-2 flex-wrap">
                 {state.myReserved.map((card) => (
@@ -864,7 +886,7 @@ export function Board({
       {state.players.filter((p) => p.id !== myId).length > 0 && (
         <div className="bg-card border-2 border-foreground rounded-[12px] p-3">
           <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-            对手
+            {t('section.opponent')}
           </div>
           <div className="flex flex-col gap-2">
             {state.players
@@ -879,7 +901,10 @@ export function Board({
                     {p.points}
                   </span>
                   <span className="text-[10px] text-muted-foreground">
-                    卡 {p.cardCount} · 预订 {p.reservedCount}
+                    {t('label.opponentStats', {
+                      cards: p.cardCount,
+                      reserved: p.reservedCount,
+                    })}
                   </span>
                   <div className="flex gap-0.5 ml-auto">
                     {GEMS.map((g) => (
