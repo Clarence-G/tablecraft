@@ -11,7 +11,11 @@ import type {
   RoomStatus,
   RoomSummary,
 } from '@repo/shared';
+import { eq } from 'drizzle-orm';
 import { customAlphabet, nanoid } from 'nanoid';
+import { db } from '../db/index.js';
+import { rooms } from '../db/schema.js';
+import { logger } from '../lib/logger.js';
 import { recordPoints } from '../lib/ledger.js';
 import { RandomProvider } from './RandomProvider';
 import { TimerManager } from './TimerManager';
@@ -65,6 +69,9 @@ export class GameRoom {
   private static readonly LOG_HISTORY_LIMIT = 100;
   private waiters: Array<(seq: number) => void> = [];
 
+  /** Players currently holding an open socket connection. */
+  connectedPlayerIds: Set<string> = new Set();
+
   private broadcast: BroadcastFn | null = null;
 
   constructor(gameId: string, meta: GameMeta, config?: unknown, logic?: GameLogic) {
@@ -87,6 +94,49 @@ export class GameRoom {
 
   setBroadcast(fn: BroadcastFn) {
     this.broadcast = fn;
+  }
+
+  /** Restore a room from a persisted DB row + related records. */
+  static fromPersisted(
+    row: { id: string; gameId: string; status: string; configJson: string | null; seed: string | null; createdAt: Date | null; finishedAt: Date | null },
+    state: unknown,
+    players: Array<{ userId: string; seatIndex: number; ready: boolean }>,
+    chatMessages: Array<{ id: string; userId: string; userName: string; text: string; createdAt: Date | null }>,
+    meta: GameMeta,
+    logic: GameLogic,
+  ): GameRoom {
+    const room = new GameRoom(row.gameId, meta, undefined, logic);
+    room.roomId = row.id;
+    room.status = row.status as RoomStatus;
+    room.state = state;
+    room.config = row.configJson ? JSON.parse(row.configJson) : meta.defaultConfig;
+    room.createdAt = row.createdAt ? row.createdAt.getTime() : Date.now();
+    room.finishedAt = row.finishedAt ? row.finishedAt.getTime() : null;
+    room.ctx = {
+      players: players.map((p) => p.userId),
+      random: new RandomProvider(row.seed ?? nanoid()),
+    };
+    for (const p of players) {
+      room.players.set(p.userId, {
+        id: p.userId,
+        name: p.userId,
+        ready: p.ready,
+        connected: false,
+        seatIndex: p.seatIndex,
+        isBot: false,
+        isGuest: true,
+      });
+    }
+    for (const msg of chatMessages) {
+      room.chatHistory.push({
+        id: msg.id,
+        from: msg.userId,
+        fromName: msg.userName,
+        text: msg.text,
+        at: msg.createdAt ? msg.createdAt.getTime() : Date.now(),
+      });
+    }
+    return room;
   }
 
   appendChatMessage(msg: ChatMessage): void {
@@ -171,6 +221,7 @@ export class GameRoom {
     this.status = 'playing';
     this.lastActivityAt = Date.now();
     this.onStateChanged();
+    void this.persistState();
     return { ok: true, data: undefined };
   }
 
@@ -208,6 +259,7 @@ export class GameRoom {
     this.processEvents(result.events ?? []);
     this.broadcastViews();
     this.onStateChanged();
+    void this.persistState();
   }
 
   markDisconnected(playerID: string): void {
@@ -215,6 +267,7 @@ export class GameRoom {
     if (player) {
       this.players.set(playerID, { ...player, connected: false });
     }
+    this.connectedPlayerIds.delete(playerID);
     if (this.status !== 'playing' || !this.logic.onPlayerDisconnect) return;
     let result: ActionResult<unknown>;
     try {
@@ -229,6 +282,7 @@ export class GameRoom {
     this.processEvents(result.events ?? []);
     this.broadcastViews();
     this.onStateChanged();
+    void this.persistState();
   }
 
   markReconnected(playerID: string): void {
@@ -236,6 +290,7 @@ export class GameRoom {
     if (player) {
       this.players.set(playerID, { ...player, connected: true });
     }
+    this.connectedPlayerIds.add(playerID);
   }
 
   restart(): void {
@@ -398,6 +453,7 @@ export class GameRoom {
     this.processEvents(result.events ?? []);
     this.broadcastViews();
     this.onStateChanged();
+    void this.persistState();
     return { kind: 'ok', seq: effectiveSeq };
   }
 
@@ -462,10 +518,62 @@ export class GameRoom {
   private broadcastViews(): void {
     if (!this.broadcast) return;
     const views = new Map<string, unknown>();
+    const connected = [...this.connectedPlayerIds];
     for (const pid of this.players.keys()) {
-      views.set(pid, this.logic.getPlayerView(this.state, pid));
+      const view = this.logic.getPlayerView(this.state, pid);
+      views.set(pid, { ...(view as object), _connected: connected });
     }
     this.broadcast(this.roomId, views);
+  }
+
+  /** Persist current state to the rooms table. Fire-and-forget; never throws. */
+  async persistState(): Promise<void> {
+    if (this.state == null) return;
+    try {
+      await db.update(rooms)
+        .set({
+          stateJson: JSON.stringify(this.state),
+          status: this.status,
+          updatedAt: new Date(),
+          ...(this.status === 'finished' && { finishedAt: new Date() }),
+        })
+        .where(eq(rooms.id, this.roomId));
+    } catch (err) {
+      logger.error({ err, roomId: this.roomId, mod: 'gameroom' }, 'persistState failed');
+    }
+  }
+
+  /**
+   * Called after AFK grace period. If logic supports onPlayerDisconnect, invoke
+   * it to let the game advance. Otherwise just notify the room.
+   * Returns whether state changed (so caller can re-broadcast).
+   */
+  handleAfk(userId: string): { stateChanged: boolean } {
+    if (this.status !== 'playing') return { stateChanged: false };
+    if (this.logic.onPlayerDisconnect) {
+      let result: ActionResult<unknown>;
+      try {
+        result = this.logic.onPlayerDisconnect(this.state, userId, this.ctx);
+      } catch (e) {
+        logger.error({ err: e, roomId: this.roomId, userId, mod: 'afk' }, 'onPlayerDisconnect threw');
+        return { stateChanged: false };
+      }
+      if (!result.ok) return { stateChanged: false };
+      this.state = result.state;
+      this.lastActivityAt = Date.now();
+      this.processEvents(result.events ?? []);
+      this.onStateChanged();
+      return { stateChanged: true };
+    }
+    // Fallback: emit a system notification so clients can show "player offline" banner
+    for (const pid of this.players.keys()) {
+      this.emitToPlayer(pid, 'game:notify', {
+        channel: 'log',
+        key: 'log.playerTimeout',
+        messageParams: { playerId: userId },
+      });
+    }
+    return { stateChanged: false };
   }
 
   // emitToPlayer is set externally by socket handlers

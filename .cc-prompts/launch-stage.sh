@@ -26,7 +26,7 @@ for WORKER in "${WORKERS[@]}"; do
   echo "=== launching $SESSION ==="
   tmux kill-session -t "$SESSION" 2>/dev/null || true
   tmux new-session -d -s "$SESSION" -x 180 -y 50 \
-    "zsh -i -c 'source ~/.zshenv && cd \"$PROJECT\" && claude --dangerously-skip-permissions --model sonnet --effort high --allowedTools '\''$ALLOWED'\'' '"
+    "zsh -i -c 'source ~/.zshenv && cd \"$PROJECT\" && claude --dangerously-skip-permissions --model sonnet --allowedTools '\\''$ALLOWED'\\'' '"
   sleep 10
 
   tmux send-keys -t "$SESSION" Enter; sleep 1

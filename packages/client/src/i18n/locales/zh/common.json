@@ -80,7 +80,19 @@
     "errorInvalidCredentials": "邮箱或密码错误。",
     "errorEmailInUse": "该邮箱已注册。",
     "guestChip": "访客",
-    "signInCta": "登录"
+    "signInCta": "登录",
+    "forgotPassword": "忘记密码？",
+    "forgotPasswordTitle": "重置密码",
+    "forgotPasswordDesc": "输入你的邮箱，我们将发送重置链接。",
+    "emailLabel": "邮箱",
+    "sendResetLink": "发送重置链接",
+    "resetLinkSent": "如果该邮箱已注册，我们已发送重置链接。",
+    "resetPasswordTitle": "设置新密码",
+    "newPasswordLabel": "新密码",
+    "resetPasswordSubmit": "重置密码",
+    "resetPasswordSuccess": "密码已重置，请登录",
+    "resetTokenInvalid": "链接已失效或已使用",
+    "backToLogin": "返回登录"
   },
   "gamesAll": {
     "title": "所有游戏",

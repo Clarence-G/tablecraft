@@ -14,10 +14,14 @@ import { TokenStore } from './api/token-store.js';
 import { closeDb, initDb } from './db/index.js';
 import { RoomManager } from './engine/RoomManager.js';
 import { auth } from './lib/auth.js';
+import { flushAnalytics } from './lib/analytics.js';
 import { logger } from './lib/logger.js';
+import { initSentry, Sentry } from './lib/sentry.js';
 import { createSessionMiddleware } from './middleware/session.js';
 import { setupAuth } from './socket/auth.js';
 import { setupHandlers } from './socket/handlers.js';
+
+initSentry();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -49,6 +53,14 @@ async function main() {
   const roomManager = new RoomManager();
   const tokenStore = new TokenStore();
 
+  // Restore persisted rooms from the previous run so live games survive server
+  // restarts. Non-fatal — hydrate logs and continues on per-room failures.
+  try {
+    await roomManager.hydrate(serverRegistry);
+  } catch (err) {
+    logger.error({ err, mod: 'server' }, 'roomManager.hydrate failed at boot');
+  }
+
   setupAuth(io, auth);
   setupHandlers(io, roomManager, serverRegistry);
 
@@ -75,6 +87,9 @@ async function main() {
   });
   app.use('/api', apiLimiter);
 
+  // Sentry request handler must come before any routes.
+  app.use(Sentry.Handlers.requestHandler());
+
   // Liveness/readiness probe. Kept above BetterAuth so it's reachable even if
   // auth middleware is broken. Used by dev tooling, CI smoke tests, and
   // (future) container orchestrators.
@@ -95,6 +110,9 @@ async function main() {
   // REST API (bots + humans). `createApiRouter` installs its own `express.json`
   // internally, which is safe because the BetterAuth handler already ran.
   app.use('/api', createApiRouter(roomManager, serverRegistry, tokenStore));
+
+  // Sentry error handler must come after routes, before other error middleware.
+  app.use(Sentry.Handlers.errorHandler());
 
   // Dev-only: gated to skip in production to avoid leaking plaintext tokens to
   // prod logs and accumulating stale rows across restarts.
@@ -136,6 +154,7 @@ async function main() {
     try {
       io.close();
       await new Promise<void>((res) => httpServer.close(() => res()));
+      await flushAnalytics();
       await closeDb();
       clearTimeout(timeout);
       logger.info({ mod: 'server' }, '[shutdown] clean exit');

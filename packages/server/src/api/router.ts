@@ -6,6 +6,7 @@ import type { GameRoom } from '../engine/GameRoom.js';
 import type { RoomManager } from '../engine/RoomManager.js';
 import { createApiAuth } from './auth.js';
 import { registerPointsRoutes } from './points.js';
+import { registerReportsRoutes } from './reports.js';
 import type { TokenStore } from './token-store.js';
 
 function gameStateResponse(room: GameRoom, userId: string) {
@@ -39,6 +40,7 @@ export function createApiRouter(
   // room/game routes. Registered before the bot-auth routes so session
   // middleware (mounted globally in `index.ts` on `/api`) is in scope.
   registerPointsRoutes(router);
+  registerReportsRoutes(router);
 
   // --- Admin endpoints (dev only) ---
 

@@ -5,7 +5,8 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { drizzle } from 'drizzle-orm/pglite';
 import { migrate } from 'drizzle-orm/pglite/migrator';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { EmailMessage, EmailTransport } from './email.js';
 import * as schema from '../db/schema.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -15,7 +16,21 @@ describe('BetterAuth integration', () => {
   let auth: ReturnType<typeof createTestAuth>;
   let db: ReturnType<typeof drizzle<typeof schema>>;
 
-  function createTestAuth(database: ReturnType<typeof drizzle<typeof schema>>) {
+  function createTestAuth(
+    database: ReturnType<typeof drizzle<typeof schema>>,
+    transport?: EmailTransport,
+  ) {
+    const sendResetPassword = transport
+      ? async ({ user, url, token }: { user: { email: string; name?: string | null }; url: string; token: string }) => {
+          await transport.send({
+            to: user.email,
+            subject: 'TableCraft — Reset your password',
+            text: `Hi ${user.name || ''},\n\nReset your password:\n${url}\n\nLink expires in 1 hour.`,
+            html: `<p><a href="${url}">Reset</a></p>`,
+          });
+        }
+      : undefined;
+
     return betterAuth({
       secret: 'test-secret-at-least-32-characters-long-xxxxxxxxxxxxxxxx',
       baseURL: 'http://localhost:3001',
@@ -28,7 +43,11 @@ describe('BetterAuth integration', () => {
           verification: schema.verification,
         },
       }),
-      emailAndPassword: { enabled: true, requireEmailVerification: false },
+      emailAndPassword: {
+        enabled: true,
+        requireEmailVerification: false,
+        ...(sendResetPassword && { sendResetPassword }),
+      },
     });
   }
 
@@ -80,5 +99,38 @@ describe('BetterAuth integration', () => {
         body: { email: 'bob@example.com', password: 'wrongpassword' },
       }),
     ).rejects.toThrow();
+  });
+
+  it('invokes sendResetPassword hook with user email, url, and token', async () => {
+    const sendMock = vi.fn(async (_msg: EmailMessage) => {});
+    const transport: EmailTransport = { send: sendMock };
+    const authWithEmail = createTestAuth(db, transport);
+
+    await authWithEmail.api.signUpEmail({
+      body: { email: 'carol@example.com', password: 'password1234', name: 'Carol' },
+    });
+
+    await authWithEmail.api.requestPasswordReset({
+      body: { email: 'carol@example.com', redirectTo: 'http://localhost:5173/reset-password' },
+    });
+
+    expect(sendMock).toHaveBeenCalledOnce();
+    const msg = sendMock.mock.calls[0][0];
+    expect(msg.to).toBe('carol@example.com');
+    expect(msg.subject).toBe('TableCraft — Reset your password');
+    expect(msg.text).toContain('http://');
+  });
+
+  it('does not call transport when reset is requested for unknown email', async () => {
+    const sendMock = vi.fn(async (_msg: EmailMessage) => {});
+    const transport: EmailTransport = { send: sendMock };
+    const authWithEmail = createTestAuth(db, transport);
+
+    // better-auth silently ignores resets for unknown emails (security)
+    await authWithEmail.api.requestPasswordReset({
+      body: { email: 'nobody@example.com', redirectTo: 'http://localhost:5173/reset-password' },
+    });
+
+    expect(sendMock).not.toHaveBeenCalled();
   });
 });

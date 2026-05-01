@@ -12,6 +12,16 @@ export class TimerManager {
     );
   }
 
+  /** Schedule a one-shot callback by key. Cancellable via cancel(key). */
+  scheduleOnce(key: string, ms: number, callback: () => void): void {
+    this.set(key, ms, callback);
+  }
+
+  /** Cancel a pending one-shot or recurring timer by key. No-op if not found. */
+  cancel(key: string): void {
+    this.clear(key);
+  }
+
   clear(name: string): void {
     const timer = this.timers.get(name);
     if (timer) {

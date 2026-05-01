@@ -27,8 +27,15 @@ Stage 1 has added pino logger at `packages/server/src/lib/logger.ts` and helmet/
 
 ```bash
 cd /Users/bytedance/Projects/boardgames
-pnpm --filter @repo/server add @sentry/node posthog-node
-pnpm --filter @tablecraft/client add @sentry/react posthog-js
+# Node 20.11 compat: pin sentry v7 (latest v8+ requires Node 20.19+)
+# posthog-node v4 for same reason (v5+ needs newer Node)
+pnpm --filter @repo/server add @sentry/node@^7.120.0 posthog-node@^4.18.0
+pnpm --filter @tablecraft/client add @sentry/react@^7.120.0 posthog-js
+```
+
+If pnpm refuses with `ERR_PNPM_UNSUPPORTED_ENGINE`, check `.npmrc` has `engine-strict=true` (it does) — the older sentry versions should work. Check installed version with:
+```bash
+cat node_modules/@sentry/node/package.json | grep '"version"'
 ```
 
 (Check client package name from `packages/client/package.json`; if it's `@repo/client`, adjust.)

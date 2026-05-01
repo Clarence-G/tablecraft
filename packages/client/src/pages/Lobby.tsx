@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import type { Socket } from 'socket.io-client';
 import { clientRegistry } from '../../../../games/client-registry';
 import { authClient } from '../lib/authClient';
+import { track } from '../lib/analytics';
 import { usePoints } from '../hooks/usePoints';
 import { useRecentGames } from '../hooks/useRecentGames';
 import type { useRoom } from '../hooks/useRoom';
@@ -155,6 +156,7 @@ export function Lobby({
     setLoading(true);
     try {
       await join(roomId, userName);
+      track('game_joined', { roomId });
       onRoomJoined(roomId);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));

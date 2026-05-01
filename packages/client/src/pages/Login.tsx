@@ -128,12 +128,14 @@ export function Login({ onSuccess, onGoToRegister, onBack }: LoginProps) {
               />
             </div>
             <div>
-              <label
-                className="block text-xs font-semibold text-foreground mb-1"
-                htmlFor="password"
-              >
-                {t('auth.password')}
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-foreground" htmlFor="password">
+                  {t('auth.password')}
+                </label>
+                <a href="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground underline">
+                  {t('auth.forgotPassword')}
+                </a>
+              </div>
               <Input
                 id="password"
                 type="password"

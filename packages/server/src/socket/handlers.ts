@@ -2,6 +2,9 @@ import type { ClientEvents, ServerEvents } from '@repo/shared';
 import type { ServerGamePlugin } from '@repo/shared';
 import type { Server, Socket } from 'socket.io';
 import type { RoomManager } from '../engine/RoomManager';
+import { track } from '../lib/analytics';
+import { logger } from '../lib/logger';
+import { moderateChat } from '../lib/moderation';
 
 type IO = Server<ClientEvents, ServerEvents>;
 type Sock = Socket<ClientEvents, ServerEvents>;
@@ -58,6 +61,7 @@ export function setupHandlers(
       roomManager.onPlayerJoin(room.roomId, userId);
       socket.join(room.roomId);
       ack({ ok: true, data: { roomId: room.roomId } });
+      track(userId, 'room_created', { gameId: room.gameId, roomId: room.roomId });
       io.to(room.roomId).emit('room:state', room.toRoomState());
       io.emit('rooms:updated');
     });
@@ -192,6 +196,13 @@ export function setupHandlers(
       }
       if (chatRateLimit.tokens <= 0) return;
       chatRateLimit.tokens -= 1;
+
+      const mod = moderateChat(text);
+      if (!mod.ok) {
+        logger.info({ userId, match: mod.match, mod: 'moderation' }, 'chat message blocked');
+        socket.emit('chat:blocked', { reason: mod.reason });
+        return;
+      }
 
       const room = roomManager.findRoomByUser(userId);
       if (!room) return;

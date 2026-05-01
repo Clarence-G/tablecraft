@@ -54,6 +54,7 @@ export interface ServerEvents {
   'game:end': (rankings: string[]) => void;
   'chat:message': (msg: ChatMessage) => void;
   'chat:history': (msgs: ChatMessage[]) => void;
+  'chat:blocked': (payload: { reason: string | undefined }) => void;
   /**
    * Notifies lobby viewers that the waiting-room list has changed
    * (create/join/leave/status-change). Payload is empty; clients should

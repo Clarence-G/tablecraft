@@ -7,6 +7,7 @@ import { useIdentity } from './hooks/useIdentity';
 import { useRoom } from './hooks/useRoom';
 import { useSession } from './hooks/useSession';
 import { useSocket } from './hooks/useSocket';
+import { ForgotPassword } from './pages/ForgotPassword';
 import { Game } from './pages/Game';
 import { GamesAll } from './pages/GamesAll';
 import { Leaderboard } from './pages/Leaderboard';
@@ -14,6 +15,7 @@ import { Lobby } from './pages/Lobby';
 import { Login } from './pages/Login';
 import { Me } from './pages/Me';
 import { Register } from './pages/Register';
+import { ResetPassword } from './pages/ResetPassword';
 import { Room } from './pages/Room';
 import { RoomsAll } from './pages/RoomsAll';
 
@@ -96,6 +98,19 @@ export function App() {
               onSuccess={() => navigate('/')}
               onGoToLogin={() => navigate('/login')}
               onBack={() => navigate('/')}
+            />
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword onBack={() => navigate('/login')} />}
+        />
+        <Route
+          path="/reset-password"
+          element={
+            <ResetPassword
+              onSuccess={() => navigate('/login')}
+              onBack={() => navigate('/login')}
             />
           }
         />
