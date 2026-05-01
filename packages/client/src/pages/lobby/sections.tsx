@@ -56,7 +56,7 @@ interface HeroGuestProps {
 export function HeroGuest({ welcome, cta, onCreateRoom, createRoomLabel }: HeroGuestProps) {
   return (
     <HeroShell>
-      <div className="max-w-[60%] sm:max-w-[55%]">
+      <div className="relative z-10 max-w-full sm:max-w-[80%] md:max-w-[70%]">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground leading-tight">
           {welcome}
         </h1>
@@ -96,7 +96,7 @@ export function HeroLoggedIn({
 }: HeroLoggedInProps) {
   return (
     <HeroShell>
-      <div className="max-w-[60%] sm:max-w-[55%]">
+      <div className="relative z-10 max-w-full sm:max-w-[80%] md:max-w-[70%]">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground leading-tight">
           {welcome}
         </h1>
