@@ -32,6 +32,12 @@ export function useSocket(userId: string, userName: string, isGuest = true) {
         reconnectionDelayMax: 2000,
         timeout: 10000,
       });
+      // Test-only: expose the socket singleton to Playwright specs so they can
+      // simulate network drops via socket.disconnect() / socket.connect().
+      // Gated on dev/test mode — never ships to production builds.
+      if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
+        (window as unknown as { __socket?: AppSocket }).__socket = socketInstance;
+      }
     } else {
       // If the auth identity changed (guest→user, user→guest, or user swap),
       // reconnect so the server middleware re-validates against the session
