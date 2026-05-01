@@ -181,10 +181,13 @@ export class GameRoom {
       return { ok: false, error: 'Room is full' };
     }
     const seatIndex = this.players.size;
+    // Host (first player to join) is auto-ready — they don't need to press
+    // "Ready" before clicking "Start Game". Bots are also auto-ready.
+    const isHost = seatIndex === 0;
     this.players.set(playerID, {
       id: playerID,
       name,
-      ready: isBot,
+      ready: isBot || isHost,
       connected: true,
       seatIndex,
       isBot,
@@ -331,7 +334,9 @@ export class GameRoom {
     this.lastActionTime.clear();
     this.timerManager.clearAll();
     for (const [id, player] of this.players) {
-      this.players.set(id, { ...player, ready: player.isBot });
+      // Host and bots are auto-ready; regular guests must re-press Ready.
+      const isHost = id === this.hostId;
+      this.players.set(id, { ...player, ready: player.isBot || isHost });
     }
     this.lastActivityAt = Date.now();
   }

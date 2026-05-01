@@ -68,18 +68,20 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
                     </span>
                   )}
                 </div>
-                <span
-                  className={`text-sm font-medium ${player.ready ? 'text-success' : 'text-muted-foreground'}`}
-                >
-                  {player.ready ? t('room.ready') : t('room.notReady')}
-                </span>
+                {player.id === room.hostId ? null : (
+                  <span
+                    className={`text-sm font-medium ${player.ready ? 'text-success' : 'text-muted-foreground'}`}
+                  >
+                    {player.ready ? t('room.ready') : t('room.notReady')}
+                  </span>
+                )}
               </div>
             ))}
           </div>
         </div>
 
         <div className="flex flex-col gap-3">
-          {!me?.ready && (
+          {!isHost && !me?.ready && (
             <Button
               onClick={ready}
               data-testid="ready-btn"

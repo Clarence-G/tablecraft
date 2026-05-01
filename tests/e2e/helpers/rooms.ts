@@ -77,10 +77,16 @@ export async function spectateRoom(page: Page, code: string): Promise<void> {
 /**
  * Click the ready button. The button must be visible and not disabled.
  * Safe to call only when the room is in 'waiting' state.
+ *
+ * No-op when called on the host page: since the host is auto-ready on the
+ * server, the Ready button is never rendered for them. This keeps existing
+ * `await readyUp(alice); await readyUp(bob)` patterns working without
+ * having to track who the host is in every spec.
  */
 export async function readyUp(page: Page): Promise<void> {
-  await page.waitForSelector(SEL.readyBtn, { timeout: 5000 });
-  await page.click(SEL.readyBtn);
+  const btn = page.locator(SEL.readyBtn);
+  if ((await btn.count()) === 0) return; // host: auto-ready, no button
+  await btn.first().click();
 }
 
 /**
