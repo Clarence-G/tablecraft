@@ -236,10 +236,14 @@ export function registerFriendsRoutes(router: Router, roomManager: RoomManager):
     const targetId = req.params.userId;
     const [a, b] = normalizePair(userId, targetId);
 
-    await db.delete(friendships).where(
+    const deleted = await db.delete(friendships).where(
       and(eq(friendships.userA, a), eq(friendships.userB, b)),
-    );
+    ).returning();
 
-    res.status(204).end();
+    if (deleted.length === 0) {
+      return void res.status(404).json({ ok: false, error: { code: 'NOT_FOUND' } });
+    }
+
+    res.json({ ok: true });
   });
 }

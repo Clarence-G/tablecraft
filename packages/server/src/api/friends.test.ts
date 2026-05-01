@@ -324,7 +324,7 @@ describe('friends REST routes', () => {
 
   // ---- Remove friendship (DELETE) ----
 
-  it('DELETE removes accepted friendship and is idempotent', async () => {
+  it('DELETE removes accepted friendship and returns JSON envelope', async () => {
     const alice = await signUp('alice7@test.com', 'password123', 'Alice7');
     const bob = await signUp('bob7@test.com', 'password123', 'Bob7');
 
@@ -340,22 +340,86 @@ describe('friends REST routes', () => {
       body: JSON.stringify({ userId: alice.userId }),
     });
 
-    // Alice removes Bob
+    // Alice removes Bob — must return 200 + JSON envelope so the client
+    // (which unconditionally resp.json()'s every response) can resolve and
+    // trigger the follow-up load(). A bare 204 caused Bug 1.
     const delResp = await fetch(`${baseUrl}/api/friends/${bob.userId}`, {
       method: 'DELETE',
       headers: { cookie: alice.cookie },
     });
-    expect(delResp.status).toBe(204);
+    expect(delResp.status).toBe(200);
+    const delBody = await delResp.json();
+    expect(delBody).toEqual({ ok: true });
 
     const rows = await db.select().from(schema.friendships);
     expect(rows).toHaveLength(0);
 
-    // Bob can also delete (idempotent: already gone, still 204)
+    // Re-delete on an already-removed friendship → 404 with JSON envelope
     const delResp2 = await fetch(`${baseUrl}/api/friends/${alice.userId}`, {
       method: 'DELETE',
       headers: { cookie: bob.cookie },
     });
-    expect(delResp2.status).toBe(204);
+    expect(delResp2.status).toBe(404);
+    const delBody2 = await delResp2.json();
+    expect(delBody2.ok).toBe(false);
+    expect(delBody2.error.code).toBe('NOT_FOUND');
+  });
+
+  it('DELETE also cancels a pending outgoing request', async () => {
+    const alice = await signUp('alice7b@test.com', 'password123', 'Alice7b');
+    const bob = await signUp('bob7b@test.com', 'password123', 'Bob7b');
+
+    await fetch(`${baseUrl}/api/friends/request`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie: alice.cookie },
+      body: JSON.stringify({ targetUserId: bob.userId }),
+    });
+
+    const delResp = await fetch(`${baseUrl}/api/friends/${bob.userId}`, {
+      method: 'DELETE',
+      headers: { cookie: alice.cookie },
+    });
+    expect(delResp.status).toBe(200);
+    expect((await db.select().from(schema.friendships))).toHaveLength(0);
+  });
+
+  // ---- Bug 2 regression: decline → re-request creates a new pending row ----
+
+  it('after decline, re-request from same sender inserts a fresh pending row', async () => {
+    const alice = await signUp('alice9@test.com', 'password123', 'Alice9');
+    const bob = await signUp('bob9@test.com', 'password123', 'Bob9');
+
+    // Alice → Bob
+    await fetch(`${baseUrl}/api/friends/request`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie: alice.cookie },
+      body: JSON.stringify({ targetUserId: bob.userId }),
+    });
+
+    // Bob declines — row deleted
+    await fetch(`${baseUrl}/api/friends/decline`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie: bob.cookie },
+      body: JSON.stringify({ userId: alice.userId }),
+    });
+    expect(await db.select().from(schema.friendships)).toHaveLength(0);
+
+    // Alice re-requests → server must accept (no cooldown) and Alice's GET
+    // /api/friends must surface Bob under pending.outgoing
+    const reqAgain = await fetch(`${baseUrl}/api/friends/request`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie: alice.cookie },
+      body: JSON.stringify({ targetUserId: bob.userId }),
+    });
+    expect(reqAgain.status).toBe(200);
+    expect((await reqAgain.json()).data.status).toBe('pending');
+
+    const aliceList = await fetch(`${baseUrl}/api/friends`, { headers: { cookie: alice.cookie } });
+    const aliceData = (await aliceList.json()).data;
+    expect(aliceData.pending.outgoing).toHaveLength(1);
+    expect(aliceData.pending.outgoing[0].userId).toBe(bob.userId);
+    expect(aliceData.pending.incoming).toHaveLength(0);
+    expect(aliceData.friends).toHaveLength(0);
   });
 
   // ---- 409 when requesting an already-accepted friend ----

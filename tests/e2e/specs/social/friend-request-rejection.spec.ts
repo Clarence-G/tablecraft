@@ -100,9 +100,14 @@ test.describe('Social — friend request rejection', () => {
       await alicePanelR
         .locator(`text=${zh.lobbyPanel.friends.toast.requestSent}`)
         .waitFor({ timeout: 3000 });
-      // Outgoing request appears again
+      // Outgoing SECTION reappears with Bob in it. The outgoingHeader string
+      // also appears as an italic relation-tag inside the search-result row,
+      // so match on a <section> that contains both the header and bob.name.
       await expect(
-        alicePanelR.locator(`text=${zh.lobbyPanel.friends.outgoingHeader}`),
+        alicePanelR
+          .locator('section')
+          .filter({ hasText: zh.lobbyPanel.friends.outgoingHeader })
+          .filter({ hasText: bob.name }),
       ).toBeVisible({ timeout: 5000 });
 
       await ctx1.close();
