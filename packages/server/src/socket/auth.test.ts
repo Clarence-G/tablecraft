@@ -1,28 +1,22 @@
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { PGlite } from '@electric-sql/pglite';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { drizzle } from 'drizzle-orm/pglite';
-import { migrate } from 'drizzle-orm/pglite/migrator';
 import { Server } from 'socket.io';
 import { type Socket, io as ioClient } from 'socket.io-client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as schema from '../db/schema.js';
+import { createTestDb, type TestDb } from '../db/testing.js';
 import { setupAuth } from './auth.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const MIGRATIONS_DIR = path.resolve(__dirname, '../../drizzle');
 
 describe('socket setupAuth', () => {
   let httpServer: ReturnType<typeof createServer>;
   let io: Server;
   let port: number;
   let auth: ReturnType<typeof buildAuth>;
+  let testDb: TestDb;
 
-  function buildAuth(database: ReturnType<typeof drizzle<typeof schema>>) {
+  function buildAuth(database: TestDb['db']) {
     return betterAuth({
       secret: 'test-secret-at-least-32-characters-long-xxxxxxxxxxxxxxxx',
       baseURL: 'http://localhost:3001',
@@ -40,10 +34,8 @@ describe('socket setupAuth', () => {
   }
 
   beforeEach(async () => {
-    const client = new PGlite();
-    const db = drizzle({ client, schema });
-    await migrate(db, { migrationsFolder: MIGRATIONS_DIR });
-    auth = buildAuth(db);
+    testDb = await createTestDb();
+    auth = buildAuth(testDb.db);
 
     httpServer = createServer();
     io = new Server(httpServer);
@@ -63,6 +55,7 @@ describe('socket setupAuth', () => {
   afterEach(async () => {
     io.close();
     await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+    await testDb.cleanup();
   });
 
   function connect(authData: Record<string, unknown>, cookieHeader?: string): Promise<Socket> {

@@ -13,6 +13,11 @@ playwright-report/
 .ace-tool/
 .superpowers/
 
+# Env files (never commit secrets)
+.env
+.env.local
+.env.*.local
+
 # Build artifacts in games/
 games/**/*.js
 games/**/*.js.map

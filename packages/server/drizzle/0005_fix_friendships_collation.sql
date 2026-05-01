@@ -1,0 +1,2 @@
+ALTER TABLE "friendships" DROP CONSTRAINT "friendships_normalized_check";--> statement-breakpoint
+ALTER TABLE "friendships" ADD CONSTRAINT "friendships_normalized_check" CHECK (user_a COLLATE "C" < user_b COLLATE "C");

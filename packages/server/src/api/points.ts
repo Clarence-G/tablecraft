@@ -19,8 +19,8 @@ function sendError(res: Response, status: number, code: string, message: string)
 
 /**
  * Detect a PG unique-violation (SQLSTATE 23505) on the `user.claimed_guest_id`
- * column. PGlite's pg-protocol errors expose `code` and `constraint` fields
- * directly; some wrapper layers nest the original on `cause`. We check both,
+ * column. postgres-js exposes `code` and `constraint_name` fields directly;
+ * some wrapper layers nest the original on `cause`. We check both,
  * then fall back to a message substring as belt-and-suspenders.
  */
 function isClaimedGuestIdUniqueViolation(err: unknown): boolean {

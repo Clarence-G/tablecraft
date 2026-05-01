@@ -1,29 +1,28 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { PGlite } from '@electric-sql/pglite';
-import { drizzle } from 'drizzle-orm/pglite';
-import { migrate } from 'drizzle-orm/pglite/migrator';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as schema from '../db/schema';
+import { createTestDb, type TestDb } from '../db/testing.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const MIGRATIONS = path.resolve(__dirname, '../../drizzle');
 
 // We import recordPoints dynamically after mocking the db module so each test
 // gets a fresh PGlite-backed db.
 let recordPoints: typeof import('./ledger.js').recordPoints;
 
 describe('recordPoints', () => {
-  let db: ReturnType<typeof drizzle<typeof schema>>;
+  let db: TestDb['db'];
+  let testDb: TestDb;
 
   beforeEach(async () => {
-    const client = new PGlite();
-    db = drizzle({ client, schema });
-    await migrate(db, { migrationsFolder: MIGRATIONS });
+    testDb = await createTestDb();
+
+    db = testDb.db;
 
     vi.resetModules();
     vi.doMock('../db/index.js', () => ({ db }));
     ({ recordPoints } = await import('./ledger.js'));
+  });
+
+  afterEach(async () => {
+    await testDb.cleanup();
   });
 
   it('writes a win row for a logged-in user', async () => {
@@ -114,13 +113,14 @@ describe('recordPoints', () => {
 });
 
 describe('ensureDailyCheckin', () => {
-  let db: ReturnType<typeof drizzle<typeof schema>>;
+  let db: TestDb['db'];
+  let testDb: TestDb;
   let ensureDailyCheckin: typeof import('./ledger.js').ensureDailyCheckin;
 
   beforeEach(async () => {
-    const client = new PGlite();
-    db = drizzle({ client, schema });
-    await migrate(db, { migrationsFolder: MIGRATIONS });
+    testDb = await createTestDb();
+
+    db = testDb.db;
 
     vi.resetModules();
     vi.doMock('../db/index.js', () => ({ db }));

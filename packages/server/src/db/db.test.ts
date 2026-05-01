@@ -1,22 +1,19 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { PGlite } from '@electric-sql/pglite';
 import { eq } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/pglite';
-import { migrate } from 'drizzle-orm/pglite/migrator';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as schema from './schema';
+import { createTestDb, type TestDb } from './testing';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const MIGRATIONS = path.join(__dirname, '../../drizzle');
-
-describe('db: PGlite + drizzle pg-core schema', () => {
-  let db: ReturnType<typeof drizzle<typeof schema>>;
+describe('db: Postgres + drizzle pg-core schema', () => {
+  let testDb: TestDb;
+  let db: TestDb['db'];
 
   beforeEach(async () => {
-    const client = new PGlite();
-    db = drizzle({ client, schema });
-    await migrate(db, { migrationsFolder: MIGRATIONS });
+    testDb = await createTestDb();
+    db = testDb.db;
+  });
+
+  afterEach(async () => {
+    await testDb.cleanup();
   });
 
   it('round-trips a users row with id/name/createdAt', async () => {

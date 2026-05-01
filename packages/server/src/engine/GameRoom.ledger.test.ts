@@ -1,16 +1,10 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { PGlite } from '@electric-sql/pglite';
 import type { ActionResult, GameContext, GameLogic, GameMeta } from '@repo/shared';
-import { drizzle } from 'drizzle-orm/pglite';
-import { migrate } from 'drizzle-orm/pglite/migrator';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { vi } from 'vitest';
 import { z } from 'zod';
 import * as schema from '../db/schema';
+import { createTestDb, type TestDb } from '../db/testing.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const MIGRATIONS = path.resolve(__dirname, '../../drizzle');
 
 // Dynamically imported after mocking db so GameRoom pulls the test db too.
 let GameRoom: typeof import('./GameRoom.js').GameRoom;
@@ -50,16 +44,21 @@ const meta: GameMeta = {
 };
 
 describe('GameRoom END_GAME → points_ledger integration', () => {
-  let db: ReturnType<typeof drizzle<typeof schema>>;
+  let db: TestDb['db'];
+  let testDb: TestDb;
 
   beforeEach(async () => {
-    const client = new PGlite();
-    db = drizzle({ client, schema });
-    await migrate(db, { migrationsFolder: MIGRATIONS });
+    testDb = await createTestDb();
+
+    db = testDb.db;
 
     vi.resetModules();
     vi.doMock('../db/index.js', () => ({ db }));
     ({ GameRoom } = await import('./GameRoom.js'));
+  });
+
+  afterEach(async () => {
+    await testDb.cleanup();
   });
 
   it('writes a win row only for the winner, skips bots, routes guest vs user', async () => {
@@ -84,10 +83,14 @@ describe('GameRoom END_GAME → points_ledger integration', () => {
 
     room.handleAction('userA', { type: 'end' }, 1);
 
-    // ledger writes are fire-and-forget — wait a microtask tick
-    await new Promise((r) => setImmediate(r));
-
-    const rows = await db.select().from(schema.pointsLedger).orderBy(schema.pointsLedger.reason);
+    // ledger writes are fire-and-forget — poll until both rows land
+    // (postgres-js requires real network round-trip, not just a microtask)
+    let rows: Array<typeof schema.pointsLedger.$inferSelect> = [];
+    for (let i = 0; i < 50; i++) {
+      rows = await db.select().from(schema.pointsLedger).orderBy(schema.pointsLedger.reason);
+      if (rows.length >= 2) break;
+      await new Promise((r) => setTimeout(r, 20));
+    }
     // 2 rows: winner userA (win, 10) + loser guestB (loss, 0). Bot is skipped.
     expect(rows).toHaveLength(2);
     const win = rows.find((r) => r.reason === 'win');

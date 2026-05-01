@@ -1,24 +1,23 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { PGlite } from '@electric-sql/pglite';
-import { drizzle } from 'drizzle-orm/pglite';
-import { migrate } from 'drizzle-orm/pglite/migrator';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as schema from '../db/schema.js';
+import { createTestDb, type TestDb } from '../db/testing.js';
 import { TokenStore } from './token-store.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const MIGRATIONS = path.resolve(__dirname, '../../drizzle');
 
 describe('TokenStore', () => {
-  let db: ReturnType<typeof drizzle<typeof schema>>;
+  let db: TestDb['db'];
+  let testDb: TestDb;
   let tokenStore: TokenStore;
 
   beforeEach(async () => {
-    const client = new PGlite();
-    db = drizzle({ client, schema });
-    await migrate(db, { migrationsFolder: MIGRATIONS });
+    testDb = await createTestDb();
+
+    db = testDb.db;
     tokenStore = new TokenStore(db);
+  });
+
+  afterEach(async () => {
+    await testDb.cleanup();
   });
 
   it('generate returns plaintext token and userId', async () => {

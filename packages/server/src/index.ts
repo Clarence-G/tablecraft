@@ -34,8 +34,8 @@ async function main() {
     logger.fatal({ mod: 'server', err }, '[fatal] Database initialization failed');
     logger.fatal(
       { mod: 'server' },
-      'If this is pglite WASM abort, check Node version (<25) and ' +
-        '`packages/server/data/pgdata/` integrity. The server did NOT start.',
+      'Check DATABASE_URL connection and that the Postgres server is reachable. ' +
+        'The server did NOT start.',
     );
     process.exit(1);
   }
@@ -140,8 +140,7 @@ async function main() {
     });
   });
 
-  // Graceful shutdown. Without this, SIGKILL / unhandled SIGTERM can leave
-  // pglite's dataDir mid-write, corrupting it so the next boot has to rotate.
+  // Graceful shutdown for HTTP server and DB pool.
   let shuttingDown = false;
   async function shutdown(signal: string) {
     if (shuttingDown) return;

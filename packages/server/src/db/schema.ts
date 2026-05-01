@@ -279,7 +279,11 @@ export const friendships = pgTable(
     userBIdx: index('idx_friendships_user_b').on(t.userB),
     check: check(
       'friendships_normalized_check',
-      sql`user_a < user_b`,
+      // Use COLLATE "C" for pure codepoint comparison, matching the
+      // JS-side normalizePair() which sorts by Unicode codepoints.
+      // Default libc locale (e.g. en_US.UTF-8) is case-insensitive and
+      // disagrees with JS — 'T' < 'q' is true in JS but false in en_US.
+      sql`user_a COLLATE "C" < user_b COLLATE "C"`,
     ),
   }),
 );

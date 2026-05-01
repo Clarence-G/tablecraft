@@ -1,23 +1,18 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { PGlite } from '@electric-sql/pglite';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { drizzle } from 'drizzle-orm/pglite';
-import { migrate } from 'drizzle-orm/pglite/migrator';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EmailMessage, EmailTransport } from './email.js';
 import * as schema from '../db/schema.js';
+import { createTestDb, type TestDb } from '../db/testing.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const MIGRATIONS_DIR = path.resolve(__dirname, '../../drizzle');
 
 describe('BetterAuth integration', () => {
   let auth: ReturnType<typeof createTestAuth>;
-  let db: ReturnType<typeof drizzle<typeof schema>>;
+  let db: TestDb['db'];
+  let testDb: TestDb;
 
   function createTestAuth(
-    database: ReturnType<typeof drizzle<typeof schema>>,
+    database: TestDb['db'],
     transport?: EmailTransport,
   ) {
     const sendResetPassword = transport
@@ -52,10 +47,14 @@ describe('BetterAuth integration', () => {
   }
 
   beforeEach(async () => {
-    const client = new PGlite();
-    db = drizzle({ client, schema });
-    await migrate(db, { migrationsFolder: MIGRATIONS_DIR });
+    testDb = await createTestDb();
+
+    db = testDb.db;
     auth = createTestAuth(db);
+  });
+
+  afterEach(async () => {
+    await testDb.cleanup();
   });
 
   it('signs up a new user via email + password and persists them', async () => {

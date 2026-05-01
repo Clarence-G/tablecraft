@@ -1,21 +1,15 @@
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { PGlite } from '@electric-sql/pglite';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { toNodeHandler } from 'better-auth/node';
-import { drizzle } from 'drizzle-orm/pglite';
-import { migrate } from 'drizzle-orm/pglite/migrator';
 import express, { Router } from 'express';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as schema from '../db/schema.js';
+import { createTestDb, type TestDb } from '../db/testing.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const MIGRATIONS_DIR = path.resolve(__dirname, '../../drizzle');
 
-function buildAuth(database: ReturnType<typeof drizzle<typeof schema>>) {
+function buildAuth(database: TestDb['db']) {
   return betterAuth({
     secret: 'test-secret-at-least-32-characters-long-xxxxxxxxxxxxxxxx',
     baseURL: 'http://localhost:0',
@@ -37,15 +31,16 @@ const mockRoomManager = {
 } as unknown as import('../engine/RoomManager.js').RoomManager;
 
 describe('friends REST routes', () => {
-  let db: ReturnType<typeof drizzle<typeof schema>>;
+  let db: TestDb['db'];
+  let testDb: TestDb;
   let httpServer: ReturnType<typeof createServer>;
   let baseUrl: string;
   let registerFriendsRoutes: typeof import('./friends.js').registerFriendsRoutes;
 
   beforeEach(async () => {
-    const client = new PGlite();
-    db = drizzle({ client, schema });
-    await migrate(db, { migrationsFolder: MIGRATIONS_DIR });
+    testDb = await createTestDb();
+
+    db = testDb.db;
 
     const { vi } = await import('vitest');
     vi.resetModules();
@@ -71,6 +66,7 @@ describe('friends REST routes', () => {
 
   afterEach(async () => {
     await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+    await testDb.cleanup();
   });
 
   async function signUp(email: string, password: string, name: string) {
