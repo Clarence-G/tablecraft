@@ -31,6 +31,7 @@ interface LobbyProps {
   roomCtx: RoomCtx;
   onRoomCreated: (roomId: string) => void;
   onRoomJoined: (roomId: string) => void;
+  onRoomSpectated: (roomId: string) => void;
   onGoToLogin: () => void;
   onGoToRegister: () => void;
   onGoToAllRooms: () => void;
@@ -46,6 +47,7 @@ export function Lobby({
   roomCtx,
   onRoomCreated,
   onRoomJoined,
+  onRoomSpectated,
   onGoToLogin,
   onGoToRegister,
   onGoToAllRooms,
@@ -298,7 +300,9 @@ export function Lobby({
                     key={r.roomId}
                     room={r}
                     onJoin={() => handleJoinRoom(r.roomId)}
+                    onSpectate={() => onRoomSpectated(r.roomId)}
                     joinLabel={t('lobby.join')}
+                    spectateLabel={t('lobby.room.spectate')}
                     disabled={loading || !socketReady}
                   />
                 ))}

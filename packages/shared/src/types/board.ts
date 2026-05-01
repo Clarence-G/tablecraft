@@ -10,4 +10,6 @@ export interface BoardProps<TView, TAction = unknown> {
   isSending: boolean;
   lastReject: string | null;
   notifications: unknown[];
+  /** True when this socket is a spectator, not a seated player. Interactive controls should be hidden. */
+  isSpectator?: boolean;
 }

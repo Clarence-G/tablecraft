@@ -907,6 +907,36 @@ export const logic: GameLogic<HoldemState, Action, PlayerView> = {
       showdownResult: state.showdownResult,
     };
   },
+
+  getSpectatorView(state): PlayerView {
+    const isShowdown = state.handPhase === 'showdown' || state.handPhase === 'hand_over';
+    const players = state.players.map((p) => ({
+      id: p.id,
+      chips: p.chips,
+      currentBet: p.currentBet,
+      status: p.status,
+      cardCount: p.holeCards ? 2 : 0,
+      holeCards: isShowdown ? p.holeCards : null,
+    }));
+    return {
+      myHoleCards: null,
+      communityCards: state.communityCards,
+      pot: state.pot,
+      players,
+      currentPlayer: state.players[state.currentPlayerIdx]?.id ?? '',
+      bettingRound: state.bettingRound,
+      handPhase: state.handPhase,
+      gamePhase: state.gamePhase,
+      bigBlind: state.bigBlind,
+      minRaise: state.minRaise,
+      myChips: 0,
+      myCurrentBet: 0,
+      winner: state.winner,
+      handNumber: state.handNumber,
+      dealerIdx: state.dealerIdx,
+      showdownResult: state.showdownResult,
+    };
+  },
 };
 
 function buildResult(state: HoldemState, actionLog?: EngineEvent): ActionResult<HoldemState> {

@@ -72,6 +72,9 @@ export class GameRoom {
   /** Players currently holding an open socket connection. */
   connectedPlayerIds: Set<string> = new Set();
 
+  /** userId → socketId for active spectators. */
+  spectators: Map<string, string> = new Map();
+
   private broadcast: BroadcastFn | null = null;
 
   constructor(gameId: string, meta: GameMeta, config?: unknown, logic?: GameLogic) {
@@ -293,6 +296,30 @@ export class GameRoom {
     this.connectedPlayerIds.add(playerID);
   }
 
+  addSpectator(userId: string, socketId: string): void {
+    this.spectators.set(userId, socketId);
+  }
+
+  removeSpectator(userId: string): void {
+    this.spectators.delete(userId);
+  }
+
+  /** Sanitized view safe for spectators — no private hand/card/role info. */
+  spectatorView(): unknown {
+    if (this.logic.getSpectatorView) {
+      return this.logic.getSpectatorView(this.state);
+    }
+    const state = this.state as Record<string, unknown>;
+    if (!Array.isArray(state.players)) return state;
+    const PRIVATE_KEYS = ['hand', 'hole', 'holeCards', 'role', 'word', 'secret'];
+    const players = (state.players as Array<Record<string, unknown>>).map((p) => {
+      const cleaned = { ...p };
+      for (const key of PRIVATE_KEYS) delete cleaned[key];
+      return cleaned;
+    });
+    return { ...state, players };
+  }
+
   restart(): void {
     this.status = 'waiting';
     this.state = null;
@@ -368,6 +395,7 @@ export class GameRoom {
       maxPlayers: this.ctx.players.length || this.players.size,
       config: this.config,
       createdAt: this.createdAt,
+      spectatorCount: this.spectators.size,
     };
   }
 
@@ -380,6 +408,7 @@ export class GameRoom {
       hostName: host?.name ?? '',
       playerCount: this.players.size,
       maxPlayers: this.meta.maxPlayers,
+      status: this.status,
     };
   }
 
@@ -524,6 +553,9 @@ export class GameRoom {
       views.set(pid, { ...(view as object), _connected: connected });
     }
     this.broadcast(this.roomId, views);
+    if (this.spectators.size > 0) {
+      this.emitSpectators('spectator:state', this.spectatorView());
+    }
   }
 
   /** Persist current state to the rooms table. Fire-and-forget; never throws. */
@@ -578,4 +610,7 @@ export class GameRoom {
 
   // emitToPlayer is set externally by socket handlers
   emitToPlayer: (playerID: string, event: string, data?: unknown) => void = () => {};
+
+  // emitSpectators is set externally by socket handlers
+  emitSpectators: (event: string, data: unknown) => void = () => {};
 }

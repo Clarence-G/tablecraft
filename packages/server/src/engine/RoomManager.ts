@@ -85,6 +85,18 @@ export class RoomManager {
     return result;
   }
 
+  /** Returns waiting rooms (joinable) and playing rooms (spectatable), excluding finished. */
+  listActiveRooms(gameId?: string): RoomSummary[] {
+    const result: RoomSummary[] = [];
+    for (const room of this.rooms.values()) {
+      if (room.status === 'finished') continue;
+      if (room.status === 'waiting' && room.players.size >= room.meta.maxPlayers) continue;
+      if (gameId && room.gameId !== gameId) continue;
+      result.push(room.toRoomSummary());
+    }
+    return result;
+  }
+
   destroy(): void {
     clearInterval(this.cleanupTimer);
   }

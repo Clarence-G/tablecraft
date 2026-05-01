@@ -1,6 +1,9 @@
 import { GameChatProvider } from '@repo/game-ui/chat';
 import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import type { ClientEvents, ServerEvents } from '@repo/shared';
+import type { Socket } from 'socket.io-client';
 import { useChat } from './hooks/useChat';
 import { useGame } from './hooks/useGame';
 import { useIdentity } from './hooks/useIdentity';
@@ -18,6 +21,7 @@ import { Register } from './pages/Register';
 import { ResetPassword } from './pages/ResetPassword';
 import { Room } from './pages/Room';
 import { RoomsAll } from './pages/RoomsAll';
+import { SpectatorView } from './pages/SpectatorView';
 
 type UseRoomRet = ReturnType<typeof useRoom>;
 type UseGameRet = ReturnType<typeof useGame>;
@@ -33,6 +37,7 @@ export function App() {
   const actorUserName = session.data?.user?.name ?? userName;
   const isGuest = !session.data?.user;
   const { socket, connected } = useSocket(actorUserId, actorUserName, isGuest);
+  const { t } = useTranslation('common');
 
   const roomCtx = useRoom(socket);
   const game = useGame(socket);
@@ -40,6 +45,28 @@ export function App() {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Resume banner: shown when socket reconnects and user has an active room
+  // but they're currently on the lobby (not already in a room route).
+  const [resumeRoomId, setResumeRoomId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleConnect = () => {
+      socket.emit('room:resume', (result) => {
+        if (!result.ok || !result.data) return;
+        const { roomId } = result.data;
+        if (!window.location.pathname.startsWith(`/rooms/${roomId}`)) {
+          setResumeRoomId(roomId);
+        }
+      });
+    };
+    socket.on('connect', handleConnect);
+    if (socket.connected) handleConnect();
+    return () => {
+      socket.off('connect', handleConnect);
+    };
+  }, [socket]);
 
   // Keep the URL in sync with server-driven room status changes for users
   // already inside a room route:
@@ -61,6 +88,31 @@ export function App() {
 
   return (
     <GameChatProvider value={{ messages: chat.messages, send: chat.send, myId: actorUserId }}>
+      {/* Resume banner: shows on lobby when socket reconnects with an active room */}
+      {resumeRoomId && location.pathname === '/' && (
+        <div className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-center px-4 pt-3 pointer-events-none">
+          <div className="pointer-events-auto flex items-center gap-3 bg-card border-2 border-foreground rounded-[12px] shadow-card px-4 py-2.5 max-w-sm w-full">
+            <span className="text-sm font-semibold flex-1">{t('room.resumeBanner.title')}</span>
+            <button
+              type="button"
+              onClick={() => {
+                navigate(`/rooms/${resumeRoomId}`);
+                setResumeRoomId(null);
+              }}
+              className="text-xs font-bold border-2 border-foreground bg-foreground text-background rounded-[8px] px-3 py-1 hover:-translate-y-0.5 transition-all"
+            >
+              {t('room.resumeBanner.cta')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setResumeRoomId(null)}
+              className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t('room.resumeBanner.dismiss')}
+            </button>
+          </div>
+        </div>
+      )}
       <Routes>
         <Route
           path="/"
@@ -78,6 +130,7 @@ export function App() {
               onGoToMe={() => navigate('/me')}
               onRoomCreated={(id) => navigate(`/rooms/${id}`)}
               onRoomJoined={(id) => navigate(`/rooms/${id}`)}
+              onRoomSpectated={(id) => navigate(`/rooms/${id}/watch`)}
             />
           }
         />
@@ -143,6 +196,7 @@ export function App() {
                 await roomCtx.join(targetRoomId, actorUserName);
                 navigate(`/rooms/${targetRoomId}`);
               }}
+              onSpectateRoom={(targetRoomId) => navigate(`/rooms/${targetRoomId}/watch`)}
             />
           }
         />
@@ -167,6 +221,16 @@ export function App() {
               roomCtx={roomCtx}
               game={game}
               socketReady={connected}
+            />
+          }
+        />
+        <Route
+          path="/rooms/:roomId/watch"
+          element={
+            <SpectatorRoute
+              userId={actorUserId}
+              socket={socket}
+              onLeave={() => navigate('/')}
             />
           }
         />
@@ -240,6 +304,20 @@ function GameRoute({
       }}
     />
   );
+}
+
+function SpectatorRoute({
+  userId,
+  socket,
+  onLeave,
+}: {
+  userId: string;
+  socket: Socket<ServerEvents, ClientEvents> | null;
+  onLeave: () => void;
+}) {
+  const { roomId } = useParams<{ roomId: string }>();
+  if (!roomId) return <Navigate to="/" replace />;
+  return <SpectatorView socket={socket} userId={userId} roomId={roomId} onLeave={onLeave} />;
 }
 
 /**

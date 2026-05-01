@@ -36,6 +36,15 @@ export interface ClientEvents {
 
   'room:list': (gameId: string, ack: (rooms: RoomSummary[]) => void) => void;
 
+  /** Explicit resume: returns the roomId the user is currently seated in, or null. */
+  'room:resume': (ack: (result: Ack<{ roomId: string } | null>) => void) => void;
+
+  /** Join a room as a spectator. Only allowed for rooms in 'playing' or 'finished' status. */
+  'room:spectate': (roomId: string, ack: (result: Ack<{ state: unknown }>) => void) => void;
+
+  /** Leave spectator mode. */
+  'room:unspectate': () => void;
+
   'chat:send': (text: string) => void;
 }
 
@@ -49,6 +58,8 @@ export interface ServerEvents {
    */
   'room:left': () => void;
   'game:state': (view: unknown) => void;
+  /** Spectator-only view, sent after each state change instead of game:state. */
+  'spectator:state': (view: unknown) => void;
   'game:reject': (reason: string) => void;
   'game:notify': (payload: unknown) => void;
   'game:end': (rankings: string[]) => void;

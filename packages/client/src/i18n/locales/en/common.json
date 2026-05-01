@@ -44,7 +44,10 @@
     "resultLoss": "Lost",
     "resultDraw": "Draw",
     "comingSoon": "More games coming soon",
-    "connectingHint": "Connecting to server…"
+    "connectingHint": "Connecting to server…",
+    "room": {
+      "spectate": "Watch"
+    }
   },
   "room": {
     "connecting": "Connecting...",
@@ -57,7 +60,12 @@
     "needPlayers": "Need at least {{count}} players",
     "startGame": "Start Game",
     "playAgain": "Play Again",
-    "leave": "Leave"
+    "leave": "Leave",
+    "resumeBanner": {
+      "title": "You have a game in progress",
+      "cta": "Return to room",
+      "dismiss": "Dismiss"
+    }
   },
   "game": {
     "loading": "Loading...",
@@ -151,6 +159,37 @@
       "signInCta": "Sign in / Sign up",
       "loggedInHint": "Open profile",
       "signOut": "Sign out"
+    },
+    "friends": {
+      "tabLabel": "Friends",
+      "searchPlaceholder": "Search by username...",
+      "incomingHeader": "Incoming requests",
+      "outgoingHeader": "Sent requests",
+      "friendsHeader": "Friends",
+      "empty": {
+        "title": "No friends yet",
+        "helper": "Search for a username to send a friend request"
+      },
+      "guestEmpty": "Sign in to see friends",
+      "status": {
+        "online": "Online",
+        "offline": "Offline"
+      },
+      "actions": {
+        "add": "Add",
+        "accept": "Accept",
+        "decline": "Decline",
+        "cancel": "Cancel",
+        "remove": "Remove",
+        "joinRoom": "Join room"
+      },
+      "toast": {
+        "requestSent": "Friend request sent",
+        "accepted": "Friend request accepted",
+        "declined": "Friend request declined",
+        "removed": "Friend removed",
+        "error": "Action failed, please try again"
+      }
     }
   },
   "guest": {

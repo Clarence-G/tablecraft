@@ -25,6 +25,7 @@ export interface RoomState {
   maxPlayers: number;
   config?: unknown;
   createdAt: number;
+  spectatorCount: number;
 }
 
 export interface RoomSummary {
@@ -34,4 +35,5 @@ export interface RoomSummary {
   hostName: string;
   playerCount: number;
   maxPlayers: number;
+  status: RoomStatus;
 }

@@ -44,7 +44,10 @@
     "resultLoss": "输了",
     "resultDraw": "平局",
     "comingSoon": "更多游戏即将上线",
-    "connectingHint": "正在连接服务器…"
+    "connectingHint": "正在连接服务器…",
+    "room": {
+      "spectate": "围观"
+    }
   },
   "room": {
     "connecting": "连接中...",
@@ -57,7 +60,12 @@
     "needPlayers": "至少需要 {{count}} 名玩家",
     "startGame": "开始游戏",
     "playAgain": "再来一局",
-    "leave": "离开"
+    "leave": "离开",
+    "resumeBanner": {
+      "title": "你有一局游戏正在进行中",
+      "cta": "返回房间",
+      "dismiss": "忽略"
+    }
   },
   "game": {
     "loading": "加载中...",
@@ -151,6 +159,37 @@
       "signInCta": "登录 / 注册",
       "loggedInHint": "点击进入个人中心",
       "signOut": "登出"
+    },
+    "friends": {
+      "tabLabel": "好友",
+      "searchPlaceholder": "搜索用户名...",
+      "incomingHeader": "收到的请求",
+      "outgoingHeader": "发出的请求",
+      "friendsHeader": "好友",
+      "empty": {
+        "title": "还没有好友",
+        "helper": "搜索用户名，发送好友请求吧"
+      },
+      "guestEmpty": "登录后查看好友",
+      "status": {
+        "online": "在线",
+        "offline": "离线"
+      },
+      "actions": {
+        "add": "添加",
+        "accept": "接受",
+        "decline": "拒绝",
+        "cancel": "取消",
+        "remove": "删除",
+        "joinRoom": "加入房间"
+      },
+      "toast": {
+        "requestSent": "好友请求已发送",
+        "accepted": "已接受好友请求",
+        "declined": "已拒绝好友请求",
+        "removed": "已删除好友",
+        "error": "操作失败，请重试"
+      }
     }
   },
   "guest": {

@@ -1,20 +1,29 @@
 import Avatar from 'boring-avatars';
 import {
+  Check,
   History,
   PanelRightClose,
   PanelRightOpen,
+  Search,
+  Trash2,
   Trophy,
   User as UserIcon,
+  UserMinus,
+  UserPlus,
+  Users,
+  X,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LeaderboardRow } from '@repo/game-ui/leaderboard';
 import { apiFetch } from '../../lib/api';
 import { useRecentGames, type RecentGame } from '../../hooks/useRecentGames';
+import { useFriends, type FriendEntry, type PendingEntry, type SearchUser } from '../../hooks/useFriends';
 
 const STORAGE_KEY = 'lobbysidepanel.expanded';
 
-type TabId = 'leaderboard' | 'profile' | 'recent';
+type TabId = 'leaderboard' | 'friends' | 'profile' | 'recent';
 
 interface SessionUser {
   id: string;
@@ -367,6 +376,281 @@ function ProfileTab({
   );
 }
 
+// ---------- Friends tab ----------
+
+function FriendsTab({ authedUser }: { authedUser: SessionUser | null }) {
+  const { t } = useTranslation('common');
+  const navigate = useNavigate();
+  const { data, sendRequest, acceptRequest, declineRequest, removeFriend, searchUsers } = useFriends();
+  const [query, setQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
+  const [notice, setNotice] = useState('');
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    clearTimeout(debounceRef.current);
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const results = await searchUsers(query);
+        setSearchResults(results);
+      } catch {
+        setSearchResults([]);
+      }
+    }, 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [query, searchUsers]);
+
+  function showNotice(msg: string) {
+    setNotice(msg);
+    setTimeout(() => setNotice(''), 3000);
+  }
+
+  async function handleAdd(userId: string) {
+    try {
+      await sendRequest(userId);
+      showNotice(t('lobbyPanel.friends.toast.requestSent'));
+      setSearchResults((prev) => prev.map((u) => u.userId === userId ? { ...u, relation: 'pending_out' as const } : u));
+    } catch {
+      showNotice(t('lobbyPanel.friends.toast.error'));
+    }
+  }
+
+  async function handleAccept(userId: string) {
+    try {
+      await acceptRequest(userId);
+      showNotice(t('lobbyPanel.friends.toast.accepted'));
+    } catch {
+      showNotice(t('lobbyPanel.friends.toast.error'));
+    }
+  }
+
+  async function handleDecline(userId: string) {
+    try {
+      await declineRequest(userId);
+      showNotice(t('lobbyPanel.friends.toast.declined'));
+    } catch {
+      showNotice(t('lobbyPanel.friends.toast.error'));
+    }
+  }
+
+  async function handleRemove(userId: string) {
+    try {
+      await removeFriend(userId);
+      showNotice(t('lobbyPanel.friends.toast.removed'));
+    } catch {
+      showNotice(t('lobbyPanel.friends.toast.error'));
+    }
+  }
+
+  async function handleCancelRequest(userId: string) {
+    try {
+      await removeFriend(userId);
+    } catch {
+      showNotice(t('lobbyPanel.friends.toast.error'));
+    }
+  }
+
+  if (!authedUser) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 py-8">
+        <Users className="w-12 h-12 text-foreground/30" strokeWidth={1.5} />
+        <div className="text-xs text-center text-muted-foreground">
+          {t('lobbyPanel.friends.guestEmpty')}
+        </div>
+      </div>
+    );
+  }
+
+  const hasFriends = data.friends.length > 0;
+  const hasIncoming = data.pending.incoming.length > 0;
+  const hasOutgoing = data.pending.outgoing.length > 0;
+
+  return (
+    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+      {/* Search input */}
+      <div className="px-3 pt-3 pb-2 border-b border-border">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t('lobbyPanel.friends.searchPlaceholder')}
+            className="w-full pl-8 pr-3 py-2 text-xs rounded-[8px] border-2 border-foreground bg-card focus:outline-none focus:ring-2 focus:ring-warning/30"
+          />
+        </div>
+      </div>
+
+      {/* Notice */}
+      {notice && (
+        <div className="mx-3 mt-2 px-3 py-1.5 rounded-[8px] bg-secondary/60 border border-border text-xs text-foreground text-center">
+          {notice}
+        </div>
+      )}
+
+      <div className="flex-1 px-3 py-2 flex flex-col gap-3">
+        {/* Search results */}
+        {query.trim() && (
+          <div className="flex flex-col gap-1">
+            {searchResults.length === 0 ? (
+              <div className="text-xs text-muted-foreground text-center py-2">
+                {t('lobby.loading')}
+              </div>
+            ) : (
+              searchResults.map((u) => (
+                <div key={u.userId} className="flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] border border-border bg-card text-xs">
+                  <span className="font-medium truncate">{u.name}</span>
+                  {u.relation === 'none' && (
+                    <button
+                      type="button"
+                      onClick={() => void handleAdd(u.userId)}
+                      aria-label={t('lobbyPanel.friends.actions.add')}
+                      className="flex items-center gap-1 px-2 py-1 rounded-[6px] border-2 border-foreground bg-[#fef3e0] text-[#7a4006] text-[10px] font-bold shadow-[#3d2e1e_-1px_1px_0px] hover:-translate-y-0.5 transition-all"
+                    >
+                      <UserPlus className="w-3 h-3" />
+                      {t('lobbyPanel.friends.actions.add')}
+                    </button>
+                  )}
+                  {u.relation === 'pending_out' && (
+                    <span className="text-[10px] text-muted-foreground italic">
+                      {t('lobbyPanel.friends.outgoingHeader')}
+                    </span>
+                  )}
+                  {u.relation === 'pending_in' && (
+                    <button
+                      type="button"
+                      onClick={() => void handleAccept(u.userId)}
+                      className="flex items-center gap-1 px-2 py-1 rounded-[6px] border-2 border-foreground bg-[#fef3e0] text-[#7a4006] text-[10px] font-bold shadow-[#3d2e1e_-1px_1px_0px] hover:-translate-y-0.5 transition-all"
+                    >
+                      <Check className="w-3 h-3" />
+                      {t('lobbyPanel.friends.actions.accept')}
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Incoming requests */}
+        {hasIncoming && (
+          <section>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">
+              {t('lobbyPanel.friends.incomingHeader')}
+            </div>
+            <div className="flex flex-col gap-1">
+              {data.pending.incoming.map((p: PendingEntry) => (
+                <div key={p.userId} className="flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] border border-border bg-card text-xs">
+                  <span className="font-medium truncate">{p.name}</span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => void handleAccept(p.userId)}
+                      aria-label={t('lobbyPanel.friends.actions.accept')}
+                      className="flex items-center justify-center size-6 rounded-[6px] border-2 border-foreground bg-[#fef3e0] text-[#7a4006] shadow-[#3d2e1e_-1px_1px_0px] hover:-translate-y-0.5 transition-all"
+                    >
+                      <Check className="w-3 h-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleDecline(p.userId)}
+                      aria-label={t('lobbyPanel.friends.actions.decline')}
+                      className="flex items-center justify-center size-6 rounded-[6px] border-2 border-border bg-secondary/60 text-muted-foreground hover:text-foreground hover:border-foreground transition-all"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Outgoing requests */}
+        {hasOutgoing && (
+          <section>
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">
+              {t('lobbyPanel.friends.outgoingHeader')}
+            </div>
+            <div className="flex flex-col gap-1">
+              {data.pending.outgoing.map((p: PendingEntry) => (
+                <div key={p.userId} className="flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] border border-border bg-card text-xs">
+                  <span className="font-medium truncate">{p.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => void handleCancelRequest(p.userId)}
+                    aria-label={t('lobbyPanel.friends.actions.cancel')}
+                    className="flex items-center gap-1 px-2 py-1 rounded-[6px] border border-border bg-secondary/60 text-muted-foreground text-[10px] hover:text-foreground hover:border-foreground transition-all"
+                  >
+                    <X className="w-3 h-3" />
+                    {t('lobbyPanel.friends.actions.cancel')}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Friends list */}
+        {(hasFriends || (!hasIncoming && !hasOutgoing && !query.trim())) && (
+          <section>
+            {(hasIncoming || hasOutgoing) && (
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">
+                {t('lobbyPanel.friends.friendsHeader')}
+              </div>
+            )}
+            {hasFriends ? (
+              <div className="flex flex-col gap-1">
+                {data.friends.map((f: FriendEntry) => (
+                  <div key={f.userId} className="group flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] border border-border bg-card text-xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className={`w-2 h-2 rounded-full flex-shrink-0 ${f.status === 'online' ? 'bg-success' : 'bg-muted-foreground/40'}`}
+                        title={f.status === 'online' ? t('lobbyPanel.friends.status.online') : t('lobbyPanel.friends.status.offline')}
+                      />
+                      <span className="font-medium truncate">{f.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {f.status === 'online' && f.currentRoomId && (
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/room/${f.currentRoomId}`)}
+                          className="flex items-center gap-1 px-2 py-1 rounded-[6px] border-2 border-foreground bg-[#fef3e0] text-[#7a4006] text-[10px] font-bold shadow-[#3d2e1e_-1px_1px_0px] hover:-translate-y-0.5 transition-all"
+                        >
+                          {t('lobbyPanel.friends.actions.joinRoom')}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => void handleRemove(f.userId)}
+                        aria-label={t('lobbyPanel.friends.actions.remove')}
+                        className="opacity-0 group-hover:opacity-100 flex items-center justify-center size-6 rounded-[6px] border border-border bg-secondary/60 text-muted-foreground hover:text-destructive hover:border-destructive transition-all"
+                      >
+                        <UserMinus className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : !hasIncoming && !hasOutgoing && !query.trim() ? (
+              <div className="flex flex-col items-center gap-2 py-8 px-4">
+                <Trash2 className="hidden" />
+                <Users className="w-10 h-10 text-foreground/20" strokeWidth={1.5} />
+                <div className="text-sm font-semibold text-foreground/60">{t('lobbyPanel.friends.empty.title')}</div>
+                <div className="text-xs text-muted-foreground text-center">{t('lobbyPanel.friends.empty.helper')}</div>
+              </div>
+            ) : null}
+          </section>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ---------- Recent tab ----------
 
 function RecentTab({
@@ -482,6 +766,12 @@ function PanelBody({ activeTab, setActiveTab, onCollapse, props }: PanelBodyProp
           onClick={() => setActiveTab('leaderboard')}
         />
         <TabButton
+          active={activeTab === 'friends'}
+          label={t('lobbyPanel.friends.tabLabel')}
+          icon={Users}
+          onClick={() => setActiveTab('friends')}
+        />
+        <TabButton
           active={activeTab === 'profile'}
           label={t('lobbyPanel.tab.profile')}
           icon={UserIcon}
@@ -506,6 +796,8 @@ function PanelBody({ activeTab, setActiveTab, onCollapse, props }: PanelBodyProp
       <div className="flex-1 flex flex-col min-h-0">
         {activeTab === 'leaderboard' ? (
           <LeaderboardTab onGoFull={props.onGoToLeaderboard} />
+        ) : activeTab === 'friends' ? (
+          <FriendsTab authedUser={props.authedUser} />
         ) : activeTab === 'profile' ? (
           <ProfileTab
             authedUser={props.authedUser}
@@ -551,6 +843,7 @@ export function LobbySidePanel(props: LobbySidePanelProps) {
   const tabLabels: Record<TabId, string> = useMemo(
     () => ({
       leaderboard: t('lobbyPanel.tab.leaderboard'),
+      friends: t('lobbyPanel.friends.tabLabel'),
       profile: t('lobbyPanel.tab.profile'),
       recent: t('lobbyPanel.tab.recent'),
     }),
@@ -578,6 +871,11 @@ export function LobbySidePanel(props: LobbySidePanelProps) {
             label={tabLabels.leaderboard}
             icon={Trophy}
             onClick={() => openToTab('leaderboard')}
+          />
+          <RailIcon
+            label={tabLabels.friends}
+            icon={Users}
+            onClick={() => openToTab('friends')}
           />
           <RailIcon
             label={tabLabels.profile}

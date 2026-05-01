@@ -269,4 +269,22 @@ export const logic: GameLogic<YahtzeeState, Action, PlayerView> = {
       winner: state.winner,
     };
   },
+
+  getSpectatorView(state): PlayerView {
+    return {
+      dice: state.dice,
+      heldDice: state.heldDice,
+      rollsLeft: state.rollsLeft,
+      roundNumber: state.roundNumber,
+      currentPlayer: state.turnOrder[state.currentPlayerIdx],
+      phase: state.phase,
+      players: state.players.map((p) => ({
+        id: p.id,
+        scores: p.scores,
+        yahtzeeBonus: p.yahtzeeBonus,
+        totalScore: calculateTotalScore(p.scores, p.yahtzeeBonus),
+      })),
+      winner: state.winner,
+    };
+  },
 };

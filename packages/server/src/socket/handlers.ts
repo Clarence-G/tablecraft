@@ -2,6 +2,9 @@ import type { ClientEvents, ServerEvents } from '@repo/shared';
 import type { ServerGamePlugin } from '@repo/shared';
 import type { Server, Socket } from 'socket.io';
 import type { RoomManager } from '../engine/RoomManager';
+import { and, eq } from 'drizzle-orm';
+import { db } from '../db/index.js';
+import { userBlocks } from '../db/schema.js';
 import { track } from '../lib/analytics';
 import { logger } from '../lib/logger';
 import { moderateChat } from '../lib/moderation';
@@ -30,6 +33,7 @@ export function setupHandlers(
       if (existingRoom.chatHistory.length > 0) {
         socket.emit('chat:history', existingRoom.chatHistory);
       }
+      logger.info({ mod: 'reconnect', userId, roomId: existingRoom.roomId }, 'player reconnected');
     }
 
     // room:create
@@ -53,7 +57,7 @@ export function setupHandlers(
         userId,
         validatedConfig,
       );
-      bindRoomEmitters(room, io, socket);
+      bindRoomEmitters(room, io);
 
       const joinResult = room.join(userId, playerName, false, socket.data.isGuest ?? true);
       if (!joinResult.ok) return ack({ ok: false, error: joinResult.error });
@@ -71,7 +75,7 @@ export function setupHandlers(
       const room = roomManager.getRoom(roomId);
       if (!room) return ack({ ok: false, error: 'Room not found' });
 
-      bindRoomEmitters(room, io, socket);
+      bindRoomEmitters(room, io);
       const result = room.join(userId, playerName, false, socket.data.isGuest ?? true);
       if (!result.ok) return ack({ ok: false, error: result.error });
 
@@ -121,12 +125,12 @@ export function setupHandlers(
       // Room leaves the waiting list once it starts.
       io.emit('rooms:updated');
 
-      // Send each player their initial view
+      // Send each player their initial view (skip spectators - none should exist yet)
       const socketsInRoom = io.sockets.adapter.rooms.get(room.roomId);
       if (socketsInRoom) {
         for (const socketId of socketsInRoom) {
           const s = io.sockets.sockets.get(socketId);
-          if (s) {
+          if (s && room.players.has(s.data.userId)) {
             const view = room.logic.getPlayerView(room.state, s.data.userId);
             s.emit('game:state', view);
           }
@@ -175,8 +179,56 @@ export function setupHandlers(
 
     // room:list
     socket.on('room:list', (gameId, ack) => {
-      const rooms = roomManager.listWaitingRooms(gameId || undefined);
+      const rooms = roomManager.listActiveRooms(gameId || undefined);
       ack(rooms);
+    });
+
+    // room:resume — explicit resume for race-condition recovery
+    socket.on('room:resume', (ack) => {
+      const room = roomManager.findRoomByUser(userId);
+      if (!room) return ack({ ok: true, data: null });
+      ack({ ok: true, data: { roomId: room.roomId } });
+    });
+
+    // room:spectate
+    socket.on('room:spectate', async (roomId, ack) => {
+      const room = roomManager.getRoom(roomId);
+      if (!room) return ack({ ok: false, error: 'Room not found' });
+      if (room.status === 'waiting') return ack({ ok: false, error: 'Game not started yet' });
+
+      // Block check: skip for guests (no persistent user identity)
+      if (!socket.data.isGuest) {
+        try {
+          const hostId = room.hostId;
+          if (hostId) {
+            const blocked = await db.select().from(userBlocks).where(
+              and(eq(userBlocks.blockerId, userId), eq(userBlocks.blockedId, hostId)),
+            ).limit(1);
+            if (blocked.length > 0) return ack({ ok: false, error: 'blocked' });
+          }
+        } catch {
+          // DB errors must not block spectating
+        }
+      }
+
+      room.addSpectator(userId, socket.id);
+      socket.data.spectatingRoomId = roomId;
+      socket.join(roomId);
+      ack({ ok: true, data: { state: room.spectatorView() } });
+      io.to(roomId).emit('room:state', room.toRoomState());
+    });
+
+    // room:unspectate
+    socket.on('room:unspectate', () => {
+      const spectatingRoomId = socket.data.spectatingRoomId as string | undefined;
+      if (!spectatingRoomId) return;
+      const room = roomManager.getRoom(spectatingRoomId);
+      if (room) {
+        room.removeSpectator(userId);
+        socket.leave(spectatingRoomId);
+        io.to(spectatingRoomId).emit('room:state', room.toRoomState());
+      }
+      socket.data.spectatingRoomId = undefined;
     });
 
     // chat:send — broadcast a text message to everyone in the sender's room.
@@ -220,6 +272,16 @@ export function setupHandlers(
 
     // disconnect
     socket.on('disconnect', () => {
+      // Cleanup spectator state
+      const spectatingRoomId = socket.data.spectatingRoomId as string | undefined;
+      if (spectatingRoomId) {
+        const spectatedRoom = roomManager.getRoom(spectatingRoomId);
+        if (spectatedRoom) {
+          spectatedRoom.removeSpectator(userId);
+          io.to(spectatingRoomId).emit('room:state', spectatedRoom.toRoomState());
+        }
+      }
+
       const room = roomManager.findRoomByUser(userId);
       if (!room) return;
       room.markDisconnected(userId);
@@ -228,7 +290,7 @@ export function setupHandlers(
   });
 }
 
-function bindRoomEmitters(room: import('../engine/GameRoom').GameRoom, io: IO, socket: Sock): void {
+function bindRoomEmitters(room: import('../engine/GameRoom').GameRoom, io: IO): void {
   // emitToPlayer: find socket for that player and emit
   room.emitToPlayer = (playerID: string, event: string, data?: unknown) => {
     const socketsInRoom = io.sockets.adapter.rooms.get(room.roomId);
@@ -236,6 +298,17 @@ function bindRoomEmitters(room: import('../engine/GameRoom').GameRoom, io: IO, s
     for (const socketId of socketsInRoom) {
       const s = io.sockets.sockets.get(socketId);
       if (s && s.data.userId === playerID) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (s as any).emit(event, data);
+      }
+    }
+  };
+
+  // emitSpectators: send to all current spectator sockets
+  room.emitSpectators = (event: string, data: unknown) => {
+    for (const sockId of room.spectators.values()) {
+      const s = io.sockets.sockets.get(sockId);
+      if (s) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (s as any).emit(event, data);
       }

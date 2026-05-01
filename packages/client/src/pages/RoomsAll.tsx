@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import type { ClientEvents, RoomSummary, ServerEvents } from '@repo/shared';
-import { ArrowLeft, Plus, Users } from 'lucide-react';
+import { ArrowLeft, Eye, Plus, Users } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Socket } from 'socket.io-client';
@@ -14,9 +14,10 @@ interface RoomsAllProps {
   onBack: () => void;
   onGoToAllGames: () => void;
   onJoinRoom: (roomId: string) => Promise<void>;
+  onSpectateRoom: (roomId: string) => void;
 }
 
-export function RoomsAll({ socket, listRooms, onBack, onGoToAllGames, onJoinRoom }: RoomsAllProps) {
+export function RoomsAll({ socket, listRooms, onBack, onGoToAllGames, onJoinRoom, onSpectateRoom }: RoomsAllProps) {
   const { t, i18n } = useTranslation('common');
   const gt = (id: string, key: string) => i18n.t(key, { ns: id });
 
@@ -152,15 +153,27 @@ export function RoomsAll({ socket, listRooms, onBack, onGoToAllGames, onJoinRoom
                   <Users className="size-3" />
                   {r.playerCount}/{r.maxPlayers}
                 </span>
-                <Button
-                  onClick={() => handleJoin(r.roomId)}
-                  disabled={joining}
-                  size="sm"
-                  className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-foreground rounded-[8px] px-2.5 font-semibold text-xs h-8"
-                >
-                  <Plus className="size-3" />
-                  {t('lobby.join')}
-                </Button>
+                {r.status === 'playing' ? (
+                  <Button
+                    onClick={() => onSpectateRoom(r.roomId)}
+                    size="sm"
+                    variant="secondary"
+                    className="border-2 border-border rounded-[8px] px-2.5 font-semibold text-xs h-8 hover:-translate-y-0.5 transition-all"
+                  >
+                    <Eye className="size-3" />
+                    {t('lobby.room.spectate')}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => handleJoin(r.roomId)}
+                    disabled={joining}
+                    size="sm"
+                    className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-foreground rounded-[8px] px-2.5 font-semibold text-xs h-8"
+                  >
+                    <Plus className="size-3" />
+                    {t('lobby.join')}
+                  </Button>
+                )}
               </div>
             ))}
           </div>

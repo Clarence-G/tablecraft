@@ -138,12 +138,15 @@ export function QuickJoinBar({ onQuickJoin, placeholder, joinLabel }: QuickJoinB
 interface RoomCardProps {
   room: RoomSummary;
   onJoin: () => void;
+  onSpectate?: () => void;
   joinLabel: string;
+  spectateLabel?: string;
   disabled: boolean;
 }
 
 /** Horizontally-scrolled room card used in the Active rooms carousel. */
-export function RoomCard({ room, onJoin, joinLabel, disabled }: RoomCardProps) {
+export function RoomCard({ room, onJoin, onSpectate, joinLabel, spectateLabel, disabled }: RoomCardProps) {
+  const isPlaying = room.status === 'playing';
   return (
     <div className="snap-start shrink-0 w-[220px] bg-card border-2 border-foreground rounded-[12px] shadow-card p-3 flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
@@ -158,15 +161,27 @@ export function RoomCard({ room, onJoin, joinLabel, disabled }: RoomCardProps) {
           <Users className="size-3" />
           {room.playerCount}/{room.maxPlayers}
         </span>
-        <Button
-          onClick={onJoin}
-          disabled={disabled}
-          size="sm"
-          className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-foreground rounded-[8px] px-2.5 font-semibold text-xs h-7"
-        >
-          <Plus className="size-3" />
-          {joinLabel}
-        </Button>
+        {isPlaying ? (
+          <Button
+            onClick={onSpectate}
+            disabled={disabled || !onSpectate}
+            size="sm"
+            variant="secondary"
+            className="border-2 border-border rounded-[8px] px-2.5 font-semibold text-xs h-7 hover:-translate-y-0.5 transition-all"
+          >
+            {spectateLabel ?? joinLabel}
+          </Button>
+        ) : (
+          <Button
+            onClick={onJoin}
+            disabled={disabled}
+            size="sm"
+            className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-foreground rounded-[8px] px-2.5 font-semibold text-xs h-7"
+          >
+            <Plus className="size-3" />
+            {joinLabel}
+          </Button>
+        )}
       </div>
     </div>
   );
