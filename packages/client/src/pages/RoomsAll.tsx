@@ -157,8 +157,8 @@ export function RoomsAll({ socket, listRooms, onBack, onGoToAllGames, onJoinRoom
                   <Button
                     onClick={() => onSpectateRoom(r.roomId)}
                     size="sm"
-                    variant="secondary"
-                    className="border-2 border-border rounded-[8px] px-2.5 font-semibold text-xs h-8 hover:-translate-y-0.5 transition-all"
+                    variant="outline"
+                    className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-foreground bg-card rounded-[8px] px-2.5 font-semibold text-xs h-8"
                   >
                     <Eye className="size-3" />
                     {t('lobby.room.spectate')}

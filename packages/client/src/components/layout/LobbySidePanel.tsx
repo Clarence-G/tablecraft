@@ -2,6 +2,7 @@ import Avatar from 'boring-avatars';
 import {
   Check,
   History,
+  LogIn,
   PanelRightClose,
   PanelRightOpen,
   Search,
@@ -171,7 +172,7 @@ function LeaderboardTab({ onGoFull }: { onGoFull: () => void }) {
 
   return (
     <div className="flex-1 flex flex-col min-h-0">
-      {/* Period switch: 总榜 / 周榜 / 日榜 */}
+      {/* Period switch: all-time / weekly / daily */}
       <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border bg-background/40">
         <PeriodPill
           active={period === 'all'}
@@ -456,11 +457,19 @@ function FriendsTab({ authedUser }: { authedUser: SessionUser | null }) {
 
   if (!authedUser) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 py-8">
+      <div className="flex-1 flex flex-col items-center gap-3 px-6 pt-14">
         <Users className="w-12 h-12 text-foreground/30" strokeWidth={1.5} />
-        <div className="text-xs text-center text-muted-foreground">
+        <div className="text-xs text-center text-muted-foreground max-w-[180px] leading-relaxed">
           {t('lobbyPanel.friends.guestEmpty')}
         </div>
+        <button
+          type="button"
+          onClick={() => navigate('/login')}
+          className="mt-2 inline-flex items-center gap-1.5 px-4 h-10 rounded-[10px] border-2 border-foreground bg-primary text-primary-foreground text-sm font-semibold shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active transition-all"
+        >
+          <LogIn className="size-4" strokeWidth={2} />
+          {t('auth.signIn')}
+        </button>
       </div>
     );
   }

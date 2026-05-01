@@ -1,5 +1,6 @@
 import { GameLogProvider } from '@repo/game-ui/log';
 import type { ClientEvents, RoomState, ServerEvents } from '@repo/shared';
+import { Eye } from 'lucide-react';
 import { Suspense, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Socket } from 'socket.io-client';
@@ -86,8 +87,15 @@ export function SpectatorView({ socket, userId, roomId, onLeave }: SpectatorView
 
   const Board = plugin.Board;
   const meta = plugin.meta;
-  const localizedName = t(`${roomState.gameId}:name`, { defaultValue: meta.name });
-  const rulesText = t(`${roomState.gameId}:rules`, { defaultValue: '' });
+  const localizedName = t(`${roomState.gameId}:name`);
+  const rulesText = t(`${roomState.gameId}:rules`);
+
+  // Spectator is NOT a seated player. Point myId at the first seated player
+  // so each game's Board renders a concrete player perspective rather than
+  // falling back to setup/host UI. The outer pointer-events-none wrapper then
+  // blocks any action attempts, and the server ignores actions from sockets
+  // not in the room's player set anyway (defense in depth).
+  const viewAsPlayerId = roomState.players[0]?.id ?? userId;
 
   return (
     <GameLogProvider>
@@ -98,23 +106,44 @@ export function SpectatorView({ socket, userId, roomId, onLeave }: SpectatorView
         roomId={roomState.roomId}
         matchStartedAt={null}
         players={roomState.players}
-        myId={userId}
+        myId={viewAsPlayerId}
         scene={meta.scene}
         rulesText={rulesText || undefined}
         onReturnToLobby={onLeave}
       >
-        <Suspense fallback={<Loading />}>
-          <Board
-            state={gameState as never}
-            myId={userId}
-            players={roomState.players}
-            sendAction={() => {}}
-            isSending={false}
-            lastReject={null}
-            notifications={[]}
-            isSpectator
-          />
-        </Suspense>
+        {/* Persistent top banner — high-contrast warning so spectator mode is unmistakable. */}
+        <div
+          role="status"
+          aria-live="polite"
+          className="sticky top-0 z-30 mb-3 flex items-center gap-2 rounded-[10px] border-2 border-foreground bg-warning px-4 py-2.5 text-sm font-bold text-foreground shadow-card"
+        >
+          <Eye className="size-5 shrink-0" />
+          <span className="truncate">{t('spectator.banner')}</span>
+        </div>
+        {/* Read-only shell: blocks all click/drag interactions AND applies a
+            visual downgrade so spectators never mistake the board for playable.
+            - pointer-events-none: hard lock on all inputs
+            - select-none: no text selection
+            - opacity-70 + saturate-75: desaturated / dimmed so it reads as a
+              passive viewing pane, not the active player surface */}
+        <div
+          className="pointer-events-none select-none opacity-55 saturate-50 contrast-90"
+          aria-disabled="true"
+          data-spectator="true"
+        >
+          <Suspense fallback={<Loading />}>
+            <Board
+              state={gameState as never}
+              myId={viewAsPlayerId}
+              players={roomState.players}
+              sendAction={() => {}}
+              isSending={false}
+              lastReject={null}
+              notifications={[]}
+              isSpectator
+            />
+          </Suspense>
+        </div>
       </GameRoomLayout>
     </GameLogProvider>
   );

@@ -76,12 +76,16 @@ export function App() {
   // RoomRoute's useAutoJoinRoom drives URL → room, not the other way around.
   // Letting room state pull users into /rooms/:id from anywhere would race
   // with `leave()` + navigate('/') (stale room state bounces them back).
+  // The `/watch` spectator route is NOT a player seat, so it MUST be excluded
+  // from this URL-sync effect — otherwise a spectator would be yanked to
+  // /rooms/:id/play the moment roomCtx picks up any room state.
   const roomId = roomCtx.room?.roomId ?? null;
   const roomStatus = roomCtx.room?.status ?? null;
   useEffect(() => {
     if (!roomId || !roomStatus) return;
     const path = location.pathname;
     if (!path.startsWith(`/rooms/${roomId}`)) return;
+    if (path.endsWith('/watch')) return; // spectator route — leave it alone
     const target = roomStatus === 'playing' ? `/rooms/${roomId}/play` : `/rooms/${roomId}`;
     if (path !== target) navigate(target, { replace: true });
   }, [roomId, roomStatus, location.pathname, navigate]);

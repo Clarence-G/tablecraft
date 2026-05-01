@@ -205,5 +205,8 @@
       "Owl",
       "Dragon"
     ]
+  },
+  "spectator": {
+    "banner": "You're spectating this match"
   }
 }

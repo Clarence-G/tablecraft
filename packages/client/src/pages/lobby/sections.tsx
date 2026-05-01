@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { QuickJoinInput } from '@repo/game-ui/input';
 import { Stat } from '@repo/game-ui/stat';
 import type { RoomSummary } from '@repo/shared';
-import { Plus, Users } from 'lucide-react';
+import { Eye, Plus, Users } from 'lucide-react';
 
 /**
  * Card-styled hero frame with a warm illustrated background bleeding in from
@@ -166,9 +166,10 @@ export function RoomCard({ room, onJoin, onSpectate, joinLabel, spectateLabel, d
             onClick={onSpectate}
             disabled={disabled || !onSpectate}
             size="sm"
-            variant="secondary"
-            className="border-2 border-border rounded-[8px] px-2.5 font-semibold text-xs h-7 hover:-translate-y-0.5 transition-all"
+            variant="outline"
+            className="shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active border-2 border-foreground bg-card rounded-[8px] px-2.5 font-semibold text-xs h-7"
           >
+            <Eye className="size-3" />
             {spectateLabel ?? joinLabel}
           </Button>
         ) : (
