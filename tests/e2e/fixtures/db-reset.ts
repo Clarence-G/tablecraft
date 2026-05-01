@@ -1,6 +1,3 @@
-import { mkdtempSync, mkdirSync, existsSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { startServerWithLog } from './server-log';
 
 export interface IsolatedServer {
@@ -15,38 +12,28 @@ export interface IsolatedServer {
 }
 
 /**
- * Start a fully isolated server instance with its own temporary database.
+ * Start an auxiliary server instance on a unique port that shares the
+ * `tablecraft_test` Postgres database with other e2e tests.
  *
- * Use this in test.beforeEach (or beforeAll for a file-scoped server) when
- * you need clean DB state between tests.
+ * Use this in test.beforeAll when you need:
+ *   - Access to server-side logs (e.g. password-reset emails)
+ *   - A dedicated server URL that is NOT the dev server on :3001
  *
- * IMPORTANT: Browser-based Playwright tests CANNOT use this for isolation,
- * because the Vite dev client running at http://localhost:5173 is configured
- * at build time to talk to http://localhost:3001. Changing the server URL has
- * no effect on the browser client.
+ * NOTE: The test DB is shared across callers. Tests should use unique emails,
+ * room codes, etc. to avoid cross-contamination.
  *
- * This fixture is intended for:
+ * Browser-based Playwright tests CANNOT use the `serverUrl` returned here for
+ * isolation because the Vite dev client at :5173 is configured at build time to
+ * talk to :3001. This fixture is intended for:
+ *   - Password-reset email extraction via the server log file
  *   - Bot socket tests (Stage 3) that connect directly to serverUrl
  *   - Server-side API tests that use mintBotToken / raw fetch
- *   - Password-reset email extraction (serverLogPath is available)
- *
- * For browser e2e tests that need state isolation, use unique emails and room
- * codes per test instead of spinning up a new server.
- *
- * Option A (this implementation): spawn a fresh server with a unique DATA_DIR.
- * Option B (not implemented): call /api/admin/reset if that endpoint exists.
- * See ISSUE_e2e-stage1-infra.md → Infrastructure gaps for rationale.
  *
  * @param port - Port to listen on (default: 13001 to avoid conflicting with
  *               the dev server on 3001)
  */
 export async function resetDb(port = 13001): Promise<IsolatedServer> {
-  const dataDir = mkdtempSync(join(tmpdir(), 'tablecraft-e2e-'));
-
-  const { pid, logPath, kill } = await startServerWithLog({
-    dataDir,
-    port,
-  });
+  const { pid, logPath, kill } = await startServerWithLog({ port });
 
   void pid; // pid is available if callers need it for diagnostics
 

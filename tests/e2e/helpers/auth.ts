@@ -149,7 +149,7 @@ export async function requestPasswordReset(
 
   await page.evaluate(
     async ({ url, email: em, redirectTo: redir }) => {
-      await fetch(`${url}/api/auth/forget-password`, {
+      await fetch(`${url}/api/auth/request-password-reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -172,11 +172,17 @@ export async function requestPasswordReset(
       continue;
     }
 
-    // The ConsoleTransport logs: text: "...reset-password?token=<TOKEN>..."
-    // Works with both pino-pretty (dev) and JSON (production) formats.
-    const match = content.match(/reset-password\?token=([\w_-]+)/);
-    if (match) {
-      return match[1];
+    // BetterAuth 1.6 emits URL format: .../reset-password/<TOKEN>?callbackURL=...
+    // (In older versions it was .../reset-password?token=<TOKEN>.)
+    // Works with both pino-pretty (dev) and JSON (production) log formats.
+    // Use matchAll + last match so repeat calls in the same server session
+    // (multiple tests sharing one log file) pick up the newest token.
+    const matches = [
+      ...content.matchAll(/reset-password\/([\w-]+)\?callbackURL=/g),
+      ...content.matchAll(/reset-password\?token=([\w_-]+)/g),
+    ];
+    if (matches.length > 0) {
+      return matches[matches.length - 1][1];
     }
   }
 

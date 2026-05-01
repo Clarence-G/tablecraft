@@ -13,9 +13,9 @@ const REPO_ROOT = join(__dirname, '../../../');
  * The returned `logPath` can be passed to requestPasswordReset() or any
  * other helper that needs to read server-side effects from the log.
  *
- * The server uses PGlite. Pass `dataDir` to use an isolated database directory
- * instead of the default `packages/server/data/pgdata`. Pass a unique `dataDir`
- * per test file for full DB isolation.
+ * Uses the shared `tablecraft_test` Postgres database. Multiple callers must
+ * coordinate to avoid cross-contamination; in practice tests use unique
+ * emails / room codes so collisions are acceptable.
  *
  * Output format: when NODE_ENV is not 'production', pino-pretty is used.
  * Both formats include the email body text — regex extraction works for either.
@@ -29,17 +29,14 @@ const REPO_ROOT = join(__dirname, '../../../');
  * ```
  */
 export async function startServerWithLog(opts: {
-  dataDir?: string;
   port?: number;
+  databaseUrl?: string;
 }): Promise<{ pid: number; logPath: string; kill: () => Promise<void> }> {
   const port = opts.port ?? 13001;
-  // Unlike the production data dir (which uses PGlite's internal path),
-  // DATABASE_URL here is the dataDir path for PGlite.
-  const dataDir = opts.dataDir ?? join(REPO_ROOT, `tmp/e2e-server-${port}`);
-
-  if (!existsSync(dataDir)) {
-    mkdirSync(dataDir, { recursive: true });
-  }
+  const databaseUrl =
+    opts.databaseUrl ??
+    process.env.E2E_DATABASE_URL ??
+    `postgres://${process.env.USER}@localhost:5432/tablecraft_test`;
 
   const logDir = join(REPO_ROOT, 'tmp/e2e-logs');
   if (!existsSync(logDir)) {
@@ -56,7 +53,8 @@ export async function startServerWithLog(opts: {
       env: {
         ...process.env,
         PORT: String(port),
-        DATABASE_URL: dataDir,
+        DATABASE_URL: databaseUrl,
+        BETTER_AUTH_URL: `http://localhost:${port}`,
         NODE_ENV: 'development',
       },
       stdio: ['ignore', 'pipe', 'pipe'],

@@ -1,13 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { signUpEmail, signInEmail, signOut, E2EAuthError } from '../../helpers/auth';
 
-// BUG: POST /api/auth/sign-up/email returns 500 on the running dev server.
-// All tests in this file are marked fixme until the server bug is resolved.
-// Reproduction: curl -X POST http://localhost:3001/api/auth/sign-up/email \
-//   -H "Content-Type: application/json" \
-//   -d '{"email":"x@test.local","password":"testtest1","name":"X"}'
-// → HTTP 500 empty body.
-// See docs/ISSUE_e2e-stage2a-auth-rooms.md § Bugs found during testing.
+// Previously blocked by a server bug where POST /api/auth/sign-up/email returned
+// HTTP 500 under pglite. Fixed in commit 77e2c07 (feat(stage1.5): migrate
+// pglite to Postgres, fix BetterAuth 500).
 
 const APP = 'http://localhost:5173';
 
@@ -16,7 +12,7 @@ function uniqueEmail(tag: string) {
 }
 
 test.describe('Email signup — happy path', () => {
-  test.fixme('new user registers, sees their name, signs out, signs back in — BLOCKED: /api/auth/sign-up/email returns 500', async ({ page }) => {
+  test('new user registers, sees their name, signs out, signs back in', async ({ page }) => {
     const email = uniqueEmail('signup-happy');
     const password = 'password123';
     const name = 'TestUser';
@@ -35,19 +31,19 @@ test.describe('Email signup — happy path', () => {
     const sessionBefore = await page.evaluate(async () => {
       const res = await fetch('http://localhost:3001/api/auth/get-session', { credentials: 'include' });
       const json = await res.json();
-      return json?.data?.user?.id ?? null;
+      return json?.user?.id ?? null;
     });
     await signInEmail(page, { email, password });
     const sessionAfter = await page.evaluate(async () => {
       const res = await fetch('http://localhost:3001/api/auth/get-session', { credentials: 'include' });
       const json = await res.json();
-      return json?.data?.user?.id ?? null;
+      return json?.user?.id ?? null;
     });
     expect(sessionAfter).toBeTruthy();
     expect(sessionBefore).toBeNull();
   });
 
-  test.fixme('signed-in user can navigate to /me and see their name — BLOCKED: /api/auth/sign-up/email returns 500', async ({ page }) => {
+  test('signed-in user can navigate to /me and see their name', async ({ page }) => {
     const email = uniqueEmail('me-page');
     const name = 'MePageUser';
     await signUpEmail(page, { email, password: 'password123', name });
@@ -58,7 +54,7 @@ test.describe('Email signup — happy path', () => {
 });
 
 test.describe('Email signup — negative scenarios', () => {
-  test.fixme('duplicate email registration throws E2EAuthError — BLOCKED: /api/auth/sign-up/email returns 500', async ({ page }) => {
+  test('duplicate email registration throws E2EAuthError', async ({ page }) => {
     const email = uniqueEmail('dup-email');
     await signUpEmail(page, { email, password: 'password123', name: 'FirstUser' });
     await signOut(page);
@@ -73,7 +69,7 @@ test.describe('Email signup — negative scenarios', () => {
     expect(threw).toBe(true);
   });
 
-  test.fixme('wrong password on sign-in throws E2EAuthError — BLOCKED: /api/auth/sign-up/email returns 500', async ({ page }) => {
+  test('wrong password on sign-in throws E2EAuthError', async ({ page }) => {
     const email = uniqueEmail('wrong-pw');
     await signUpEmail(page, { email, password: 'correctPassword1', name: 'WrongPassUser' });
     await signOut(page);

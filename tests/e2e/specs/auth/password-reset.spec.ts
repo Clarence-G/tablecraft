@@ -2,10 +2,9 @@ import { test, expect } from '@playwright/test';
 import { signUpEmail, signInEmail, signOut, requestPasswordReset, resetPassword, E2EAuthError } from '../../helpers/auth';
 import { resetDb } from '../../fixtures/db-reset';
 
-// BUG: POST /api/auth/sign-up/email returns 500 on the running dev server.
-// Password-reset tests depend on sign-up, so the happy-path tests are fixme.
-// The negative scenario (invalid token) does NOT require sign-up and is enabled.
-// See docs/ISSUE_e2e-stage2a-auth-rooms.md § Bugs found during testing.
+// Previously blocked by a server bug where POST /api/auth/sign-up/email returned
+// HTTP 500 under pglite. Fixed in commit 77e2c07 (feat(stage1.5): migrate
+// pglite to Postgres, fix BetterAuth 500). Happy-path tests re-enabled.
 
 function uniqueEmail(tag: string) {
   return `${tag}-${Date.now()}@test.local`;
@@ -22,7 +21,7 @@ test.describe('Password reset flow', () => {
     await server.kill();
   });
 
-  test.fixme('user can reset password via email token — BLOCKED: /api/auth/sign-up/email returns 500', async ({ page }) => {
+  test('user can reset password via email token', async ({ page }) => {
     const email = uniqueEmail('pw-reset');
     const oldPassword = 'oldPassword1';
     const newPassword = 'newPassword2';
@@ -42,13 +41,13 @@ test.describe('Password reset flow', () => {
     const session = await page.evaluate(async (url) => {
       const res = await fetch(`${url}/api/auth/get-session`, { credentials: 'include' });
       const json = await res.json();
-      return json?.data?.user ?? null;
+      return json?.user ?? null;
     }, server.serverUrl);
     expect(session).not.toBeNull();
     expect(session.email).toBe(email);
   });
 
-  test.fixme('old password no longer works after reset — BLOCKED: /api/auth/sign-up/email returns 500', async ({ page }) => {
+  test('old password no longer works after reset', async ({ page }) => {
     const email = uniqueEmail('pw-old');
     const oldPassword = 'oldPass11';
     const newPassword = 'newPass22';
