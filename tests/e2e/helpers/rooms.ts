@@ -1,11 +1,11 @@
 import type { Page } from '@playwright/test';
-import zh from '../../../packages/client/src/i18n/locales/zh/common.json';
 
 // ---------------------------------------------------------------------------
 // testid-based selectors (preferred — locale-independent)
 // ---------------------------------------------------------------------------
 const SEL = {
   gameCard: (gameId: string) => `[data-testid="game-card-${gameId}"]`,
+  createRoomBtn: '[data-testid="create-room-btn"]',
   roomPage: '[data-testid="room-page"]',
   roomCode: '[data-testid="room-code"]',
   readyBtn: '[data-testid="ready-btn"]',
@@ -19,13 +19,11 @@ const SEL = {
 };
 
 // ---------------------------------------------------------------------------
-// zh-locale text fallbacks (used when testids are missing in production code)
-// These are compile-time constants — switching the app locale does NOT affect
-// the test selector. If you add a new locale, also add a fallback here.
+// zh-locale text fallbacks — kept only for spectate, which has no testid yet.
+// See ISSUE_e2e-stage1-infra.md for the spectator-view testid gap.
 // ---------------------------------------------------------------------------
 const TEXT = {
-  createRoom: zh.lobby?.createRoomShort ?? '创建房间',
-  spectate: zh.lobby?.room?.spectate ?? '围观',
+  spectate: '围观',
 };
 
 /**
@@ -41,9 +39,9 @@ export async function createRoom(page: Page, gameId: string): Promise<string> {
   // Click the game card to filter active rooms for that game
   await page.click(SEL.gameCard(gameId));
 
-  // Click the "Create room" button. Uses text fallback — no testid exists in
-  // production yet. See ISSUE_e2e-stage1-infra.md for the needed testid.
-  await page.click(`button:has-text("${TEXT.createRoom}")`);
+  // Click the "Create room" button (data-testid="create-room-btn")
+  await page.waitForSelector(SEL.createRoomBtn, { timeout: 5000 });
+  await page.click(SEL.createRoomBtn);
 
   await page.waitForSelector(SEL.roomPage, { timeout: 8000 });
   await page.waitForSelector(SEL.roomCode, { timeout: 5000 });

@@ -70,7 +70,7 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
     Boolean(authedUser) && !meInTop && me?.rank != null && (me?.points ?? 0) > 0;
 
   return (
-    <div className="min-h-screen">
+    <div data-testid="leaderboard-page" className="min-h-screen">
       <nav className="sticky top-0 z-50 bg-background border-b-[2.5px] border-foreground px-4 sm:px-6 py-3">
         <div className="max-w-3xl mx-auto flex items-center gap-3">
           <button
@@ -115,16 +115,17 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
         ) : (
           <div className="space-y-2">
             {entries.map((e) => (
-              <LeaderboardRow
-                key={e.userId}
-                rank={e.rank}
-                userId={e.userId}
-                name={e.name}
-                points={e.points}
-                highlighted={e.userId === authedUser?.id}
-                youLabel={t('leaderboard.youLabel')}
-                pointsSuffix={t('leaderboard.ptsSuffix')}
-              />
+              <div key={e.userId} data-testid="leaderboard-row">
+                <LeaderboardRow
+                  rank={e.rank}
+                  userId={e.userId}
+                  name={e.name}
+                  points={e.points}
+                  highlighted={e.userId === authedUser?.id}
+                  youLabel={t('leaderboard.youLabel')}
+                  pointsSuffix={t('leaderboard.ptsSuffix')}
+                />
+              </div>
             ))}
           </div>
         )}

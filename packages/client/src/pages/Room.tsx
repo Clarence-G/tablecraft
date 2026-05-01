@@ -30,7 +30,11 @@ export function Room({ roomId, userId, roomCtx, onGameStart, onLeave }: RoomPage
   const allReady = hasEnoughPlayers && room.players.every((p) => p.ready);
 
   return (
-    <div className="min-h-screen p-6 sm:p-8" data-testid="room-page">
+    <div
+      className="min-h-screen p-6 sm:p-8"
+      data-testid="room-page"
+      data-room-status={room.status === 'finished' ? 'ended' : 'waiting'}
+    >
       <div className="max-w-lg mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-[#1a1108]">{t('room.waitingRoom')}</h1>

@@ -285,6 +285,7 @@ export function Lobby({
                   type="button"
                   onClick={() => handleCreate(gameFilter)}
                   disabled={loading || !socketReady}
+                  data-testid="create-room-btn"
                   className="inline-flex items-center gap-1 text-sm font-semibold border-2 border-foreground bg-card rounded-[10px] px-3 py-1.5 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active disabled:opacity-60 transition-all"
                 >
                   <Plus className="size-3.5" />
@@ -313,6 +314,7 @@ export function Lobby({
                     type="button"
                     onClick={() => handleCreate(gameFilter)}
                     disabled={loading || !socketReady}
+                    data-testid="create-room-btn"
                     className="inline-flex items-center gap-1 text-sm font-semibold border-2 border-foreground bg-card rounded-[10px] px-3 py-1.5 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active disabled:opacity-60 transition-all"
                   >
                     <Plus className="size-3.5" />
