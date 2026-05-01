@@ -1,4 +1,4 @@
-# DESIGN.md -- Tabletop Games Platform
+# DESIGN.md -- TableCraft
 
 Design language: **"Digital objects on a physical table."** Every UI element feels like a real card, token, or board piece resting on a warm wooden surface. The core pillars are **thick borders, hard offset shadows, and tactile interactions**.
 

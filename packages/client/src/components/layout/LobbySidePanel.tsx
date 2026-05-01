@@ -82,7 +82,7 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`relative flex items-center gap-1 px-2 py-1.5 rounded-[10px] text-xs font-semibold border-2 transition-all ${
+      className={`relative flex items-center gap-1 px-1.5 py-1.5 rounded-[10px] text-xs font-semibold border-2 transition-all ${
         active
           ? 'bg-[#fef3e0] border-warning text-[#7a4006] shadow-button'
           : 'bg-card border-foreground text-muted-foreground shadow-[#3d2e1e_-2px_2px_0px] hover:-translate-y-0.5'
@@ -767,7 +767,7 @@ function PanelBody({ activeTab, setActiveTab, onCollapse, props }: PanelBodyProp
   const { t } = useTranslation('common');
   return (
     <>
-      <div className="flex items-center gap-1.5 px-2 pr-3 py-2 border-b-2 border-foreground bg-secondary/60">
+      <div className="flex flex-wrap items-center gap-1 px-2 pr-3 py-2 border-b-2 border-foreground bg-secondary/60">
         <TabButton
           active={activeTab === 'leaderboard'}
           label={t('lobbyPanel.tab.leaderboard')}
@@ -903,7 +903,7 @@ export function LobbySidePanel(props: LobbySidePanelProps) {
       {expanded && (
         <aside
           data-testid="lobby-side-panel-desktop"
-          className="hidden md:flex flex-col w-72 lg:w-80 border-l-2 border-border bg-card/90 backdrop-blur-sm sticky top-[60px] h-[calc(100vh-60px)]"
+          className="hidden md:flex flex-col w-80 lg:w-96 border-l-2 border-border bg-card/90 backdrop-blur-sm sticky top-[60px] h-[calc(100vh-60px)]"
         >
           <PanelBody
             activeTab={activeTab}

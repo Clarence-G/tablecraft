@@ -1,4 +1,4 @@
-# LAYOUT.md -- Tabletop Games Platform
+# LAYOUT.md -- TableCraft
 
 Layout language: **"Every game is played _on_ a table, not _in_ a web page."** The screen is a table. The platform chrome is the room the table sits in. Everything else is objects resting on the surface. This doc complements `DESIGN.md` -- it defines **where things go**, not what they look like.
 

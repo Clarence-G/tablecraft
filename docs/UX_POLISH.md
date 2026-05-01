@@ -1,4 +1,4 @@
-# UX_POLISH.md -- Tabletop Games Platform
+# UX_POLISH.md -- TableCraft
 
 Polish language: **"Make it feel alive, without making it loud."** `DESIGN.md`
 defines the visual language, `LAYOUT.md` defines the structure. This doc

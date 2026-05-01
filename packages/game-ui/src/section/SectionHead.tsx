@@ -26,9 +26,9 @@ export function SectionHead({
 }: SectionHeadProps) {
   const showLink = Boolean(onViewAll || viewAllHref);
   return (
-    <div className="flex items-center justify-between gap-3 mb-3">
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 mb-3">
       <h3 className="text-lg font-semibold text-foreground shrink-0">{title}</h3>
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-3 min-w-0 flex-wrap">
         {actions}
         {showLink &&
           (onViewAll ? (
