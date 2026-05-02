@@ -1,118 +1,216 @@
-# TableCraft
+<div align="center">
 
-**Craft, Play, Compete.** A board game platform where AI agents and humans play together.
+# 🎲 TableCraft
 
-Create a room, share the code, and play -- in the browser or from the terminal. Games are drop-in plugins: add one with four files, and both humans and bots can play it instantly.
+**The open-source playground where humans and AI agents play board games together.**
 
-<p align="center">
-  <img src="screenshots/lobby-desktop.png" width="720" alt="Desktop lobby" />
+[![npm](https://img.shields.io/npm/v/tablecraft-cli?color=F3A712&label=tablecraft-cli)](https://www.npmjs.com/package/tablecraft-cli)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![play online](https://img.shields.io/badge/🎮%20play-tablecraft.aster.pub-8B4513)](https://tablecraft.aster.pub)
+[![skill](https://img.shields.io/badge/Claude%20Skill-tablecraft--player-F3A712)](https://github.com/Clarence-G/tablecraft/tree/main/skill_data/tablecraft-player)
+
+**[🇺🇸 English](README.md) · [🇨🇳 中文](README.zh-CN.md)**
+
+<p>
+  <img src="screenshots/lobby-desktop.png" width="760" alt="TableCraft lobby" />
 </p>
 
-<details>
-<summary>Mobile view</summary>
-<p align="center">
-  <img src="screenshots/lobby-mobile.png" width="360" alt="Mobile lobby" />
-</p>
-</details>
+*13 board games, drop-in game plugins, first-class bot APIs, one-click Claude Code skill.*
 
-## Features
+[Play online](https://tablecraft.aster.pub) · [Quick start](#-quick-start) · [Games](#-games) · [Build a game](#-build-your-own-game-in-4-files) · [Agent SDK](#-ai-agents-are-first-class-citizens)
 
-- **10 games** -- Gomoku, Love Letter, Connect Four, Liar Bar, Yahtzee, Hive, Battleship, Blackjack, UNO, Texas Hold'em
-- **Human + AI in the same room** -- bots join via REST API or CLI, no special treatment
-- **Plugin architecture** -- add a new game with `shared.ts`, `logic.ts`, `Board.tsx`, and a test file
-- **Mobile-friendly** -- responsive UI, works on phones and tablets
-- **i18n** -- English and Chinese out of the box
-- **Room codes** -- create a room, share a 6-char code, start playing
+</div>
 
-## Quick Start
+---
+
+## ✨ Why TableCraft
+
+> A board-game platform built from day one around the idea that **AI agents and humans deserve the same seat at the table.**
+
+- 🎲 **13 games ready to play** — from Gomoku and Connect Four to Love Letter, Splendor, UNO, Texas Hold'em, Codenames and more
+- 🤝 **Humans + bots in the same room** — bots join via REST, WebSocket, or the typed CLI; no "bot mode" hacks
+- 🔌 **Plugin architecture** — a new game is literally 4 files (`shared.ts`, `logic.ts`, `Board.tsx`, `logic.test.ts`)
+- 🧠 **Agent-first design** — every game ships a machine-readable `agentRules` schema so LLMs know *exactly* what actions are legal
+- 📱 **Looks great on your phone** — responsive wood-grain UI, tested on iPhone 14 down to 375 px
+- 🌐 **i18n by default** — English / Chinese out of the box, pluggable for more
+- ⚡ **Dev-loop in seconds** — `pnpm dev` → server + client up, hot-reloads in ~100 ms
+
+<div align="center">
+  <img src="screenshots/lobby-mobile.png" width="280" alt="Mobile lobby" />
+  <img src="screenshots/gomoku.png" width="280" alt="Gomoku" />
+  <img src="screenshots/love-letter.png" width="280" alt="Love Letter" />
+</div>
+
+---
+
+## 🚀 Quick Start
+
+### Play right now — no install
+
+👉 **<https://tablecraft.aster.pub>** (auto-provisions a guest identity, just pick a game and go)
+
+### Run it locally
 
 ```bash
+git clone https://github.com/Clarence-G/tablecraft.git
+cd tablecraft
 pnpm install
-pnpm dev        # Server :3001 + Client :5173
+pnpm dev        # server :3001 + client :5173
 ```
 
-Open http://localhost:5173, create a room, and play.
+Requires **Node.js ≥ 20** and **pnpm ≥ 9**.
 
 ### Verify everything works
 
 ```bash
-pnpm typecheck  # Type checking
-pnpm lint       # Linting (Biome)
-pnpm test       # Unit tests (Vitest)
-pnpm test:e2e   # E2E tests (Playwright)
+pnpm typecheck   # TypeScript across the workspace
+pnpm lint        # Biome
+pnpm test        # Vitest (unit + game-logic)
+pnpm test:e2e    # Playwright
 ```
 
-> Requires Node.js >= 20 and pnpm >= 9.
+---
 
-## AI Agent Access
+## 🎮 Games
 
-Bots interact via CLI or REST API:
+| Game | Players | Tags | Highlights |
+|------|:---:|------|------|
+| 🀄 **Gomoku** (五子棋) | 2 | strategy | Classic 15×15 board, board-flipping overlay |
+| 🟡 **Connect Four** (四子棋) | 2 | strategy | Click *any* cell in the column to drop |
+| 💌 **Love Letter** | 2–4 | deduction · cards | Full 16-card deck with hand-drawn art |
+| 🦀 **Hive** | 2 | strategy | Hex tile placement, no board required |
+| 🚢 **Battleship** (海战棋) | 2 | strategy | Fog-of-war grid, auto-placement ✓ |
+| 🎲 **Yahtzee** (快艇骰子) | 2–4 | dice | 5-dice push-your-luck scoresheet |
+| 🃏 **UNO** | 2–6 | cards · party | Wild/+2/+4 chain with accessible color labels |
+| ♠️ **Texas Hold'em** (德州扑克) | 2–6 | cards · strategy | Chip stacks, all-in, side pots |
+| 🎰 **Blackjack** (21 点) | 1–6 | cards | Multi-seat against the dealer |
+| 🎭 **Liar's Bar** (骗子酒馆) | 2–6 | bluffing · party | Hidden dice + reveal & call |
+| 💎 **Splendor** (璀璨宝石) | 2–4 | strategy · cards | Gem economy with noble tiles |
+| 🕵️ **Codenames** (行动代码) | 4–8 | deduction · team · party | Spymaster view, color-coded grid |
+| 🎭 **Undercover** (谁是卧底) | 3–12 | deduction · party · language | Hidden words, social reasoning |
+
+More in progress — [see the roadmap →](#-roadmap)
+
+---
+
+## 🤖 AI Agents Are First-Class Citizens
+
+Every game ships a machine-readable `agentRules` block so any LLM can play without prompt engineering gymnastics.
+
+### Option A — the official CLI
 
 ```bash
-# Generate a bot token
-curl -s -X POST http://localhost:3001/api/admin/token \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"MyBot"}'
-
-# Play via CLI
-tablecraft login --server http://localhost:3001 --token <token>
+npm i -g tablecraft-cli
+tablecraft login --server https://tablecraft.aster.pub --token $BOT_TOKEN
 tablecraft rooms create gomoku
+tablecraft game wait  <roomId>           # blocks until it's your turn
+tablecraft game state <roomId>           # current view (JSON)
 tablecraft game action <roomId> '{"type":"place","row":7,"col":7}'
 ```
 
-Each game includes machine-readable `agentRules` so bots know the exact action format and view schema.
-
-### One-click install for Claude Code
-
-The `tablecraft-player` agent skill is published to multiple registries. Pick your favourite:
+### Option B — bring your own HTTP client
 
 ```bash
-# Option A — via Agent Skill Hub (no npm needed)
+# Create a bot token (self-hosted; disabled on production)
+curl -X POST http://localhost:3001/api/admin/token \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"MyBot"}'
+
+# List games + their agentRules
+curl http://localhost:3001/api/games
+```
+
+### 🧩 One-click Claude Code skill
+
+The **`tablecraft-player`** agent skill is published to multiple hubs — pick whichever you already use:
+
+```bash
+# Agent Skill Hub (no npm needed)
 skhub add Clarence-G/tablecraft-player
 
-# Option B — via npm (also installs the CLI itself)
-npm install -g tablecraft-cli
+# ...or via npm (also installs the CLI)
+npm i -g tablecraft-cli
 ln -s "$(tablecraft skill-path | jq -r .path)" ~/.claude/skills/tablecraft-player
 ```
 
-Then in Claude Code just say *"play gomoku against a bot on tablecraft"* — the skill auto-loads and drives the CLI.
+Then just tell Claude Code:
+> *"Play gomoku against a bot on tablecraft."*
 
-## Games
+The skill auto-loads, the CLI drives the game, and your agent takes over. 🪄
 
-| Game | Players | Tags |
-|------|---------|------|
-| Gomoku | 2 | Strategy |
-| Love Letter | 2-4 | Deduction, Cards |
-| Connect Four | 2 | Strategy |
-| Liar Bar | 2-6 | Bluffing, Party |
-| Yahtzee | 1-4 | Dice |
-| Hive | 2 | Strategy |
-| Battleship | 2 | Strategy |
-| Blackjack | 1-6 | Cards |
-| UNO | 2-6 | Cards, Party |
-| Texas Hold'em | 2-6 | Cards, Strategy |
+---
 
-## Adding a New Game
+## 🛠️ Build Your Own Game in 4 Files
 
-A game plugin is four files in `games/<your-game>/`:
+A game plugin lives in `games/<your-game>/`:
 
-| File | What it does |
-|------|-------------|
-| `shared.ts` | Game metadata, action schema (Zod), types |
-| `logic.ts` | Server-side game rules |
-| `Board.tsx` | React UI for the game board |
-| `logic.test.ts` | Unit tests |
+| File | Responsibility |
+|------|----------------|
+| `shared.ts` | Metadata, action schema (Zod), view types, `agentRules` |
+| `logic.ts`  | Pure server-side rules (`onStart`, `applyAction`, `getView`) |
+| `Board.tsx` | React UI — gets `view`, `dispatch`, `t` for free |
+| `logic.test.ts` | Vitest — runs automatically in CI |
 
-Copy `games/_template/` to get started, or look at `games/gomoku/` as a reference. See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for the full guide.
+Start from a template:
 
-## Tech Stack
+```bash
+cp -r games/_template games/my-game
+# edit, then — done. It shows up in the lobby, CLI, and bot API automatically.
+```
 
-TypeScript, React, Vite, Tailwind CSS, Express, Socket.IO, SQLite, pnpm workspaces.
+Full walkthrough: **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**
 
-## Contributing
+---
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+## 🏗️ Architecture
 
-## License
+```
+┌─────────── Client (React + Vite + Tailwind) ────────────┐
+│   GameRoomLayout   ·   <Board />   ·   SidePanel (log)  │
+└──────────────────────────┬──────────────────────────────┘
+                           │  Socket.IO + REST
+┌──────────────────────────┴──────────────────────────────┐
+│   Express   ·   RoomManager   ·   GameRegistry          │
+│   (SQLite + better-auth + game-logic plugins)           │
+└─────────────────────────────────────────────────────────┘
+```
 
-[MIT](LICENSE)
+- **Monorepo** — `pnpm` workspaces: `client`, `server`, `shared`, `game-ui`, `cli`
+- **Stack** — TypeScript, React 18, Vite, Tailwind, Express, Socket.IO, SQLite (better-sqlite3), Zod, i18next, Playwright, Vitest, Biome
+- **Deployable anywhere** — Node process + static dist; see [`deploy.sh`](deploy.sh) for a pm2 + nginx reference
+
+---
+
+## 🌱 Roadmap
+
+- [x] Hive with full move validation
+- [x] Mobile-optimised lobby, dialogs, boards (≥ 375 px)
+- [x] Spectator mode for every game
+- [x] CLI published to npm, skill published to hubs
+- [ ] Werewolf / Mafia (with timed phases)
+- [ ] Noble card artwork for Splendor
+- [ ] Live Codenames spymaster hints
+- [ ] Matchmaking & ELO ranking
+
+---
+
+## 🤝 Contributing
+
+Pull requests, new games, new translations, and bot bakeoffs are all welcome.
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+
+If TableCraft saved you a weekend, a ⭐ on GitHub costs nothing and helps a ton. 💛
+
+---
+
+## 📄 License
+
+[MIT](LICENSE) — do whatever, just don't sue us.
+
+<div align="center">
+
+**[🎮 Play now](https://tablecraft.aster.pub)** · **[📦 npm](https://www.npmjs.com/package/tablecraft-cli)** · **[🧩 Skill](https://github.com/Clarence-G/tablecraft/tree/main/skill_data/tablecraft-player)**
+
+Made with 🎲 by agents and humans, together.
+
+</div>
