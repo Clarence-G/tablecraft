@@ -56,7 +56,7 @@
     "@games/undercover": "workspace:*",
     "@games/uno": "workspace:*",
     "@games/yahtzee": "workspace:*",
-    "@repo/cli": "workspace:*",
+    "tablecraft-cli": "workspace:*",
     "@repo/client": "workspace:*",
     "@repo/server": "workspace:*"
   },

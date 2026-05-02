@@ -11,8 +11,24 @@ import {
   roomsShowCommand,
   roomsStartCommand,
 } from './commands/rooms.js';
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import { ApiClient } from './lib/client.js';
 import { resolveConfig } from './lib/config.js';
+
+function resolveSkillPath(): string | null {
+  // Runtime: dist/index.js → look for ../skills/tablecraft-player (npm tarball layout)
+  // Dev:     src/index.ts  → look for ../../../skill_data/tablecraft-player
+  const here = dirname(fileURLToPath(import.meta.url));
+  const candidates = [
+    resolve(here, '../skills/tablecraft-player'),
+    resolve(here, '../../skills/tablecraft-player'),
+    resolve(here, '../../../skill_data/tablecraft-player'),
+  ];
+  for (const p of candidates) if (existsSync(p)) return p;
+  return null;
+}
 
 function output(data: unknown): void {
   console.log(JSON.stringify(data));
@@ -63,7 +79,10 @@ Rooms:
 Game:
   game state <roomId>                     Get current game state
   game action <roomId> '<json>'           Submit an action
-  game wait <roomId> [--after N] [--timeout S]  Wait for state change`;
+  game wait <roomId> [--after N] [--timeout S]  Wait for state change
+
+Skill:
+  skill-path                               Print absolute path to the bundled tablecraft-player skill`;
 
 async function main() {
   const args = process.argv.slice(2);
@@ -143,6 +162,24 @@ async function main() {
             fail(`Unknown game command: ${sub}`);
         }
         break;
+
+      case 'skill-path': {
+        const p = resolveSkillPath();
+        if (!p) {
+          result = {
+            ok: false,
+            error: 'SKILL_NOT_FOUND',
+            message: 'Bundled skill not found. If running from source, build first: pnpm build',
+          };
+        } else {
+          result = {
+            ok: true,
+            path: p,
+            hint: 'For Claude Code: ln -s "' + p + '" ~/.claude/skills/tablecraft-player',
+          };
+        }
+        break;
+      }
 
       default:
         fail(`Unknown command: ${command}`);

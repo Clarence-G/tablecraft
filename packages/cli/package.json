@@ -1,20 +1,55 @@
 {
-  "name": "@repo/cli",
+  "name": "tablecraft-cli",
   "version": "0.1.0",
-  "private": true,
+  "description": "CLI for playing board games on TableCraft — join rooms, make moves, challenge bots. Includes the `tablecraft-player` skill for AI agents (Claude Code, Codex CLI, etc.).",
   "type": "module",
+  "license": "MIT",
+  "author": "Clarence G <clarence@aster.pub>",
+  "homepage": "https://tablecraft.aster.pub",
+  "bugs": {
+    "url": "https://github.com/Clarence-G/tablecraft/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Clarence-G/tablecraft.git",
+    "directory": "packages/cli"
+  },
+  "keywords": [
+    "tablecraft",
+    "board-games",
+    "cli",
+    "ai-agent",
+    "bot",
+    "claude-skill",
+    "agent-skill",
+    "gomoku",
+    "blackjack",
+    "uno",
+    "multiplayer"
+  ],
   "bin": {
-    "tablecraft": "./dist/index.js"
+    "tablecraft": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsx src/index.ts"
-  },
-  "dependencies": {
-    "tsx": "^4.11.0"
+    "build": "tsc && node -e \"require('fs').chmodSync('dist/index.js', 0o755)\" && node scripts/bundle-skill.mjs",
+    "dev": "tsx src/index.ts",
+    "prepublishOnly": "pnpm build"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "tsx": "^4.11.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
