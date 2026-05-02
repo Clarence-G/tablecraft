@@ -1,7 +1,8 @@
-import type { ServerGamePlugin } from '@repo/shared';
+import type { ClientEvents, ServerEvents, ServerGamePlugin } from '@repo/shared';
 import { buildGameDetail } from '@repo/shared';
 import { Router } from 'express';
 import express from 'express';
+import type { Server as IOServer } from 'socket.io';
 import type { GameRoom } from '../engine/GameRoom.js';
 import type { RoomManager } from '../engine/RoomManager.js';
 import { createApiAuth } from './auth.js';
@@ -31,8 +32,19 @@ export function createApiRouter(
   roomManager: RoomManager,
   registry: Record<string, ServerGamePlugin>,
   tokenStore: TokenStore,
+  io: IOServer<ClientEvents, ServerEvents>,
 ): Router {
   const router = Router();
+
+  // Broadcast the room state + lobby listing update to every socket.io client
+  // in `roomId`. Mirrors what the socket handlers do after a state-mutating
+  // event, so REST-driven mutations (bot joins / bot starts game / bot action)
+  // reach every human player's browser in real time without relying on
+  // manual refresh.
+  const broadcastRoomState = (room: GameRoom) => {
+    io.to(room.roomId).emit('room:state', room.toRoomState());
+    io.emit('rooms:updated');
+  };
   const auth = createApiAuth(tokenStore);
 
   router.use(express.json());
@@ -130,6 +142,11 @@ export function createApiRouter(
     roomManager.onPlayerJoin(room.roomId, userId);
     room.onStateChanged();
 
+    // New room appeared in the lobby; tell every connected client to refresh
+    // its lobby listing. (No room-scoped broadcast yet because nobody else has
+    // subscribed to this new roomId.)
+    io.emit('rooms:updated');
+
     res.status(201).json({ ok: true, data: room.toRoomState() });
   });
 
@@ -190,6 +207,7 @@ export function createApiRouter(
     room.join(userId, req.botUserName!, true);
     roomManager.onPlayerJoin(room.roomId, userId);
     room.onStateChanged();
+    broadcastRoomState(room);
 
     res.json({ ok: true, data: room.toRoomState() });
   });
@@ -214,9 +232,14 @@ export function createApiRouter(
     roomManager.onPlayerLeave(userId);
     room.onStateChanged();
 
+    // Broadcast remaining state to the room BEFORE we potentially destroy it,
+    // then signal the lobby so empty-room cleanup is visible everywhere.
+    broadcastRoomState(room);
+
     // Clean up empty rooms
     if (room.players.size === 0) {
       roomManager.removeRoom(room.roomId);
+      io.emit('rooms:updated');
     }
 
     res.json({ ok: true, data: null });
@@ -257,6 +280,17 @@ export function createApiRouter(
         hint: error === 'PLAYERS_NOT_READY' ? 'All players must be ready before starting' : '',
       });
       return;
+    }
+
+    // CRITICAL: broadcast start transition to every subscriber. Otherwise
+    // human players whose socket is sitting in the lobby/waiting view will
+    // stay stuck on the old status=waiting state until they manually refresh
+    // (because the state change happened server-side via REST, not through
+    // the socket 'room:start' handler). Mirrors socket/handlers.ts `room:start`.
+    broadcastRoomState(room);
+    for (const playerId of room.players.keys()) {
+      const view = room.logic.getPlayerView(room.state, playerId);
+      room.emitToPlayer?.(playerId, 'game:state', view);
     }
 
     res.json({ ok: true, data: room.toRoomState() });

@@ -111,7 +111,7 @@ async function main() {
 
   // REST API (bots + humans). `createApiRouter` installs its own `express.json`
   // internally, which is safe because the BetterAuth handler already ran.
-  app.use('/api', createApiRouter(roomManager, serverRegistry, tokenStore));
+  app.use('/api', createApiRouter(roomManager, serverRegistry, tokenStore, io));
 
   // Sentry error handler must come after routes, before other error middleware.
   app.use(Sentry.Handlers.errorHandler());
