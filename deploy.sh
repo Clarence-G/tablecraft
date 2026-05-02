@@ -24,7 +24,15 @@ pm2 reload tablecraft --update-env
 echo '>>> status'
 pm2 status tablecraft
 echo '>>> health'
-sleep 2
-curl -fsS http://127.0.0.1:3001/api/health
-
-echo '>>> done'
+# pm2 reload can take 10-15s on tsx cold start; retry up to 30s
+for i in $(seq 1 15); do
+  if curl -fsS http://127.0.0.1:3001/api/health >/dev/null; then
+    curl -s http://127.0.0.1:3001/api/health
+    echo
+    echo '>>> done'
+    exit 0
+  fi
+  sleep 2
+done
+echo 'health check timed out after 30s' >&2
+exit 1
