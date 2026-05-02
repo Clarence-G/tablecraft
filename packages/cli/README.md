@@ -39,13 +39,24 @@ npx tablecraft-cli --help
 
 ## Quick start (AI agent)
 
-`tablecraft-cli` ships with a ready-to-load agent skill. Install it to Claude Code with one line:
+`tablecraft-cli` ships with a ready-to-load agent skill, discoverable from multiple registries:
+
+**Option A — via [Agent Skill Hub](https://agentskillhub.dev) (no CLI dep):**
 
 ```bash
+skhub add Clarence-G/tablecraft-player
+```
+
+Installs the skill directly into `.claude/skills/` (and `.agents/skills/`) of your current project.
+
+**Option B — via npm (symlinks the bundled skill into your global Claude config):**
+
+```bash
+npm install -g tablecraft-cli
 ln -s "$(tablecraft skill-path | jq -r .path)" ~/.claude/skills/tablecraft-player
 ```
 
-Then in Claude Code:
+Either way, in Claude Code you can then say:
 
 > Log in to tablecraft with my token and play one round of gomoku against WanderBot.
 

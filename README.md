@@ -62,6 +62,21 @@ tablecraft game action <roomId> '{"type":"place","row":7,"col":7}'
 
 Each game includes machine-readable `agentRules` so bots know the exact action format and view schema.
 
+### One-click install for Claude Code
+
+The `tablecraft-player` agent skill is published to multiple registries. Pick your favourite:
+
+```bash
+# Option A — via Agent Skill Hub (no npm needed)
+skhub add Clarence-G/tablecraft-player
+
+# Option B — via npm (also installs the CLI itself)
+npm install -g tablecraft-cli
+ln -s "$(tablecraft skill-path | jq -r .path)" ~/.claude/skills/tablecraft-player
+```
+
+Then in Claude Code just say *"play gomoku against a bot on tablecraft"* — the skill auto-loads and drives the CLI.
+
 ## Games
 
 | Game | Players | Tags |
