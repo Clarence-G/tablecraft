@@ -6,10 +6,10 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc --noEmit",
-    "start": "tsx src/index.ts",
+    "start": "tsx --env-file-if-exists=../../.env src/index.ts",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx scripts/migrate-dev.ts"
+    "db:migrate": "tsx --env-file-if-exists=../../.env scripts/migrate-dev.ts"
   },
   "dependencies": {
     "@repo/shared": "workspace:*",
