@@ -62,7 +62,7 @@ export function Game({ userId, room, game, onReturnToLobby }: GamePageProps) {
   const rulesText = t(`${room.gameId}:rules`, { defaultValue: '' });
 
   return (
-    <GameLogProvider>
+    <GameLogProvider defaultNs={room.gameId}>
       <NotificationBridge notifications={notifications} />
       <GameRoomLayout
         gameId={room.gameId}

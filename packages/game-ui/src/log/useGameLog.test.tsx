@@ -72,4 +72,32 @@ describe('useGameLog', () => {
     expect(holder.current?.entries[0]?.actorId).toBe('alice');
     expect(holder.current?.entries[0]?.kind).toBe('system');
   });
+
+  it('qualifies bare message keys with defaultNs and preserves already-namespaced keys', () => {
+    const holder: { current: GameLogContextValue | null } = { current: null };
+    render(
+      <GameLogProvider defaultNs="connect-four">
+        <Capture holder={holder} />
+      </GameLogProvider>,
+    );
+    const notifs: unknown[] = [
+      // Server-emitted: bare key, no ns → gets prefixed.
+      { channel: 'log', messageKey: 'log.drop', kind: 'action' },
+      // Board.tsx-style: legacy 'game.log.xxx' dotted form → rewritten to ns:key.
+      { channel: 'log', messageKey: 'connect-four.log.win', kind: 'action' },
+      // Already properly namespaced → untouched.
+      { channel: 'log', messageKey: 'connect-four:log.draw', kind: 'action' },
+      // Different ns (rare, but respect explicit) → untouched.
+      { channel: 'log', messageKey: 'common:player.joined', kind: 'system' },
+    ];
+    act(() => {
+      holder.current?.ingestNotifications(notifs);
+    });
+    expect(holder.current?.entries.map((e) => e.messageKey)).toEqual([
+      'connect-four:log.drop',
+      'connect-four:log.win',
+      'connect-four:log.draw',
+      'common:player.joined',
+    ]);
+  });
 });

@@ -17,7 +17,37 @@ function nextId(seq: { current: number }): string {
   return `log-${seq.current}`;
 }
 
-export function GameLogProvider({ children }: { children: ReactNode }) {
+/**
+ * Qualify a bare i18n key (e.g. `log.drop`) with the game's namespace so
+ * i18next resolves it under the right resource bundle. Keys that already
+ * include a namespace separator (`:`) — like `gomoku.log.move` handed in
+ * from Board.tsx or an explicitly namespaced `connect-four:log.drop` — are
+ * passed through unchanged.
+ *
+ * This is the fix for the historical bug where every game's server-side
+ * `logAction('log.drop', ...)` rendered as raw `log.drop` in the activity
+ * log, because SidePanel's `t(key)` used the default `common` namespace.
+ */
+function qualifyMessageKey(key: string, ns: string | undefined): string {
+  if (!ns) return key;
+  if (key.includes(':')) return key; // already namespaced
+  if (key.startsWith(`${ns}.`)) return `${ns}:${key.slice(ns.length + 1)}`;
+  return `${ns}:${key}`;
+}
+
+export function GameLogProvider({
+  children,
+  defaultNs,
+}: {
+  children: ReactNode;
+  /**
+   * Default i18n namespace for log entries whose `messageKey` is bare
+   * (e.g. server-emitted `log.drop`). Pass the current `gameId` so keys
+   * resolve under that game's resource bundle. When omitted, keys are
+   * left untouched (back-compat with existing tests).
+   */
+  defaultNs?: string;
+}) {
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const seqRef = useRef({ current: 0 });
   const seenNotifications = useRef<WeakSet<object>>(new WeakSet());
@@ -59,7 +89,12 @@ export function GameLogProvider({ children }: { children: ReactNode }) {
           ? (record.messageParams as Record<string, string | number>)
           : undefined;
       const actorId = typeof record.actorId === 'string' ? record.actorId : undefined;
-      fresh.push({ kind, actorId, messageKey: record.messageKey, messageParams });
+      fresh.push({
+        kind,
+        actorId,
+        messageKey: qualifyMessageKey(record.messageKey, defaultNs),
+        messageParams,
+      });
     }
     if (fresh.length === 0) return;
     setEntries((prev) => {
@@ -70,7 +105,7 @@ export function GameLogProvider({ children }: { children: ReactNode }) {
       const overflow = appended.length - MAX_ENTRIES;
       return overflow > 0 ? appended.slice(overflow) : appended;
     });
-  }, []);
+  }, [defaultNs]);
 
   const clear = useCallback(() => setEntries([]), []);
 

@@ -98,7 +98,7 @@ export function SpectatorView({ socket, userId, roomId, onLeave }: SpectatorView
   const viewAsPlayerId = roomState.players[0]?.id ?? userId;
 
   return (
-    <GameLogProvider>
+    <GameLogProvider defaultNs={roomState.gameId}>
       <GameRoomLayout
         gameId={roomState.gameId}
         gameName={localizedName}
