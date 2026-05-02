@@ -35,5 +35,11 @@
     "green": "Green",
     "yellow": "Yellow",
     "wild": "Wild"
+  },
+  "a11y": {
+    "wild": "Wild",
+    "wildDrawFour": "Wild +4",
+    "wildWithColor": "Wild (now {{color}})",
+    "wildDrawFourWithColor": "Wild +4 (now {{color}})"
   }
 }

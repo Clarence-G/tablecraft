@@ -388,9 +388,11 @@ export function Board({
       </div>
 
       {/* Piece inventory / placement panel */}
-      {isMyTurn && !gameOver && (
+      {!gameOver && (
         <div className="w-full max-w-lg bg-card/85 backdrop-blur-sm border-2 border-foreground/40 rounded-[12px] p-3 shadow-[4px_4px_0px_0px_rgba(26,17,8,0.4)]">
-          <div className="text-xs text-muted-foreground font-medium mb-2">{t('selectPiece')}</div>
+          <div className="text-xs text-muted-foreground font-medium mb-2">
+            {isMyTurn ? t('selectPiece') : t('waiting')}
+          </div>
           <div className="flex flex-wrap gap-2">
             {(['queen', 'spider', 'beetle', 'grasshopper', 'ant'] as HivePieceType[]).map((pt) => {
               const count = myInventory[pt];

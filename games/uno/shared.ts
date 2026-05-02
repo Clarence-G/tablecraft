@@ -94,6 +94,36 @@ export function serializeCard(card: UnoCard): string {
   return `${card.color}_${card.value}`;
 }
 
+/** Builds an accessible aria-label for a card, including color prefix.
+ *  `t` is the i18next translation function scoped to the 'uno' namespace.
+ *  `activeColor` is only needed for wild cards on the discard pile (after color was chosen). */
+export function getCardAriaLabel(
+  serialized: string,
+  t: (key: string, params?: Record<string, string>) => string,
+  activeColor?: string,
+): string {
+  if (serialized === 'wild') {
+    if (activeColor) return t('a11y.wildWithColor', { color: t(`color.${activeColor}`) });
+    return t('a11y.wild');
+  }
+  if (serialized === 'wild_draw_four') {
+    if (activeColor) return t('a11y.wildDrawFourWithColor', { color: t(`color.${activeColor}`) });
+    return t('a11y.wildDrawFour');
+  }
+  const card = deserializeCard(serialized);
+  let value: string;
+  if (card.type === 'number') {
+    value = String(card.value);
+  } else if (card.type === 'action') {
+    if (card.action === 'skip') value = 'SKIP';
+    else if (card.action === 'reverse') value = 'REVERSE';
+    else value = '+2';
+  } else {
+    value = '';
+  }
+  return `${t(`color.${card.color}`)} ${value}`.trim();
+}
+
 export function deserializeCard(s: string): UnoCard {
   if (s === 'wild') {
     return { type: 'wild', color: 'wild', action: 'wild' };

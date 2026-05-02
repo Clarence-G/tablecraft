@@ -6,7 +6,7 @@ import type { BoardProps } from '@repo/shared';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type Action, COLORS, type PlayerView, type UnoColor, deserializeCard } from './shared';
+import { type Action, COLORS, type PlayerView, type UnoColor, deserializeCard, getCardAriaLabel } from './shared';
 
 // ---- Card color styling ----
 
@@ -76,17 +76,21 @@ function UnoCardFace({
   disabled,
   onClick,
   size = 'normal',
+  activeColor,
 }: {
   serialized: string;
   selected?: boolean;
   disabled?: boolean;
   onClick?: () => void;
   size?: 'small' | 'normal';
+  activeColor?: UnoColor;
 }) {
+  const { t } = useTranslation('uno');
   const color = getCardColor(serialized);
   const { className: colorClass, style: colorStyle } = getCardStyle(color);
   const label = getCardLabel(serialized);
   const cornerGlyph = getCornerGlyph(serialized);
+  const ariaLabel = getCardAriaLabel(serialized, t, activeColor);
 
   return (
     <PlayingCard
@@ -109,6 +113,7 @@ function UnoCardFace({
       selected={selected}
       disabled={disabled}
       onClick={onClick}
+      aria-label={ariaLabel}
       style={{
         ...colorStyle,
         boxShadow: selected
@@ -411,7 +416,7 @@ export function Board({
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: reduced ? 0 : 0.35, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <UnoCardFace serialized={topCard} size="normal" />
+                  <UnoCardFace serialized={topCard} size="normal" activeColor={topCardIsWild ? state.activeColor : undefined} />
                 </motion.div>
               )}
             </AnimatePresence>

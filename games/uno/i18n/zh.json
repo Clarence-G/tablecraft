@@ -35,5 +35,11 @@
     "green": "绿色",
     "yellow": "黄色",
     "wild": "变色"
+  },
+  "a11y": {
+    "wild": "变色牌",
+    "wildDrawFour": "变色牌 +4",
+    "wildWithColor": "变色牌（当前{{color}}）",
+    "wildDrawFourWithColor": "变色牌 +4（当前{{color}}）"
   }
 }

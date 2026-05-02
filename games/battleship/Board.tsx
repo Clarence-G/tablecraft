@@ -71,7 +71,7 @@ function PlacementGrid({
   return (
     <div
       className="inline-grid border-2 border-card/50 shadow-[4px_4px_0px_0px_#1a1108]"
-      style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)` }}
+      style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, auto)` }}
     >
       {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, idx) => {
         const row = Math.floor(idx / GRID_SIZE);
@@ -120,7 +120,7 @@ function BattleGrid({ label, shipGrid, shotsGrid, clickable, onCellClick }: Batt
       </div>
       <div
         className="inline-grid border-2 border-card/50 shadow-[4px_4px_0px_0px_#1a1108]"
-        style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)` }}
+        style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, auto)` }}
       >
         {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, idx) => {
           const row = Math.floor(idx / GRID_SIZE);

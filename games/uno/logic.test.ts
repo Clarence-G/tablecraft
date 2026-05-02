@@ -2,7 +2,7 @@ import { GameTestHarness } from '@repo/shared/testing';
 import { describe, expect, it } from 'vitest';
 import { logic } from './logic';
 import type { Action, PlayerView } from './shared';
-import { deserializeCard } from './shared';
+import { deserializeCard, getCardAriaLabel } from './shared';
 
 type Harness = GameTestHarness<any, Action, PlayerView>;
 
@@ -316,5 +316,55 @@ describe('UNO Logic', () => {
         expect(result.state.direction).toBe(-1);
       }
     });
+  });
+});
+
+// ---- Aria label tests ----
+
+// Minimal mock matching the zh locale (avoids importing the full i18n stack)
+function mockT(key: string, params?: Record<string, string>): string {
+  const map: Record<string, string> = {
+    'color.red': '红色',
+    'color.blue': '蓝色',
+    'color.green': '绿色',
+    'color.yellow': '黄色',
+    'a11y.wild': '变色牌',
+    'a11y.wildDrawFour': '变色牌 +4',
+    'a11y.wildWithColor': '变色牌（当前{{color}}）',
+    'a11y.wildDrawFourWithColor': '变色牌 +4（当前{{color}}）',
+  };
+  let result = map[key] ?? key;
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      result = result.replace(`{{${k}}}`, v);
+    }
+  }
+  return result;
+}
+
+describe('getCardAriaLabel', () => {
+  it('colored cards include the color name', () => {
+    expect(getCardAriaLabel('red_8', mockT)).toBe('红色 8');
+    expect(getCardAriaLabel('blue_skip', mockT)).toBe('蓝色 SKIP');
+    expect(getCardAriaLabel('green_reverse', mockT)).toBe('绿色 REVERSE');
+    expect(getCardAriaLabel('yellow_draw_two', mockT)).toBe('黄色 +2');
+  });
+
+  it('wild hand cards carry the wild label without active color', () => {
+    expect(getCardAriaLabel('wild', mockT)).toBe('变色牌');
+    expect(getCardAriaLabel('wild_draw_four', mockT)).toBe('变色牌 +4');
+  });
+
+  it('wild on discard pile includes the active color', () => {
+    expect(getCardAriaLabel('wild', mockT, 'red')).toBe('变色牌（当前红色）');
+    expect(getCardAriaLabel('wild_draw_four', mockT, 'blue')).toBe('变色牌 +4（当前蓝色）');
+  });
+
+  it('every colored hand card label matches a color word', () => {
+    const cards = ['red_5', 'blue_skip', 'green_reverse', 'yellow_draw_two', 'wild', 'wild_draw_four'];
+    for (const card of cards) {
+      const label = getCardAriaLabel(card, mockT);
+      expect(label).toMatch(/红色|蓝色|绿色|黄色|变色牌/);
+    }
   });
 });
