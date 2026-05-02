@@ -4,7 +4,7 @@
  * Player colors are passed via the PLAYER_DISC_COLORS token array.
  */
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 /** Two-player color tokens from the design system */
 export const PLAYER_DISC_COLORS: [string, string] = [
@@ -28,6 +28,8 @@ interface DiscBoardProps {
   onColumnClick: (col: number) => void;
   /** Optional: show winning cell highlight */
   winningCells?: Set<number>;
+  /** Returns the accessible label for clickable cells in a given column (0-indexed). */
+  getColumnAriaLabel?: (col: number) => string;
 }
 
 function findGhostRow(board: number[], rows: number, cols: number, col: number): number | null {
@@ -45,64 +47,75 @@ export function DiscBoard({
   canPlay,
   onColumnClick,
   winningCells,
+  getColumnAriaLabel = (col) => `Drop in column ${col + 1}`,
 }: DiscBoardProps) {
   const [hoverCol, setHoverCol] = useState<number | null>(null);
 
   const ghostRow = hoverCol !== null && canPlay ? findGhostRow(board, rows, cols, hoverCol) : null;
+
+  // Lowest empty row per column: the piece would land here, and it is the keyboard focus target.
+  const lowestEmptyByCol = useMemo(
+    () => Array.from({ length: cols }, (_, col) => findGhostRow(board, rows, cols, col)),
+    [board, rows, cols],
+  );
 
   return (
     <div
       className="bg-card border-2 border-foreground rounded-[12px] p-2 shadow-[4px_4px_0px_0px_#3d2e1e] select-none"
       onMouseLeave={() => setHoverCol(null)}
     >
-      {/* Column hover zones */}
-      <div className="flex gap-1 mb-1">
-        {Array.from({ length: cols }, (_, col) => (
-          <button
-            key={col}
-            type="button"
-            className="flex-1 h-5 flex items-center justify-center cursor-pointer disabled:cursor-default"
-            disabled={!canPlay}
-            onClick={() => onColumnClick(col)}
-            onMouseEnter={() => setHoverCol(col)}
-            aria-label={`Drop in column ${col + 1}`}
-          >
-            {hoverCol === col && canPlay && ghostRow !== null && (
-              <div className={`w-2 h-2 rounded-full ${PLAYER_DISC_BG[myPlayerIndex]}`} />
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* Grid */}
       {Array.from({ length: rows }, (_, row) => (
         <div key={row} className="flex gap-1 mb-1 last:mb-0">
           {Array.from({ length: cols }, (_, col) => {
             const idx = row * cols + col;
             const cellValue = board[idx];
-            const isGhost = ghostRow === row && hoverCol === col && cellValue === 0;
+            const isEmpty = cellValue === 0;
+            const colLandingRow = lowestEmptyByCol[col];
+            // A cell is clickable when it is empty and the column is not full and it is the player's turn.
+            const isPlayable = canPlay && isEmpty && colLandingRow !== null;
+            // Only the lowest empty cell per column receives focus via Tab (one tab stop per column).
+            const isFocusTarget = isPlayable && colLandingRow === row;
+            const isGhost = ghostRow === row && hoverCol === col && isEmpty;
             const isWinning = winningCells?.has(idx);
 
             let discClass = '';
             if (cellValue === 1) {
-              discClass = `${PLAYER_DISC_BG[0]} ${isWinning ? 'ring-2 ring-foreground' : ''}`;
+              discClass = `${PLAYER_DISC_BG[0]}${isWinning ? ' ring-2 ring-foreground' : ''}`;
             } else if (cellValue === 2) {
-              discClass = `${PLAYER_DISC_BG[1]} ${isWinning ? 'ring-2 ring-foreground' : ''}`;
+              discClass = `${PLAYER_DISC_BG[1]}${isWinning ? ' ring-2 ring-foreground' : ''}`;
             } else if (isGhost) {
               discClass = PLAYER_DISC_BG_GHOST[myPlayerIndex];
             }
 
-            return (
+            const discContent = (cellValue !== 0 || isGhost) && (
               <div
-                key={col}
-                className="w-10 h-10 rounded-full bg-muted border border-border flex items-center justify-center"
-              >
-                {(cellValue !== 0 || isGhost) && (
-                  <div
-                    className={`w-8 h-8 rounded-full transition-colors ${discClass}`}
-                    style={cellValue !== 0 ? { animation: 'discDrop 0.2s ease-out' } : undefined}
-                  />
-                )}
+                className={`w-8 h-8 rounded-full transition-colors ${discClass}`}
+                style={cellValue !== 0 ? { animation: 'discDrop 0.2s ease-out' } : undefined}
+              />
+            );
+
+            const baseClass =
+              'w-10 h-10 rounded-full bg-muted border border-border flex items-center justify-center';
+
+            if (isPlayable) {
+              return (
+                <button
+                  key={col}
+                  type="button"
+                  className={`${baseClass} cursor-pointer`}
+                  tabIndex={isFocusTarget ? 0 : -1}
+                  aria-label={getColumnAriaLabel(col)}
+                  onClick={() => onColumnClick(col)}
+                  onMouseEnter={() => setHoverCol(col)}
+                >
+                  {discContent}
+                </button>
+              );
+            }
+
+            return (
+              <div key={col} className={baseClass}>
+                {discContent}
               </div>
             );
           })}

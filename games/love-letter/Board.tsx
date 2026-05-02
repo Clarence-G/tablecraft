@@ -5,6 +5,7 @@ import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LOVE_LETTER_CARD_ART, LOVE_LETTER_CARD_BACK } from './cardArt';
 import { type Action, OTHER_TARGET_CARDS, type PlayerView } from './shared';
 
 // ---- Card Component ----
@@ -25,12 +26,15 @@ function CardFace({
   t: (key: string) => string;
 }) {
   const isSmall = size === 'small';
+  const name = t(`cardNames.${value}`);
   return (
     <PlayingCard
       size={isSmall ? 'sm' : 'lg'}
       corner={value}
-      center={t(`cardNames.${value}`)}
+      center={name}
       subtitle={!isSmall ? t(`cardDescriptions.${value}`) : undefined}
+      cardArt={LOVE_LETTER_CARD_ART[value]}
+      cardArtAlt={name}
       selected={selected}
       disabled={disabled}
       onClick={onClick}
@@ -39,7 +43,13 @@ function CardFace({
 }
 
 function CardBack({ size = 'small' }: { size?: 'small' | 'normal' }) {
-  return <PlayingCard size={size === 'small' ? 'sm' : 'lg'} faceDown />;
+  return (
+    <PlayingCard
+      size={size === 'small' ? 'sm' : 'lg'}
+      faceDown
+      backArt={LOVE_LETTER_CARD_BACK}
+    />
+  );
 }
 
 // ---- Main Board ----

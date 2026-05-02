@@ -60,6 +60,14 @@ interface LeaderboardEntry {
 
 function readInitialExpanded(): boolean {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') return true;
+  // Mobile: always start collapsed — the drawer is a fixed overlay that
+  // covers 85vw and intercepts pointer events, so defaulting to "open"
+  // makes the lobby's game tiles and Create-Room button unreachable on
+  // first load. Users tap the FAB when they actually want the panel.
+  // We read md breakpoint manually (640px here matches Tailwind's `md:`
+  // default — the aside is conditionally `md:hidden` so this mirrors the
+  // same split.)
+  if (window.matchMedia('(max-width: 767px)').matches) return false;
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored !== null) return stored === 'true';
   return true; // default: open on desktop
@@ -835,10 +843,28 @@ export function LobbySidePanel(props: LobbySidePanelProps) {
   const [activeTab, setActiveTab] = useState<TabId>('leaderboard');
 
   useEffect(() => {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, String(expanded));
-    }
+    if (typeof localStorage === 'undefined' || typeof window === 'undefined') return;
+    // Only persist the desktop preference — mobile forces collapsed on first
+    // load (see readInitialExpanded), so we'd otherwise keep overwriting the
+    // desktop user's saved "open" preference with `false` whenever they used
+    // the site on a phone.
+    if (window.matchMedia('(max-width: 767px)').matches) return;
+    localStorage.setItem(STORAGE_KEY, String(expanded));
   }, [expanded]);
+
+  // Auto-collapse when viewport shrinks into mobile range. Without this, a
+  // desktop user who opened DevTools / rotated an iPad into portrait /
+  // narrowed the window would see the drawer snap to mobile styling
+  // (fixed + 85vw) while staying open and covering the whole lobby.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mql = window.matchMedia('(max-width: 767px)');
+    const onChange = (ev: MediaQueryListEvent) => {
+      if (ev.matches) setExpanded(false);
+    };
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
 
   // NOTE: we intentionally let guests open the 'recent' tab — the tab body
   // already renders a "sign in to see recent games" empty state, which is

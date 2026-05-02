@@ -145,6 +145,24 @@ export class RoomManager {
         this.removeRoom(id);
         continue;
       }
+      // Solo-host waiting room: room has only the creator and they never got
+      // a socket connection (e.g. REST-only bot spam, or abandoned auto-create).
+      // 1 minute is plenty — a real host would've had at least one socket
+      // heartbeat within that window. Prevents orphan rooms piling up when a
+      // bot or racy client calls POST /rooms but never follows up with join.
+      if (
+        room.status === 'waiting' &&
+        room.players.size === 1 &&
+        this.allDisconnected(room) &&
+        now - room.lastActivityAt > 60_000
+      ) {
+        logger.info(
+          { roomId: id, gameId: room.gameId, mod: 'room-manager' },
+          'cleanup: dropping abandoned solo-host waiting room (>1min, never connected)',
+        );
+        this.removeRoom(id);
+        continue;
+      }
       // Abandoned waiting room: no live players for >10 min — drop it.
       if (
         room.status === 'waiting' &&

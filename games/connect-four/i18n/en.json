@@ -9,6 +9,7 @@
   "waiting": "Waiting",
   "playRed": "You play Red",
   "playYellow": "You play Yellow",
+  "dropInColumn": "Drop into column {{col}}",
   "log": {
     "drop": "dropped in column {{col}} (row {{row}})",
     "win": "connected four — wins!",

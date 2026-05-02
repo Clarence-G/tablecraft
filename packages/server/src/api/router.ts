@@ -137,6 +137,37 @@ export function createApiRouter(
 
     const userId = req.botUserId!;
     const userName = req.botUserName!;
+
+    // Enforce "one active room per user": if the caller is already hosting or
+    // seated in a non-finished room, refuse to create another. Without this a
+    // bot or client can spam POST /rooms and leave a trail of abandoned empty
+    // waiting-rooms in the lobby (28 such rooms observed in prod before fix).
+    // Clients can recover by calling leave on the existing room first, OR by
+    // passing { "force": true } in the body to auto-leave the stale room
+    // first (useful for test scripts that reuse bot names across runs).
+    const existingRoom = roomManager.findRoomByUser(userId);
+    if (existingRoom && existingRoom.status !== 'finished') {
+      const force = req.body && typeof req.body === 'object' && (req.body as Record<string, unknown>).force === true;
+      if (force) {
+        existingRoom.leave(userId);
+        roomManager.onPlayerLeave(userId);
+        if (!roomManager.removeIfEmpty(existingRoom.roomId)) {
+          io.to(existingRoom.roomId).emit('room:state', existingRoom.toRoomState());
+        }
+        io.emit('rooms:updated');
+        // fall through to create new room below
+      } else {
+        res.status(409).json({
+          ok: false,
+          error: 'ALREADY_IN_ROOM',
+          message: `User is already in room "${existingRoom.roomId}" (${existingRoom.gameId}, ${existingRoom.status})`,
+          hint: 'Leave the existing room first (POST /rooms/:id/leave) or pass { "force": true }',
+          data: existingRoom.toRoomSummary(),
+        });
+        return;
+      }
+    }
+
     const room = roomManager.createRoom(gameId, plugin.meta, plugin.logic, userId, config);
     room.join(userId, userName, true);
     roomManager.onPlayerJoin(room.roomId, userId);

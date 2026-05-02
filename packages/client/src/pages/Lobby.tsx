@@ -256,8 +256,8 @@ export function Lobby({
             }
           />
 
-          {/* Game filter chips: wrap to 2 rows on desktop, scroll on small screens */}
-          <div className="flex flex-wrap gap-2 pb-2 mb-3">
+          {/* Game filter chips + contextual create-room action: single row so layout stays stable when filter toggles */}
+          <div className="flex flex-wrap items-center gap-2 pb-2 mb-3">
             <FilterChip
               active={gameFilter === ''}
               label={t('lobby.filterAllGames')}
@@ -272,6 +272,18 @@ export function Lobby({
                 onClick={() => setGameFilter(g.meta.id)}
               />
             ))}
+            {gameFilter && (
+              <button
+                type="button"
+                onClick={() => handleCreate(gameFilter)}
+                disabled={loading || !socketReady}
+                data-testid="create-room-btn"
+                className="ml-auto inline-flex items-center gap-1 text-sm font-semibold border-2 border-foreground bg-card rounded-full px-3 py-1 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active disabled:opacity-60 transition-all"
+              >
+                <Plus className="size-3.5" />
+                {t('lobby.createForGame', { game: filteredGameName })}
+              </button>
+            )}
           </div>
 
           {rooms.length === 0 ? (
@@ -281,49 +293,21 @@ export function Lobby({
                   ? t('lobby.noRoomsForGame', { game: filteredGameName })
                   : t('lobby.noActiveRooms')}
               </div>
-              {gameFilter && (
-                <button
-                  type="button"
-                  onClick={() => handleCreate(gameFilter)}
-                  disabled={loading || !socketReady}
-                  data-testid="create-room-btn"
-                  className="inline-flex items-center gap-1 text-sm font-semibold border-2 border-foreground bg-card rounded-[10px] px-3 py-1.5 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active disabled:opacity-60 transition-all"
-                >
-                  <Plus className="size-3.5" />
-                  {t('lobby.createForGame', { game: filteredGameName })}
-                </button>
-              )}
             </div>
           ) : (
-            <>
-              <ViewAllRow>
-                {rooms.slice(0, 5).map((r) => (
-                  <RoomCard
-                    key={r.roomId}
-                    room={r}
-                    onJoin={() => handleJoinRoom(r.roomId)}
-                    onSpectate={() => onRoomSpectated(r.roomId)}
-                    joinLabel={t('lobby.join')}
-                    spectateLabel={t('lobby.room.spectate')}
-                    disabled={loading || !socketReady}
-                  />
-                ))}
-              </ViewAllRow>
-              {gameFilter && (
-                <div className="mt-3 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => handleCreate(gameFilter)}
-                    disabled={loading || !socketReady}
-                    data-testid="create-room-btn"
-                    className="inline-flex items-center gap-1 text-sm font-semibold border-2 border-foreground bg-card rounded-[10px] px-3 py-1.5 shadow-button hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active disabled:opacity-60 transition-all"
-                  >
-                    <Plus className="size-3.5" />
-                    {t('lobby.createForGame', { game: filteredGameName })}
-                  </button>
-                </div>
-              )}
-            </>
+            <ViewAllRow>
+              {rooms.slice(0, 5).map((r) => (
+                <RoomCard
+                  key={r.roomId}
+                  room={r}
+                  onJoin={() => handleJoinRoom(r.roomId)}
+                  onSpectate={() => onRoomSpectated(r.roomId)}
+                  joinLabel={t('lobby.join')}
+                  spectateLabel={t('lobby.room.spectate')}
+                  disabled={loading || !socketReady}
+                />
+              ))}
+            </ViewAllRow>
           )}
         </section>
 

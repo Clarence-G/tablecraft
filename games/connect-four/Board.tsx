@@ -72,6 +72,7 @@ export function Board({
           setPendingCol(col);
           sendAction({ type: 'drop', col });
         }}
+        getColumnAriaLabel={(col) => t('dropInColumn', { col: col + 1 })}
       />
 
       <div className="flex items-center gap-2 text-sm font-medium bg-foreground/85 text-card border-2 border-foreground rounded-[8px] px-3 py-1.5 shadow-button">

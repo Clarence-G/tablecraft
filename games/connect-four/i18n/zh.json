@@ -9,6 +9,7 @@
   "waiting": "等待",
   "playRed": "你执红子",
   "playYellow": "你执黄子",
+  "dropInColumn": "投入第 {{col}} 列",
   "log": {
     "drop": "在第 {{col}} 列落子（行 {{row}}）",
     "win": "连成四子，获胜！",

@@ -102,7 +102,7 @@ export function Room({ roomId, userId, roomCtx, onGameStart: _onGameStart, onLea
             {/* Cover card */}
             <div className="bg-card border-thick border-foreground rounded-[20px] overflow-hidden shadow-card">
               {meta ? (
-                <div className="aspect-square sm:aspect-[4/3] lg:aspect-square relative">
+                <div className="aspect-[5/3] sm:aspect-[4/3] lg:aspect-square relative">
                   <GameCoverImage
                     gameId={meta.id}
                     fallbackIcon={meta.icon ?? 'stack'}

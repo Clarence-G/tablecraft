@@ -89,9 +89,16 @@ export function GameActionDialog({
 
   return (
     <Dialog open={game !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[540px] p-0 overflow-hidden">
-        {/* Hero banner: full-width cover image with gradient fade into the body */}
-        <div className="relative aspect-[16/9] overflow-hidden">
+      <DialogContent className="sm:max-w-[540px] p-0 overflow-hidden max-h-[calc(100dvh-2rem)] grid grid-rows-[auto_minmax(0,1fr)]">
+        {/* Hero banner: full-width cover image with gradient fade into the body.
+         *
+         * Mobile sizing note: we use a shorter aspect ratio on small screens
+         * (5:3 → ~225px at 375w → too tall with the body pushes CTA off-screen)
+         * and switch to 16:9 from sm: onwards where there's horizontal room.
+         * The `shrink-0` is belt-and-braces — grid-rows defines this as `auto`
+         * but a flex ancestor could still try to stretch it.
+         */}
+        <div className="relative aspect-[2/1] sm:aspect-[16/9] overflow-hidden shrink-0">
           <GameCoverImage
             gameId={m.id}
             fallbackIcon={m.icon ?? 'rolling-dices'}
@@ -104,7 +111,9 @@ export function GameActionDialog({
           />
         </div>
 
-        <div className="px-5 pt-2 pb-5 space-y-4">
+        {/* Scrollable body — min-h:0 on the row lets this take the remaining
+         * dvh and scroll internally on mobile when rooms list is long. */}
+        <div className="px-5 pt-2 pb-5 space-y-4 overflow-y-auto min-h-0">
           <DialogHeader className="gap-1">
             <DialogTitle className="text-xl font-extrabold leading-tight">
               {displayName}

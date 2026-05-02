@@ -41,6 +41,17 @@ export function setupHandlers(
       const plugin = registry[gameId];
       if (!plugin) return ack({ ok: false, error: 'Unknown game' });
 
+      // Enforce "one active room per user" at the socket layer too. Without
+      // this, a client can race-call room:create repeatedly (double-click,
+      // reconnect-then-create) and leave orphan waiting-rooms behind.
+      const alreadyIn = roomManager.findRoomByUser(userId);
+      if (alreadyIn && alreadyIn.status !== 'finished') {
+        return ack({
+          ok: false,
+          error: `Already in room ${alreadyIn.roomId} (${alreadyIn.status}). Leave it first.`,
+        });
+      }
+
       let validatedConfig = plugin.meta.defaultConfig;
       if (plugin.meta.configSchema && config !== undefined) {
         const result = plugin.meta.configSchema.safeParse(config);
