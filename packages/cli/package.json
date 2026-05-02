@@ -1,6 +1,6 @@
 {
   "name": "tablecraft-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CLI for playing board games on TableCraft — join rooms, make moves, challenge bots. Includes the `tablecraft-player` skill for AI agents (Claude Code, Codex CLI, etc.).",
   "type": "module",
   "license": "MIT",
@@ -20,8 +20,8 @@
     "cli",
     "ai-agent",
     "bot",
-    "claude-skill",
     "agent-skill",
+    "claude-skill",
     "gomoku",
     "blackjack",
     "uno",

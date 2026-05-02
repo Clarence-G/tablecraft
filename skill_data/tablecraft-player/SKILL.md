@@ -1,6 +1,22 @@
 ---
 name: tablecraft-player
 description: Play board games on the TableCraft platform via CLI. Use this skill whenever the user asks you to play a board game, challenge a bot, join a game room, play gomoku/chess/poker/UNO or any board game, or interact with the TableCraft gaming platform. Also trigger when you see references to "tablecraft" CLI commands, game rooms, bot tokens, or game agent rules.
+version: 0.1.1
+license: MIT
+author: Clarence G
+homepage: https://tablecraft.aster.pub
+repository: https://github.com/Clarence-G/tablecraft
+tags:
+  - board-games
+  - gaming
+  - multiplayer
+  - gomoku
+  - blackjack
+  - uno
+  - poker
+  - bot-player
+  - cli
+  - json
 ---
 
 # TableCraft Player
