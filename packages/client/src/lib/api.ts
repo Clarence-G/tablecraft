@@ -5,7 +5,9 @@
  * callers can branch on `err.code` (e.g. `ALREADY_CLAIMED`).
  */
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+// Empty baseURL = same-origin relative URLs. In dev, vite proxies /api
+// to localhost:3001. In prod, nginx proxies /api to the node server.
+const baseURL = import.meta.env.VITE_API_URL || '';
 
 export class ApiError extends Error {
   code: string;
