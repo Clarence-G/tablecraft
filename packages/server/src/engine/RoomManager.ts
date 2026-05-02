@@ -145,11 +145,28 @@ export class RoomManager {
         this.removeRoom(id);
         continue;
       }
+      // Abandoned waiting room: no live players for >10 min — drop it.
       if (
         room.status === 'waiting' &&
         this.allDisconnected(room) &&
         now - room.lastActivityAt > 10 * 60_000
       ) {
+        this.removeRoom(id);
+        continue;
+      }
+      // Abandoned in-progress game: everyone dropped and nobody came back.
+      // Without this branch a game-in-progress with no live players sits in
+      // the lobby forever, because 'playing' status never self-transitions
+      // to 'finished' on disconnect alone.
+      if (
+        room.status === 'playing' &&
+        this.allDisconnected(room) &&
+        now - room.lastActivityAt > 10 * 60_000
+      ) {
+        logger.info(
+          { roomId: id, gameId: room.gameId, mod: 'room-manager' },
+          'cleanup: abandoning stale playing room (all disconnected >10min)',
+        );
         this.removeRoom(id);
       }
     }

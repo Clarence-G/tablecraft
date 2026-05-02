@@ -1,18 +1,12 @@
 import { GameIcon } from '@/components/GameIcon';
 import { LeaderboardRow } from '@repo/game-ui/leaderboard';
-import { ArrowLeft } from 'lucide-react';
+import type { LeaderboardEntry } from '@repo/shared';
+import { ArrowLeft, Bot } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { clientRegistry } from '../../../../games/client-registry';
 import { useSession } from '../hooks/useSession';
 import { apiFetch } from '../lib/api';
-
-interface LeaderboardEntry {
-  rank: number;
-  userId: string;
-  name: string;
-  points: number;
-}
 
 interface MyRank {
   rank: number | null;
@@ -125,6 +119,16 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
                   youLabel={t('leaderboard.youLabel')}
                   pointsSuffix={t('leaderboard.ptsSuffix')}
                 />
+                {e.isBot && (
+                  <div className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5 ml-[4.25rem]">
+                    <Bot className="size-3" aria-hidden="true" />
+                    <span>
+                      {e.ownerName
+                        ? t('leaderboard.botBy', { name: e.ownerName })
+                        : t('leaderboard.botUnowned')}
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
           </div>

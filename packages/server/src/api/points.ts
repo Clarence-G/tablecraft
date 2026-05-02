@@ -1,7 +1,8 @@
 import { and, desc, eq, gte, isNotNull, isNull, ne, sql } from 'drizzle-orm';
 import type { Request, Response, Router } from 'express';
 import { db } from '../db/index.js';
-import { pointsLedger, user } from '../db/schema.js';
+import { botTokens, pointsLedger, user } from '../db/schema.js';
+import { TokenStore } from './token-store.js';
 
 /**
  * Points + leaderboard + claim-guest endpoints. Spec §5.3.
@@ -84,7 +85,7 @@ async function fetchPointsSummary(filter: {
 }
 
 export function registerPointsRoutes(router: Router): void {
-  // GET /api/me — current session's profile + points summary.
+  // GET /api/me — current session's profile + points summary + owned bots.
   router.get('/me', async (req: Request, res: Response) => {
     const session = req.session;
     if (!session) {
@@ -92,7 +93,11 @@ export function registerPointsRoutes(router: Router): void {
       return;
     }
 
-    const points = await fetchPointsSummary({ userId: session.user.id });
+    const tokenStore = new TokenStore(db);
+    const [points, bots] = await Promise.all([
+      fetchPointsSummary({ userId: session.user.id }),
+      tokenStore.listByOwner(session.user.id),
+    ]);
     const safeUser = {
       id: session.user.id,
       email: session.user.email,
@@ -125,7 +130,7 @@ export function registerPointsRoutes(router: Router): void {
       result: r.reason, // 'win' | 'loss' | 'draw'
       endedAt: r.endedAt,
     }));
-    res.json({ ok: true, data: { user: safeUser, points, recentGames } });
+    res.json({ ok: true, data: { user: safeUser, points, recentGames, bots } });
   });
 
   // GET /api/guest/:guestId/points — public read of a guest's summary.
@@ -213,8 +218,8 @@ export function registerPointsRoutes(router: Router): void {
     res.json({ ok: true, data: { mergedRows: result } });
   });
 
-  // GET /api/leaderboard — public top-N by points (sum per user). Optionally
-  // scoped to a gameId and/or a rolling time window (period=all|week|day).
+  // GET /api/leaderboard — top-N by points. Includes both human users and bots.
+  // Entries where isBot=true carry the bot's name and ownerName.
   // Excludes guest-only rows (user_id IS NULL).
   router.get('/leaderboard', async (req: Request, res: Response) => {
     const gameId = typeof req.query.gameId === 'string' ? req.query.gameId : undefined;
@@ -222,8 +227,6 @@ export function registerPointsRoutes(router: Router): void {
     const limit = Math.min(Math.max(Number.isFinite(limitParam) ? limitParam : 50, 1), 100);
 
     // period: 'all' (default) | 'week' (last 7d) | 'day' (last 24h).
-    // Rolling windows (not ISO calendar weeks) so the board feels live —
-    // e.g. a win at 23:50 still counts 23:50 next day's "24h" window.
     const rawPeriod = typeof req.query.period === 'string' ? req.query.period : 'all';
     const period = rawPeriod === 'week' || rawPeriod === 'day' ? rawPeriod : 'all';
     const now = Date.now();
@@ -250,15 +253,19 @@ export function registerPointsRoutes(router: Router): void {
     const rows = await db
       .select({
         userId: pointsSubquery.userId,
-        name: user.name,
+        name: sql<string>`COALESCE(${user.name}, ${botTokens.name}, ${pointsSubquery.userId})`,
         total: pointsSubquery.total,
+        isBot: sql<boolean>`(${botTokens.userId} IS NOT NULL)`,
+        // Scalar subquery for owner name avoids a second alias on the user table
+        ownerName: sql<string | null>`(SELECT name FROM "user" WHERE id = ${botTokens.ownerUserId})`,
       })
       .from(pointsSubquery)
-      .innerJoin(user, eq(user.id, pointsSubquery.userId))
+      .leftJoin(user, eq(user.id, pointsSubquery.userId))
+      .leftJoin(botTokens, eq(botTokens.userId, pointsSubquery.userId))
       .orderBy(desc(pointsSubquery.total))
       .limit(limit);
 
-    // total = number of distinct users with > 0 earned points (loss-only rows excluded).
+    // total = number of distinct users/bots with > 0 earned points.
     const totalSub = db
       .select({ userId: pointsLedger.userId })
       .from(pointsLedger)
@@ -274,6 +281,8 @@ export function registerPointsRoutes(router: Router): void {
       userId: r.userId as string,
       name: r.name,
       points: Number(r.total),
+      isBot: Boolean(r.isBot),
+      ownerName: r.ownerName ?? null,
     }));
     res.json({ ok: true, data: { entries, total } });
   });

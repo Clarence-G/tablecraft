@@ -7,11 +7,13 @@ import { clientRegistry } from '../../../../games/client-registry';
 import { authClient } from '../lib/authClient';
 import { apiFetch } from '../lib/api';
 import { useSession } from '../hooks/useSession';
+import { BotManager, type BotRow } from '../components/BotManager';
 
 interface MeApiResponse {
   user: { id: string; email: string; name: string; image: string | null };
   points: { global: number; byGame: Record<string, number> };
   recentGames: unknown[];
+  bots?: BotRow[];
 }
 
 interface MeProps {
@@ -142,6 +144,8 @@ export function Me({ onBack, onSignedOut }: MeProps) {
             )}
           </div>
         </section>
+
+        {!loading && <BotManager initialBots={data?.bots ?? []} />}
 
         <section className="pt-2">
           <Button

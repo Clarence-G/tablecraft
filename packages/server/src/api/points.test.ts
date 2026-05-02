@@ -400,4 +400,62 @@ describe('points REST routes', () => {
     expect(lb.data.entries.some((e: { userId: string }) => e.userId === userId)).toBe(true);
     expect(lb.data.total).toBe(1);
   });
+
+  it('GET /api/leaderboard includes bots with isBot=true and ownerName', async () => {
+    const alice = await signUp('alice@example.com', 'correct-horse-battery-staple', 'Alice');
+    const bob = await signUp('bob@example.com', 'correct-horse-battery-staple', 'Bob');
+
+    // Create owned bots directly in the DB (bypassing token crypto)
+    const botB1UserId = 'bot_b1';
+    const botB2UserId = 'bot_b2';
+    const botUnownedId = 'bot_unowned';
+
+    await db.insert(schema.botTokens).values([
+      { userId: botB1UserId, name: 'B1', tokenHash: 'hash_b1', ownerUserId: alice.userId },
+      { userId: botB2UserId, name: 'B2', tokenHash: 'hash_b2', ownerUserId: bob.userId },
+      { userId: botUnownedId, name: 'Unowned', tokenHash: 'hash_unowned' },
+    ]);
+
+    await db.insert(schema.pointsLedger).values([
+      { userId: alice.userId, gameId: 'g', reason: 'win', points: 20 },
+      { userId: botB1UserId, gameId: 'g', reason: 'win', points: 10 },
+      { userId: botB2UserId, gameId: 'g', reason: 'win', points: 5 },
+      { userId: botUnownedId, gameId: 'g', reason: 'win', points: 3 },
+    ]);
+
+    const resp = await fetch(`${baseUrl}/api/leaderboard`);
+    expect(resp.status).toBe(200);
+    const body = await resp.json();
+
+    expect(body.data.entries).toHaveLength(4);
+    expect(body.data.total).toBe(4);
+
+    // Sorted by points desc: Alice(20), B1(10), B2(5), Unowned(3)
+    const [first, second, third, fourth] = body.data.entries;
+    expect(first).toMatchObject({ rank: 1, userId: alice.userId, points: 20, isBot: false, ownerName: null });
+    expect(second).toMatchObject({ rank: 2, userId: botB1UserId, points: 10, isBot: true, ownerName: 'Alice' });
+    expect(third).toMatchObject({ rank: 3, userId: botB2UserId, points: 5, isBot: true, ownerName: 'Bob' });
+    expect(fourth).toMatchObject({ rank: 4, userId: botUnownedId, points: 3, isBot: true, ownerName: null });
+  });
+
+  it('GET /api/me returns bots list for logged-in user', async () => {
+    const { cookie, userId } = await signUp('alice@example.com', 'correct-horse-battery-staple', 'Alice');
+
+    // Seed an owned bot
+    await db.insert(schema.botTokens).values({
+      userId: 'bot_mine',
+      name: 'My Robot',
+      tokenHash: 'hash_mine',
+      ownerUserId: userId,
+    });
+
+    const resp = await fetch(`${baseUrl}/api/me`, { headers: { cookie } });
+    expect(resp.status).toBe(200);
+    const body = await resp.json();
+    expect(body.data.bots).toHaveLength(1);
+    expect(body.data.bots[0].userId).toBe('bot_mine');
+    expect(body.data.bots[0].name).toBe('My Robot');
+    // tokenHash must not leak
+    expect(body.data.bots[0]).not.toHaveProperty('tokenHash');
+  });
 });

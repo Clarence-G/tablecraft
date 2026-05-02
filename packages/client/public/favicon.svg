@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="geometricPrecision">
+  <!-- TableCraft favicon v4
+       双版本合一：viewBox 内置 media query，小尺寸自动切到极简版
+       (Chrome/Edge/FF 都支持 SVG favicon 内嵌 @media — Safari 部分支持)
+       基调：warm skeuomorphic，奶油底 + 厚棕描边 + 琥珀高光 -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fff4dc"/>
+      <stop offset="100%" stop-color="#ecd090"/>
+    </linearGradient>
+    <linearGradient id="dice" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fffbf0"/>
+      <stop offset="55%" stop-color="#f7dea0"/>
+      <stop offset="100%" stop-color="#d0a858"/>
+    </linearGradient>
+    <style>
+      /* At very small render sizes (tab favicons), hide the 5-pip detail
+         and show a single central pip for maximum legibility. */
+      .small-only { display: none; }
+      @media (max-width: 20px) {
+        .detail { display: none; }
+        .small-only { display: inline; }
+      }
+    </style>
+  </defs>
+
+  <!-- hard drop shadow -->
+  <rect x="5" y="11" width="56" height="52" rx="11" fill="#1a0d06"/>
+
+  <!-- cream tile base with extra-thick dark-brown border -->
+  <rect x="2" y="4" width="56" height="52" rx="11"
+        fill="url(#bg)" stroke="#2a1810" stroke-width="4"/>
+
+  <!-- inner warm rim highlight -->
+  <rect x="4" y="6" width="52" height="48" rx="9"
+        fill="none" stroke="#fff3c8" stroke-width="1.2" opacity="0.75"/>
+
+  <!-- ═══ Detailed dice (≥32px render) ═══ -->
+  <g class="detail" transform="translate(10 10)">
+    <rect x="0" y="0" width="40" height="40" rx="8"
+          fill="url(#dice)" stroke="#2a1810" stroke-width="4"/>
+    <rect x="3" y="3" width="34" height="5" rx="2.5"
+          fill="#fff3c8" opacity="0.8"/>
+    <circle cx="9"  cy="9"  r="4" fill="#2a1810"/>
+    <circle cx="31" cy="9"  r="4" fill="#2a1810"/>
+    <circle cx="20" cy="20" r="4.4" fill="#2a1810"/>
+    <circle cx="9"  cy="31" r="4" fill="#2a1810"/>
+    <circle cx="31" cy="31" r="4" fill="#2a1810"/>
+  </g>
+
+  <!-- ═══ Simplified dice (≤20px render, tab icon) ═══ -->
+  <g class="small-only" transform="translate(10 10)">
+    <rect x="0" y="0" width="40" height="40" rx="8"
+          fill="url(#dice)" stroke="#2a1810" stroke-width="5"/>
+    <!-- 3-pip diagonal: unambiguously reads as dice face "3" -->
+    <circle cx="10" cy="10" r="5" fill="#2a1810"/>
+    <circle cx="20" cy="20" r="5" fill="#2a1810"/>
+    <circle cx="30" cy="30" r="5" fill="#2a1810"/>
+  </g>
+</svg>

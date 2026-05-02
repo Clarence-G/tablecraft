@@ -151,4 +151,14 @@
   .border-thick {
     border-width: 2.5px;
   }
+  /* Hide horizontal/vertical scrollbars while keeping scroll working.
+     Used on carousels (ViewAllRow, filter chips) where the native scrollbar
+     is visually noisy. */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }

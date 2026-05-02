@@ -5,6 +5,7 @@ import express from 'express';
 import type { GameRoom } from '../engine/GameRoom.js';
 import type { RoomManager } from '../engine/RoomManager.js';
 import { createApiAuth } from './auth.js';
+import { registerBotsRoutes } from './bots.js';
 import { registerFriendsRoutes } from './friends.js';
 import { registerPointsRoutes } from './points.js';
 import { registerReportsRoutes } from './reports.js';
@@ -43,6 +44,7 @@ export function createApiRouter(
   registerPointsRoutes(router);
   registerReportsRoutes(router);
   registerFriendsRoutes(router, roomManager);
+  registerBotsRoutes(router, tokenStore);
 
   // --- Admin endpoints (dev only; gated in production) ---
 

@@ -61,15 +61,15 @@ describe('GameRoom END_GAME → points_ledger integration', () => {
     await testDb.cleanup();
   });
 
-  it('writes a win row only for the winner, skips bots, routes guest vs user', async () => {
-    // Create a real user row for userA so the FK holds.
+  it('writes win row for winner, routes guest vs user; bots get ledger rows', async () => {
+    // Create a real user row for userA.
     await db.insert(schema.user).values({
       id: 'userA',
       name: 'User A',
       email: 'a@example.com',
     });
 
-    // rankings: userA wins, guestB loses, botC is skipped
+    // rankings: userA wins, guestB loses, botC loses (bot now participates)
     const logic = makeEndGameLogic(['userA', 'guestB', 'botC']);
     const room = new GameRoom('test', meta, undefined, logic);
 
@@ -83,25 +83,59 @@ describe('GameRoom END_GAME → points_ledger integration', () => {
 
     room.handleAction('userA', { type: 'end' }, 1);
 
-    // ledger writes are fire-and-forget — poll until both rows land
-    // (postgres-js requires real network round-trip, not just a microtask)
+    // Poll until 3 rows land (userA win, guestB loss, botC loss)
     let rows: Array<typeof schema.pointsLedger.$inferSelect> = [];
     for (let i = 0; i < 50; i++) {
       rows = await db.select().from(schema.pointsLedger).orderBy(schema.pointsLedger.reason);
-      if (rows.length >= 2) break;
+      if (rows.length >= 3) break;
       await new Promise((r) => setTimeout(r, 20));
     }
-    // 2 rows: winner userA (win, 10) + loser guestB (loss, 0). Bot is skipped.
-    expect(rows).toHaveLength(2);
+
+    expect(rows).toHaveLength(3);
+
     const win = rows.find((r) => r.reason === 'win');
-    const loss = rows.find((r) => r.reason === 'loss');
     expect(win?.userId).toBe('userA');
     expect(win?.guestId).toBeNull();
     expect(win?.points).toBe(10);
     expect(win?.roomId).toBe(room.roomId);
-    expect(loss?.userId).toBeNull();
-    expect(loss?.guestId).toBe('guestB');
-    expect(loss?.points).toBe(0);
+
+    const guestLoss = rows.find((r) => r.guestId === 'guestB');
+    expect(guestLoss?.userId).toBeNull();
+    expect(guestLoss?.points).toBe(0);
+
+    // Bot row: userId = bot id, guestId = null
+    const botLoss = rows.find((r) => r.userId === 'botC');
+    expect(botLoss).toBeDefined();
+    expect(botLoss?.guestId).toBeNull();
+    expect(botLoss?.points).toBe(0);
+    expect(botLoss?.reason).toBe('loss');
+  });
+
+  it('bot winner gets a win row with userId = bot id', async () => {
+    const logic = makeEndGameLogic(['bot_winner', 'guestB', 'guestC']);
+    const room = new GameRoom('test', meta, undefined, logic);
+
+    room.join('bot_winner', 'Bot', /* isBot */ true);
+    room.join('guestB', 'B', false, true);
+    room.join('guestC', 'C', false, true);
+    room.ready('guestB');
+    room.ready('guestC');
+    room.start();
+
+    room.handleAction('bot_winner', { type: 'end' }, 1);
+
+    let rows: Array<typeof schema.pointsLedger.$inferSelect> = [];
+    for (let i = 0; i < 50; i++) {
+      rows = await db.select().from(schema.pointsLedger);
+      if (rows.length >= 3) break;
+      await new Promise((r) => setTimeout(r, 20));
+    }
+
+    const botWin = rows.find((r) => r.userId === 'bot_winner');
+    expect(botWin).toBeDefined();
+    expect(botWin?.guestId).toBeNull();
+    expect(botWin?.reason).toBe('win');
+    expect(botWin?.points).toBe(10);
   });
 
   it('writes no rows when rankings is empty', async () => {

@@ -107,6 +107,7 @@ export interface ClientGamePlugin {
     | 'tags'
     | 'icon'
     | 'estimatedMinutes'
+    | 'rules'
     | 'scene'
   >;
   Board: React.LazyExoticComponent<React.ComponentType<any>> | React.ComponentType<any>;

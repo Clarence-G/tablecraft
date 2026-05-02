@@ -400,7 +400,11 @@ export class GameRoom {
       hostId: this.hostId,
       players: [...this.players.values()],
       minPlayers: this.meta.minPlayers,
-      maxPlayers: this.ctx.players.length || this.players.size,
+      // Always report the game's declared max — not the current seat count —
+      // so the client can render "1/4" progress and compute the remaining-slot
+      // affordances. Using ctx.players.length here incorrectly reported a
+      // shrinking capacity (e.g. "2-1 人") for a fresh 2-player game.
+      maxPlayers: this.meta.maxPlayers,
       config: this.config,
       createdAt: this.createdAt,
       spectatorCount: this.spectators.size,
@@ -528,19 +532,18 @@ export class GameRoom {
   }
 
   /**
-   * Fire-and-forget ledger writes for every human finisher. Spec §4.4:
-   * - Bots are skipped (no bot ranking in this release).
-   * - Winner = rankings[0] (single winner). Others get 'loss' (0 points → skipped).
-   * - PlayerInfo.isGuest routes the row to user_id vs guest_id; missing field
-   *   defaults to guest (conservative — writing to the unique user_id column
-   *   requires a real FK target).
+   * Fire-and-forget ledger writes for every finisher (humans and bots).
+   * Spec §4.4 updated 2026-05: bots are now first-class ranking citizens.
+   * - Bots always write to user_id (not guest_id) regardless of the isGuest
+   *   field, because bot IDs are stable and leaderboard joins via bot_tokens.
+   * - PlayerInfo.isGuest routes human rows to user_id vs guest_id.
    */
   private writePointsLedger(rankings: string[]): void {
     if (rankings.length === 0) return;
     const winnerId = rankings[0];
     for (const [pid, info] of this.players) {
-      if (info.isBot) continue;
-      const isGuest = info.isGuest ?? true;
+      // Bots always write to userId; humans route by isGuest flag.
+      const isGuest = !info.isBot && (info.isGuest ?? true);
       const reason: 'win' | 'loss' = pid === winnerId ? 'win' : 'loss';
       void recordPoints({
         userId: isGuest ? null : pid,

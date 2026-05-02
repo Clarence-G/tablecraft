@@ -43,6 +43,13 @@
       "when": 1777619849984,
       "tag": "0005_fix_friendships_collation",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777706552006,
+      "tag": "0006_bot_ownership",
+      "breakpoints": true
     }
   ]
 }

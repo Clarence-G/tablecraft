@@ -154,17 +154,26 @@ export const actionLog = pgTable(
   }),
 );
 
-export const botTokens = pgTable('bot_tokens', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => nanoid()),
-  userId: text('user_id').notNull().unique(),
-  name: text('name').notNull(),
-  tokenHash: text('token_hash').notNull().unique(),
-  createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
-  lastUsedAt: timestamp('last_used_at', { withTimezone: true, mode: 'date' }),
-  revokedAt: timestamp('revoked_at', { withTimezone: true, mode: 'date' }),
-});
+export const botTokens = pgTable(
+  'bot_tokens',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => nanoid()),
+    userId: text('user_id').notNull().unique(),
+    name: text('name').notNull(),
+    tokenHash: text('token_hash').notNull().unique(),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true, mode: 'date' }),
+    revokedAt: timestamp('revoked_at', { withTimezone: true, mode: 'date' }),
+    // Ownership added 2026-05: links bot to its creator for CRUD and display.
+    // NULL for pre-ownership bots (e.g. DefaultBot seeded in dev).
+    ownerUserId: text('owner_user_id').references(() => user.id, { onDelete: 'cascade' }),
+  },
+  (t) => ({
+    ownerIdx: index('idx_bot_tokens_owner').on(t.ownerUserId),
+  }),
+);
 
 // ---------------------------------------------------------------------------
 // Points ledger (spec §3.2). Append-only record of point awards. Owner is
@@ -180,7 +189,9 @@ export const pointsLedger = pgTable(
     id: text('id')
       .primaryKey()
       .$defaultFn(() => nanoid()),
-    userId: text('user_id').references(() => user.id, { onDelete: 'set null' }),
+    // FK dropped in migration 0006 (Design A1) to allow bot user IDs that don't
+    // exist in the `user` table. Application-layer enforces validity.
+    userId: text('user_id'),
     guestId: text('guest_id'),
     gameId: text('game_id').notNull(),
     roomId: text('room_id'),

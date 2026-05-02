@@ -27,3 +27,7 @@ games/**/*.d.ts.map
 
 # Local review tools (not for repo)
 scene-gallery.html
+
+# Local-only generated artifacts (covers are built into public/; screenshots are for QA)
+/out/
+/screenshots/
