@@ -5,9 +5,10 @@
 import { chromium, devices } from '@playwright/test';
 import path from 'node:path';
 import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 const PROD = 'https://tablecraft.aster.pub';
-const OUT_DIR = '/Users/bytedance/Projects/boardgames/screenshots';
+const OUT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../screenshots');
 
 async function cap(name: string, viewport: { width: number; height: number }, device?: any) {
   const browser = await chromium.launch();
