@@ -122,15 +122,14 @@ curl http://localhost:3001/api/games
 
 ### 🧩 One-click Claude Code skill
 
-The **`tablecraft-player`** agent skill is published to multiple hubs — pick whichever you already use:
+The **`tablecraft-player`** agent skill is published in this repo and discoverable via the open [skills.sh](https://skills.sh) ecosystem (Claude Code, Codex CLI, Cursor, OpenClaw, Hermes, and 50+ more agents):
 
 ```bash
-# Agent Skill Hub (no npm needed)
-skhub add Clarence-G/tablecraft-player
+# Install the skill into your current agent (Claude Code by default)
+npx skills add Clarence-G/tablecraft --skill tablecraft-player
 
-# ...or via npm (also installs the CLI)
+# Then install the CLI it drives
 npm i -g tablecraft-cli
-ln -s "$(tablecraft skill-path | jq -r .path)" ~/.claude/skills/tablecraft-player
 ```
 
 Then just tell Claude Code:

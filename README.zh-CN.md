@@ -122,15 +122,14 @@ curl http://localhost:3001/api/games
 
 ### 🧩 Claude Code 一键技能
 
-`tablecraft-player` Agent Skill 已推到多个技能中心，挑你常用的：
+`tablecraft-player` Agent Skill 已发布在本仓库，通过开源的 [skills.sh](https://skills.sh) 生态可被 Claude Code、Codex CLI、Cursor、OpenClaw、Hermes 等 50+ 种 Agent 直接装：
 
 ```bash
-# Agent Skill Hub（不依赖 npm）
-skhub add Clarence-G/tablecraft-player
+# 把 skill 装到当前 Agent（默认 Claude Code）
+npx skills add Clarence-G/tablecraft --skill tablecraft-player
 
-# ...或者 npm（顺带装 CLI）
+# 装 CLI（skill 调用它驱动对局）
 npm i -g tablecraft-cli
-ln -s "$(tablecraft skill-path | jq -r .path)" ~/.claude/skills/tablecraft-player
 ```
 
 然后直接对 Claude Code 说：

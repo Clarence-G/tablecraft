@@ -140,8 +140,12 @@ To test disconnect handling, call `h.disconnect(playerID)` — it invokes `logic
 The platform supports AI agent access via REST API and CLI.
 
 - **REST API** at `/api/*` — 12 endpoints for game discovery, room management, and gameplay. See `packages/server/src/api/router.ts`.
-- **CLI** (`tablecraft`) at `packages/cli/` — thin HTTP client, all output is single-line JSON. Run via `tsx packages/cli/src/index.ts <command>`.
-- **Skill** at `.claude/skills/tablecraft-player/` — teaches Claude Code agents how to use the CLI.
+- **CLI** (`tablecraft`) at `packages/cli/` — thin HTTP client, all output is single-line JSON.
+  - **Published to npm** as [`tablecraft-cli`](https://www.npmjs.com/package/tablecraft-cli). End users install with `npm i -g tablecraft-cli`; in development, run from source via `tsx packages/cli/src/index.ts <command>`.
+  - When bumping CLI features, run `pnpm --filter tablecraft-cli build` and `cd packages/cli && npm version <patch|minor|major> && npm publish` to ship a new version.
+- **Skill** at `skill_data/tablecraft-player/SKILL.md` — teaches Claude Code (and any [skills.sh](https://skills.sh)-compatible agent: Codex CLI, Cursor, OpenClaw, Hermes, etc.) how to drive the CLI.
+  - **Discoverable via skills.sh**: end users install with `npx skills add Clarence-G/tablecraft --skill tablecraft-player` (auto-detects current agent and copies into `.claude/skills/`, `.codex/skills/`, etc.).
+  - **Also bundled in the npm package**: at build time `packages/cli/scripts/bundle-skill.mjs` copies `skill_data/tablecraft-player/` → `packages/cli/skills/tablecraft-player/` (wired into `pnpm build` and `prepublishOnly`, so every `npm publish` ships the latest skill). Reachable at runtime via `tablecraft skill-path`. **`packages/cli/skills/` is generated — never edit it directly; edit `skill_data/tablecraft-player/SKILL.md`** and the next build will sync.
 - **Bot tokens** — generated via `POST /api/admin/token`, stored in memory. Bots auto-ready on room join.
 - **Game rules for agents** — `GET /api/games/:gameId` returns both `agentRules` (natural-language strategy/view hints) and `actionSchema` (JSON Schema auto-derived from the Zod action schema). Agents can validate their generated actions against the schema before submitting.
 
