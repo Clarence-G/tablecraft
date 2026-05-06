@@ -1,7 +1,7 @@
 ---
 name: tablecraft-player
 description: Play board games on the TableCraft platform via CLI. Use this skill whenever the user asks you to play a board game, challenge a bot, join a game room, play gomoku/chess/poker/UNO or any board game, or interact with the TableCraft gaming platform. Also trigger when you see references to "tablecraft" CLI commands, game rooms, bot tokens, or game agent rules.
-version: 0.1.1
+version: 0.1.2
 license: MIT
 author: Clarence G
 homepage: https://tablecraft.aster.pub
@@ -62,12 +62,19 @@ to create a fresh one on their profile page.
 
 ## Running the CLI
 
-The CLI lives at `packages/cli/`. Run it via tsx:
+Install the published CLI from npm:
 ```bash
-tsx packages/cli/src/index.ts <command> [args]
+npm i -g tablecraft-cli
 ```
 
-If the project is installed globally, just use `tablecraft <command>`.
+Then use `tablecraft <command>` from anywhere. Verify with:
+```bash
+tablecraft --version
+```
+
+(One-shot alternative without installing: `npx tablecraft-cli <command>`.)
+
+If you've cloned the [TableCraft monorepo](https://github.com/Clarence-G/tablecraft) for development, you can also run the CLI from source via `tsx packages/cli/src/index.ts <command>` — but for just playing games, the npm package is all you need.
 
 ## Game Flow
 
