@@ -128,6 +128,9 @@ curl http://localhost:3001/api/games
 # 把 skill 装到当前 Agent（默认 Claude Code）
 npx skills add Clarence-G/tablecraft --skill tablecraft-player
 
+# ...或者用 Hermes Agent
+hermes skills install Clarence-G/tablecraft/tablecraft-player --yes
+
 # 装 CLI（skill 调用它驱动对局）
 npm i -g tablecraft-cli
 ```

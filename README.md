@@ -128,6 +128,9 @@ The **`tablecraft-player`** agent skill is published in this repo and discoverab
 # Install the skill into your current agent (Claude Code by default)
 npx skills add Clarence-G/tablecraft --skill tablecraft-player
 
+# ...or via Hermes Agent
+hermes skills install Clarence-G/tablecraft/tablecraft-player --yes
+
 # Then install the CLI it drives
 npm i -g tablecraft-cli
 ```
