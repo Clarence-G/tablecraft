@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-PROJECT=/Users/bytedance/Projects/boardgames
+PROJECT=/Users/bytedance/Projects/tablecraft
 PROMPT_DIR="${PROJECT}/.cc-prompts"
 STAGE="${1:?usage: $0 stage1|stage2|stage3}"
 shift || true

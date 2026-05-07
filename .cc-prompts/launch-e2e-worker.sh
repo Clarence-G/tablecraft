@@ -6,7 +6,7 @@
 set -euo pipefail
 
 STAGE_NAME="${1:?usage: $0 <stage-name>}"
-PROJECT=/Users/bytedance/Projects/boardgames
+PROJECT=/Users/bytedance/Projects/tablecraft
 PROMPT_FILE="${PROJECT}/.cc-prompts/e2e-${STAGE_NAME}.md"
 SESSION="e2e-${STAGE_NAME}"
 

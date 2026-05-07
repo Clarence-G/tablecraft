@@ -2,7 +2,7 @@
 # Launch 3 Claude Code tmux sessions for ActivityLog worker task (CC-A, CC-B, CC-C).
 set -euo pipefail
 
-PROJECT=/Users/bytedance/Projects/boardgames
+PROJECT=/Users/bytedance/Projects/tablecraft
 PROMPT_DIR=$PROJECT/.cc-prompts
 ALLOWED='Read,Edit,Write,Glob,Grep,Bash(git *),Bash(pnpm *),Bash(node *),Bash(npx *),Bash(curl *),Bash(mkdir *),Bash(chmod *)'
 

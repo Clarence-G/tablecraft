@@ -14,7 +14,7 @@ NAME="${1:?usage: $0 <prompt-name> [sonnet|opus] [effort]}"
 MODEL="${2:-sonnet}"
 EFFORT="${3:-high}"
 
-PROJECT=/Users/bytedance/Projects/boardgames
+PROJECT=/Users/bytedance/Projects/tablecraft
 PROMPT_FILE="${PROJECT}/.cc-prompts/${NAME}.md"
 SESSION="cc-${NAME}"
 
