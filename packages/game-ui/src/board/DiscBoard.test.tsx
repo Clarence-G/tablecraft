@@ -96,9 +96,10 @@ describe('DiscBoard click-target logic', () => {
       const onClick = vi.fn();
       const { getAllByRole } = renderBoard(partialBoard, true, onClick);
       const buttons = getAllByRole('button');
-      // Row 3, col 3: buttons order rows 0-3 all have 7 buttons = 28,
-      // then row3 col3 = index 28 + 3 = 31
-      fireEvent.click(buttons[31]);
+      // Rows 0-3 all have 7 buttons each = 28. Row 3 col 3 sits at 3*7+3 = 24.
+      // (Original 28+3=31 was wrong: that offset is rows 0-3 FULL count, then
+      // index 3 within row 4 skips col 3 — landing on col 4 instead.)
+      fireEvent.click(buttons[24]);
       expect(onClick).toHaveBeenCalledWith(3);
     });
   });
