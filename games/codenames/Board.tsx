@@ -195,7 +195,7 @@ export function Board({
               disabled={!isClickable || !!isSending}
               onClick={() => isClickable && sendAction({ type: 'guess', cellIndex: i })}
               className={`
-                relative rounded-lg border-2 px-0.5 py-1.5 sm:py-2 text-center
+                relative rounded-lg border-2 px-0.5 py-1.5 sm:py-2 min-h-[44px] text-center
                 text-[10px] sm:text-xs font-medium transition-all
                 ${colorClass}
                 ${isClickable ? 'cursor-pointer hover:scale-105 active:scale-95' : 'cursor-default'}

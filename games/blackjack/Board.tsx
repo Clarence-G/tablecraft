@@ -167,7 +167,7 @@ function BettingPanel({
             disabled={amount > myChips}
             onClick={() => onBet(amount)}
             className={[
-              'px-4 py-2 rounded-[8px] border-2 font-semibold text-sm transition-all',
+              'px-4 py-2 min-h-[44px] rounded-[8px] border-2 font-semibold text-sm transition-all',
               amount <= myChips
                 ? 'border-foreground bg-card shadow-[2px_2px_0px_0px_hsl(var(--foreground))] active:translate-y-[1px] active:shadow-none hover:bg-warning/10'
                 : 'border-border bg-muted text-muted-foreground cursor-not-allowed',

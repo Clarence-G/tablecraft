@@ -205,12 +205,21 @@ export function Board({
 
       {/* Deck info */}
       <div className="text-center text-xs text-muted-foreground mb-3">
-        {t('deckRemaining')} {state.deckSize} {t('cardsUnit')}
+        <div>
+          {t('deckRemaining')} {state.deckSize} {t('cardsUnit')}
+        </div>
         {state.removedCards.length > 0 && (
-          <span className="ml-2">
-            | {t('removed')}{' '}
-            {state.removedCards.map((c) => `${t(`cardNames.${c}`)}(${c})`).join(', ')}
-          </span>
+          <div className="mt-1 flex flex-wrap justify-center gap-1 sm:inline-flex sm:ml-2 sm:mt-0">
+            <span className="opacity-70">{t('removed')}:</span>
+            {state.removedCards.map((c, i) => (
+              <span
+                key={`${c}-${i}`}
+                className="px-1.5 py-0.5 rounded bg-muted/50 border border-border text-foreground/80"
+              >
+                {t(`cardNames.${c}`)}({c})
+              </span>
+            ))}
+          </div>
         )}
       </div>
 

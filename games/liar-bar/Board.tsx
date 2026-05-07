@@ -190,11 +190,19 @@ export function Board({
         })}
       </div>
 
-      {/* Game Info */}
-      <div className="border-2 border-foreground/50 rounded-[12px] bg-card/85 backdrop-blur-sm shadow-[4px_4px_0px_0px_rgba(26,17,8,0.4)] p-3 text-center">
-        <div className="text-xs text-muted-foreground mb-1">{t('declaredSuit')}</div>
+      {/* Game Info — declared suit (emphasized hierarchy vs hand cards) */}
+      <div
+        className="border-4 rounded-[16px] bg-card/85 backdrop-blur-sm p-4 text-center"
+        style={{
+          borderColor: SUIT_COLORS[state.declaredSuit].border,
+          boxShadow: `6px 6px 0px 0px hsl(var(--shadow))`,
+        }}
+      >
+        <div className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground mb-1">
+          {t('declaredSuit')}
+        </div>
         <div
-          className="text-2xl font-bold"
+          className="text-4xl font-black leading-none"
           style={{ color: SUIT_COLORS[state.declaredSuit].text }}
         >
           {state.declaredSuit}
@@ -226,7 +234,19 @@ export function Board({
       {/* My Hand */}
       {amAlive && !gameOver && state.phase === 'playing' && isMyTurn && (
         <div className="border-2 border-foreground/50 rounded-[12px] bg-card/85 backdrop-blur-sm shadow-[4px_4px_0px_0px_rgba(26,17,8,0.4)] p-3">
-          <div className="text-xs font-medium text-muted-foreground mb-2">{t('yourHand')}</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs font-medium text-muted-foreground">{t('yourHand')}</div>
+            <div
+              className={[
+                'text-xs font-mono tabular-nums px-2 py-0.5 rounded-full border',
+                selectedIndices.length > 0
+                  ? 'border-primary text-primary bg-primary/10'
+                  : 'border-border text-muted-foreground',
+              ].join(' ')}
+            >
+              {selectedIndices.length}/3
+            </div>
+          </div>
           <div className="flex flex-wrap gap-2 justify-center mb-3">
             {state.myHand.map((card, i) => (
               <HandCard
