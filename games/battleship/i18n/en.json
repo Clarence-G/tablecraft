@@ -18,6 +18,13 @@
   "destroyed": "Destroyed",
   "alive": "Active",
   "waiting": "Waiting",
+  "ships": {
+    "carrier": "Carrier",
+    "battleship": "Battleship",
+    "cruiser": "Cruiser",
+    "submarine": "Submarine",
+    "destroyer": "Destroyer"
+  },
   "log": {
     "placeShips": "deployed their fleet",
     "hit": "fired at ({{row}}, {{col}}) — hit!",

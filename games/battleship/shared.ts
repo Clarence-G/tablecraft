@@ -101,6 +101,21 @@ export const CLASSIC_SHIPS: ShipDefinition[] = [
 
 export const SHIP_NAMES_ZH: string[] = ['航母', '战列舰', '巡洋舰', '潜艇', '驱逐舰'];
 
+/**
+ * i18n keys matching the order of CLASSIC_SHIPS. Look up via
+ * `t('ships.<key>')` to get the localized ship name. The SHIP_NAMES_ZH
+ * array is kept for backward compatibility — agents consuming shared.ts
+ * directly (e.g. in tests) still get hardcoded zh strings, but all
+ * user-facing UI should go through i18n.
+ */
+export const SHIP_NAME_KEYS: string[] = [
+  'ships.carrier',
+  'ships.battleship',
+  'ships.cruiser',
+  'ships.submarine',
+  'ships.destroyer',
+];
+
 function rotate90(offset: [number, number]): [number, number] {
   return [offset[1], -offset[0]];
 }

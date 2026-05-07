@@ -9,7 +9,7 @@ import {
   CLASSIC_SHIPS,
   GRID_SIZE,
   type PlayerView,
-  SHIP_NAMES_ZH,
+  SHIP_NAME_KEYS,
   type ShipPlacement,
   getAbsolutePositions,
   rotateOffsets,
@@ -173,6 +173,7 @@ function ShipSelector({
   placedShips: Set<number>;
   onSelect: (idx: number) => void;
 }) {
+  const { t } = useTranslation('battleship');
   return (
     <div className="flex flex-wrap gap-1.5 justify-center">
       {CLASSIC_SHIPS.map((ship, i) => {
@@ -191,7 +192,7 @@ function ShipSelector({
               ${!selected && !placed ? 'border-border bg-card text-foreground hover:border-foreground/60' : ''}
             `}
           >
-            {SHIP_NAMES_ZH[i]} ({ship.offsets.length})
+            {t(SHIP_NAME_KEYS[i]!)} ({ship.offsets.length})
           </button>
         );
       })}
@@ -212,6 +213,7 @@ function SunkIndicator({
   destroyedLabel: string;
   aliveLabel: string;
 }) {
+  const { t } = useTranslation('battleship');
   return (
     <div className="text-xs text-muted-foreground">
       <span className="font-medium mr-1">{label}:</span>
@@ -220,7 +222,7 @@ function SunkIndicator({
           // biome-ignore lint/suspicious/noArrayIndexKey: ship index is stable
           key={i}
           className={`inline-block w-2 h-2 rounded-full mr-0.5 ${sunk ? 'bg-[#d94040]' : 'bg-[#2563eb]'}`}
-          title={`${SHIP_NAMES_ZH[i]} ${sunk ? destroyedLabel : aliveLabel}`}
+          title={`${t(SHIP_NAME_KEYS[i]!)} ${sunk ? destroyedLabel : aliveLabel}`}
         />
       ))}
     </div>
@@ -244,6 +246,13 @@ export function Board({
     new Array(GRID_SIZE * GRID_SIZE).fill(0),
   );
   const [placedShips, setPlacedShips] = useState<Set<number>>(new Set());
+  /**
+   * Per-ship rotation used when it was placed on the local grid. Needed so
+   * handleConfirmPlacement can rebuild a faithful ShipPlacement[] with the
+   * rotation the player actually chose, instead of always sending rotation=0
+   * (which made `GET /api/rooms/:id` return bogus rotations for agents).
+   */
+  const [shipRotations, setShipRotations] = useState<Map<number, number>>(new Map());
   const { t } = useTranslation('battleship');
 
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
@@ -298,21 +307,36 @@ export function Board({
     const newPlaced = new Set(placedShips);
     newPlaced.add(selectedShipIdx);
     setPlacedShips(newPlaced);
+    const newRotations = new Map(shipRotations);
+    newRotations.set(selectedShipIdx, rotation);
+    setShipRotations(newRotations);
     setSelectedShipIdx(null);
   }
 
   function handleConfirmPlacement() {
     if (placedShips.size !== CLASSIC_SHIPS.length) return;
 
-    // Reconstruct placements from localGrid
-    // We stored shipValue = shipIndex+1 in the grid; find anchor for each ship
+    // Reconstruct placements from localGrid.
+    // We stored shipValue = shipIndex+1 in the grid; the anchor is the FIRST
+    // grid cell (in row-major scan order) matching that ship's value. But:
+    // the anchor cell must correspond to offset (0, 0) of the ship AFTER
+    // rotation normalization. Since rotateOffsets() in shared.ts normalizes
+    // so that (minR, minC) = (0, 0), the top-left bounding cell in localGrid
+    // IS the anchor for that rotation. So a naive "first occurrence in
+    // row-major order" scan correctly finds the anchor, provided we use the
+    // rotation that was applied at placement time.
     const placementMap = new Map<number, ShipPlacement>();
     for (let idx = 0; idx < localGrid.length; idx++) {
       const v = localGrid[idx];
       if (v > 0 && !placementMap.has(v)) {
         const row = Math.floor(idx / GRID_SIZE);
         const col = idx % GRID_SIZE;
-        placementMap.set(v, { shipIndex: v - 1, row, col, rotation: 0 });
+        const shipIndex = v - 1;
+        // shipRotations is guaranteed populated because handlePlacementClick
+        // writes to it on every successful placement, and placedShips.size
+        // check above ensures every ship was placed.
+        const shipRotation = shipRotations.get(shipIndex) ?? 0;
+        placementMap.set(v, { shipIndex, row, col, rotation: shipRotation });
       }
     }
 
@@ -323,6 +347,7 @@ export function Board({
   function handleReset() {
     setLocalGrid(new Array(GRID_SIZE * GRID_SIZE).fill(0));
     setPlacedShips(new Set());
+    setShipRotations(new Map());
     setSelectedShipIdx(null);
   }
 
