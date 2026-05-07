@@ -78,6 +78,18 @@ export type UnoCard = NumberCard | ActionCard | WildCard;
 // ---- Constants ----
 
 export const COLORS: UnoColor[] = ['red', 'blue', 'green', 'yellow'];
+
+// UNO card colors are canonical game-mechanic identities, not theme tokens.
+// They intentionally bypass --destructive/--success etc. so red always looks
+// red regardless of theme changes.
+// `bgClass` is a Tailwind arbitrary-value class string so Tailwind's JIT
+// can pick it up from this source file.
+export const UNO_COLORS = {
+  red: { bgClass: 'bg-[#d94040]', hex: '#d94040' },
+  blue: { bgClass: 'bg-[#2563eb]', hex: '#2563eb' },
+  green: { bgClass: 'bg-[#16a34a]', hex: '#16a34a' },
+  yellow: { bgClass: 'bg-[#d97706]', hex: '#d97706' },
+} as const;
 export const INITIAL_HAND_SIZE = 7;
 export const DRAW_TWO_COUNT = 2;
 export const WILD_DRAW_FOUR_COUNT = 4;

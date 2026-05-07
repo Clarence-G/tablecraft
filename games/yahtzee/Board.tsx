@@ -126,7 +126,7 @@ function DieFace({
         'transition-all duration-150',
         held
           ? 'bg-[#fff6d9] shadow-[2px_2px_0px_0px_rgba(0,0,0,0.35)]'
-          : 'bg-card border-foreground shadow-[4px_4px_0px_0px_#1a1108]',
+          : 'bg-card border-foreground shadow-[4px_4px_0px_0px_hsl(var(--shadow))]',
         onClick ? 'cursor-pointer active:translate-y-[2px] active:shadow-none' : 'cursor-default',
       ].join(' ')}
       style={held ? { borderColor: 'var(--scene-accent, #d97706)' } : undefined}
@@ -169,7 +169,7 @@ function DieFace({
         >
           <span
             className="block w-1.5 h-1.5 rounded-full"
-            style={{ backgroundColor: '#1a1108' }}
+            style={{ backgroundColor: 'hsl(var(--shadow))' }}
           />
         </span>
       )}
@@ -210,7 +210,7 @@ function ScoreRow({
         isFilled
           ? 'bg-transparent border-foreground/25 text-foreground cursor-default'
           : canScore
-            ? 'bg-[#fef3e0]/85 border-[#d97706] cursor-pointer hover:bg-[#fde8e8] hover:border-[#d94040]'
+            ? 'bg-warning/10 border-warning cursor-pointer hover:bg-destructive/10 hover:border-destructive'
             : 'bg-white/30 border-foreground/15 text-muted-foreground cursor-default',
       ].join(' ')}
       aria-label={`${t(`categories.${category}`)}: ${isFilled ? score : showPotential ? `${t('preview')}${potential}` : t('unfilled')}`}
@@ -224,7 +224,7 @@ function ScoreRow({
       <span
         className={[
           'font-mono font-semibold min-w-[2.5rem] text-right shrink-0',
-          isFilled ? 'text-foreground' : showPotential ? 'text-[#d97706]' : 'text-muted-foreground',
+          isFilled ? 'text-foreground' : showPotential ? 'text-warning' : 'text-muted-foreground',
         ].join(' ')}
       >
         {isFilled ? score : showPotential ? potential : '--'}
@@ -254,7 +254,7 @@ function OpponentCard({
         render={
           <button
             type="button"
-            className="w-full text-left border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_#0c1a2e] p-3 cursor-pointer transition-transform active:translate-y-[1px] active:shadow-[2px_2px_0px_0px_#0c1a2e] hover:-translate-y-[1px] hover:shadow-[5px_5px_0px_0px_#0c1a2e]"
+            className="w-full text-left border-2 border-foreground rounded-[12px] bg-card shadow-[4px_4px_0px_0px_hsl(var(--shadow))] p-3 cursor-pointer transition-transform active:translate-y-[1px] active:shadow-[2px_2px_0px_0px_hsl(var(--shadow))] hover:-translate-y-[1px] hover:shadow-[5px_5px_0px_0px_hsl(var(--shadow))]"
             aria-label={t('viewScorecard', { name })}
           />
         }
@@ -263,7 +263,7 @@ function OpponentCard({
         <div className="text-xs text-muted-foreground">
           {t('filledCount', { n: filled })} · {t('upperSection')}
           {upperSum}
-          {hasBonus && <span className="text-[#16a34a] ml-1">+{UPPER_BONUS_VALUE}</span>}
+          {hasBonus && <span className="text-success ml-1">+{UPPER_BONUS_VALUE}</span>}
         </div>
         <div className="text-sm font-bold text-foreground mt-1">
           {player.totalScore} {t('points')}
@@ -298,7 +298,7 @@ function OpponentScorecardBody({
       <div className="mb-2 text-xs text-muted-foreground">
         {t('upperSectionSum')} {upperSum}/{UPPER_BONUS_THRESHOLD}
         {hasBonus ? (
-          <span className="text-[#16a34a] font-semibold ml-1">{t('bonusEarned')}</span>
+          <span className="text-success font-semibold ml-1">{t('bonusEarned')}</span>
         ) : (
           <span className="ml-1">
             {t('bonusHint', { threshold: UPPER_BONUS_THRESHOLD, bonus: UPPER_BONUS_VALUE })}
@@ -307,7 +307,7 @@ function OpponentScorecardBody({
       </div>
       <div className="w-full h-1.5 bg-muted rounded-full mb-3 overflow-hidden">
         <div
-          className="h-full rounded-full bg-[#16a34a] transition-all"
+          className="h-full rounded-full bg-success transition-all"
           style={{ width: `${(upperBonusProgress / UPPER_BONUS_THRESHOLD) * 100}%` }}
         />
       </div>
@@ -331,7 +331,7 @@ function OpponentScorecardBody({
       </div>
 
       {player.yahtzeeBonus > 0 && (
-        <div className="mt-2 text-xs font-semibold text-[#16a34a] px-1">
+        <div className="mt-2 text-xs font-semibold text-success px-1">
           {t('yahtzeeBonus', { n: player.yahtzeeBonus * 100 })}
         </div>
       )}
@@ -545,7 +545,7 @@ function BoardInner({
 
       {/* Status (round + rolls info — turn lives in header) */}
       <div className="flex justify-center mb-3">
-        <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium bg-card border-2 border-foreground rounded-full px-3 py-1 shadow-[2px_2px_0px_0px_#0c1a2e] text-foreground">
+        <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium bg-card border-2 border-foreground rounded-full px-3 py-1 shadow-[2px_2px_0px_0px_hsl(var(--shadow))] text-foreground">
           {gameOver
             ? `${t('gameOver')} ${playerNames[state.winner ?? ''] ?? state.winner} ${t('won')}`
             : isMyTurn
@@ -576,9 +576,9 @@ function BoardInner({
           className="border-2 rounded-[14px] p-4 mb-3"
           style={{
             backgroundColor: 'rgba(245, 237, 220, 0.96)',
-            borderColor: '#1a1108',
+            borderColor: 'hsl(var(--shadow))',
             boxShadow:
-              '4px 4px 0px 0px #0c1a2e, inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -2px 6px rgba(40,25,10,0.12)',
+              '4px 4px 0px 0px hsl(var(--shadow)), inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -2px 6px rgba(40,25,10,0.12)',
           }}
         >
           <div className="flex justify-center gap-2 mb-4">
@@ -648,7 +648,7 @@ function BoardInner({
       {/* My Scorecard */}
       {myPlayerScore && (
         <div
-          className="border-2 border-foreground rounded-[12px] p-3 mb-3 shadow-[4px_4px_0px_0px_#0c1a2e] relative"
+          className="border-2 border-foreground rounded-[12px] p-3 mb-3 shadow-[4px_4px_0px_0px_hsl(var(--shadow))] relative"
           style={paperStyle}
         >
           <div className="flex items-center justify-between mb-2">
@@ -666,7 +666,7 @@ function BoardInner({
           <div className="mb-2 text-xs text-muted-foreground">
             {t('upperSectionSum')} {upperSum}/{UPPER_BONUS_THRESHOLD}
             {hasUpperBonus ? (
-              <span className="text-[#16a34a] font-semibold ml-1">{t('bonusEarned')}</span>
+              <span className="text-success font-semibold ml-1">{t('bonusEarned')}</span>
             ) : (
               <span className="ml-1">
                 {t('bonusHint', { threshold: UPPER_BONUS_THRESHOLD, bonus: UPPER_BONUS_VALUE })}
@@ -675,7 +675,7 @@ function BoardInner({
           </div>
           <div className="w-full h-1.5 bg-muted rounded-full mb-3 overflow-hidden">
             <div
-              className="h-full rounded-full bg-[#16a34a] transition-all"
+              className="h-full rounded-full bg-success transition-all"
               style={{ width: `${(upperBonusProgress / UPPER_BONUS_THRESHOLD) * 100}%` }}
             />
           </div>
@@ -724,7 +724,7 @@ function BoardInner({
 
               {/* Yahtzee bonus */}
               {myPlayerScore.yahtzeeBonus > 0 && (
-                <div className="mt-2 text-xs font-semibold text-[#16a34a] px-1">
+                <div className="mt-2 text-xs font-semibold text-success px-1">
                   {t('yahtzeeBonus', { n: myPlayerScore.yahtzeeBonus * 100 })}
                 </div>
               )}

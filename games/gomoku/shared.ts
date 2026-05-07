@@ -33,6 +33,13 @@ Invalid moves: placing on an occupied cell, acting when not your turn.`,
 
 export const BOARD_SIZE = 15;
 
+// Stone colors are canonical game-mechanic identities, not theme tokens.
+// Black uses near-black #1a1108 for visual depth on the warm board.
+export const STONE_COLORS = {
+  black: { bgClass: 'bg-[#1a1108]', hex: '#1a1108' },
+  white: { bgClass: 'bg-card', hex: '#ffffff' },
+} as const;
+
 export const ActionSchema = z.object({
   type: z.literal('place'),
   row: z

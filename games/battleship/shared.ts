@@ -49,6 +49,20 @@ Invalid moves: firing a cell already fired at, firing when not your turn.`,
 export const GRID_SIZE = 10;
 export const TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
 
+// Ship hull, hit, and water (miss) colors are canonical game-mechanic
+// identities, not theme tokens. A hull stays hard-blue across themes; a
+// hit stays red. Intentionally hex literal so theme swaps cannot
+// inadvertently break naval-cell recognition.
+//
+// `bgClass` is a Tailwind arbitrary-value class string so Tailwind's JIT
+// can pick it up from this source file. `miss` uses a card-surface token
+// because water is ambient fleet-grid background, not a game identity.
+export const SHIP_COLORS = {
+  hull: { bgClass: 'bg-[#2563eb]', hex: '#2563eb' },
+  hit: { bgClass: 'bg-[#d94040]', hex: '#d94040' },
+  miss: { bgClass: 'bg-card/40', hex: 'transparent' },
+} as const;
+
 export interface ShipDefinition {
   name: string;
   offsets: [number, number][];

@@ -45,6 +45,7 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-board: var(--board);
   --color-board-line: var(--board-line);
+  --color-shadow: var(--shadow);
 
   /* Six game colors */
   --color-dice-red: #d94040;
@@ -109,6 +110,12 @@
   /* Gomoku board */
   --board: #d4a056;
   --board-line: #6b5744;
+
+  /* Skeuomorphic shadow offset — slightly darker than --foreground so the
+     4px/4px/0/0 drop-shadows on boards, cards, and buttons read as punchy
+     depth rather than a soft tint. Introduced as a token so the 50+ places
+     that used the literal #1a1108 have a semantic name to migrate to. */
+  --shadow: #1a1108;
 }
 
 @layer base {

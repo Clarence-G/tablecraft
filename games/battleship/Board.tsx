@@ -9,6 +9,7 @@ import {
   CLASSIC_SHIPS,
   GRID_SIZE,
   type PlayerView,
+  SHIP_COLORS,
   SHIP_NAME_KEYS,
   type ShipPlacement,
   getAbsolutePositions,
@@ -25,14 +26,17 @@ function cellClass(kind: CellKind): string {
     case 'water':
       return 'bg-card/10 border-card/20';
     case 'ship':
-      return 'bg-[#2563eb] border-[#1a1108]';
+      return `${SHIP_COLORS.hull.bgClass} border-shadow`;
     case 'hit':
-      return 'bg-[#d94040] border-[#1a1108]';
+      return `${SHIP_COLORS.hit.bgClass} border-shadow`;
     case 'miss':
       return 'bg-card/40 border-card/30';
     case 'preview':
+      // Preview accent uses SHIP_COLORS.hull.hex at 80% alpha + a light
+      // highlight border (#93c5fd = pale hull tint, preview-only identity).
       return 'bg-[#2563eb]/80 border-2 border-[#93c5fd] shadow-[0_0_8px_rgba(37,99,235,0.6)]';
     case 'preview-invalid':
+      // Pale hit-red tint for invalid placement preview (#fca5a5 = pale hit).
       return 'bg-[#d94040]/60 border-2 border-[#fca5a5] animate-pulse';
     default:
       return 'bg-card/10 border-card/20';
@@ -41,7 +45,7 @@ function cellClass(kind: CellKind): string {
 
 function CellContent({ kind }: { kind: CellKind }) {
   if (kind === 'hit') {
-    return <span className="text-[#fef3e0] font-bold text-xs leading-none">X</span>;
+    return <span className="text-background font-bold text-xs leading-none">X</span>;
   }
   if (kind === 'miss') {
     return <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 inline-block" />;
@@ -70,7 +74,7 @@ function PlacementGrid({
 }: PlacementGridProps) {
   return (
     <div
-      className="inline-grid border-2 border-card/50 shadow-[4px_4px_0px_0px_#1a1108]"
+      className="inline-grid border-2 border-card/50 shadow-[4px_4px_0px_0px_hsl(var(--shadow))]"
       style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, auto)` }}
     >
       {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, idx) => {
@@ -119,7 +123,7 @@ function BattleGrid({ label, shipGrid, shotsGrid, clickable, onCellClick }: Batt
         {label}
       </div>
       <div
-        className="inline-grid border-2 border-card/50 shadow-[4px_4px_0px_0px_#1a1108]"
+        className="inline-grid border-2 border-card/50 shadow-[4px_4px_0px_0px_hsl(var(--shadow))]"
         style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, auto)` }}
       >
         {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, idx) => {
@@ -221,7 +225,7 @@ function SunkIndicator({
         <span
           // biome-ignore lint/suspicious/noArrayIndexKey: ship index is stable
           key={i}
-          className={`inline-block w-2 h-2 rounded-full mr-0.5 ${sunk ? 'bg-[#d94040]' : 'bg-[#2563eb]'}`}
+          className={`inline-block w-2 h-2 rounded-full mr-0.5 ${sunk ? SHIP_COLORS.hit.bgClass : SHIP_COLORS.hull.bgClass}`}
           title={`${t(SHIP_NAME_KEYS[i]!)} ${sunk ? destroyedLabel : aliveLabel}`}
         />
       ))}
@@ -362,9 +366,9 @@ export function Board({
     rotatedOffsets.length > 0 ? Math.max(...rotatedOffsets.map(([, c]) => c)) + 1 : 0;
 
   return (
-    <div className="mx-auto max-w-4xl p-4 sm:p-6 rounded-2xl border-2 border-[#1a1108] bg-gradient-to-br from-[#1e3a5f] to-[#0f1e33] shadow-[6px_6px_0px_0px_#1a1108]">
+    <div className="mx-auto max-w-4xl p-4 sm:p-6 rounded-2xl border-2 border-shadow bg-gradient-to-br from-[#1e3a5f] to-[#0f1e33] shadow-[6px_6px_0px_0px_hsl(var(--shadow))]">
       <div
-        className="flex-1 text-foreground flex flex-col items-center p-3 sm:p-4 gap-3 w-full bg-[#fef3e0]/5"
+        className="flex-1 text-foreground flex flex-col items-center p-3 sm:p-4 gap-3 w-full bg-warning/5"
         data-testid="game-board"
       >
       {/* Players */}
@@ -413,7 +417,7 @@ export function Board({
                       <div
                         // biome-ignore lint/suspicious/noArrayIndexKey: preview cells use stable index
                         key={idx}
-                        className={filled ? 'bg-[#2563eb] rounded-sm' : ''}
+                        className={filled ? `${SHIP_COLORS.hull.bgClass} rounded-sm` : ''}
                       />
                     );
                   })}
@@ -443,7 +447,7 @@ export function Board({
             <button
               type="button"
               onClick={handleReset}
-              className="px-3 py-1.5 text-xs bg-secondary border-2 border-border rounded shadow-[2px_2px_0px_0px_#3d2e1e] hover:border-foreground/60 transition-colors"
+              className="px-3 py-1.5 text-xs bg-secondary border-2 border-border rounded shadow-[2px_2px_0px_0px_hsl(var(--foreground))] hover:border-foreground/60 transition-colors"
             >
               {t('reset')}
             </button>
@@ -451,7 +455,7 @@ export function Board({
               type="button"
               disabled={placedShips.size !== CLASSIC_SHIPS.length}
               onClick={handleConfirmPlacement}
-              className={`px-4 py-1.5 text-xs font-semibold rounded border-2 shadow-[2px_2px_0px_0px_#3d2e1e] transition-colors
+              className={`px-4 py-1.5 text-xs font-semibold rounded border-2 shadow-[2px_2px_0px_0px_hsl(var(--foreground))] transition-colors
                 ${
                   placedShips.size === CLASSIC_SHIPS.length
                     ? 'bg-primary text-primary-foreground border-foreground hover:opacity-80'
@@ -467,7 +471,7 @@ export function Board({
 
       {/* Placement: waiting for opponent */}
       {state.phase === 'placement' && state.myPlaced && (
-        <div className="bg-card border-2 border-border rounded shadow-[4px_4px_0px_0px_#3d2e1e] px-6 py-4 text-center">
+        <div className="bg-card border-2 border-border rounded shadow-[4px_4px_0px_0px_hsl(var(--foreground))] px-6 py-4 text-center">
           <div className="text-sm font-semibold text-foreground mb-1">{t('fleetDeployed')}</div>
           <div className="text-xs text-muted-foreground">{t('waitingOpponent')}</div>
         </div>

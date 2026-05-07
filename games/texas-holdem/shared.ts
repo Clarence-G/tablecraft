@@ -54,6 +54,15 @@ Win: last player with chips. Hand win: best 5-card poker hand or all others fold
 Hand rankings (high to low): Royal Flush, Straight Flush, Four of a Kind, Full House, Flush, Straight, Three of a Kind, Two Pair, One Pair, High Card.`,
 };
 
+// Dealer button and poker chip dot colors are canonical game-mechanic identities.
+// The dealer "D" button and chip-count dots are always gold/brass regardless of theme.
+// `bgClass`, `textClass`, `borderClass`, `ringClass` let Tailwind JIT pick up the classes;
+// `bg`, `text`, `hex` expose raw hex for inline style objects.
+export const POKER_CHIP_COLORS = {
+  surface: { bg: '#f5ecd6', bgClass: 'bg-[#f5ecd6]', text: '#4a3528', textClass: 'text-[#4a3528]' },
+  gold: { hex: '#8b6f3d', borderClass: 'border-[#8b6f3d]', textClass: 'text-[#8b6f3d]', ringClass: 'ring-[#8b6f3d]' },
+} as const;
+
 // ---- Card utilities ----
 
 export const SUITS = ['s', 'h', 'd', 'c'] as const;

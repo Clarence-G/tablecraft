@@ -78,6 +78,15 @@ export type WinResult = { type: 'none' } | { type: 'white' } | { type: 'black' }
 
 // ============ Constants ============
 
+// Piece fill colors are canonical game-mechanic identities.
+// White and black are the two player colors in Hive — they intentionally
+// bypass theme tokens so piece identity stays visually unambiguous.
+// `bgClass` lets Tailwind JIT pick up the class from source scan.
+export const PIECE_COLORS = {
+  white: { bgClass: 'bg-white', hex: '#ffffff' },
+  black: { bgClass: 'bg-[#1a1108]', hex: '#1a1108' },
+} as const;
+
 export const INITIAL_INVENTORY: PieceInventory = {
   queen: 1,
   spider: 2,

@@ -5,7 +5,7 @@ import type { BoardProps } from '@repo/shared';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Action, HexCoord, HivePieceType, PlayerView, Tile } from './shared';
-import { HEX_SIZE, coordKey, hexToPixel } from './shared';
+import { HEX_SIZE, PIECE_COLORS, coordKey, hexToPixel } from './shared';
 
 // ============ Piece Icons ============
 
@@ -52,9 +52,9 @@ interface HexTileProps {
 
 function HexTile({ x, y, size, tile, selected, isMoveable, onClick }: HexTileProps) {
   const isWhite = tile.color === 'white';
-  const fill = isWhite ? '#ffffff' : '#1a1108';
-  const defaultStroke = isWhite ? '#3d2e1e' : '#c4b8a8';
-  const stroke = selected ? '#d97706' : defaultStroke;
+  const fill = PIECE_COLORS[tile.color].hex;
+  const defaultStroke = isWhite ? 'var(--foreground)' : 'var(--border)';
+  const stroke = selected ? 'var(--warning)' : defaultStroke;
   const strokeWidth = selected ? 3 : 1.5;
   const isLightIcon = !isWhite;
   const iconScale = (size * 0.7) / 24;
@@ -91,7 +91,7 @@ function HexTile({ x, y, size, tile, selected, isMoveable, onClick }: HexTilePro
             cx={x + size * 0.55}
             cy={y - size * 0.55}
             r={size * 0.22}
-            fill="#7c3aed"
+            fill="var(--color-crown)"
             stroke="#fef3e0"
             strokeWidth={1}
           />
@@ -317,7 +317,7 @@ export function Board({
         >
           {/* Origin dot when empty */}
           {topTiles.length === 0 && validTargets.length === 0 && (
-            <circle cx={0} cy={0} r={3} fill="#c4b8a8" opacity={0.5} />
+            <circle cx={0} cy={0} r={3} fill="var(--border)" opacity={0.5} />
           )}
 
           {/* Placed tiles */}
@@ -350,7 +350,7 @@ export function Board({
             const { x, y } = hexToPixel(t);
             const tKey = coordKey(t);
             const isPlacement = !!selectedPieceType;
-            const color = isPlacement ? '#16a34a' : '#2563eb';
+            const color = isPlacement ? 'var(--color-success)' : 'var(--color-royal-blue)';
             const overlaps = topTiles.some((tile) => coordKey(tile.coord) === tKey);
             if (overlaps) return null;
 
@@ -408,7 +408,7 @@ export function Board({
                   className={`flex flex-col items-center gap-1 px-3 py-2 rounded-[8px] border-2 min-w-[56px] min-h-[56px] transition-all
                     ${
                       isSelected
-                        ? 'bg-[#fef3e0] border-[#d97706] shadow-[2px_2px_0px_0px_#3d2e1e]'
+                        ? 'bg-warning/10 border-warning shadow-[2px_2px_0px_0px_hsl(var(--foreground))]'
                         : canPlace && count > 0
                           ? 'bg-secondary border-border hover:border-foreground cursor-pointer'
                           : 'bg-muted border-border opacity-40 cursor-not-allowed'

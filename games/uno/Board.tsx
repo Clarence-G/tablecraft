@@ -6,22 +6,15 @@ import type { BoardProps } from '@repo/shared';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type Action, COLORS, type PlayerView, type UnoColor, deserializeCard, getCardAriaLabel } from './shared';
+import { type Action, COLORS, UNO_COLORS, type PlayerView, type UnoColor, deserializeCard, getCardAriaLabel } from './shared';
 
 // ---- Card color styling ----
 
-const CARD_COLOR_HEX: Record<string, string> = {
-  red: '#d94040',
-  blue: '#2563eb',
-  green: '#16a34a',
-  yellow: '#d97706',
-};
-
 function getCardStyle(color: string): { className: string; style?: React.CSSProperties } {
-  const hex = CARD_COLOR_HEX[color];
+  const hex = UNO_COLORS[color as keyof typeof UNO_COLORS]?.hex;
   if (hex) {
     return {
-      className: 'border-[#1a1108] text-card',
+      className: 'border-[hsl(var(--shadow))] text-card',
       // Plastic sheen: base color + soft top highlight + bottom shadow.
       style: {
         background: `linear-gradient(160deg, color-mix(in srgb, ${hex} 100%, white 18%) 0%, ${hex} 38%, color-mix(in srgb, ${hex} 100%, black 16%) 100%)`,
@@ -29,10 +22,9 @@ function getCardStyle(color: string): { className: string; style?: React.CSSProp
     };
   }
   return {
-    className: 'border-[#1a1108] text-card',
+    className: 'border-[hsl(var(--shadow))] text-card',
     style: {
-      background:
-        'conic-gradient(from 210deg at 50% 50%, #d94040, #d97706, #16a34a, #2563eb, #d94040)',
+      background: `conic-gradient(from 210deg at 50% 50%, ${UNO_COLORS.red.hex}, ${UNO_COLORS.yellow.hex}, ${UNO_COLORS.green.hex}, ${UNO_COLORS.blue.hex}, ${UNO_COLORS.red.hex})`,
     },
   };
 }
@@ -138,8 +130,8 @@ function ColorDot({ color }: { color: UnoColor }) {
 function ColorPickerModal({ onChoose }: { onChoose: (c: UnoColor) => void }) {
   const { t } = useTranslation('uno');
   return (
-    <div className="fixed inset-0 bg-[#1a1108]/60 flex items-center justify-center z-50">
-      <div className="bg-card border-2 border-foreground rounded-[16px] p-6 shadow-[4px_4px_0px_0px_#3d2e1e] max-w-xs w-full mx-4 text-center">
+    <div className="fixed inset-0 bg-[hsl(var(--shadow))]/60 flex items-center justify-center z-50">
+      <div className="bg-card border-2 border-foreground rounded-[16px] p-6 shadow-[4px_4px_0px_0px_hsl(var(--foreground))] max-w-xs w-full mx-4 text-center">
         <div className="text-sm font-semibold text-foreground mb-4">{t('chooseColor')}</div>
         <div className="flex gap-3 justify-center">
           {COLORS.map((c) => {
@@ -302,13 +294,13 @@ export function Board({
     !reduced && isMyTurn && !gameOver
       ? {
           boxShadow: [
-            '#1a1108 -4px 4px 0px, 0 0 0 0 rgba(244,217,168,0)',
-            '#1a1108 -4px 4px 0px, 0 0 0 5px rgba(244,217,168,0.55)',
-            '#1a1108 -4px 4px 0px, 0 0 0 0 rgba(244,217,168,0)',
+            'hsl(var(--shadow)) -4px 4px 0px, 0 0 0 0 rgba(244,217,168,0)',
+            'hsl(var(--shadow)) -4px 4px 0px, 0 0 0 5px rgba(244,217,168,0.55)',
+            'hsl(var(--shadow)) -4px 4px 0px, 0 0 0 0 rgba(244,217,168,0)',
           ],
           opacity: [1, 0.94, 1],
         }
-      : { boxShadow: '#1a1108 -4px 4px 0px', opacity: 1 };
+      : { boxShadow: 'hsl(var(--shadow)) -4px 4px 0px', opacity: 1 };
 
   return (
     <div
@@ -328,7 +320,7 @@ export function Board({
               key={p.id}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 text-xs font-semibold transition-all ${
                 isCurrent
-                  ? 'bg-card border-foreground text-foreground shadow-[#1a1108_-2px_2px_0px]'
+                  ? 'bg-card border-foreground text-foreground shadow-[hsl(var(--shadow))_-2px_2px_0px]'
                   : 'bg-card/80 border-card/60 text-foreground/80'
               }`}
             >
@@ -359,9 +351,9 @@ export function Board({
         <div className="flex flex-col items-center gap-1.5">
           <div className="relative">
             <div
-              className="absolute -top-1 -left-1 w-14 h-20 sm:w-20 sm:h-28 rounded-[10px] border-2 border-[#1a1108]"
+              className="absolute -top-1 -left-1 w-14 h-20 sm:w-20 sm:h-28 rounded-[10px] border-2 border-[hsl(var(--shadow))]"
               style={{
-                background: 'linear-gradient(160deg, #2a1810 0%, #1a1108 60%, #0d0805 100%)',
+                background: 'linear-gradient(160deg, #2a1810 0%, hsl(var(--shadow)) 60%, #0d0805 100%)',
                 boxShadow: '0 2px 0 -1px rgba(26,17,8,0.5)',
               }}
               aria-hidden
@@ -371,13 +363,13 @@ export function Board({
               onClick={isMyTurn && !state.hasDrawnThisTurn ? handleDraw : undefined}
               disabled={!isMyTurn || state.hasDrawnThisTurn}
               aria-label={t('drawCard')}
-              className={`relative w-14 h-20 sm:w-20 sm:h-28 rounded-[10px] border-2 border-[#1a1108] flex items-center justify-center text-card font-bold ${
+              className={`relative w-14 h-20 sm:w-20 sm:h-28 rounded-[10px] border-2 border-[hsl(var(--shadow))] flex items-center justify-center text-card font-bold ${
                 isMyTurn && !state.hasDrawnThisTurn
                   ? 'cursor-pointer hover:-translate-y-1 transition-transform'
                   : 'cursor-default'
               }`}
               style={{
-                background: 'linear-gradient(160deg, #2a1810 0%, #1a1108 60%, #0d0805 100%)',
+                background: 'linear-gradient(160deg, #2a1810 0%, hsl(var(--shadow)) 60%, #0d0805 100%)',
                 boxShadow: '0 4px 0 -1px rgba(26,17,8,0.55), 0 8px 12px -4px rgba(0,0,0,0.35)',
               }}
             >
@@ -430,14 +422,14 @@ export function Board({
         <div className="flex flex-col items-center gap-2 sm:gap-3">
           {topCardIsWild && (
             <div className="flex flex-col items-center gap-0.5">
-              <div className="w-8 h-8 rounded-full border-2 border-[#1a1108] bg-card flex items-center justify-center shadow-[#1a1108_-2px_2px_0px]">
+              <div className="w-8 h-8 rounded-full border-2 border-[hsl(var(--shadow))] bg-card flex items-center justify-center shadow-[hsl(var(--shadow))_-2px_2px_0px]">
                 <ColorDot color={state.activeColor} />
               </div>
               <span className="text-[10px] text-card/90 font-semibold">{t('currentColor')}</span>
             </div>
           )}
           <div className="flex flex-col items-center gap-0.5">
-            <div className="w-8 h-8 rounded-full border-2 border-[#1a1108] bg-card flex items-center justify-center text-foreground text-base font-bold shadow-[#1a1108_-2px_2px_0px]">
+            <div className="w-8 h-8 rounded-full border-2 border-[hsl(var(--shadow))] bg-card flex items-center justify-center text-foreground text-base font-bold shadow-[hsl(var(--shadow))_-2px_2px_0px]">
               {state.direction === 1 ? '↻' : '↺'}
             </div>
             <span className="text-[10px] text-card/90 font-semibold">{t('direction')}</span>

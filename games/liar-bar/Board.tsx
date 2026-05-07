@@ -5,34 +5,13 @@ import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Action, Card, PlayerView } from './shared';
+import { type Action, type Card, type PlayerView, SUIT_COLORS } from './shared';
 
 const CARD_ACCENT: Record<Card, CardAccent> = {
   Q: 'blue',
   K: 'purple',
   A: 'green',
   Joker: 'red',
-};
-
-const CARD_BG: Record<Card, string> = {
-  Q: 'bg-[#e8f0fe]',
-  K: 'bg-[#f0e8fe]',
-  A: 'bg-[#e8f8ee]',
-  Joker: 'bg-[#fde8e8]',
-};
-
-const CARD_BORDER_COLOR: Record<Card, string> = {
-  Q: 'border-[#2563eb]',
-  K: 'border-[#7c3aed]',
-  A: 'border-[#16a34a]',
-  Joker: 'border-[#d94040]',
-};
-
-const CARD_TEXT_COLOR: Record<Card, string> = {
-  Q: 'text-[#2563eb]',
-  K: 'text-[#7c3aed]',
-  A: 'text-[#16a34a]',
-  Joker: 'text-[#d94040]',
 };
 
 function HandCard({
@@ -50,7 +29,7 @@ function HandCard({
     <PlayingCard
       size="md"
       accent={CARD_ACCENT[card]}
-      backgroundClass={CARD_BG[card]}
+      backgroundClass={SUIT_COLORS[card].bgClass}
       corner={card === 'Joker' ? 'J' : card}
       center={card === 'Joker' ? 'Joker' : card}
       selected={selected}
@@ -75,7 +54,7 @@ function RevolverDisplay({ chamber, alive }: { chamber: number; alive: boolean }
             key={i}
             className={[
               'w-3 h-3 rounded-full border',
-              fired ? 'bg-[#d94040] border-[#d94040]' : 'bg-muted border-border',
+              fired ? 'bg-destructive border-destructive' : 'bg-muted border-border',
               !alive ? 'opacity-40' : '',
             ].join(' ')}
           />
@@ -152,24 +131,32 @@ export function Board({
             {cr.wasLying ? t('caughtLying') : t('honestInnocent')}
           </div>
           <div className="flex gap-1 justify-center mb-2">
-            {cr.playedCards.map((card, i) => (
-              <div
-                // biome-ignore lint/suspicious/noArrayIndexKey: played cards are ephemeral display-only list
-                key={i}
-                className={`px-2 py-1 rounded-[8px] border-2 text-xs font-bold ${CARD_BG[card as Card]} ${CARD_BORDER_COLOR[card as Card]} ${CARD_TEXT_COLOR[card as Card]}`}
-              >
-                {card}
-              </div>
-            ))}
+            {cr.playedCards.map((card, i) => {
+              const suit = SUIT_COLORS[card as Card];
+              return (
+                <div
+                  // biome-ignore lint/suspicious/noArrayIndexKey: played cards are ephemeral display-only list
+                  key={i}
+                  className="px-2 py-1 rounded-[8px] border-2 text-xs font-bold"
+                  style={{
+                    backgroundColor: suit.bg,
+                    borderColor: suit.border,
+                    color: suit.text,
+                  }}
+                >
+                  {card}
+                </div>
+              );
+            })}
           </div>
           <div className="text-xs text-muted-foreground">
             {playerNames[cr.shooterId] ?? cr.shooterId}{' '}
             {t('triggerPull', { n: cr.shotChamberIndex + 1 })}
             {' — '}
             {cr.shotDied ? (
-              <span className="text-[#d94040] font-semibold">{t('shotEliminated')}</span>
+              <span className="text-destructive font-semibold">{t('shotEliminated')}</span>
             ) : (
-              <span className="text-[#16a34a] font-semibold">{t('luckyAlive')}</span>
+              <span className="text-success font-semibold">{t('luckyAlive')}</span>
             )}
           </div>
         </div>
@@ -188,7 +175,7 @@ export function Board({
               />
               <RevolverDisplay chamber={info?.revolverChamber ?? 0} alive={info?.alive ?? true} />
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                {!info?.alive && <span className="text-[#d94040] font-semibold">{t('out')}</span>}
+                {!info?.alive && <span className="text-destructive font-semibold">{t('out')}</span>}
                 {info?.alive && p.id !== myId && (
                   <div className="flex gap-0.5">
                     {Array.from({ length: info.cardCount }, (_, i) => (
@@ -206,7 +193,10 @@ export function Board({
       {/* Game Info */}
       <div className="border-2 border-foreground/50 rounded-[12px] bg-card/85 backdrop-blur-sm shadow-[4px_4px_0px_0px_rgba(26,17,8,0.4)] p-3 text-center">
         <div className="text-xs text-muted-foreground mb-1">{t('declaredSuit')}</div>
-        <div className={`text-2xl font-bold ${CARD_TEXT_COLOR[state.declaredSuit as Card]}`}>
+        <div
+          className="text-2xl font-bold"
+          style={{ color: SUIT_COLORS[state.declaredSuit].text }}
+        >
           {state.declaredSuit}
         </div>
       </div>
@@ -227,7 +217,7 @@ export function Board({
         <div className="text-center text-xs text-muted-foreground bg-secondary rounded-[8px] py-2 px-3">
           {playerNames[state.lastPlay.playerId] ?? state.lastPlay.playerId} {t('claimedPlayed')}{' '}
           <span className="font-semibold">{state.lastPlay.count}</span> {t('cardsUnit')}{' '}
-          <span className={`font-bold ${CARD_TEXT_COLOR[state.declaredSuit as Card]}`}>
+          <span className="font-bold" style={{ color: SUIT_COLORS[state.declaredSuit].text }}>
             {state.declaredSuit}
           </span>
         </div>
@@ -253,7 +243,7 @@ export function Board({
             <button
               type="button"
               onClick={handlePlayCards}
-              className="w-full py-2.5 rounded-[12px] font-semibold text-sm bg-primary text-primary-foreground border-2 border-[#1a1108] shadow-[4px_4px_0px_0px_#1a1108] transition-all hover:-translate-y-0.5 active:translate-y-px"
+              className="w-full py-2.5 rounded-[12px] font-semibold text-sm bg-primary text-primary-foreground border-2 border-shadow shadow-[4px_4px_0px_0px_hsl(var(--shadow))] transition-all hover:-translate-y-0.5 active:translate-y-px"
             >
               {t('playCards', { n: selectedIndices.length, suit: state.declaredSuit })}
             </button>
@@ -296,14 +286,14 @@ export function Board({
           <button
             type="button"
             onClick={handleChallenge}
-            className="flex-1 py-3 rounded-[12px] font-bold text-sm border-2 border-[#d94040] bg-[#fde8e8] text-[#d94040] shadow-[4px_4px_0px_0px_#d94040] transition-all hover:-translate-y-0.5 active:translate-y-px"
+            className="flex-1 py-3 rounded-[12px] font-bold text-sm border-2 border-destructive bg-destructive/10 text-destructive shadow-[4px_4px_0px_0px_hsl(var(--destructive))] transition-all hover:-translate-y-0.5 active:translate-y-px"
           >
             {t('challenge')}
           </button>
           <button
             type="button"
             onClick={handleBelieve}
-            className="flex-1 py-3 rounded-[12px] font-bold text-sm border-2 border-[#16a34a] bg-[#e8f8ee] text-[#16a34a] shadow-[4px_4px_0px_0px_#16a34a] transition-all hover:-translate-y-0.5 active:translate-y-px"
+            className="flex-1 py-3 rounded-[12px] font-bold text-sm border-2 border-success bg-success/10 text-success shadow-[4px_4px_0px_0px_hsl(var(--success))] transition-all hover:-translate-y-0.5 active:translate-y-px"
           >
             {t('believe')}
           </button>

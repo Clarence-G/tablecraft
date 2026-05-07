@@ -9,6 +9,7 @@ import {
   type Action,
   type PlayerInfo,
   type PlayerView,
+  POKER_CHIP_COLORS,
   SUIT_PATHS,
   displayRank,
   isRedSuit,
@@ -93,8 +94,8 @@ function PlayerSeat({
   };
   const statusColor: Record<string, string> = {
     folded: 'text-muted-foreground',
-    all_in: 'text-[#d97706]',
-    eliminated: 'text-[#d94040]',
+    all_in: 'text-warning',
+    eliminated: 'text-destructive',
   };
 
   return (
@@ -111,7 +112,7 @@ function PlayerSeat({
       <div className="flex items-center gap-2 min-w-0">
         {isDealer && (
           <span
-            className="text-[10px] w-5 h-5 inline-flex items-center justify-center rounded-full bg-[#f5ecd6] text-[#4a3528] border border-[#8b6f3d] font-bold shrink-0"
+            className={`text-[10px] w-5 h-5 inline-flex items-center justify-center rounded-full ${POKER_CHIP_COLORS.surface.bgClass} ${POKER_CHIP_COLORS.surface.textClass} border ${POKER_CHIP_COLORS.gold.borderClass} font-bold shrink-0`}
             style={{ boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.2), 0 1px 1px rgba(0,0,0,0.25)' }}
           >
             D
@@ -127,10 +128,10 @@ function PlayerSeat({
           </span>
         )}
         {player.currentBet > 0 && (
-          <span className="text-xs font-semibold text-[#8b6f3d] inline-flex items-center gap-1">
+          <span className={`text-xs font-semibold ${POKER_CHIP_COLORS.gold.textClass} inline-flex items-center gap-1`}>
             <span
               aria-hidden
-              className="inline-block w-2 h-2 rounded-full bg-[var(--scene-accent,#d4a056)] ring-1 ring-[#8b6f3d]"
+              className={`inline-block w-2 h-2 rounded-full bg-[var(--scene-accent,#d4a056)] ring-1 ${POKER_CHIP_COLORS.gold.ringClass}`}
             />
             {player.currentBet}
           </span>
@@ -194,7 +195,7 @@ function RaisePanel({
           max={maxRaise}
           value={clamped}
           onChange={(e) => setAmount(Number(e.target.value))}
-          className="flex-1 border-2 border-foreground rounded-[8px] px-3 py-2 text-sm bg-card text-foreground outline-none focus:border-[#d97706]"
+          className="flex-1 border-2 border-foreground rounded-[8px] px-3 py-2 text-sm bg-card text-foreground outline-none focus:border-warning"
         />
         <span className="text-sm text-muted-foreground shrink-0">{t('chips')}</span>
       </div>
@@ -202,7 +203,7 @@ function RaisePanel({
         <button
           type="button"
           onClick={() => onRaise(clamped)}
-          className="flex-1 py-2 rounded-[8px] border-2 border-foreground bg-primary text-primary-foreground font-semibold text-sm shadow-[2px_2px_0px_0px_#1a1108] active:translate-y-[1px] active:shadow-none"
+          className="flex-1 py-2 rounded-[8px] border-2 border-foreground bg-primary text-primary-foreground font-semibold text-sm shadow-[2px_2px_0px_0px_hsl(var(--shadow))] active:translate-y-[1px] active:shadow-none"
         >
           {t('raiseAmount', { amount: clamped })}
         </button>
@@ -255,10 +256,10 @@ function ActionPanel({
 
   const btnBase = 'py-3 px-2 rounded-[8px] border-2 font-semibold text-sm transition-all';
   const btnActive =
-    'border-foreground bg-card shadow-[2px_2px_0px_0px_#3d2e1e] active:translate-y-[1px] active:shadow-none hover:bg-[#fef3e0]';
+    'border-foreground bg-card shadow-[2px_2px_0px_0px_hsl(var(--foreground))] active:translate-y-[1px] active:shadow-none hover:bg-warning/10';
   const btnDisabled = 'border-border bg-muted text-muted-foreground cursor-not-allowed';
   const btnDanger =
-    'border-[#d94040] bg-[#fde8e8] text-[#d94040] shadow-[2px_2px_0px_0px_#d94040] active:translate-y-[1px] active:shadow-none';
+    'border-destructive bg-destructive/10 text-destructive shadow-[2px_2px_0px_0px_hsl(var(--destructive))] active:translate-y-[1px] active:shadow-none';
 
   if (showRaise) {
     return (
@@ -377,7 +378,7 @@ export function Board({
 
       {/* Error message */}
       {lastReject && (
-        <div className="px-3 py-2 rounded-[8px] bg-[#fde8e8] border-2 border-[#d94040] text-[#d94040] text-sm text-center">
+        <div className="px-3 py-2 rounded-[8px] bg-destructive/10 border-2 border-destructive text-destructive text-sm text-center">
           {lastReject}
         </div>
       )}
@@ -398,7 +399,7 @@ export function Board({
             className="inline-block w-2.5 h-2.5 rounded-full"
             style={{
               background: 'var(--scene-accent, #d4a056)',
-              boxShadow: 'inset 0 -1px 0 rgba(0,0,0,0.3), 0 0 0 1px #8b6f3d',
+              boxShadow: `inset 0 -1px 0 rgba(0,0,0,0.3), 0 0 0 1px ${POKER_CHIP_COLORS.gold.hex}`,
             }}
           />
           {t('pot')}
@@ -445,15 +446,15 @@ export function Board({
 
       {/* Showdown result */}
       {state.showdownResult && state.handPhase !== 'betting' && (
-        <div className="border-2 border-[#16a34a] rounded-[12px] bg-[#e8f8ee] shadow-[4px_4px_0px_0px_#16a34a] p-4 mb-3">
-          <div className="text-xs font-semibold text-[#16a34a] mb-2">{t('showdown')}</div>
+        <div className="border-2 border-success rounded-[12px] bg-success/10 shadow-[4px_4px_0px_0px_hsl(var(--success))] p-4 mb-3">
+          <div className="text-xs font-semibold text-success mb-2">{t('showdown')}</div>
           {state.showdownResult.map((r) => (
             <div key={r.playerId} className="flex justify-between items-center text-sm py-1">
               <span className="text-foreground font-semibold">
                 {playerNames[r.playerId] ?? r.playerId}
               </span>
               <span className="text-muted-foreground text-xs mx-2">{r.handName}</span>
-              <span className="text-[#16a34a] font-bold">+{r.amount}</span>
+              <span className="text-success font-bold">+{r.amount}</span>
             </div>
           ))}
         </div>
@@ -462,7 +463,7 @@ export function Board({
       {/* Action area */}
       {isMyTurn && (
         <motion.div
-          className="border-2 border-foreground rounded-[12px] bg-card text-foreground shadow-[4px_4px_0px_0px_#1a1108] p-4 mb-3"
+          className="border-2 border-foreground rounded-[12px] bg-card text-foreground shadow-[4px_4px_0px_0px_hsl(var(--shadow))] p-4 mb-3"
           animate={turnPulse}
           transition={
             isMyTurn && !reduced
@@ -502,7 +503,7 @@ export function Board({
       )}
 
       {/* Players list */}
-      <div className="border-2 border-foreground rounded-[12px] bg-card text-foreground shadow-[4px_4px_0px_0px_#1a1108] p-3 mb-3">
+      <div className="border-2 border-foreground rounded-[12px] bg-card text-foreground shadow-[4px_4px_0px_0px_hsl(var(--shadow))] p-3 mb-3">
         <div className="text-xs text-muted-foreground font-semibold mb-2">{t('playerStatus')}</div>
         <div className="flex flex-col gap-1">
           {state.players.map((p, i) => (

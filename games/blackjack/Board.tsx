@@ -93,11 +93,11 @@ function PlayerRow({
   };
 
   const outcomeColor: Record<string, string> = {
-    win: 'text-[#16a34a]',
-    blackjack: 'text-[#16a34a]',
-    lose: 'text-[#d94040]',
-    bust: 'text-[#d94040]',
-    push: 'text-[#d97706]',
+    win: 'text-success',
+    blackjack: 'text-success',
+    lose: 'text-destructive',
+    bust: 'text-destructive',
+    push: 'text-warning',
     pending: 'text-muted-foreground',
   };
 
@@ -105,7 +105,7 @@ function PlayerRow({
     <div
       className={[
         'flex items-center justify-between px-3 py-2 rounded-[8px] border-2',
-        isActive ? 'border-[#d97706] bg-[#fef3e0]' : 'border-border bg-card',
+        isActive ? 'border-warning bg-warning/10' : 'border-border bg-card',
         isMe ? 'border-foreground' : '',
       ].join(' ')}
     >
@@ -113,7 +113,7 @@ function PlayerRow({
         <span className="text-sm font-semibold truncate text-foreground">{name}</span>
         {isMe && <span className="text-xs text-muted-foreground shrink-0">{t('me')}</span>}
         {player.bet > 0 && (
-          <span className="text-xs text-[#d97706] shrink-0">
+          <span className="text-xs text-warning shrink-0">
             {t('bet')} {player.bet}
           </span>
         )}
@@ -169,7 +169,7 @@ function BettingPanel({
             className={[
               'px-4 py-2 rounded-[8px] border-2 font-semibold text-sm transition-all',
               amount <= myChips
-                ? 'border-foreground bg-card shadow-[2px_2px_0px_0px_#3d2e1e] active:translate-y-[1px] active:shadow-none hover:bg-[#fef3e0]'
+                ? 'border-foreground bg-card shadow-[2px_2px_0px_0px_hsl(var(--foreground))] active:translate-y-[1px] active:shadow-none hover:bg-warning/10'
                 : 'border-border bg-muted text-muted-foreground cursor-not-allowed',
             ].join(' ')}
           >
@@ -185,7 +185,7 @@ function BettingPanel({
           value={custom}
           onChange={(e) => setCustom(e.target.value)}
           placeholder={t('customAmount')}
-          className="flex-1 border-2 border-foreground rounded-[8px] px-3 py-2 text-sm bg-card text-foreground outline-none focus:border-[#d97706]"
+          className="flex-1 border-2 border-foreground rounded-[8px] px-3 py-2 text-sm bg-card text-foreground outline-none focus:border-warning"
         />
         <button
           type="button"
@@ -200,7 +200,7 @@ function BettingPanel({
           className={[
             'px-4 py-2 rounded-[8px] border-2 font-semibold text-sm transition-all',
             custom && Number(custom) >= 10 && Number(custom) <= Math.min(500, myChips)
-              ? 'border-foreground bg-primary text-primary-foreground shadow-[2px_2px_0px_0px_#1a1108] active:translate-y-[1px] active:shadow-none'
+              ? 'border-foreground bg-primary text-primary-foreground shadow-[2px_2px_0px_0px_hsl(var(--shadow))] active:translate-y-[1px] active:shadow-none'
               : 'border-border bg-muted text-muted-foreground cursor-not-allowed',
           ].join(' ')}
         >
@@ -229,7 +229,7 @@ function ActionButtons({
   const { t } = useTranslation('blackjack');
   const btnBase = 'flex-1 py-3 rounded-[8px] border-2 font-semibold text-sm transition-all';
   const btnActive =
-    'border-foreground bg-card shadow-[2px_2px_0px_0px_#3d2e1e] active:translate-y-[1px] active:shadow-none hover:bg-[#fef3e0]';
+    'border-foreground bg-card shadow-[2px_2px_0px_0px_hsl(var(--foreground))] active:translate-y-[1px] active:shadow-none hover:bg-warning/10';
   const btnDisabled = 'border-border bg-muted text-muted-foreground cursor-not-allowed';
 
   return (
@@ -322,13 +322,13 @@ export function Board({
 
       {/* Error message */}
       {lastReject && (
-        <div className="mb-3 px-3 py-2 rounded-[8px] bg-[#fde8e8] border-2 border-[#d94040] text-[#d94040] text-sm text-center">
+        <div className="mb-3 px-3 py-2 rounded-[8px] bg-destructive/10 border-2 border-destructive text-destructive text-sm text-center">
           {lastReject}
         </div>
       )}
 
       {/* Dealer hand */}
-      <div className="border-2 border-card/40 rounded-[12px] bg-card/85 backdrop-blur-sm text-foreground shadow-[4px_4px_0px_0px_#1a1108] p-4 mb-3">
+      <div className="border-2 border-card/40 rounded-[12px] bg-card/85 backdrop-blur-sm text-foreground shadow-[4px_4px_0px_0px_hsl(var(--shadow))] p-4 mb-3">
         <Hand
           cards={state.dealerHand}
           label={t('dealer')}
@@ -348,8 +348,8 @@ export function Board({
           className={[
             'border-2 rounded-[12px] bg-card/90 backdrop-blur-sm text-foreground p-4 mb-3',
             isMyTurn
-              ? 'border-[#d97706] shadow-[4px_4px_0px_0px_#d97706]'
-              : 'border-card/40 shadow-[4px_4px_0px_0px_#1a1108]',
+              ? 'border-warning shadow-[4px_4px_0px_0px_hsl(var(--warning))]'
+              : 'border-card/40 shadow-[4px_4px_0px_0px_hsl(var(--shadow))]',
           ].join(' ')}
         >
           <Hand
@@ -359,10 +359,10 @@ export function Board({
             pointsLabel={t('points')}
           />
           {state.myTotal > 21 && (
-            <div className="text-center text-sm font-bold text-[#d94040] mt-1">{t('bust')}</div>
+            <div className="text-center text-sm font-bold text-destructive mt-1">{t('bust')}</div>
           )}
           {state.myTotal === 21 && state.myHand.length === 2 && (
-            <div className="text-center text-sm font-bold text-[#16a34a] mt-1">
+            <div className="text-center text-sm font-bold text-success mt-1">
               {t('blackjack')}
             </div>
           )}
@@ -370,7 +370,7 @@ export function Board({
       )}
 
       {/* Action area */}
-      <div className="border-2 border-card/40 rounded-[12px] bg-card/90 backdrop-blur-sm text-foreground shadow-[4px_4px_0px_0px_#1a1108] p-4 mb-3">
+      <div className="border-2 border-card/40 rounded-[12px] bg-card/90 backdrop-blur-sm text-foreground shadow-[4px_4px_0px_0px_hsl(var(--shadow))] p-4 mb-3">
         {state.phase === 'betting' && (
           <BettingPanel
             myChips={myPlayer?.chips ?? 0}
@@ -403,7 +403,7 @@ export function Board({
       </div>
 
       {/* Players list */}
-      <div className="border-2 border-card/40 rounded-[12px] bg-card/80 backdrop-blur-sm text-foreground shadow-[4px_4px_0px_0px_#1a1108] p-3 mb-3">
+      <div className="border-2 border-card/40 rounded-[12px] bg-card/80 backdrop-blur-sm text-foreground shadow-[4px_4px_0px_0px_hsl(var(--shadow))] p-3 mb-3">
         <div className="text-xs text-muted-foreground font-semibold mb-2">{t('playerStatus')}</div>
         <div className="flex flex-col gap-1">
           {state.players.map((p) => (

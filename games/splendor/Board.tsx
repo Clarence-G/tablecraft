@@ -23,6 +23,11 @@ import {
 } from './shared';
 
 // ---- Gem color palette (matches DESIGN.md 六色 where possible) ----
+//
+// Canonical game-mechanic palette: a ruby IS red, an emerald IS green, etc.
+// These hexes intentionally bypass semantic tokens (--destructive, --success,
+// --warning, --foreground) so that gem identity survives theme changes.
+// Consumed as inline style values, not Tailwind classes.
 
 const GEM_BG: Record<Token, string> = {
   white: '#faf5eb',
@@ -79,7 +84,7 @@ function GemToken({
       style={{
         background: GEM_BG[color],
         color: GEM_FG[color],
-        borderColor: '#1a1108',
+        borderColor: 'hsl(var(--shadow))',
       }}
     >
       {count === undefined ? t(`gem.${color}`) : count}
@@ -104,7 +109,7 @@ function CostRow({ cost, bonuses }: { cost: GemCount; bonuses?: GemCount }) {
             style={{
               background: GEM_BG[g],
               color: GEM_FG[g],
-              border: '1.5px solid #1a1108',
+              border: '1.5px solid hsl(var(--shadow))',
             }}
           >
             {hasDiscount ? (
@@ -142,7 +147,7 @@ function CardFace({
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       disabled={disabled}
-      className={`${sizeClass} flex flex-col justify-between rounded-[10px] bg-card border-2 border-foreground transition-all shadow-[3px_3px_0px_0px_#3d2e1e]
+      className={`${sizeClass} flex flex-col justify-between rounded-[10px] bg-card border-2 border-foreground transition-all shadow-[3px_3px_0px_0px_hsl(var(--foreground))]
         ${disabled ? 'opacity-50 cursor-not-allowed' : onClick ? 'cursor-pointer hover:-translate-y-0.5' : ''}
       `}
     >
@@ -152,7 +157,7 @@ function CardFace({
           style={{
             background: GEM_BG[card.bonus],
             color: GEM_FG[card.bonus],
-            border: '2px solid #1a1108',
+            border: '2px solid hsl(var(--shadow))',
           }}
         >
           +1
@@ -170,10 +175,15 @@ function CardFace({
 
 function CardBack({ level, count }: { level: 1 | 2 | 3; count: number }) {
   const { t } = useTranslation('splendor');
-  const levelColor = level === 1 ? '#16a34a' : level === 2 ? '#2563eb' : '#7c3aed';
+  const levelColor =
+    level === 1
+      ? 'var(--color-jade)'
+      : level === 2
+        ? 'var(--color-royal-blue)'
+        : 'var(--color-crown)';
   return (
     <div
-      className="w-20 h-28 sm:w-24 sm:h-32 flex flex-col items-center justify-center rounded-[10px] border-2 border-foreground shadow-[3px_3px_0px_0px_#3d2e1e] text-white"
+      className="w-20 h-28 sm:w-24 sm:h-32 flex flex-col items-center justify-center rounded-[10px] border-2 border-foreground shadow-[3px_3px_0px_0px_hsl(var(--foreground))] text-white"
       style={{ background: levelColor }}
     >
       <span className="text-xs font-semibold uppercase tracking-wide opacity-90">
@@ -202,13 +212,13 @@ function NobleCard({
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       disabled={disabled}
-      className={`w-20 h-20 sm:w-24 sm:h-24 flex flex-col items-center justify-between p-1.5 rounded-[10px] border-2 border-foreground shadow-[3px_3px_0px_0px_#3d2e1e] transition-all
+      className={`w-20 h-20 sm:w-24 sm:h-24 flex flex-col items-center justify-between p-1.5 rounded-[10px] border-2 border-foreground shadow-[3px_3px_0px_0px_hsl(var(--foreground))] transition-all
         ${highlighted ? 'ring-2 ring-warning -translate-y-0.5' : ''}
         ${disabled ? 'opacity-40' : ''}
       `}
       style={{ background: '#f0e8fe' }}
     >
-      <div className="flex items-center gap-1 text-[#7c3aed]">
+      <div className="flex items-center gap-1 text-[var(--color-crown)]">
         <Crown className="w-3 h-3" />
         <span className="text-xs font-black">{noble.points}</span>
       </div>
@@ -310,7 +320,7 @@ function CardDialog({
 
   return (
     <div
-      className="fixed inset-0 bg-[#1a1108]/60 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-shadow/60 z-50 flex items-center justify-center p-4"
       onClick={onClose}
       onKeyDown={(e) => {
         if (e.key === 'Escape') onClose();
@@ -321,7 +331,7 @@ function CardDialog({
       tabIndex={-1}
     >
       <div
-        className="bg-card border-2 border-foreground rounded-[12px] shadow-[4px_4px_0px_0px_#3d2e1e] p-4 w-full max-w-sm"
+        className="bg-card border-2 border-foreground rounded-[12px] shadow-[4px_4px_0px_0px_hsl(var(--foreground))] p-4 w-full max-w-sm"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         role="document"
@@ -359,7 +369,7 @@ function CardDialog({
             <div className="text-muted-foreground">{t('card.netCost')}</div>
             <CostRow cost={afford.gemsSpent} />
             {afford.goldUsed > 0 && (
-              <div className="flex items-center gap-1 text-[#d97706]">
+              <div className="flex items-center gap-1 text-warning">
                 <Coins className="w-3 h-3" />
                 {t('card.goldCover', { count: afford.goldUsed })}
               </div>
@@ -373,8 +383,8 @@ function CardDialog({
         </div>
 
         {needsNobleChoice && afford.affordable && (
-          <div className="mb-3 p-2 bg-[#f0e8fe] rounded-[8px] border-2 border-[#7c3aed]">
-            <div className="text-xs font-semibold mb-1 text-[#7c3aed]">
+          <div className="mb-3 p-2 bg-[#f0e8fe] rounded-[8px] border-2 border-[var(--color-crown)]">
+            <div className="text-xs font-semibold mb-1 text-[var(--color-crown)]">
               {t('action.nobleSelect')}
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -396,11 +406,11 @@ function CardDialog({
               type="button"
               disabled={buyDisabled}
               onClick={onBuy}
-              className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-[10px] border-2 border-[#1a1108] font-semibold text-sm transition-all
+              className={`flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-[10px] border-2 border-shadow font-semibold text-sm transition-all
                 ${
                   buyDisabled
                     ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-60'
-                    : 'bg-primary text-primary-foreground shadow-[3px_3px_0px_0px_#1a1108] hover:-translate-y-0.5'
+                    : 'bg-primary text-primary-foreground shadow-[3px_3px_0px_0px_hsl(var(--shadow))] hover:-translate-y-0.5'
                 }
               `}
             >
@@ -413,7 +423,7 @@ function CardDialog({
               type="button"
               onClick={onReserve}
               disabled={reservedCount >= MAX_RESERVED}
-              className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-[10px] border-2 border-foreground bg-card font-semibold text-sm hover:-translate-y-0.5 transition-all shadow-[3px_3px_0px_0px_#3d2e1e]"
+              className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2 rounded-[10px] border-2 border-foreground bg-card font-semibold text-sm hover:-translate-y-0.5 transition-all shadow-[3px_3px_0px_0px_hsl(var(--foreground))]"
             >
               <Coins className="w-3.5 h-3.5" />
               {supplyGold > 0 ? t('action.reserveWithGold') : t('action.reserve')}
@@ -652,7 +662,7 @@ export function Board({
           )}
         </div>
         {lastReject && (
-          <div className="text-center text-xs text-destructive bg-[#fde8e8] rounded-[8px] px-2 py-1 mx-auto border-2 border-destructive">
+          <div className="text-center text-xs text-destructive bg-destructive/10 rounded-[8px] px-2 py-1 mx-auto border-2 border-destructive">
             {lastReject}
           </div>
         )}
@@ -677,7 +687,7 @@ export function Board({
       )}
 
       {/* Gem supply & cart */}
-      <div className="bg-card border-2 border-foreground rounded-[12px] shadow-[4px_4px_0px_0px_#3d2e1e] p-3">
+      <div className="bg-card border-2 border-foreground rounded-[12px] shadow-[4px_4px_0px_0px_hsl(var(--foreground))] p-3">
         <div className="flex justify-between items-center mb-2">
           <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1">
             <Gem className="w-3 h-3" />
@@ -764,7 +774,7 @@ export function Board({
               type="button"
               onClick={handleConfirmTake}
               disabled={!isMyTurn || (overflow > 0 && discardTotal !== overflow)}
-              className="w-full px-4 py-2 rounded-[10px] border-2 border-[#1a1108] bg-primary text-primary-foreground font-semibold text-sm shadow-[3px_3px_0px_0px_#1a1108] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
+              className="w-full px-4 py-2 rounded-[10px] border-2 border-shadow bg-primary text-primary-foreground font-semibold text-sm shadow-[3px_3px_0px_0px_hsl(var(--shadow))] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:hover:translate-y-0"
             >
               {t('action.confirmTakeGems')}
               {cartTotal > 0 && (
@@ -832,7 +842,7 @@ export function Board({
 
       {/* My panel */}
       {me && (
-        <div className="bg-card border-2 border-foreground rounded-[12px] shadow-[4px_4px_0px_0px_#3d2e1e] p-3">
+        <div className="bg-card border-2 border-foreground rounded-[12px] shadow-[4px_4px_0px_0px_hsl(var(--foreground))] p-3">
           <div className="flex items-center justify-between mb-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {t('section.myRealm')}

@@ -41,6 +41,20 @@ Win condition: last player alive. Eliminated when the bullet fires (1/6 chance e
 export type Card = 'Q' | 'K' | 'A' | 'Joker';
 export type Suit = 'Q' | 'K' | 'A';
 
+// Suit colors are canonical game-mechanic identities, not theme tokens.
+// A Q stays blue across themes; a K stays purple. Intentionally hex
+// literal so theme swaps cannot inadvertently break card recognition.
+//
+// `bgClass` is a Tailwind arbitrary-value class string so Tailwind's JIT
+// can pick it up from this source file. It duplicates the `bg` hex
+// because the PlayingCard API consumes a className, not a style object.
+export const SUIT_COLORS = {
+  Q: { bg: '#e8f0fe', bgClass: 'bg-[#e8f0fe]', border: '#2563eb', text: '#2563eb' },
+  K: { bg: '#f0e8fe', bgClass: 'bg-[#f0e8fe]', border: '#7c3aed', text: '#7c3aed' },
+  A: { bg: '#e8f8ee', bgClass: 'bg-[#e8f8ee]', border: '#16a34a', text: '#16a34a' },
+  Joker: { bg: '#fde8e8', bgClass: 'bg-[#fde8e8]', border: '#d94040', text: '#d94040' },
+} as const;
+
 export const ActionSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('play_cards'),

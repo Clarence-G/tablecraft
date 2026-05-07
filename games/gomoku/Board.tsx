@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Action, PlayerView, Stone } from './shared';
-import { BOARD_SIZE } from './shared';
+import { BOARD_SIZE, STONE_COLORS } from './shared';
 
 const STAR_POINTS: [number, number][] = [
   [3, 3],
@@ -181,7 +181,7 @@ export function Board({
           className="absolute inset-0 flex items-center justify-center pointer-events-none"
         >
           <div
-            className="w-[18%] h-[18%] rounded-full bg-[#d94040]"
+            className="w-[18%] h-[18%] rounded-full bg-destructive"
             style={{ boxShadow: '0 0 0 1.5px rgba(255,255,255,0.9)' }}
           />
         </div>,
@@ -194,13 +194,13 @@ export function Board({
     isMyTurn && !gameOver
       ? {
           boxShadow: [
-            '#1a1108 -4px 4px 0px, 0 0 0 0 rgba(217,119,6,0)',
-            '#1a1108 -4px 4px 0px, 0 0 0 4px rgba(217,119,6,0.45)',
-            '#1a1108 -4px 4px 0px, 0 0 0 0 rgba(217,119,6,0)',
+            'hsl(var(--shadow)) -4px 4px 0px, 0 0 0 0 rgba(217,119,6,0)',
+            'hsl(var(--shadow)) -4px 4px 0px, 0 0 0 4px rgba(217,119,6,0.45)',
+            'hsl(var(--shadow)) -4px 4px 0px, 0 0 0 0 rgba(217,119,6,0)',
           ],
           opacity: [1, 0.92, 1],
         }
-      : { boxShadow: '#1a1108 -4px 4px 0px', opacity: 1 };
+      : { boxShadow: 'hsl(var(--shadow)) -4px 4px 0px', opacity: 1 };
 
   return (
     <div
@@ -230,7 +230,7 @@ export function Board({
         }
       >
         <div
-          className={`w-4 h-4 rounded-full border-2 ${state.myStone === 'black' ? 'bg-[#1a1108] border-foreground' : 'bg-card border-foreground'}`}
+          className={`w-4 h-4 rounded-full border-2 border-foreground ${state.myStone === 'black' ? STONE_COLORS.black.bgClass : STONE_COLORS.white.bgClass}`}
         />
         <span className="text-foreground">
           {state.myStone === 'black' ? t('playBlack') : t('playWhite')}
