@@ -1,5 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { type ReactNode, useState } from 'react';
+import { Check, X } from 'lucide-react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { useIsTouchViewport } from '../hooks/useIsTouchViewport';
 
 export type Stone = 'black' | 'white';
 
@@ -52,6 +54,49 @@ function StoneView({ stone }: { stone: Stone }) {
   );
 }
 
+function ConfirmChip({
+  row,
+  col,
+  size,
+  onConfirm,
+  onCancel,
+}: {
+  row: number;
+  col: number;
+  size: number;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const coord = `${columnLetter(col)}${size - row}`;
+  return (
+    <div
+      data-testid="confirm-chip"
+      className="absolute flex items-center gap-1 bg-card border-2 border-foreground shadow-card-active rounded-[8px] px-2 py-1 z-10"
+      style={{ top: 8, right: 8 }}
+    >
+      <span className="text-foreground font-semibold text-sm whitespace-nowrap">
+        放在 {coord}？
+      </span>
+      <button
+        type="button"
+        className="flex items-center justify-center min-h-11 min-w-11 rounded-[8px] border-2 border-foreground bg-card shadow-card-active"
+        onClick={onConfirm}
+        aria-label="确认"
+      >
+        <Check size={16} />
+      </button>
+      <button
+        type="button"
+        className="flex items-center justify-center min-h-11 min-w-11 rounded-[8px] border-2 border-foreground bg-card shadow-card-active"
+        onClick={onCancel}
+        aria-label="取消"
+      >
+        <X size={16} />
+      </button>
+    </div>
+  );
+}
+
 export function IntersectionBoard({
   size,
   stones,
@@ -65,10 +110,56 @@ export function IntersectionBoard({
   className,
 }: IntersectionBoardProps) {
   const [hovered, setHovered] = useState<[number, number] | null>(null);
+  const [armed, setArmed] = useState<[number, number] | null>(null);
+  const armedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTouch = useIsTouchViewport();
+
   const boardPx = size * CELL;
   const gutter = showCoordinates ? LABEL_GUTTER : 0;
   const svgSize = boardPx + 2 * gutter;
   const insetPct = gutter === 0 ? '0' : `${(gutter / svgSize) * 100}%`;
+
+  const clearArmed = () => {
+    setArmed(null);
+    if (armedTimeoutRef.current) {
+      clearTimeout(armedTimeoutRef.current);
+      armedTimeoutRef.current = null;
+    }
+  };
+
+  const armCell = (r: number, c: number) => {
+    if (armedTimeoutRef.current) clearTimeout(armedTimeoutRef.current);
+    setArmed([r, c]);
+    armedTimeoutRef.current = setTimeout(() => {
+      setArmed(null);
+      armedTimeoutRef.current = null;
+    }, 4000);
+  };
+
+  const handleCellClick = (r: number, c: number) => {
+    if (!isTouch) {
+      onPlace?.(r, c);
+      return;
+    }
+    if (armed && armed[0] === r && armed[1] === c) {
+      clearArmed();
+      onPlace?.(r, c);
+      return;
+    }
+    armCell(r, c);
+  };
+
+  // Clear armed state when board is disabled
+  useEffect(() => {
+    if (disabled) clearArmed();
+  }, [disabled]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (armedTimeoutRef.current) clearTimeout(armedTimeoutRef.current);
+    };
+  }, []);
 
   return (
     <div
@@ -169,6 +260,7 @@ export function IntersectionBoard({
             row.map((cell, c) => {
               const placeable = !disabled && (canPlace?.(r, c) ?? false);
               const isHovered = hovered?.[0] === r && hovered?.[1] === c;
+              const isArmed = armed?.[0] === r && armed?.[1] === c;
               return (
                 <button
                   type="button"
@@ -177,7 +269,7 @@ export function IntersectionBoard({
                   className="flex items-center justify-center bg-transparent border-none p-0 relative"
                   style={{ cursor: placeable ? 'pointer' : 'default' }}
                   disabled={!placeable}
-                  onClick={() => placeable && onPlace?.(r, c)}
+                  onClick={() => handleCellClick(r, c)}
                   onMouseEnter={() => placeable && setHovered([r, c])}
                   onMouseLeave={() => setHovered(null)}
                   data-row={r}
@@ -186,7 +278,19 @@ export function IntersectionBoard({
                 >
                   <AnimatePresence>
                     {cell && <StoneView key={`s-${r}-${c}`} stone={cell} />}
-                    {!cell && !disabled && isHovered && previewStone && (
+                    {!cell && !disabled && isTouch && isArmed && previewStone && (
+                      <motion.div
+                        key="armed-preview"
+                        data-testid="armed-preview"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 0.6 }}
+                        exit={{ opacity: 0 }}
+                        className={`w-[77%] aspect-square rounded-full ${
+                          previewStone === 'black' ? 'bg-[#1a1108]' : 'bg-white'
+                        }`}
+                      />
+                    )}
+                    {!cell && !disabled && !isTouch && isHovered && previewStone && (
                       <motion.div
                         key="preview"
                         initial={{ opacity: 0 }}
@@ -204,6 +308,21 @@ export function IntersectionBoard({
             }),
           )}
         </div>
+
+        {/* Mobile tap-to-confirm chip */}
+        {armed && isTouch && (
+          <ConfirmChip
+            row={armed[0]}
+            col={armed[1]}
+            size={size}
+            onConfirm={() => {
+              const [r, c] = armed;
+              clearArmed();
+              onPlace?.(r, c);
+            }}
+            onCancel={clearArmed}
+          />
+        )}
       </div>
     </div>
   );

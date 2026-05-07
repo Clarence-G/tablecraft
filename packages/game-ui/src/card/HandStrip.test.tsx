@@ -9,6 +9,7 @@ interface Card {
 
 const CARDS: Card[] = Array.from({ length: 3 }, (_, i) => ({ id: `c${i}`, v: i }));
 const LONG_HAND: Card[] = Array.from({ length: 12 }, (_, i) => ({ id: `c${i}`, v: i }));
+const SEVEN: Card[] = Array.from({ length: 7 }, (_, i) => ({ id: `c${i}`, v: i }));
 
 describe('HandStrip', () => {
   it('renders each card through renderCard', () => {
@@ -103,5 +104,94 @@ describe('HandStrip', () => {
     );
     expect(getByTestId('hand-strip').getAttribute('data-empty')).toBe('true');
     expect(getByText('nothing here')).toBeInTheDocument();
+  });
+
+  it('caps overlap so each card retains minTapWidth of tappable surface', () => {
+    const { container } = render(
+      <HandStrip
+        cards={SEVEN}
+        getKey={(c) => c.id}
+        overlapThreshold={6}
+        maxOverlap={14}
+        cardWidth={56}
+        minTapWidth={44}
+        renderCard={(c) => <span key={c.id}>{c.v}</span>}
+      />,
+    );
+    const wrappers = container.querySelectorAll('[data-testid="hand-strip"] > div');
+    expect(wrappers.length).toBe(7);
+    // effectiveOverlap = min(14, 56 - 44) = 12
+    expect((wrappers[0] as HTMLElement).style.marginLeft).toBe('');
+    for (let i = 1; i < 7; i++) {
+      expect((wrappers[i] as HTMLElement).style.marginLeft).toContain('12px');
+    }
+  });
+
+  it('clamps overlap to zero when cardWidth is smaller than minTapWidth', () => {
+    const { container } = render(
+      <HandStrip
+        cards={SEVEN}
+        getKey={(c) => c.id}
+        overlapThreshold={6}
+        maxOverlap={14}
+        cardWidth={40}
+        minTapWidth={44}
+        renderCard={(c) => <span key={c.id}>{c.v}</span>}
+      />,
+    );
+    const wrappers = container.querySelectorAll('[data-testid="hand-strip"] > div');
+    expect(wrappers.length).toBe(7);
+    for (const w of Array.from(wrappers)) {
+      expect((w as HTMLElement).style.marginLeft).toBe('');
+    }
+  });
+
+  it('keeps overlap = maxOverlap when already under the cap', () => {
+    const { container } = render(
+      <HandStrip
+        cards={SEVEN}
+        getKey={(c) => c.id}
+        overlapThreshold={6}
+        maxOverlap={8}
+        cardWidth={56}
+        minTapWidth={44}
+        renderCard={(c) => <span key={c.id}>{c.v}</span>}
+      />,
+    );
+    const wrappers = container.querySelectorAll('[data-testid="hand-strip"] > div');
+    expect((wrappers[1] as HTMLElement).style.marginLeft).toContain('8px');
+  });
+
+  it('does not overlap when card count is at or below overlapThreshold', () => {
+    const { container } = render(
+      <HandStrip
+        cards={SEVEN.slice(0, 6)}
+        getKey={(c) => c.id}
+        overlapThreshold={6}
+        maxOverlap={14}
+        cardWidth={56}
+        minTapWidth={44}
+        renderCard={(c) => <span key={c.id}>{c.v}</span>}
+      />,
+    );
+    const wrappers = container.querySelectorAll('[data-testid="hand-strip"] > div');
+    expect(wrappers.length).toBe(6);
+    for (const w of Array.from(wrappers)) {
+      expect((w as HTMLElement).style.marginLeft).toBe('');
+    }
+  });
+
+  it('falls back to maxOverlap unchanged when cardWidth is omitted', () => {
+    const { container } = render(
+      <HandStrip
+        cards={LONG_HAND}
+        getKey={(c) => c.id}
+        overlapThreshold={9}
+        maxOverlap={20}
+        renderCard={(c) => <span key={c.id}>{c.v}</span>}
+      />,
+    );
+    const wrappers = container.querySelectorAll('[data-testid="hand-strip"] > div');
+    expect((wrappers[1] as HTMLElement).style.marginLeft).toContain('20px');
   });
 });

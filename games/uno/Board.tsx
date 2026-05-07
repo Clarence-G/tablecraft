@@ -484,11 +484,13 @@ export function Board({
               isDisabled={() => !isMyTurn}
               overlapThreshold={6}
               maxOverlap={14}
+              cardWidth={56}
+              minTapWidth={44}
               emptyLabel={t('noCards')}
               renderCard={(c, { selected, disabled, onSelect }) => (
                 <UnoCardFace
                   serialized={c.serialized}
-                  size="small"
+                  size="normal"
                   selected={selected}
                   disabled={disabled}
                   onClick={onSelect}

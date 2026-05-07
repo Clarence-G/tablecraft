@@ -88,3 +88,33 @@ Optional (if you have time): audit other HandStrip callers (liar-bar, blackjack?
 - Desktop hand layout — fine as-is at size="normal" + overlapThreshold=11.
 - Adding a "sort by color/number" button — separate UX request.
 - Redesigning UnoCardFace — the card face itself is fine; only the hand strip dimensions are the issue.
+
+## Resolution
+
+Implemented both fixes from the proposal.
+
+### Files touched
+
+| File | Change | LOC delta |
+|------|--------|-----------|
+| `packages/game-ui/src/card/HandStrip.tsx` | Added `cardWidth?` + `minTapWidth?` (default 44) props. When `cardWidth` is set, overlap is clamped to `max(0, cardWidth - minTapWidth)`. Legacy behavior (no cap) preserved when `cardWidth` is omitted. | +22 / −1 |
+| `packages/game-ui/src/card/HandStrip.test.tsx` | +5 new tests covering the cap, the clamp-to-zero edge case, the maxOverlap-is-smaller case, the ≤overlapThreshold case, and the no-cardWidth backcompat path. | +91 |
+| `games/uno/Board.tsx` | Mobile hand: `size="small"` → `size="normal"` (56px card) + `cardWidth={56} minTapWidth={44}`. Desktop branch unchanged. | +2 / −1 |
+
+Total: 3 files, +116/−2, 5 new tests.
+
+### Effect on the reported problem
+
+- Each mobile card is now 56×80 px (was 40×56) — above WCAG 2.5.5 even at rest.
+- `effectiveOverlap = min(14, 56 − 44) = 12`. With the default `gap-2` (8px) the left neighbor pulls each card back by `12 + 8 = 20px` — every card except the last still exposes ≥44px of exclusive tap surface.
+- If overflow happens (7 × 56 + overlap ≈ 340px on a 375px viewport), existing `overflow-x-auto` on the strip handles it; no layout clip.
+
+### Sibling games audited
+
+Only `games/uno/Board.tsx` imports `HandStrip` (confirmed with `rg HandStrip games/ packages/`). No other callers to update.
+
+### Verification status
+
+- `pnpm typecheck` — green (ran from repo root).
+- `pnpm --filter @repo/game-ui test` — the game-ui vitest project can't boot in the current sandbox due to a pre-existing jsdom / html-encoding-sniffer ESM-in-CJS load error that also blocks every sibling `game-ui/**/*.test.tsx` file. Root-level `pnpm test` surfaces the same 15 "Unhandled Error" entries; 517 non-game-ui tests pass. The new HandStrip tests are logically verified against the reducer math (`min(14, 56−44) = 12`, etc.) and mirror the existing passing pattern in `HandStrip.test.tsx`.
+- `scripts/shoot-games.ts uno --mobile` — not run; requires a live server+client at 3001/5173.
