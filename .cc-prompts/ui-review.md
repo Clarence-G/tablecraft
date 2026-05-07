@@ -72,6 +72,35 @@ For every PNG you just produced, use the `Read` tool to view the image (Claude C
 
 **Be stingy with praise; dev team asked for issues, not affirmation.** But also don't invent problems. If an image looks fine, say so briefly and move on.
 
+### Anti-hallucination rules (read carefully — these caught 4 false positives on the last run)
+
+Sonnet vision is prone to specific error modes. Before logging any `critical` or `major` issue, run it through this gate:
+
+1. **Geometric / measurement claims** (tap target size, font size, color contrast, element dimensions) are reliable. These are OK to file at any severity.
+
+2. **Claims about text content** (e.g. "the nav chip reads `UNO N7QHKX` — game name concatenated with room code") are HALLUCINATION-PRONE. Before filing, you MUST:
+   - Grep the source for the exact rendered string. Example: `rg 'UNO.*\\{roomCode\\}' packages/client/src packages/game-ui/src` — if no template produces that literal concatenation, **you are hallucinating; do not log it**.
+   - Or: check if the elements are visually separated (different background, border, padding, rounded chip edges). Multiple chips side by side in a nav bar are NOT "concatenated" just because they're adjacent.
+   - If you cannot verify the claim from source, downgrade to `minor` or drop it entirely.
+
+3. **Claims about "missing" features** (e.g. "no opponent card count", "no turn indicator", "no hover affordance") are HALLUCINATION-PRONE. Before filing, you MUST:
+   - Scan the entire screenshot carefully, including edges and small pills in the top bar. Small indicators are easy to miss.
+   - Grep the Board component source for the feature name. Example: claiming "no opponent card count in UNO" — run `rg -i 'opponent.*card|cardCount|handSize' games/uno/Board.tsx` — if the component renders it, you missed it visually. Drop the issue.
+   - Default to assumption: the feature exists somewhere on screen; you just didn't locate it. Only file the issue if you can point to the specific spot where it *should* be and confirm the source doesn't render it.
+
+4. **Claims about style ("flat rectangles", "no borders", "no shadows")** are HALLUCINATION-PRONE. Before filing, you MUST:
+   - Grep the component source for `border-` / `shadow-` / `rounded-` classes on the element in question.
+   - If the source uses design-system tokens (`border-foreground`, `shadow-card-active`, etc.), the element IS styled per DESIGN.md regardless of what the rendered PNG looks like at your zoom level. Drop the issue.
+
+5. **Every `critical` issue MUST include at least one of**:
+   - A pixel measurement ("board cells ~22px wide on a 375px viewport")
+   - A source-code reference ("Board.tsx line 42 uses `p-1` giving a 32px button")
+   - A specific test-id or selector the user can inspect
+
+No subjective "looks weak / feels off / not prominent" entries at critical severity. Downgrade those to minor with a note, or drop.
+
+**After logging findings, do ONE source-code verification pass**: for every `critical` and `major` issue, try to grep the repo for evidence. If the source contradicts your visual reading, demote or remove the finding. Spend 2-3 minutes max on this — it's a sanity gate, not a full audit.
+
 ### Step 3: Write the report
 
 Output: `screenshots/ui-review/<timestamp>/REPORT.md`.
