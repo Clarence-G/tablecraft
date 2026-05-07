@@ -131,7 +131,7 @@ export function Board({
 
   return (
     <div
-      className="flex-1 text-foreground flex flex-col p-3 sm:p-4 max-w-lg mx-auto w-full"
+      className="flex-1 text-foreground flex flex-col p-3 sm:p-4 max-w-3xl lg:max-w-5xl mx-auto w-full"
       data-testid="game-board"
     >
       {/* Notifications */}

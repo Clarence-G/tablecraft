@@ -786,39 +786,45 @@ export function Board({
         {[3, 2, 1].map((lvl) => {
           const level = lvl as 1 | 2 | 3;
           return (
-            <div key={level} className="flex gap-2 items-center overflow-x-auto">
-              <button
-                type="button"
-                onClick={() => handleReserveDeck(level)}
-                disabled={
-                  !isMyTurn ||
-                  state.deckCounts[level] === 0 ||
-                  (me?.reservedCount ?? 0) >= MAX_RESERVED
-                }
-                className="shrink-0 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:-translate-y-0.5 transition-transform"
-                aria-label={t('action.reserveFromDeck', { level })}
-              >
-                <CardBack level={level} count={state.deckCounts[level]} />
-              </button>
-              <div className="flex gap-2">
-                {Array.from({ length: 4 }, (_, idx) => idx).map((slot) => {
-                  const card = state.visible[level][slot];
-                  return card ? (
-                    <CardFace
-                      key={card.id}
-                      card={card}
-                      bonuses={me?.bonuses}
-                      onClick={() => isMyTurn && setActiveCard({ card, source: 'visible' })}
-                      disabled={!isMyTurn}
-                    />
-                  ) : (
-                    <div
-                      key={`empty-${level}-${slot}`}
-                      className="w-24 h-32 rounded-[10px] border-2 border-dashed border-border opacity-40"
-                    />
-                  );
-                })}
+            <div key={level} className="relative">
+              <div className="flex gap-2 items-center overflow-x-auto">
+                <button
+                  type="button"
+                  onClick={() => handleReserveDeck(level)}
+                  disabled={
+                    !isMyTurn ||
+                    state.deckCounts[level] === 0 ||
+                    (me?.reservedCount ?? 0) >= MAX_RESERVED
+                  }
+                  className="shrink-0 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer hover:-translate-y-0.5 transition-transform"
+                  aria-label={t('action.reserveFromDeck', { level })}
+                >
+                  <CardBack level={level} count={state.deckCounts[level]} />
+                </button>
+                <div className="flex gap-2">
+                  {Array.from({ length: 4 }, (_, idx) => idx).map((slot) => {
+                    const card = state.visible[level][slot];
+                    return card ? (
+                      <CardFace
+                        key={card.id}
+                        card={card}
+                        bonuses={me?.bonuses}
+                        onClick={() => isMyTurn && setActiveCard({ card, source: 'visible' })}
+                        disabled={!isMyTurn}
+                      />
+                    ) : (
+                      <div
+                        key={`empty-${level}-${slot}`}
+                        className="w-24 h-32 rounded-[10px] border-2 border-dashed border-border opacity-40"
+                      />
+                    );
+                  })}
+                </div>
               </div>
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute top-0 right-0 h-full w-8 bg-gradient-to-l from-card to-transparent sm:hidden"
+              />
             </div>
           );
         })}

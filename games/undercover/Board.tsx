@@ -51,7 +51,7 @@ export function Board({ state, myId, players, sendAction, isSending, lastReject 
   const gameOver = state.phase === 'finished';
 
   return (
-    <div className="flex-1 text-foreground flex flex-col p-3 sm:p-4 max-w-lg mx-auto w-full gap-3">
+    <div className="flex-1 text-foreground flex flex-col p-3 sm:p-4 max-w-3xl lg:max-w-5xl mx-auto w-full gap-3">
       {/* Elimination banner */}
       {eliminationBanner && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-destructive text-destructive-foreground px-5 py-3 rounded-xl shadow-lg text-center text-sm font-semibold">

@@ -46,16 +46,25 @@ function CardBack() {
   return <PlayingCard size="md" faceDown />;
 }
 
-function CardPlaceholder() {
+function CardPlaceholder({ label }: { label?: string }) {
   return (
     <div
-      className="w-14 h-20 rounded-[10px] border shrink-0"
+      className="w-14 h-20 rounded-[10px] border shrink-0 flex items-end justify-center pb-1.5"
       style={{
         borderColor: 'rgba(244, 217, 168, 0.22)',
         background: 'rgba(0, 0, 0, 0.16)',
         boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.25)',
       }}
-    />
+    >
+      {label && (
+        <span
+          className="text-[10px] tracking-widest uppercase opacity-60"
+          style={{ color: 'rgba(244, 217, 168, 0.75)' }}
+        >
+          {label}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -244,7 +253,7 @@ function ActionPanel({
 }) {
   const [showRaise, setShowRaise] = useState(false);
 
-  const btnBase = 'py-3 rounded-[8px] border-2 font-semibold text-sm transition-all';
+  const btnBase = 'py-3 px-2 rounded-[8px] border-2 font-semibold text-sm transition-all';
   const btnActive =
     'border-foreground bg-card shadow-[2px_2px_0px_0px_#3d2e1e] active:translate-y-[1px] active:shadow-none hover:bg-[#fef3e0]';
   const btnDisabled = 'border-border bg-muted text-muted-foreground cursor-not-allowed';
@@ -354,7 +363,7 @@ export function Board({
 
   return (
     <div
-      className="flex-1 text-card flex flex-col p-3 sm:p-4 max-w-2xl mx-auto w-full gap-3"
+      className="flex-1 text-card flex flex-col p-3 sm:p-4 max-w-3xl lg:max-w-5xl mx-auto w-full gap-3"
       data-testid="game-board"
     >
       {/* Status row */}
@@ -405,10 +414,14 @@ export function Board({
             // biome-ignore lint/suspicious/noArrayIndexKey: community cards are ordered and stable for display
             <CardFace key={i} card={card} />
           ))}
-          {Array.from({ length: Math.max(0, 5 - state.communityCards.length) }).map((_, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: placeholder positions are ordered and stable
-            <CardPlaceholder key={i} />
-          ))}
+          {Array.from({ length: Math.max(0, 5 - state.communityCards.length) }).map((_, i) => {
+            const slotIdx = state.communityCards.length + i;
+            const labelKey = ['flop1', 'flop2', 'flop3', 'turn', 'river'][slotIdx];
+            return (
+              // biome-ignore lint/suspicious/noArrayIndexKey: placeholder positions are ordered and stable
+              <CardPlaceholder key={i} label={labelKey ? t(labelKey) : undefined} />
+            );
+          })}
         </div>
 
         {/* My hole cards */}

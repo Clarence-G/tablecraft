@@ -12,10 +12,14 @@ set -euo pipefail
 TARGETS="${1:-battleship}"
 MODEL="${2:-sonnet}"
 EFFORT="${3:-high}"
+# Optional 4th arg: suffix to disambiguate parallel review sessions.
+# e.g. launch-ui-review.sh "blackjack hive" sonnet high batch-a
+#   → tmux session "cc-ui-review-batch-a"
+SUFFIX="${4:-}"
 
 PROJECT=/Users/bytedance/Projects/tablecraft
 PROMPT_FILE="${PROJECT}/.cc-prompts/ui-review.md"
-SESSION="cc-ui-review"
+SESSION="cc-ui-review${SUFFIX:+-$SUFFIX}"
 
 # Tool surface: Read/Write/Edit for scripts + report, Bash limited to dev-server
 # health checks, Playwright runs, git status (read-only), jq/curl/tsx for API

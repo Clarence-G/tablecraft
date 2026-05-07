@@ -144,7 +144,7 @@ export function Board({
   const cr = state.challengeResult;
 
   return (
-    <div className="flex-1 text-foreground flex flex-col p-3 sm:p-4 max-w-lg mx-auto w-full gap-3">
+    <div className="flex-1 text-foreground flex flex-col p-3 sm:p-4 max-w-3xl lg:max-w-5xl mx-auto w-full gap-3">
       {/* Challenge Result Overlay */}
       {cr && !gameOver && (
         <div className="border-2 border-foreground/50 rounded-[12px] bg-card/85 backdrop-blur-sm shadow-[4px_4px_0px_0px_rgba(26,17,8,0.4)] p-4 text-center">

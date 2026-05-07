@@ -95,7 +95,7 @@ export function DiscBoard({
             );
 
             const baseClass =
-              'w-10 h-10 rounded-full bg-muted border border-border flex items-center justify-center';
+              'w-[clamp(44px,6vw,64px)] aspect-square rounded-full bg-muted border border-border flex items-center justify-center';
 
             if (isPlayable) {
               return (

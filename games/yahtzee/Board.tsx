@@ -383,7 +383,22 @@ function ReadOnlyScoreRow({
 
 // ---- Main Board ----
 
-export function Board({
+export function Board(props: BoardProps<PlayerView, Action>) {
+  // Fail-closed guard: the server's PlayerView snapshot may not have landed
+  // on the very first render. Previously `state.players.find(...)` etc. would
+  // throw and trip the Sentry ErrorBoundary.
+  //
+  // We split the component in two so the guard can early-return BEFORE any
+  // hook executes — this is the only React-legal way to conditionally skip
+  // the rest of a component body without violating Rules of Hooks. All hooks
+  // live in BoardInner, which only runs once state has hydrated.
+  if (!props.state || !props.state.players || props.state.players.length === 0) {
+    return null;
+  }
+  return <BoardInner {...props} />;
+}
+
+function BoardInner({
   state,
   myId,
   players,
@@ -513,7 +528,7 @@ export function Board({
 
   return (
     <div
-      className="flex-1 text-foreground flex flex-col p-3 sm:p-4 max-w-2xl mx-auto w-full"
+      className="flex-1 text-foreground flex flex-col p-3 sm:p-4 max-w-3xl lg:max-w-5xl mx-auto w-full overflow-y-auto"
       data-testid="game-board"
     >
       {/* Header: Players */}
@@ -641,7 +656,7 @@ export function Board({
             <button
               type="button"
               onClick={() => setShowFullScorecard((v) => !v)}
-              className="text-xs text-muted-foreground underline"
+              className="text-xs text-muted-foreground underline inline-flex items-center min-h-[44px] py-2 px-3"
             >
               {showFullScorecard ? t('collapse') : t('expand')}
             </button>
