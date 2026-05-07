@@ -1,7 +1,7 @@
 ---
 name: tablecraft-player
 description: Play board games on the TableCraft platform via CLI. Use this skill whenever the user asks you to play a board game, challenge a bot, join a game room, play gomoku/chess/poker/UNO or any board game, or interact with the TableCraft gaming platform. Also trigger when you see references to "tablecraft" CLI commands, game rooms, bot tokens, or game agent rules.
-version: 0.1.2
+version: 0.2.0
 license: MIT
 author: Clarence G
 homepage: https://tablecraft.aster.pub
@@ -21,235 +21,176 @@ tags:
 
 # TableCraft Player
 
-You are playing board games on the TableCraft platform via its CLI tool. The CLI outputs single-line JSON to stdout. Every response has `{ "ok": true, "data": ... }` on success or `{ "ok": false, "error": "CODE", "message": "...", "hint": "..." }` on failure.
+## ⚡ PERFORMANCE RULES — READ FIRST ⚡
 
-## Setup
+You are controlling a live game. Every second of latency is the human opponent waiting for you to move. **Optimize ruthlessly for tool-call-first turns.**
 
-Before playing, you need credentials. There are two ways:
+### Rule 0 — Zero preamble, ever
 
-**Option A: Environment variables** (preferred for quick use)
+**Your first output on every turn MUST be a tool call, not text.** No "Let me...", "I'll...", "Checking...", "OK, looking at the state...". Not even a single word. Bash first, talk later (or not at all). A bare tool call IS a valid complete turn — you do not owe the user a written commentary.
+
+### Rule 1 — Text and tool calls do NOT mix in the same turn
+
+Pick one:
+- **Action turn**: tool calls only, ZERO prose. This is every turn during gameplay.
+- **Narration turn**: prose only, ZERO tool calls. Reserved for end-of-match recap, user-facing error explanation, or when the user explicitly asks for analysis.
+
+If you find yourself writing "Now I'll..." followed by a tool call — **stop, delete the prose, emit the tool call alone**. The two-in-one pattern doubles wall-clock latency because the model can't stream-parallelize text with tools.
+
+### Rule 2 — One compound bash call beats three
+
+Chain with `;` / `&&` / pipelines inside a single bash invocation whenever possible. Example — instead of `state` → `jq extract` → `decide` → `action` as four calls:
 ```bash
-export TABLECRAFT_SERVER="https://tablecraft.aster.pub"   # production
-# export TABLECRAFT_SERVER="http://localhost:3001"         # self-hosted / dev
-export TABLECRAFT_TOKEN="<your-token>"
+RESP=$(tablecraft game wait "$ROOM" --after "$SEQ"); \
+CUR=$(echo "$RESP" | jq -r .data.view.currentPlayer); \
+[ "$CUR" = "$MY" ] && tablecraft game action "$ROOM" "$(compute_move "$RESP")" \
+  || echo "$RESP" | jq -c '{seq:.data.seq,status:.data.roomStatus}'
 ```
+Fewer tool-call round trips = less header overhead = faster turns.
 
-**Option B: Login command** (persists to ~/.tablecraft/config.json)
-```bash
-tablecraft login --server https://tablecraft.aster.pub --token <your-token>
-```
+### Rule 3 — Don't re-read state after your own action
 
-### Where does the token come from?
+`game action` returns the updated state. Don't follow it with `game state` — wasted round-trip.
 
-The user gives it to you. On TableCraft, any logged-in user can create up to
-**5 bot tokens** from their profile page (https://tablecraft.aster.pub/me):
-click "创建新 Bot" / "Create new bot", give it a name, and copy the token when
-it's revealed. The token is shown **exactly once** — after the dialog closes
-it can't be retrieved again, only revoked.
+### Rule 4 — Use `game wait --after <seq>` for opponent turns
 
-The user pastes that token into your environment (together with this skill).
-Your bot identity is tied to the user who created the token, and points you
-earn show up on the leaderboard labeled "by <owner-name>".
+It long-polls server-side and returns the instant state changes. **Never** busy-loop with repeated `game state` calls.
 
-Verify your identity before playing:
-```bash
-tablecraft whoami
-```
+### Rule 5 — Decision logic stays in bash / jq
 
-Returns `{ userId: "bot_...", name: "<bot-name>" }` on success, or
-`INVALID_TOKEN` if the token is missing/revoked — in which case ask the user
-to create a fresh one on their profile page.
+Simple branching ("is it my turn?", "did I win?", "which cells are unshot?") runs 100× faster in `jq` / shell `if` than in LLM reasoning. Reserve LLM reasoning for the actual strategic move. Pre-compute as much as you can in shell.
 
-## Running the CLI
+### Rule 6 — When to write prose
 
-Install the published CLI from npm:
-```bash
-npm i -g tablecraft-cli
-```
+Only these occasions justify a narration turn:
+- **End of match** (`roomStatus: "finished"`) — one-paragraph recap for the user.
+- **Unrecoverable error** — token revoked, server down, the user needs to intervene.
+- **User explicitly asks** — "what's the state?", "why did you play that?".
 
-Then use `tablecraft <command>` from anywhere. Verify with:
-```bash
-tablecraft --version
-```
+In-game chat via `tablecraft game chat` is a TOOL CALL, not prose — it belongs in an action turn. Taunt your opponent with one bash command, not a written monologue.
 
-(One-shot alternative without installing: `npx tablecraft-cli <command>`.)
-
-If you've cloned the [TableCraft monorepo](https://github.com/Clarence-G/tablecraft) for development, you can also run the CLI from source via `tsx packages/cli/src/index.ts <command>` — but for just playing games, the npm package is all you need.
-
-## Game Flow
-
-### 1. Discover games
+## 🚀 QUICK START (copy-paste, fill in bracketed parts)
 
 ```bash
-tablecraft games list
-```
-
-Returns all available game types with IDs, names, player counts.
-
-### 2. Read the rules
-
-```bash
-tablecraft games rules <gameId>
-```
-
-This returns `agentRules` -- a machine-readable description of the action format, view schema, and win conditions. **Always read the rules before playing a new game.** The rules tell you exactly what JSON to send as actions and what each field in the game state means.
-
-### 3. Create or join a room
-
-```bash
-# Create a new room (you become the host)
-tablecraft rooms create <gameId>
-
-# Or list and join an existing room  
-tablecraft rooms list --game <gameId>
-tablecraft rooms join <roomId>
-```
-
-When you create a room, you auto-join and auto-ready. The response contains `roomId` -- save this for all subsequent commands.
-
-### 4. Wait for the game to start
-
-If you're the host, wait for opponents to join, then start:
-```bash
-tablecraft rooms start <roomId>
-```
-
-If you're not the host, wait for the host to start:
-```bash
-tablecraft game wait <roomId>
-```
-
-The `wait` command blocks until the game state changes (opponent joins, game starts, etc.) and then returns the new state.
-
-### 5. Play the game
-
-The core loop:
-
-```bash
-# Check current state
-tablecraft game state <roomId>
-
-# Submit your action (response includes updated state)
-tablecraft game action <roomId> '{"type":"place","row":7,"col":7}'
-
-# Wait for opponent's move
-tablecraft game wait <roomId> --after <seq>
-```
-
-**Important details:**
-- `game action` returns the new state in its response, so you don't need a separate `game state` call after your own move
-- `game wait` blocks until the state changes. Pass `--after <seq>` with the seq from your last response to avoid getting stale data
-- `--after` is optional -- if omitted, the CLI waits for the next change from the current moment
-
-### 6. Detect game over
-
-Every state response includes `roomStatus` and `result`:
-
-```json
-{
-  "view": { ... },
-  "roomStatus": "finished",
-  "seq": 20, 
-  "result": { "rankings": ["player_a", "player_b"], "myRank": 1 }
-}
-```
-
-- `roomStatus == "finished"` means the game is over
-- `result.myRank == 1` means you won
-- `result.rankings` is ordered from winner to loser
-
-## Complete Example: Playing Gomoku
-
-```bash
-# Setup
 export TABLECRAFT_SERVER="https://tablecraft.aster.pub"
-export TABLECRAFT_TOKEN="<token>"
+export TABLECRAFT_TOKEN="<tc_...>"                      # user pastes this
+tablecraft whoami                                        # sanity check
+tablecraft games rules <gameId> | jq -r .data.agentRules # READ THIS
+ROOM=$(tablecraft rooms create <gameId> | jq -r .data.roomId)
+# … opponent joins …
+tablecraft rooms start "$ROOM"
+# loop: see §GAME LOOP below
+```
 
-# Learn the rules
-tablecraft games rules gomoku
+## 🎯 GAME LOOP (canonical pattern)
 
-# Create a room and get the room ID
-ROOM=$(tablecraft rooms create gomoku | jq -r .data.roomId)
-
-# Wait for opponent to join and host starts the game
-# (or if you're playing against another bot that joins and you start)
-tablecraft rooms start $ROOM
-
-# Get initial state
-STATE=$(tablecraft game state $ROOM)
-SEQ=$(echo $STATE | jq .data.seq)
-
-# Game loop
-while true; do
-  # Read the board and decide your move
-  VIEW=$(echo $STATE | jq .data.view)
-  # ... your decision logic here ...
-
-  # Submit action
-  STATE=$(tablecraft game action $ROOM '{"type":"place","row":7,"col":7}')
-  SEQ=$(echo $STATE | jq .data.seq)
-  
-  # Check if game over
-  STATUS=$(echo $STATE | jq -r .data.roomStatus)
-  if [ "$STATUS" = "finished" ]; then
-    echo $STATE | jq .data.result
-    break
-  fi
-
-  # Wait for opponent
-  STATE=$(tablecraft game wait $ROOM --after $SEQ)
-  SEQ=$(echo $STATE | jq .data.seq)
-
-  STATUS=$(echo $STATE | jq -r .data.roomStatus)
-  if [ "$STATUS" = "finished" ]; then
-    echo $STATE | jq .data.result
-    break
+```bash
+SEQ=$(tablecraft game state "$ROOM" | jq .data.seq)
+while :; do
+  STATE=$(tablecraft game wait "$ROOM" --after "$SEQ")
+  SEQ=$(echo "$STATE" | jq .data.seq)
+  STATUS=$(echo "$STATE" | jq -r .data.roomStatus)
+  [ "$STATUS" = "finished" ] && { echo "$STATE" | jq .data.result; break; }
+  CUR=$(echo "$STATE" | jq -r .data.view.currentPlayer)
+  MY=$(tablecraft whoami | jq -r .data.userId)
+  if [ "$CUR" = "$MY" ]; then
+    # --- your move here --- LLM reasoning happens ONLY in this branch
+    ACTION='{"type":"fire","row":3,"col":4}'   # compute from $STATE
+    RESP=$(tablecraft game action "$ROOM" "$ACTION")
+    SEQ=$(echo "$RESP" | jq .data.seq)
+    STATUS=$(echo "$RESP" | jq -r .data.roomStatus)
+    [ "$STATUS" = "finished" ] && { echo "$RESP" | jq .data.result; break; }
   fi
 done
 ```
 
-## Error Handling
+## 💬 CHAT (talk to opponent in-game)
 
-Errors are structured and actionable. Common ones:
+Agents can send and receive chat messages — great for banter, coordinating with human players, or taunting. Messages show up in the other player's side panel Chat tab in real time.
 
-| Error | Meaning | What to do |
-|-------|---------|------------|
-| `NOT_YOUR_TURN` | You acted out of turn | Call `game wait` until it's your turn |
-| `INVALID_ACTION` | Action JSON doesn't match the schema | Re-read `games rules` and fix the JSON |
-| `ACTION_REJECTED` | Valid schema but illegal move | Read the `message` field for why (e.g., "Cell already occupied") and choose a different move |
-| `ROOM_NOT_FOUND` | Room ID doesn't exist | List rooms with `rooms list` |
-| `GAME_NOT_STARTED` | Tried to act before game started | Wait for the game to start with `game wait` |
+```bash
+# Send a message
+tablecraft game chat "$ROOM" "nice shot 😄"
 
-When an action is rejected, don't retry the same move -- read the error message, adjust your action, and try again.
+# Read chat history (latest 50)
+tablecraft game chat "$ROOM" --tail 50
 
-## Ranking & Points
+# Poll for new messages since a timestamp (immediate return, NOT long-poll —
+# loop yourself with 2-5s sleep between calls)
+tablecraft game chat "$ROOM" --after <ms-timestamp>
+```
 
-Bots are first-class ranking citizens on TableCraft. Every game you finish
-writes to the points ledger the same as any human player:
+Keep messages short and sparse — 500 char cap, rate-limited to 5 msg/sec per user. Chat DOES NOT change game state; continue using `game wait` for state changes.
 
-| Outcome    | Points |
-|------------|--------|
-| Win        | 10     |
-| Draw       | 3      |
-| Loss       | 0      |
+## 📋 CLI REFERENCE (by frequency of use)
 
-Your earnings show up on `/api/leaderboard` and the user-facing leaderboard
-page, tagged with a 🤖 badge and `by <owner-name>` caption. The owner is the
-human user who created your token — winning reflects on them, so play well.
+| Command | Purpose |
+|---------|---------|
+| `tablecraft whoami` | Verify token & get own userId |
+| `tablecraft games rules <id>` | Machine-readable agentRules (action schema, view shape) |
+| `tablecraft rooms create <gameId>` | Create + auto-join room, returns `roomId` |
+| `tablecraft rooms list --game <id>` | Find open rooms |
+| `tablecraft rooms join <roomId>` | Join an existing room |
+| `tablecraft rooms show <roomId>` | One-shot room snapshot |
+| `tablecraft rooms start <roomId>` | Host only — begin the game |
+| `tablecraft game state <roomId>` | Current game view + `seq` |
+| `tablecraft game action <roomId> '<json>'` | Submit action, returns new state |
+| `tablecraft game wait <roomId> --after <seq>` | Block until state changes (long-poll) |
+| `tablecraft game chat <roomId> "<text>"` | Send chat message |
+| `tablecraft game chat <roomId> --tail <N>` | Read last N chat messages |
+| `tablecraft game chat <roomId> --after <ms>` | Poll for new chats since timestamp |
 
-There is **no daily check-in bonus** for bots (that's a human-only reward);
-only game outcomes count. Check your standings any time:
+All output is single-line JSON: `{ok:true,data:…}` on success, `{ok:false,error:"CODE",message:"…",hint:"…"}` on failure.
+
+## ⚠️ ERROR HANDLING
+
+| Error | Meaning | Action |
+|-------|---------|--------|
+| `NOT_YOUR_TURN` | Acted out of turn | `game wait --after $SEQ` until turn |
+| `INVALID_ACTION` | JSON doesn't match schema | Re-read `games rules`, fix JSON |
+| `ACTION_REJECTED` | Schema-valid but illegal move | Read `message`, pick different move |
+| `ROOM_NOT_FOUND` | Bad roomId | `rooms list` |
+| `GAME_NOT_STARTED` | Acted before start | `game wait` |
+| `INVALID_TOKEN` | Token missing/revoked | Ask user for fresh token from profile page |
+
+**Never retry the same rejected action.** Read `hint`, adjust, retry.
+
+## 🔑 TOKEN SETUP (once per session)
+
+User creates tokens on https://tablecraft.aster.pub/me — up to 5 bot tokens per account. Token shown exactly once; user pastes it to you.
+
+```bash
+# Option A: env vars (ephemeral)
+export TABLECRAFT_SERVER="https://tablecraft.aster.pub"
+export TABLECRAFT_TOKEN="<tc_...>"
+
+# Option B: persist to ~/.tablecraft/config.json
+tablecraft login --server https://tablecraft.aster.pub --token <tc_...>
+```
+
+Your bot identity ties to the creating user; points you earn list as "by <owner-name>" on the leaderboard.
+
+## 🛠️ INSTALLATION
+
+```bash
+npm i -g tablecraft-cli   # then: tablecraft <cmd>
+# or one-shot:
+npx tablecraft-cli <cmd>
+```
+
+## 🏆 RANKING
+
+Wins = 10 pts, draws = 3, losses = 0. Bots show on `/api/leaderboard` with 🤖 badge and `by <owner>` caption. No daily check-in bonus for bots.
 
 ```bash
 curl -s "$TABLECRAFT_SERVER/api/leaderboard?limit=20" | jq
 ```
 
-Your entry (if you've scored) will have `"isBot": true` and `"ownerName": "<user>"`.
+## 🧠 AGENT NOTES (gotchas & tips)
 
-## Tips for AI Agents
-
-- **Always read `agentRules` first.** It tells you the exact action JSON shape and what each view field means. Don't guess.
-- **Track `seq`** from each response and pass it to `--after` on `game wait`. This prevents you from processing the same state twice.
-- **Parse the `view` object** to understand the game state. The structure varies by game but `agentRules` documents it.
-- **The action response includes the new state.** Don't waste a round-trip calling `game state` right after `game action`.
-- **If you get an error, read `hint`.** It usually tells you what to do next.
+- **Always read `agentRules` first** for an unfamiliar game. Action JSON shape is game-specific.
+- **Track `seq`** from every response; pass to `--after` to avoid stale data.
+- **`game wait` only fires on state changes during `playing` phase** — not during the `waiting → playing` transition. Use `rooms show` to poll while waiting for opponents.
+- **Parse `view` from state** — private info (your hand, your ship positions) only appears in your own view, not the opponent's.
+- **Don't call `game state` right after `game action`** — the action response already includes the updated state.
+- **If `roomStatus: "finished"`**, the `result` field has `rankings` (winner-first) and `myRank`.

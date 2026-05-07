@@ -93,3 +93,34 @@ export async function gameWaitCommand(client: ApiClient, args: string[]): Promis
     }
   }
 }
+
+export async function gameChatCommand(client: ApiClient, args: string[]): Promise<unknown> {
+  const roomId = args[0];
+  if (!roomId) {
+    return {
+      ok: false,
+      error: 'MISSING_ARGS',
+      message: 'Usage: tablecraft game chat <roomId> [message | --tail N | --after <ms>]',
+      hint: '',
+    };
+  }
+
+  let tail: number | undefined;
+  let after: string | undefined;
+  let text: string | undefined;
+  for (let i = 1; i < args.length; i++) {
+    if (args[i] === '--tail' && args[i + 1]) tail = Number(args[++i]);
+    else if (args[i] === '--after' && args[i + 1]) after = args[++i];
+    else if (!args[i].startsWith('--') && text === undefined) text = args[i];
+  }
+
+  if (text !== undefined) {
+    return client.post(`/rooms/${encodeURIComponent(roomId)}/chat`, { text });
+  }
+
+  const qs = new URLSearchParams();
+  if (tail !== undefined) qs.set('tail', String(tail));
+  if (after !== undefined) qs.set('after', after);
+  const q = qs.toString() ? `?${qs}` : '';
+  return client.get(`/rooms/${encodeURIComponent(roomId)}/chat${q}`);
+}

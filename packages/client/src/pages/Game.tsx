@@ -1,6 +1,6 @@
 import type { RoomState } from '@repo/shared';
 import { GameLogProvider, useGameLog } from '@repo/game-ui/log';
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { clientRegistry } from '../../../../games/client-registry';
 import { GameRoomLayout } from '../components/layout/GameRoomLayout';
@@ -42,9 +42,9 @@ function NotificationBridge({ notifications }: { notifications: unknown[] }) {
 
 export function Game({ userId, room, game, onReturnToLobby }: GamePageProps) {
   const { t } = useTranslation('common');
-  const { state, sendAction, lastReject, notifications, matchStartedAt, isSending } = game;
+  const { view, sendAction, lastReject, notifications, matchStartedAt, isSending } = game;
 
-  if (!room || !state) return <Loading />;
+  if (!room || !view) return <Loading />;
 
   const plugin = clientRegistry[room.gameId];
   if (!plugin)
@@ -61,8 +61,13 @@ export function Game({ userId, room, game, onReturnToLobby }: GamePageProps) {
   // Empty-string fallback (not a hardcoded UI string) — intentionally kept.
   const rulesText = t(`${room.gameId}:rules`, { defaultValue: '' });
 
+  const playerNames = useMemo(
+    () => Object.fromEntries(room.players.map((p) => [p.id, p.name])),
+    [room.players],
+  );
+
   return (
-    <GameLogProvider defaultNs={room.gameId}>
+    <GameLogProvider defaultNs={room.gameId} playerNames={playerNames}>
       <NotificationBridge notifications={notifications} />
       <GameRoomLayout
         gameId={room.gameId}
@@ -83,7 +88,7 @@ export function Game({ userId, room, game, onReturnToLobby }: GamePageProps) {
         )}
         <Suspense fallback={<Loading />}>
           <Board
-            state={state}
+            state={view}
             myId={userId}
             players={room.players}
             sendAction={sendAction}

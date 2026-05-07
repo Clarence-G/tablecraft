@@ -44,7 +44,9 @@ function LogList({ entries }: { entries: LogEntry[] }) {
 
 function LogRow({ entry }: { entry: LogEntry }) {
   const { t } = useTranslation();
+  const { playerNames } = useGameLog();
   const message = t(entry.messageKey, { defaultValue: entry.messageKey, ...entry.messageParams });
+  const actorDisplay = entry.actorId ? (playerNames[entry.actorId] ?? entry.actorId) : null;
   const containerClass =
     entry.kind === 'system'
       ? 'bg-muted/40 border-l-2 border-border/60 text-muted-foreground'
@@ -56,7 +58,7 @@ function LogRow({ entry }: { entry: LogEntry }) {
       data-kind={entry.kind}
       className={`leading-snug break-words rounded-r-[6px] px-2 py-1.5 ${containerClass}`}
     >
-      {entry.actorId ? <span className="font-semibold mr-1">{entry.actorId}</span> : null}
+      {actorDisplay ? <span className="font-semibold mr-1">{actorDisplay}</span> : null}
       <span>{message}</span>
     </div>
   );

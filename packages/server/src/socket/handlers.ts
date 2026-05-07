@@ -12,6 +12,27 @@ import { moderateChat } from '../lib/moderation';
 type IO = Server<ClientEvents, ServerEvents>;
 type Sock = Socket<ClientEvents, ServerEvents>;
 
+// Per-user token-bucket for chat rate limiting. Shared between socket and REST
+// handlers so all send paths are throttled together.
+const chatBuckets = new Map<string, { last: number; tokens: number }>();
+
+export function tryConsumeChatToken(userId: string): boolean {
+  let bucket = chatBuckets.get(userId);
+  if (!bucket) {
+    bucket = { last: Date.now(), tokens: 5 };
+    chatBuckets.set(userId, bucket);
+  }
+  const now = Date.now();
+  const refill = Math.floor((now - bucket.last) / 1000);
+  if (refill > 0) {
+    bucket.tokens = Math.min(5, bucket.tokens + refill);
+    bucket.last = now;
+  }
+  if (bucket.tokens <= 0) return false;
+  bucket.tokens -= 1;
+  return true;
+}
+
 export function setupHandlers(
   io: IO,
   roomManager: RoomManager,
@@ -247,21 +268,12 @@ export function setupHandlers(
 
     // chat:send — broadcast a text message to everyone in the sender's room.
     // No persistence beyond in-memory chatHistory on the GameRoom.
-    const chatRateLimit: { last: number; tokens: number } = { last: Date.now(), tokens: 5 };
     socket.on('chat:send', (rawText) => {
       if (typeof rawText !== 'string') return;
       const text = rawText.trim().slice(0, 500);
       if (!text) return;
 
-      // Simple token-bucket: 5 messages refill at 1/sec.
-      const now = Date.now();
-      const refill = Math.floor((now - chatRateLimit.last) / 1000);
-      if (refill > 0) {
-        chatRateLimit.tokens = Math.min(5, chatRateLimit.tokens + refill);
-        chatRateLimit.last = now;
-      }
-      if (chatRateLimit.tokens <= 0) return;
-      chatRateLimit.tokens -= 1;
+      if (!tryConsumeChatToken(userId)) return;
 
       const mod = moderateChat(text);
       if (!mod.ok) {
@@ -273,6 +285,7 @@ export function setupHandlers(
       const room = roomManager.findRoomByUser(userId);
       if (!room) return;
       const player = room.players.get(userId);
+      const now = Date.now();
       const msg = {
         id: `${now}-${Math.random().toString(36).slice(2, 8)}`,
         from: userId,

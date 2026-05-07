@@ -5,7 +5,10 @@ import type { Socket } from 'socket.io-client';
 type AppSocket = Socket<ServerEvents, ClientEvents>;
 
 interface GameSnapshot {
-  state: unknown;
+  /** Authoritative state from the last `game:state` broadcast. */
+  authoritativeState: unknown;
+  /** Optional client-side optimistic overlay. Cleared on `game:state`, `game:reject`, or send-timeout. */
+  optimisticView: unknown;
   lastReject: string | null;
   notifications: unknown[];
   matchStartedAt: number | null;
@@ -16,7 +19,8 @@ interface GameSnapshot {
 const SEND_TIMEOUT_MS = 3000;
 
 const EMPTY_SNAPSHOT: GameSnapshot = {
-  state: null,
+  authoritativeState: null,
+  optimisticView: null,
   lastReject: null,
   notifications: [],
   matchStartedAt: null,
@@ -25,7 +29,8 @@ const EMPTY_SNAPSHOT: GameSnapshot = {
 const noop = () => {};
 const noopUnsub = () => noop;
 
-class GameStore {
+// Exported for unit tests — the React hook is a thin wrapper over this store.
+export class GameStore {
   private _snapshot: GameSnapshot = EMPTY_SNAPSHOT;
   private listeners = new Set<() => void>();
   private seq = 0;
@@ -41,7 +46,8 @@ class GameStore {
       this.clearSendTimer();
       this._snapshot = {
         ...this._snapshot,
-        state: view,
+        authoritativeState: view,
+        optimisticView: null,
         matchStartedAt,
         isSending: false,
       };
@@ -50,7 +56,12 @@ class GameStore {
 
     socket.on('game:reject', (reason) => {
       this.clearSendTimer();
-      this._snapshot = { ...this._snapshot, lastReject: reason, isSending: false };
+      this._snapshot = {
+        ...this._snapshot,
+        lastReject: reason,
+        optimisticView: null,
+        isSending: false,
+      };
       this.notify();
       if (this.rejectTimer) clearTimeout(this.rejectTimer);
       this.rejectTimer = setTimeout(() => {
@@ -77,15 +88,19 @@ class GameStore {
 
   getSnapshot = (): GameSnapshot => this._snapshot;
 
-  sendAction = (action: unknown) => {
+  sendAction = (action: unknown, optimisticView?: unknown) => {
     if (this._snapshot.isSending) return;
-    this._snapshot = { ...this._snapshot, isSending: true };
+    this._snapshot = {
+      ...this._snapshot,
+      isSending: true,
+      optimisticView: optimisticView !== undefined ? optimisticView : this._snapshot.optimisticView,
+    };
     this.notify();
     this.socket.emit('game:action', action, ++this.seq);
     this.sendTimer = setTimeout(() => {
       this.sendTimer = null;
       if (!this._snapshot.isSending) return;
-      this._snapshot = { ...this._snapshot, isSending: false };
+      this._snapshot = { ...this._snapshot, isSending: false, optimisticView: null };
       this.notify();
     }, SEND_TIMEOUT_MS);
   };
@@ -131,5 +146,15 @@ export function useGame(socket: AppSocket | null) {
     storeRef.current?.getSnapshot ?? (() => EMPTY_SNAPSHOT),
   );
 
-  return { ...snapshot, sendAction: storeRef.current?.sendAction ?? noop };
+  const view = snapshot.optimisticView ?? snapshot.authoritativeState;
+
+  return {
+    view,
+    authoritativeState: snapshot.authoritativeState,
+    lastReject: snapshot.lastReject,
+    notifications: snapshot.notifications,
+    matchStartedAt: snapshot.matchStartedAt,
+    isSending: snapshot.isSending,
+    sendAction: storeRef.current?.sendAction ?? noop,
+  };
 }

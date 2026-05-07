@@ -31,9 +31,9 @@ function cellClass(kind: CellKind): string {
     case 'miss':
       return 'bg-card/40 border-card/30';
     case 'preview':
-      return 'bg-[#2563eb]/60 border-[#2563eb]';
+      return 'bg-[#2563eb]/80 border-2 border-[#93c5fd] shadow-[0_0_8px_rgba(37,99,235,0.6)]';
     case 'preview-invalid':
-      return 'bg-[#d94040]/40 border-[#d94040]';
+      return 'bg-[#d94040]/60 border-2 border-[#fca5a5] animate-pulse';
     default:
       return 'bg-card/10 border-card/20';
   }
@@ -331,12 +331,17 @@ export function Board({
     selectedShipIdx !== null && CLASSIC_SHIPS[selectedShipIdx]
       ? rotateOffsets(CLASSIC_SHIPS[selectedShipIdx].offsets, rotation)
       : [];
+  const shipPreviewRows =
+    rotatedOffsets.length > 0 ? Math.max(...rotatedOffsets.map(([r]) => r)) + 1 : 0;
+  const shipPreviewCols =
+    rotatedOffsets.length > 0 ? Math.max(...rotatedOffsets.map(([, c]) => c)) + 1 : 0;
 
   return (
-    <div
-      className="flex-1 text-foreground flex flex-col items-center p-3 sm:p-4 gap-3 w-full"
-      data-testid="game-board"
-    >
+    <div className="mx-auto max-w-4xl p-4 sm:p-6 rounded-2xl border-2 border-[#1a1108] bg-gradient-to-br from-[#1e3a5f] to-[#0f1e33] shadow-[6px_6px_0px_0px_#1a1108]">
+      <div
+        className="flex-1 text-foreground flex flex-col items-center p-3 sm:p-4 gap-3 w-full bg-[#fef3e0]/5"
+        data-testid="game-board"
+      >
       {/* Players */}
       <div className="flex gap-3 flex-wrap justify-center">
         {players.map((p) => (
@@ -367,19 +372,28 @@ export function Board({
           {selectedShipIdx !== null && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>{t('direction')}</span>
-              <div className="flex gap-0.5">
-                {rotatedOffsets.map(([r, c], i) => (
-                  <div
-                    // biome-ignore lint/suspicious/noArrayIndexKey: preview cells use stable index
-                    key={i}
-                    className="w-2 h-2 bg-[#2563eb] rounded-sm"
-                    style={{
-                      gridRow: r + 1,
-                      gridColumn: c + 1,
-                    }}
-                  />
-                ))}
-              </div>
+              {rotatedOffsets.length > 0 && (
+                <div
+                  className="inline-grid gap-px"
+                  style={{
+                    gridTemplateRows: `repeat(${shipPreviewRows}, 8px)`,
+                    gridTemplateColumns: `repeat(${shipPreviewCols}, 8px)`,
+                  }}
+                >
+                  {Array.from({ length: shipPreviewRows * shipPreviewCols }).map((_, idx) => {
+                    const r = Math.floor(idx / shipPreviewCols);
+                    const c = idx % shipPreviewCols;
+                    const filled = rotatedOffsets.some(([or, oc]) => or === r && oc === c);
+                    return (
+                      <div
+                        // biome-ignore lint/suspicious/noArrayIndexKey: preview cells use stable index
+                        key={idx}
+                        className={filled ? 'bg-[#2563eb] rounded-sm' : ''}
+                      />
+                    );
+                  })}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() => setRotation((r) => (r + 1) % 4)}
@@ -460,7 +474,19 @@ export function Board({
               shipGrid={new Array(GRID_SIZE * GRID_SIZE).fill(0)}
               shotsGrid={state.myShots}
               clickable={isMyTurn && !gameOver}
-              onCellClick={(row, col) => sendAction({ type: 'fire', row, col })}
+              onCellClick={(row, col) => {
+                // Optimistic fire: assume hit (2). Feels rewarding; a miss
+                // visibly corrects ~one RTT later when the real view arrives.
+                const opponent = players.find((p) => p.id !== myId);
+                const nextShots = [...state.myShots];
+                nextShots[toIndex(row, col)] = 2;
+                const optimistic: PlayerView = {
+                  ...state,
+                  myShots: nextShots,
+                  currentPlayer: opponent ? opponent.id : state.currentPlayer,
+                };
+                sendAction({ type: 'fire', row, col }, optimistic);
+              }}
             />
             <BattleGrid
               label={t('ourFleet')}
@@ -483,6 +509,7 @@ export function Board({
           myId={myId}
         />
       )}
+      </div>
     </div>
   );
 }

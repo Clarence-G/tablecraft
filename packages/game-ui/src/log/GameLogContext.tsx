@@ -8,6 +8,13 @@ export interface GameLogContextValue {
   push: (entry: PushLogEntry) => void;
   ingestNotifications: (notifications: unknown[]) => void;
   clear: () => void;
+  /**
+   * Map of playerId → display name, so log rows can render actor nicknames
+   * instead of raw bot/user IDs. Populated by the game page via
+   * <GameLogProvider playerNames={...}>. Empty object when no mapping is
+   * available — consumers should fall back to `actorId` in that case.
+   */
+  playerNames: Record<string, string>;
 }
 
 export const GameLogContext = createContext<GameLogContextValue | null>(null);
@@ -38,6 +45,7 @@ function qualifyMessageKey(key: string, ns: string | undefined): string {
 export function GameLogProvider({
   children,
   defaultNs,
+  playerNames,
 }: {
   children: ReactNode;
   /**
@@ -47,6 +55,12 @@ export function GameLogProvider({
    * left untouched (back-compat with existing tests).
    */
   defaultNs?: string;
+  /**
+   * Map of playerId → display name. When provided, LogRow renders
+   * `playerNames[actorId]` in place of the raw id. Safe to omit; falls
+   * back to the id string.
+   */
+  playerNames?: Record<string, string>;
 }) {
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const seqRef = useRef({ current: 0 });
@@ -110,8 +124,8 @@ export function GameLogProvider({
   const clear = useCallback(() => setEntries([]), []);
 
   const value = useMemo<GameLogContextValue>(
-    () => ({ entries, push, ingestNotifications, clear }),
-    [entries, push, ingestNotifications, clear],
+    () => ({ entries, push, ingestNotifications, clear, playerNames: playerNames ?? {} }),
+    [entries, push, ingestNotifications, clear, playerNames],
   );
 
   return <GameLogContext.Provider value={value}>{children}</GameLogContext.Provider>;

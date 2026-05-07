@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { gameActionCommand, gameStateCommand, gameWaitCommand } from './commands/game.js';
+import { gameActionCommand, gameChatCommand, gameStateCommand, gameWaitCommand } from './commands/game.js';
 import { gamesListCommand, gamesRulesCommand } from './commands/games.js';
 import { loginCommand, whoamiCommand } from './commands/login.js';
 import {
@@ -80,6 +80,9 @@ Game:
   game state <roomId>                     Get current game state
   game action <roomId> '<json>'           Submit an action
   game wait <roomId> [--after N] [--timeout S]  Wait for state change
+  game chat <roomId> "<text>"             Send a chat message
+  game chat <roomId> --tail <N>           Read last N messages
+  game chat <roomId> --after <ms>         Poll for messages newer than timestamp
 
 Skill:
   skill-path                               Print absolute path to the bundled tablecraft-player skill`;
@@ -157,6 +160,9 @@ async function main() {
             break;
           case 'wait':
             result = await gameWaitCommand(requireClient().client, rest);
+            break;
+          case 'chat':
+            result = await gameChatCommand(requireClient().client, rest);
             break;
           default:
             fail(`Unknown game command: ${sub}`);

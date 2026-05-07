@@ -11,6 +11,8 @@ import { registerFriendsRoutes } from './friends.js';
 import { registerPointsRoutes } from './points.js';
 import { registerReportsRoutes } from './reports.js';
 import type { TokenStore } from './token-store.js';
+import { tryConsumeChatToken } from '../socket/handlers.js';
+import { moderateChat } from '../lib/moderation.js';
 
 function gameStateResponse(room: GameRoom, userId: string) {
   const view =
@@ -439,6 +441,125 @@ export function createApiRouter(
     }
 
     res.json({ ok: true, data: { changed: true, ...gameStateResponse(room, userId) } });
+  });
+
+  router.post('/rooms/:id/chat', auth, (req, res) => {
+    const room = roomManager.getRoom(req.params.id);
+    if (!room) {
+      res.status(404).json({
+        ok: false,
+        error: 'ROOM_NOT_FOUND',
+        message: `Room "${req.params.id}" not found`,
+        hint: 'Use GET /api/rooms to list available rooms',
+      });
+      return;
+    }
+
+    const userId = req.botUserId!;
+
+    if (!room.players.has(userId)) {
+      res.status(403).json({
+        ok: false,
+        error: 'NOT_A_PLAYER',
+        message: 'You are not a player in this room',
+        hint: 'Join the room first via POST /api/rooms/:id/join',
+      });
+      return;
+    }
+
+    const rawText = req.body?.text;
+    if (typeof rawText !== 'string' || !rawText.trim()) {
+      res.status(400).json({
+        ok: false,
+        error: 'INVALID_INPUT',
+        message: 'text is required and must be non-empty',
+        hint: 'Provide { "text": "..." } in the request body',
+      });
+      return;
+    }
+
+    const text = rawText.trim().slice(0, 500);
+
+    if (!tryConsumeChatToken(userId)) {
+      res.status(429).json({
+        ok: false,
+        error: 'RATE_LIMITED',
+        message: 'Too many messages, slow down',
+        hint: 'Wait a moment before sending another message',
+      });
+      return;
+    }
+
+    const mod = moderateChat(text);
+    if (!mod.ok) {
+      res.status(400).json({
+        ok: false,
+        error: 'MODERATED',
+        message: 'Message blocked by moderation',
+        hint: '',
+      });
+      return;
+    }
+
+    const now = Date.now();
+    const player = room.players.get(userId);
+    const msg = {
+      id: `${now}-${Math.random().toString(36).slice(2, 8)}`,
+      from: userId,
+      fromName: player?.name ?? userId,
+      text,
+      at: now,
+    };
+    room.appendChatMessage(msg);
+    io.to(room.roomId).emit('chat:message', msg);
+
+    res.json({ ok: true, data: msg });
+  });
+
+  router.get('/rooms/:id/chat', auth, (req, res) => {
+    const room = roomManager.getRoom(req.params.id);
+    if (!room) {
+      res.status(404).json({
+        ok: false,
+        error: 'ROOM_NOT_FOUND',
+        message: `Room "${req.params.id}" not found`,
+        hint: 'Use GET /api/rooms to list available rooms',
+      });
+      return;
+    }
+
+    const userId = req.botUserId!;
+
+    if (!room.players.has(userId)) {
+      res.status(403).json({
+        ok: false,
+        error: 'NOT_A_PLAYER',
+        message: 'You are not a player in this room',
+        hint: 'Join the room first via POST /api/rooms/:id/join',
+      });
+      return;
+    }
+
+    const afterParam = req.query.after;
+    const tailParam = req.query.tail;
+    let messages = room.chatHistory.slice();
+
+    if (afterParam !== undefined) {
+      const after = Number(afterParam);
+      messages = messages.filter((m) => m.at > after);
+    } else {
+      const tail = tailParam !== undefined ? Math.min(Number(tailParam), 200) : 50;
+      messages = messages.slice(-tail);
+    }
+
+    const lastAt =
+      messages.length > 0
+        ? messages[messages.length - 1].at
+        : afterParam !== undefined
+          ? Number(afterParam)
+          : 0;
+
+    res.json({ ok: true, data: { messages, lastAt } });
   });
 
   return router;

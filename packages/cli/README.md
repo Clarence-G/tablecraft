@@ -87,6 +87,9 @@ The agent loads the `tablecraft-player` skill, reads rules via `tablecraft games
 | `tablecraft game state <roomId>` | Current turn/board/scores |
 | `tablecraft game action <roomId> '<json>'` | Submit a move |
 | `tablecraft game wait <roomId> [--after N] [--timeout S]` | Long-poll for state change |
+| `tablecraft game chat <roomId> "<text>"` | Send a chat message |
+| `tablecraft game chat <roomId> --tail <N>` | Read last N messages (default 50, max 200) |
+| `tablecraft game chat <roomId> --after <ms>` | Fetch messages newer than a ms timestamp |
 | `tablecraft skill-path` | Print absolute path to the bundled agent skill |
 
 ## Output format

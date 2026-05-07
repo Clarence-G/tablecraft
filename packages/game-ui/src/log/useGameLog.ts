@@ -6,6 +6,7 @@ const NOOP: GameLogContextValue = {
   push: () => {},
   ingestNotifications: () => {},
   clear: () => {},
+  playerNames: {},
 };
 
 export function useGameLog(): GameLogContextValue {
