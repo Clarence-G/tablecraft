@@ -40,11 +40,11 @@ function columnLetter(i: number): string {
 }
 
 function StoneView({ stone }: { stone: Stone }) {
+  // Plain div (no spring): the previous framer-motion spring (stiffness:400,
+  // damping:20) overshot ~16% and, paired with the preview's AnimatePresence
+  // exit fade, read as a visible flicker on place. Stone appears instantly.
   return (
-    <motion.div
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+    <div
       className={`w-[77%] aspect-square rounded-full ${
         stone === 'black'
           ? 'bg-[#1a1108] border-2 border-[#3d2e1e] shadow-[0_2px_4px_rgba(0,0,0,0.3)]'
@@ -136,7 +136,12 @@ export function IntersectionBoard({
     }, 4000);
   };
 
-  const handleCellClick = (r: number, c: number) => {
+  const handleCellClick = (r: number, c: number, target: HTMLButtonElement) => {
+    // Blur immediately: once onPlace fires, canPlace typically returns false
+    // and this button flips to disabled on the next render. A focused button
+    // becoming disabled triggers browser auto-blur, which in some mobile
+    // browsers scrolls the page — explicitly blurring first avoids that.
+    target.blur();
     if (!isTouch) {
       onPlace?.(r, c);
       return;
@@ -270,7 +275,7 @@ export function IntersectionBoard({
                   className="flex items-center justify-center bg-transparent border-none p-0 relative"
                   style={{ cursor: placeable ? 'pointer' : 'default' }}
                   disabled={!placeable}
-                  onClick={() => handleCellClick(r, c)}
+                  onClick={(e) => handleCellClick(r, c, e.currentTarget)}
                   onMouseEnter={() => placeable && setHovered([r, c])}
                   onMouseLeave={() => setHovered(null)}
                   data-row={r}

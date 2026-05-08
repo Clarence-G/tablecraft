@@ -60,6 +60,35 @@ describe('IntersectionBoard — desktop direct placement', () => {
     fireEvent.click(getCell(container, 0, 0));
     expect(queryByTestId('confirm-chip')).toBeNull();
   });
+
+  it('clicking a cell does not change window.scrollY', () => {
+    // Simulate user has scrolled the page (e.g., on mobile the board may sit
+    // well below the fold). Regression guard for the gomoku scroll-to-top bug
+    // where placing a stone snapped the window back to y=0.
+    Object.defineProperty(window, 'scrollY', {
+      value: 500,
+      writable: true,
+      configurable: true,
+    });
+    const onPlace = vi.fn();
+    const { container } = renderBoard({}, onPlace);
+    fireEvent.click(getCell(container, 2, 2));
+    expect(onPlace).toHaveBeenCalledWith(2, 2);
+    expect(window.scrollY).toBe(500);
+  });
+
+  it('clicking a cell blurs the button to prevent browser auto-scroll on disable', () => {
+    // Once a stone is placed, canPlace flips false and the grid buttons
+    // become disabled. A focused disabled button triggers the browser's
+    // blur-and-scroll behavior; we pre-empt it by blurring on click.
+    const onPlace = vi.fn();
+    const { container } = renderBoard({}, onPlace);
+    const cell = getCell(container, 1, 1) as HTMLButtonElement;
+    cell.focus();
+    expect(document.activeElement).toBe(cell);
+    fireEvent.click(cell);
+    expect(document.activeElement).not.toBe(cell);
+  });
 });
 
 describe('IntersectionBoard — mobile tap-to-confirm', () => {

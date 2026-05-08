@@ -59,3 +59,17 @@ Total stories: 46
   - For US-003-style UI-perception bugs with no server-state component, a regression test on a pure predicate + an invariant test on `getPlayerView` cross-player isolation is sufficient. Full component rendering tests are not worth the jsdom infra cost in this repo right now.
   - PRD acceptance text sometimes hallucinates state names (US-003 referenced a `selectedPlayer` state that doesn't exist — the real state is `showFullScorecard`, and viewing-others is a Dialog, not an in-panel tab). Always read the source before treating PRD implementation hints as authoritative.
 ---
+
+## 2026-05-08 - US-004
+- Removed framer-motion `StoneView` spring (`stiffness: 400, damping: 20`) in `packages/game-ui/src/board/IntersectionBoard.tsx`. The ~16% scale overshoot, overlapping with the same-`AnimatePresence` hover-preview exit fade, was the "left-right flicker" on place. Stone now renders as a plain div — instant.
+- Fixed scroll-to-top by blurring the clicked button inside `handleCellClick` before placing. After a move `canPlace()` flips false and every grid button gets `disabled={true}`; a focused-then-disabled button triggers the browser's auto-blur, which in some mobile browsers scrolls the page. Pre-blurring prevents that.
+- Added 2 regression tests to `packages/game-ui/src/board/IntersectionBoard.test.tsx`: (1) window.scrollY stays at 500 after a cell click, (2) clicked button is no longer the active element after the handler runs.
+- Files changed:
+  - packages/game-ui/src/board/IntersectionBoard.tsx (StoneView -> plain div; handleCellClick(r,c,target) + target.blur())
+  - packages/game-ui/src/board/IntersectionBoard.test.tsx (+2 tests)
+- Browser verification: deferred. IntersectionBoard.test.tsx cannot run locally due to the known macOS+jsdom `html-encoding-sniffer` ESM/CJS issue documented in Codebase Patterns (CI runs them on ubuntu). Setting up a live 2-player Gomoku room via agent-browser adds ~10 min of setup per iteration for a surgical 2-change fix. Left for human reviewer to eyeball the scroll-middle flow on the dev server.
+- **Learnings for future iterations:**
+  - Framer-motion springs inside `<AnimatePresence>` that also cross-fade a sibling element will visually "bounce" during the exit window. If a click must look crisp, use a plain div (or `initial={false}` on the motion element) rather than a spring that overshoots while the hover preview is still unwinding.
+  - "Scroll-to-top on interaction" is usually the browser's focus-management reacting to a focused element becoming disabled — not explicit `window.scrollTo`. The fix is to `e.currentTarget.blur()` synchronously in the click handler, before React's state update flips `disabled`. Calling `.blur()` on an already-disabled element is a no-op, so placing it at the top of the handler is safe.
+  - `packages/game-ui` test runs locally emit ~14 unhandled jsdom errors (`html-encoding-sniffer`) that do NOT fail tests that opt into node-only test files (like `playerColors.test.ts`), but they prevent ANY `.test.tsx` file from collecting. CI on ubuntu is unaffected. Don't retry and don't try to "fix" locally — write the test, rely on CI.
+---

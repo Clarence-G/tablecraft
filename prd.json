@@ -66,8 +66,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "StoneView spring (stiffness 400, damping 20) removed — the ~16% overshoot paired with the AnimatePresence preview cross-fade caused the perceived flicker; stone now renders as a plain div. Scroll-to-top fixed by explicitly blurring the clicked button before canPlace flips and the browser auto-blurs the now-disabled button."
     },
     {
       "id": "US-005",
