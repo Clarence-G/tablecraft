@@ -1,26 +1,44 @@
-import { ArrowLeft, Frown, Home, Trophy } from 'lucide-react';
+import { ArrowLeft, Frown, Handshake, Home, Trophy } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { PointsBadge } from '../points';
 
 interface GameOverModalProps {
   rankings: string[];
   playerNames: Record<string, string>;
   myId: string;
+  pointsDelta?: Record<string, number>;
+  totalPoints?: number;
+  ties?: string[][];
   onRestart?: () => void;
   onReturnToRoom?: () => void;
   onReturnToLobby?: () => void;
+}
+
+function isInTopTie(ties: string[][] | undefined, topRanked: string, myId: string): boolean {
+  if (!ties) return false;
+  for (const group of ties) {
+    if (group.includes(topRanked) && group.includes(myId)) return true;
+  }
+  return false;
 }
 
 export function GameOverModal({
   rankings,
   playerNames,
   myId,
+  pointsDelta,
+  totalPoints,
+  ties,
   onRestart,
   onReturnToRoom,
   onReturnToLobby,
 }: GameOverModalProps) {
   const myRank = rankings.indexOf(myId) + 1;
-  const won = myRank === 1;
+  const topRanked = rankings[0];
+  const isDraw = topRanked ? isInTopTie(ties, topRanked, myId) : false;
+  const won = myRank === 1 && !isDraw;
+  const myDelta = pointsDelta?.[myId] ?? 0;
   const { t } = useTranslation('game-ui');
   const firstActionRef = useRef<HTMLButtonElement | null>(null);
 
@@ -57,15 +75,24 @@ export function GameOverModal({
     >
       <div className="bg-card border-thick border-foreground rounded-[16px] p-8 max-w-sm w-full mx-4 text-center shadow-card">
         <div className="flex justify-center mb-2">
-          {won ? (
+          {isDraw ? (
+            <Handshake className="size-10 text-warning" />
+          ) : won ? (
             <Trophy className="size-10 text-warning" />
           ) : (
             <Frown className="size-10 text-muted-foreground" />
           )}
         </div>
         <h2 id="game-over-title" className="text-2xl font-bold mb-1 text-[#1a1108]">
-          {won ? t('youWin') : t('rank', { rank: myRank })}
+          {isDraw ? t('draw') : won ? t('youWin') : t('rank', { rank: myRank })}
         </h2>
+
+        {(pointsDelta !== undefined || totalPoints !== undefined) && (
+          <div className="flex items-center justify-center gap-2 mb-2">
+            {pointsDelta !== undefined && <PointsBadge label={t('match')} points={myDelta} />}
+            {totalPoints !== undefined && <PointsBadge label={t('total')} points={totalPoints} />}
+          </div>
+        )}
 
         <div className="my-4 space-y-2">
           {rankings.map((pid, i) => (
@@ -79,6 +106,11 @@ export function GameOverModal({
               <span className="font-medium">{playerNames[pid] ?? pid}</span>
               {pid === myId && (
                 <span className="text-xs text-muted-foreground ml-auto">{t('you')}</span>
+              )}
+              {pointsDelta !== undefined && (
+                <span className={pid === myId ? '' : 'ml-auto'}>
+                  <PointsBadge label="+" points={pointsDelta[pid] ?? 0} />
+                </span>
               )}
             </div>
           ))}

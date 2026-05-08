@@ -1,6 +1,9 @@
 {
   "youWin": "你赢了!",
   "rank": "第 {{rank}} 名",
+  "draw": "平局",
+  "match": "本局",
+  "total": "总分",
   "you": "你",
   "playAgain": "再来一局",
   "returnToRoom": "返回房间",

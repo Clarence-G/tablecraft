@@ -183,3 +183,22 @@ Total stories: 46
   - `useRoom.restart()` now returns `Promise<Ack>` (US-009). Call sites that don't care about the result must use `void roomCtx.restart()` (or `.catch(noop)`) to satisfy no-floating-promises. Biome didn't flag it here but leaving a bare `roomCtx.restart()` is technically a floating promise.
   - `packages/client` has no per-package `pnpm test` script. Run its vitest project via `pnpm vitest run --workspace vitest.workspace.ts --project client` from the repo root.
 ---
+
+## 2026-05-08 - US-012
+- `GameOverModal` gained three optional props: `pointsDelta?: Record<string, number>`, `totalPoints?: number`, `ties?: string[][]`
+- Draw detection: when the viewer shares the top-ranked tie group with rankings[0], title switches to `t('draw')` and icon flips to `<Handshake>` (instead of Trophy/Frown)
+- Header band (only rendered when at least one of pointsDelta/totalPoints is provided) shows two PointsBadges: `match ${myDelta}` and `total ${totalPoints}`
+- Each rankings row gains a trailing `PointsBadge label="+" points={pointsDelta[pid] ?? 0}` when `pointsDelta` is passed
+- Added `draw`, `match`, `total` keys to `game-ui.json` in both en and zh locales
+- Files changed:
+  - packages/game-ui/src/feedback/GameOverModal.tsx (+3 props, +PointsBadge import, +Handshake icon, +isInTopTie helper)
+  - packages/game-ui/src/feedback/GameOverModal.test.tsx (+5 tests: positive delta, zero delta, draw variant, non-draw with unrelated ties; 4 -> 9 tests)
+  - packages/client/src/i18n/locales/en/game-ui.json (+draw/match/total)
+  - packages/client/src/i18n/locales/zh/game-ui.json (+draw/match/total)
+- Browser verification: deferred. All three new props are optional; until US-013 wires pointsDelta/totalPoints/ties in each Board, no existing game actually shows the new UI. Plus `.test.tsx` files cannot collect on this macOS machine (jsdom html-encoding-sniffer), so tests rely on CI. Visual verification will land with US-013 or via a story-specific screenshot once Board wiring is complete.
+- **Learnings for future iterations:**
+  - `GameOverModal` now uses the shorthand default pattern: `const myDelta = pointsDelta?.[myId] ?? 0;`. When rendering the header badge, we render `<PointsBadge label={t('match')} points={myDelta} />` unconditionally if pointsDelta is present — no negative-sign handling because POINTS[*] is non-negative (win=10, draw=3, loss=0). Future stories should not introduce negative deltas into the wire payload; if they do, `PointsBadge` renders a bare number with no sign and will need a format helper.
+  - The draw test uses `ties=[['me','other']]` and rankings=['me','other']. A "top-ranked tie" is determined by `rankings[0] ∈ group && myId ∈ group`. If the server ever emits a tie group that doesn't include the rank-1 player, `isInTopTie` returns false — matching the US-002 ledger semantics (only rank-1 ties mutate points; lower ties are losses).
+  - i18n tests use `vi.mock('react-i18next')` that returns the key as-is, so all `t('foo')` calls resolve to `'foo'`. `screen.getByText('match')` / `getByText('draw')` in tests is actually asserting against the key, not the English string. Real text ("Match", "Draw") is verified by existing end-to-end tests, not by unit tests.
+  - PointsBadge is imported from the sibling package path `../points` (not `@repo/game-ui/points`) to avoid the circular re-export: `game-ui/src/feedback/GameOverModal.tsx` is itself re-exported by `game-ui/src/feedback/index.ts` which is imported by clients — pulling back in through `@repo/game-ui` would be a package-private circular edge.
+---

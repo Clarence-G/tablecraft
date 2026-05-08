@@ -60,4 +60,52 @@ describe('GameOverModal', () => {
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onRestart).toHaveBeenCalledTimes(1);
   });
+
+  it('renders positive pointsDelta row and header match/total badges', () => {
+    render(
+      <GameOverModal
+        {...baseProps}
+        pointsDelta={{ me: 10, other: 0 }}
+        totalPoints={42}
+        onReturnToLobby={() => {}}
+      />,
+    );
+    // Header badges: "match 10" + "total 42"
+    expect(screen.getByText('match')).toBeInTheDocument();
+    expect(screen.getByText('total')).toBeInTheDocument();
+    expect(screen.getByText('42')).toBeInTheDocument();
+    // Row badges: two "+"-prefixed deltas (10 for me, 0 for other)
+    const plusLabels = screen.getAllByText('+');
+    expect(plusLabels).toHaveLength(2);
+    // My delta 10 shows up twice (header + row); opponent row shows 0
+    expect(screen.getAllByText('10')).toHaveLength(2);
+    expect(screen.getByText('0')).toBeInTheDocument();
+  });
+
+  it('renders zero pointsDelta when delta is absent for a player (fallback to 0)', () => {
+    render(<GameOverModal {...baseProps} pointsDelta={{ me: 0 }} onReturnToLobby={() => {}} />);
+    // Both player rows show a PointsBadge with "+" label and 0 points.
+    const plusLabels = screen.getAllByText('+');
+    expect(plusLabels).toHaveLength(2);
+    // Three 0s: header match + two rows
+    expect(screen.getAllByText('0')).toHaveLength(3);
+  });
+
+  it('draw variant: when I share first place via ties, show draw title instead of youWin', () => {
+    render(<GameOverModal {...baseProps} ties={[['me', 'other']]} onReturnToLobby={() => {}} />);
+    expect(screen.getByText('draw')).toBeInTheDocument();
+    expect(screen.queryByText('youWin')).not.toBeInTheDocument();
+  });
+
+  it('non-draw when I am not in the top-ranked tie group', () => {
+    const props = {
+      rankings: ['me', 'a', 'b'],
+      playerNames: { me: 'Me', a: 'A', b: 'B' },
+      myId: 'me',
+    };
+    // Tie group between A and B (both 2nd place) — I still win solo.
+    render(<GameOverModal {...props} ties={[['a', 'b']]} onReturnToLobby={() => {}} />);
+    expect(screen.getByText('youWin')).toBeInTheDocument();
+    expect(screen.queryByText('draw')).not.toBeInTheDocument();
+  });
 });

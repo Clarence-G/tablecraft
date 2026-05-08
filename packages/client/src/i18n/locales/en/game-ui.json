@@ -1,6 +1,9 @@
 {
   "youWin": "You Win!",
   "rank": "Rank #{{rank}}",
+  "draw": "Draw",
+  "match": "Match",
+  "total": "Total",
   "you": "You",
   "playAgain": "Play Again",
   "returnToRoom": "Return to Room",
