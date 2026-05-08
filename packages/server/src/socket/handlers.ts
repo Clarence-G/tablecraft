@@ -192,14 +192,30 @@ export function setupHandlers(
       io.emit('rooms:updated');
     });
 
-    // room:restart
-    socket.on('room:restart', () => {
+    // room:restart — host-only, only after the game has ended
+    socket.on('room:restart', (ack) => {
       const room = roomManager.findRoomByUser(userId);
-      if (!room) return;
-      room.restart();
+      if (!room) return ack({ ok: false, error: 'Not in a room' });
+      if (room.hostId !== userId) return ack({ ok: false, error: 'Only host can restart' });
+
+      const result = room.restart();
+      if (!result.ok) return ack({ ok: false, error: result.error });
+
+      ack({ ok: true, data: undefined });
       io.to(room.roomId).emit('room:state', room.toRoomState());
-      // restart flips status back to waiting → reappears in the list.
       io.emit('rooms:updated');
+
+      // Send each player their fresh view, same pattern as room:start.
+      const socketsInRoom = io.sockets.adapter.rooms.get(room.roomId);
+      if (socketsInRoom) {
+        for (const socketId of socketsInRoom) {
+          const s = io.sockets.sockets.get(socketId);
+          if (s && room.players.has(s.data.userId)) {
+            const view = room.logic.getPlayerView(room.state, s.data.userId);
+            s.emit('game:state', view);
+          }
+        }
+      }
     });
 
     // room:updateOptions — host-only while waiting

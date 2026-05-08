@@ -30,7 +30,12 @@ export interface ClientEvents {
 
   'room:kick': (playerId: string) => void;
 
-  'room:restart': () => void;
+  /**
+   * Host-only restart of a finished game with the same players, maxPlayers,
+   * and config. Server rejects non-host senders and rooms that aren't in a
+   * 'finished' state.
+   */
+  'room:restart': (ack: (result: Ack) => void) => void;
 
   /**
    * Host-only update of the waiting-room options: maxPlayers override and/or

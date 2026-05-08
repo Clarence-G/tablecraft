@@ -1,4 +1,4 @@
-import type { ClientEvents, RoomState, RoomSummary, ServerEvents } from '@repo/shared';
+import type { Ack, ClientEvents, RoomState, RoomSummary, ServerEvents } from '@repo/shared';
 import { useCallback, useEffect, useState } from 'react';
 import type { Socket } from 'socket.io-client';
 
@@ -79,7 +79,14 @@ export function useRoom(socket: AppSocket | null, onRoomChange?: () => void) {
   }, [socket]);
 
   const kick = useCallback((playerId: string) => socket?.emit('room:kick', playerId), [socket]);
-  const restart = useCallback(() => socket?.emit('room:restart'), [socket]);
+  const restart = useCallback(
+    () =>
+      new Promise<Ack>((resolve) => {
+        if (!socket) return resolve({ ok: false, error: 'Not connected' });
+        socket.emit('room:restart', (result) => resolve(result));
+      }),
+    [socket],
+  );
 
   const listRooms = useCallback(
     (gameId: string): Promise<RoomSummary[]> => {

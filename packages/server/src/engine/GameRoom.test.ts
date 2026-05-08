@@ -362,3 +362,67 @@ describe('GameRoom: maxPlayers + config plumbing (US-007)', () => {
     expect(third).toEqual({ ok: false, error: 'Room is full' });
   });
 });
+
+describe('GameRoom.restart (US-009)', () => {
+  it('rejects when the room is not in a finished state', () => {
+    const room = new GameRoom('test', makeMeta(), undefined, makeLogic());
+    // Fresh waiting room
+    expect(room.restart()).toEqual({ ok: false, error: 'Room is not in a finished state' });
+
+    // Playing room
+    seatTwoPlayers(room);
+    expect(room.status).toBe('playing');
+    expect(room.restart()).toEqual({ ok: false, error: 'Room is not in a finished state' });
+  });
+
+  it('preserves players, maxPlayers and config and calls logic.setup again', () => {
+    const setupCalls: Array<{ players: string[]; config: unknown }> = [];
+    const logic = makeLogic({
+      setup(ctx: GameContext): State {
+        setupCalls.push({ players: [...ctx.players], config: ctx.config });
+        return { turn: ctx.players[0]!, lastDisconnected: null, ticks: 42 };
+      },
+    });
+    const config = { rounds: 5 };
+    const room = new GameRoom('test', makeMeta({ maxPlayers: 4 }), config, logic);
+    room.maxPlayers = 3; // prior updateOptions override
+    seatTwoPlayers(room);
+    expect(setupCalls).toHaveLength(1);
+
+    // Simulate a finished game
+    room.status = 'finished';
+    room.rankings = ['A', 'B'];
+    room.finishedAt = Date.now();
+
+    const before = [...room.players.keys()];
+    const result = room.restart();
+    expect(result).toEqual({ ok: true, data: undefined });
+
+    // Player roster, maxPlayers and config are preserved
+    expect([...room.players.keys()]).toEqual(before);
+    expect(room.maxPlayers).toBe(3);
+    expect(room.config).toEqual(config);
+
+    // logic.setup was called a second time with the same players + config
+    expect(setupCalls).toHaveLength(2);
+    expect(setupCalls[1]).toEqual({ players: before, config });
+
+    // Room is back in the playing state with fresh bookkeeping
+    expect(room.status).toBe('playing');
+    expect(room.rankings).toBeNull();
+    expect(room.finishedAt).toBeNull();
+    expect(room.state).toMatchObject({ ticks: 42 });
+  });
+
+  it('bumps seq so game:state listeners refresh after restart', () => {
+    const room = new GameRoom('test', makeMeta(), undefined, makeLogic());
+    seatTwoPlayers(room);
+    const seqBeforeFinish = room.seq;
+    room.status = 'finished';
+    room.rankings = ['A', 'B'];
+    room.finishedAt = Date.now();
+
+    room.restart();
+    expect(room.seq).toBeGreaterThan(seqBeforeFinish);
+  });
+});

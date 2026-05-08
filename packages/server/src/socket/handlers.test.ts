@@ -526,3 +526,167 @@ describe('socket handlers: room:updateOptions', () => {
     bob.disconnect();
   });
 });
+
+describe('socket handlers: room:restart (US-009)', () => {
+  let httpServer: ReturnType<typeof createServer>;
+  let io: Server<ClientEvents, ServerEvents>;
+  let roomManager: RoomManager;
+  let port: number;
+
+  beforeEach(async () => {
+    httpServer = createServer();
+    io = new Server<ClientEvents, ServerEvents>(httpServer);
+    io.use((socket, next) => {
+      const { userId, userName, isGuest } = socket.handshake.auth as {
+        userId: string;
+        userName?: string;
+        isGuest?: boolean;
+      };
+      socket.data.userId = userId;
+      socket.data.userName = userName ?? userId;
+      socket.data.isGuest = isGuest ?? true;
+      next();
+    });
+
+    roomManager = new RoomManager();
+    setupHandlers(io, roomManager, { test: makePlugin('test') });
+
+    await new Promise<void>((resolve) => httpServer.listen(0, () => resolve()));
+    port = (httpServer.address() as AddressInfo).port;
+  });
+
+  afterEach(async () => {
+    roomManager.destroy();
+    io.close();
+    await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+  });
+
+  function connect(userId: string, userName = userId): Promise<TC> {
+    return new Promise((resolve, reject) => {
+      const sock: TC = ioClient(`http://localhost:${port}`, {
+        auth: { userId, userName, isGuest: true },
+        transports: ['websocket'],
+        reconnection: false,
+        forceNew: true,
+      });
+      sock.on('connect', () => resolve(sock));
+      sock.on('connect_error', reject);
+    });
+  }
+
+  function createRoom(sock: TC, playerName: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      sock.emit('room:create', 'test', playerName, undefined, (result) => {
+        if (result.ok) resolve(result.data.roomId);
+        else reject(new Error(result.error));
+      });
+    });
+  }
+
+  function joinRoom(sock: TC, roomId: string, playerName: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      sock.emit('room:join', roomId, playerName, (result) => {
+        if (result.ok) resolve();
+        else reject(new Error(result.error));
+      });
+    });
+  }
+
+  function restart(sock: TC): Promise<Ack> {
+    return new Promise((resolve) => {
+      sock.emit('room:restart', (res) => resolve(res));
+    });
+  }
+
+  function flush(ms = 50): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function seatAndStart(alice: TC, bob: TC): Promise<string> {
+    const roomId = await createRoom(alice, 'Alice');
+    await joinRoom(bob, roomId, 'Bob');
+    alice.emit('room:ready');
+    bob.emit('room:ready');
+    await flush();
+    await new Promise<void>((resolve, reject) => {
+      alice.emit('room:start', (r) => (r.ok ? resolve() : reject(new Error(r.error))));
+    });
+    await flush();
+    return roomId;
+  }
+
+  it('rejects non-host', async () => {
+    const alice = await connect('alice');
+    const bob = await connect('bob');
+    const roomId = await seatAndStart(alice, bob);
+    // Simulate game ended
+    const room = roomManager.getRoom(roomId);
+    if (!room) throw new Error('room missing');
+    room.status = 'finished';
+    room.rankings = ['alice', 'bob'];
+    room.finishedAt = Date.now();
+
+    const res = await restart(bob);
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toMatch(/host/i);
+
+    alice.disconnect();
+    bob.disconnect();
+  });
+
+  it('rejects restart before the game has ended', async () => {
+    const alice = await connect('alice');
+    const bob = await connect('bob');
+    await seatAndStart(alice, bob);
+
+    // Room is currently 'playing' — restart should fail
+    const res = await restart(alice);
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toMatch(/finished|ended|state/i);
+
+    alice.disconnect();
+    bob.disconnect();
+  });
+
+  it('preserves player list and broadcasts fresh state on successful restart', async () => {
+    const alice = await connect('alice');
+    const bob = await connect('bob');
+    const roomId = await seatAndStart(alice, bob);
+
+    const room = roomManager.getRoom(roomId);
+    if (!room) throw new Error('room missing');
+    const playersBefore = [...room.players.keys()];
+    room.status = 'finished';
+    room.rankings = ['alice', 'bob'];
+    room.finishedAt = Date.now();
+
+    const aliceStates: unknown[] = [];
+    const bobStates: unknown[] = [];
+    alice.on('game:state', (v) => aliceStates.push(v));
+    bob.on('game:state', (v) => bobStates.push(v));
+
+    const aliceRoomStates: RoomState[] = [];
+    alice.on('room:state', (s) => aliceRoomStates.push(s));
+
+    const res = await restart(alice);
+    expect(res.ok).toBe(true);
+    await flush();
+
+    // Room state is re-broadcast with status back to 'playing' and players intact
+    const last = aliceRoomStates.at(-1);
+    expect(last?.status).toBe('playing');
+    expect(last?.players.map((p) => p.id)).toEqual(playersBefore);
+
+    // Each player received a fresh game:state
+    expect(aliceStates.length).toBeGreaterThanOrEqual(1);
+    expect(bobStates.length).toBeGreaterThanOrEqual(1);
+
+    // Authoritative room keeps the same players
+    expect([...room.players.keys()]).toEqual(playersBefore);
+    expect(room.status).toBe('playing');
+    expect(room.rankings).toBeNull();
+
+    alice.disconnect();
+    bob.disconnect();
+  });
+});

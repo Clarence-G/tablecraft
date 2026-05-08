@@ -346,19 +346,26 @@ export class GameRoom {
     return { ...state, players };
   }
 
-  restart(): void {
-    this.status = 'waiting';
-    this.state = null;
+  restart(): Ack<void> {
+    if (this.status !== 'finished') {
+      return { ok: false, error: 'Room is not in a finished state' };
+    }
+    const seed = nanoid();
+    this.ctx = {
+      players: [...this.players.keys()],
+      random: new RandomProvider(seed),
+      config: this.config,
+    };
+    this.state = this.logic.setup(this.ctx, this.config);
+    this.status = 'playing';
+    this.rankings = null;
     this.finishedAt = null;
     this.lastSeq.clear();
     this.lastActionTime.clear();
     this.timerManager.clearAll();
-    for (const [id, player] of this.players) {
-      // Host and bots are auto-ready; regular guests must re-press Ready.
-      const isHost = id === this.hostId;
-      this.players.set(id, { ...player, ready: player.isBot || isHost });
-    }
     this.lastActivityAt = Date.now();
+    this.onStateChanged();
+    return { ok: true, data: undefined };
   }
 
   onStateChanged(): void {
