@@ -7,6 +7,7 @@ Total stories: 46
 - `useGame(socket)` hook wraps a `GameStore` class exported for direct unit testing (see `packages/client/src/hooks/useGame.test.ts`). Drive the store directly rather than rendering the hook — the client project's jsdom env is currently broken in this repo.
 - `useRoom(socket, onRoomChange?)` accepts an optional callback invoked on successful `room:create`/`room:join` ack — use this to wire cross-hook cleanup (e.g. GameStore reset) without coupling hooks to each other.
 - `useRoom.updateOptions({ maxPlayers?, config? })` emits `room:updateOptions` and resolves with the server `Ack`. Client features that mutate room options should always go through this (don't emit the socket event directly).
+- Adding a new workspace package: pnpm-workspace.yaml already globs `packages/*`, but the root `tsconfig.json` "references" array and `vitest.workspace.ts` list are enumerated (not glob) — append the new package to BOTH. Also extend the root `typecheck` script in `package.json` since it runs `tsc -p` against each config explicitly. If the client imports from the new package, add aliases to `packages/client/tsconfig.json` paths.
 - `ClientGamePlugin.meta` is a `Pick<>` of `GameMeta`. If you need a new meta field client-side, add it to the Pick list in `packages/shared/src/types/engine.ts` — runtime data is the full meta object, the Pick just controls public typing.
 - `App.tsx` is the orchestrator: call `useGame` before `useRoom` if the latter needs a callback from the former.
 - `GameLogProvider` (packages/game-ui/src/log/GameLogContext.tsx) auto-clears its entries when `defaultNs` prop changes — so per-game log isolation is automatic once the host sets `defaultNs` to the game's namespace.
@@ -262,4 +263,26 @@ Total stories: 46
   - The PRD AC referenced `packages/game-ui/src/i18n/` but that path does not exist. Game-ui translations live in `packages/client/src/i18n/locales/{en,zh}/game-ui.json` and are merged by the client at runtime. Future stories adding game-ui i18n keys should edit those files.
   - i18next keys can be added before consumers use them — no runtime error. Writing keys ahead of UI is safe (matches the US-014 → US-015 → future save-panel ordering in this PRD).
   - No test file needs to be added for pure i18n key additions; typecheck + biome on the changed JSON files is sufficient quality gate.
+---
+
+## 2026-05-08 - US-016
+- New workspace package `@repo/card-ui` at `packages/card-ui/` with package.json (deps: @fontsource/cinzel ^5.2.8, react ^18.3.0; dev: @types/react, typescript, vitest), tsconfig extending the base, a node-env vitest config, and `src/index.ts` exporting placeholder `CardSuit`/`CardRank`/`CardSize` types.
+- Smoke test `src/smoke.test.ts` exercises the type exports at compile + runtime (passes under `pnpm --filter @repo/card-ui test`).
+- Registered the package in `tsconfig.json` references, `vitest.workspace.ts` list, and `packages/client/tsconfig.json` paths (`@repo/card-ui` + `@repo/card-ui/*`); root `typecheck` script now also runs `tsc -p packages/card-ui/tsconfig.json`.
+- Files changed:
+  - packages/card-ui/package.json (new)
+  - packages/card-ui/tsconfig.json (new)
+  - packages/card-ui/vitest.config.ts (new)
+  - packages/card-ui/src/index.ts (new)
+  - packages/card-ui/src/smoke.test.ts (new)
+  - tsconfig.json (+card-ui reference)
+  - vitest.workspace.ts (+card-ui vitest.config.ts)
+  - package.json (+card-ui in typecheck chain)
+  - packages/client/tsconfig.json (+@repo/card-ui paths)
+  - pnpm-lock.yaml (regenerated after `pnpm install`)
+- **Learnings for future iterations:**
+  - PRD pinned `@fontsource/cinzel ^5.2.9` but npm's latest is 5.2.8 — pnpm rejects unmatched versions. When an AC lists an exact minor, check `pnpm view <pkg> versions` before committing to avoid a retry loop. (US-017 consumers: the font is installed at 5.2.8 — just `import '@fontsource/cinzel';` anywhere in card-ui source once UI lands.)
+  - Root `tsconfig.json` in this monorepo has no `paths` — cross-package typing is via `references` + per-package `tsconfig.json paths`. `packages/client/tsconfig.json` is the only place that declares `@repo/*` path aliases because the client is the runtime entry.
+  - `vitest.workspace.ts` is NOT glob-based despite the PRD's hint (it globs only `games/*`). Every `packages/*/vitest.config.ts` is listed explicitly — forget to add your new one and `pnpm test` silently skips your tests.
+  - `packages/card-ui` is set up with `environment: 'node'` by default to avoid the macOS-local jsdom html-encoding-sniffer breakage documented above. Stories implementing React components (US-017+) should keep it node-env and test via unit helpers, or flip to jsdom only when visual behavior genuinely can't be asserted otherwise (CI will run it either way).
 ---

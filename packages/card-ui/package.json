@@ -1,0 +1,23 @@
+{
+  "name": "@repo/card-ui",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fontsource/cinzel": "^5.2.8",
+    "react": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.1"
+  },
+  "peerDependencies": {
+    "react": "^18.3.0"
+  }
+}

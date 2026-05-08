@@ -10,6 +10,8 @@
       "@repo/shared/*": ["../shared/src/*"],
       "@repo/game-ui": ["../game-ui/src"],
       "@repo/game-ui/*": ["../game-ui/src/*"],
+      "@repo/card-ui": ["../card-ui/src"],
+      "@repo/card-ui/*": ["../card-ui/src/*"],
       "@games/*/shared": ["../../games/*/shared.ts"],
       "@games/*/board": ["../../games/*/Board.tsx"],
       "react-i18next": ["./node_modules/react-i18next"]

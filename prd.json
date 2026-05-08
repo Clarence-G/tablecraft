@@ -266,8 +266,8 @@
         "Tests pass"
       ],
       "priority": 16,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Scaffolded @repo/card-ui with @fontsource/cinzel@^5.2.8 + react peer; smoke test asserts CardSuit/CardRank/CardSize type exports; root tsconfig reference, client tsconfig paths, vitest workspace list and root typecheck script all updated."
     },
     {
       "id": "US-017",
