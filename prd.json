@@ -82,8 +82,8 @@
         "Tests pass"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Extracted startNewRound helper; always invoked at end of challenge branch (after turn-order rebuild, before return) — re-deals hands + picks new declaredSuit. checkAndReshuffleIfNeeded delegates to it."
     },
     {
       "id": "US-006",

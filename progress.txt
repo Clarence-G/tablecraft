@@ -12,6 +12,7 @@ Total stories: 46
 - Biome baseline on this branch has 4 pre-existing errors in `packages/game-ui/src/header/GameHeader.tsx`, `packages/game-ui/src/theme/playerColors.ts`/`.test.ts`, and `prd.json`. Not introduced by ralph stories — leave them unless a story explicitly touches those files.
 - Engine `EngineEvent` is exported from `packages/shared/src/types/engine.ts`. `END_GAME` now carries optional `ties?: string[][]`; consumers in GameRoom treat any tie group containing the rank-1 player as a shared first place. Existing games that don't emit `ties` keep their win/loss behavior unchanged.
 - `GameRoom.ledger.test.ts` uses `createTestDb()` and `vi.doMock('../db/index.js', ...)` pattern — integration tests against a real postgres. Poll the ledger (~20ms intervals, 50 iterations) since `recordPoints` is fire-and-forget.
+- In pure game-logic changes (e.g. games/liar-bar/logic.ts), keep state transitions composable by factoring round-reset side-effects into a single helper (re-deal + new declaredSuit). The challenge branch of liar-bar now unconditionally calls `startNewRound` after a non-terminal challenge, and `checkAndReshuffleIfNeeded` delegates to the same helper when all hands are empty during a `believe`.
 
 ## 2026-05-08 - US-001
 - Added `GameStore.resetForRoom()` that zeroes all snapshot fields and clears pending timers
@@ -72,4 +73,17 @@ Total stories: 46
   - Framer-motion springs inside `<AnimatePresence>` that also cross-fade a sibling element will visually "bounce" during the exit window. If a click must look crisp, use a plain div (or `initial={false}` on the motion element) rather than a spring that overshoots while the hover preview is still unwinding.
   - "Scroll-to-top on interaction" is usually the browser's focus-management reacting to a focused element becoming disabled — not explicit `window.scrollTo`. The fix is to `e.currentTarget.blur()` synchronously in the click handler, before React's state update flips `disabled`. Calling `.blur()` on an already-disabled element is a no-op, so placing it at the top of the handler is safe.
   - `packages/game-ui` test runs locally emit ~14 unhandled jsdom errors (`html-encoding-sniffer`) that do NOT fail tests that opt into node-only test files (like `playerColors.test.ts`), but they prevent ANY `.test.tsx` file from collecting. CI on ubuntu is unaffected. Don't retry and don't try to "fix" locally — write the test, rely on CI.
+---
+
+## 2026-05-08 - US-005
+- Added `startNewRound(state, ctx)` helper in games/liar-bar/logic.ts that re-deals hands to alive players and picks a new declared suit; resets `lastPlay` to null.
+- Challenge branch now always calls `startNewRound` after turn-order/next-player resolution, replacing the old `checkAndReshuffleIfNeeded` call. `checkAndReshuffleIfNeeded` still exists and delegates to `startNewRound` for the `believe` path so all-hands-empty still triggers a reshuffle there.
+- Added 2 tests in games/liar-bar/logic.test.ts under `round reset after challenge`: liar caught + survives → fresh hands + null pile; truthful play challenged + challenger survives → fresh hands + null pile.
+- Files changed:
+  - games/liar-bar/logic.ts (+startNewRound, challenge branch invokes it unconditionally)
+  - games/liar-bar/logic.test.ts (+2 tests, 32→34)
+- **Learnings for future iterations:**
+  - PRD field names sometimes don't match source (PRD mentioned "pile"/"claimedRank"; the actual fields are `lastPlay`/`declaredSuit`). Always read the source first and translate PRD language to the real domain vocabulary in your commit/notes.
+  - Liar Bar's challenge branch has two early-return sites (sole survivor / all dead) before the "continue play" path. New logic that modifies state for the next round goes AFTER both early-returns so it only fires on continuing games.
+  - When re-dealing via `startNewRound`, the spread `{ ...newState, declaredSuit, lastPlay: null }` preserves `challengeResult` — client UIs that render the last challenge outcome continue to see it until the next `play_cards` action clears it.
 ---
