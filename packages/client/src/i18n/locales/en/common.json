@@ -74,6 +74,13 @@
       "title": "You have a game in progress",
       "cta": "Return to room",
       "dismiss": "Dismiss"
+    },
+    "options": {
+      "title": "Room Options",
+      "maxPlayers": "Max players",
+      "decrement": "Decrease max players",
+      "increment": "Increase max players",
+      "onlyHostCanEdit": "Only the host can change these options"
     }
   },
   "game": {

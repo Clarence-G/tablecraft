@@ -234,8 +234,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 14,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "RoomOptionsPanel renders maxPlayers stepper + auto-form for z.object configSchema (boolean/number fields); useRoom.updateOptions wraps room:updateOptions socket emit; ClientGamePlugin meta Pick now surfaces configSchema/defaultConfig so Room.tsx can forward them; non-host stepper disabled with host-only hint"
     },
     {
       "id": "US-015",

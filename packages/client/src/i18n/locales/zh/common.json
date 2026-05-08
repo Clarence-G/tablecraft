@@ -74,6 +74,13 @@
       "title": "你有一局游戏正在进行中",
       "cta": "返回房间",
       "dismiss": "忽略"
+    },
+    "options": {
+      "title": "房间选项",
+      "maxPlayers": "最大玩家数",
+      "decrement": "减少最大玩家数",
+      "increment": "增加最大玩家数",
+      "onlyHostCanEdit": "只有房主可以修改这些选项"
     }
   },
   "game": {

@@ -6,6 +6,8 @@ Total stories: 46
 ## Codebase Patterns
 - `useGame(socket)` hook wraps a `GameStore` class exported for direct unit testing (see `packages/client/src/hooks/useGame.test.ts`). Drive the store directly rather than rendering the hook — the client project's jsdom env is currently broken in this repo.
 - `useRoom(socket, onRoomChange?)` accepts an optional callback invoked on successful `room:create`/`room:join` ack — use this to wire cross-hook cleanup (e.g. GameStore reset) without coupling hooks to each other.
+- `useRoom.updateOptions({ maxPlayers?, config? })` emits `room:updateOptions` and resolves with the server `Ack`. Client features that mutate room options should always go through this (don't emit the socket event directly).
+- `ClientGamePlugin.meta` is a `Pick<>` of `GameMeta`. If you need a new meta field client-side, add it to the Pick list in `packages/shared/src/types/engine.ts` — runtime data is the full meta object, the Pick just controls public typing.
 - `App.tsx` is the orchestrator: call `useGame` before `useRoom` if the latter needs a callback from the former.
 - `GameLogProvider` (packages/game-ui/src/log/GameLogContext.tsx) auto-clears its entries when `defaultNs` prop changes — so per-game log isolation is automatic once the host sets `defaultNs` to the game's namespace.
 - macOS-local only: `pnpm test` surfaces "Unhandled Error … html-encoding-sniffer" failures from jsdom. These BREAK test *collection* in a package that opts into `environment: 'jsdom'` from scratch (see games/yahtzee attempt) — tests ran 0/0 on local. CI on ubuntu is unaffected. Workaround: keep game packages on `environment: 'node'`, extract UI gating logic into pure helpers (e.g. `shouldShowOwnScoreRows` in games/yahtzee/shared.ts) and unit-test those in logic.test.ts.
@@ -225,4 +227,27 @@ Total stories: 46
   - `games/connect-four/Board.tsx` renders `GameOverModal` twice (winner path + draw path) — remember both when wiring.
   - Biome baseline remains at 3 errors pre-existing in playerColors.{ts,test.ts} + GameHeader.tsx; US-013 did not introduce new errors (run `pnpm biome check --diagnostic-level=error <changed-files>` to verify locally without fighting the 83-diag cap on the full run).
   - `GameOverModal` focus-ref logic now needs a 3-way decision: `onRestart → (onReturnToRoom && canReturnToRoom) → onReturnToLobby`. Future prop additions (e.g. a "Kick Host" button) should slot into the same chain rather than introduce a second useRef.
+---
+
+## 2026-05-08 - US-014
+- New `RoomOptionsPanel` at `packages/client/src/components/room/RoomOptionsPanel.tsx` with maxPlayers stepper bounded by `[max(minPlayers, currentPlayerCount), meta.maxPlayers]` and an auto-form that walks a `z.ZodObject` configSchema (ZodDefault/ZodOptional/ZodNullable unwrapped) to render boolean checkboxes and number inputs. Non-host hides the edit controls behind `disabled` + a host-only `title` tooltip. Component no-ops when `status !== 'waiting'`.
+- `useRoom.updateOptions` added — wraps `room:updateOptions` socket emit with an Ack-resolving Promise (same shape as restart()).
+- `ClientGamePlugin.meta` Pick extended with `configSchema` and `defaultConfig` so Room.tsx can forward the zod schema to the panel without casts. Runtime was already carrying these fields; the Pick was just hiding them.
+- Room.tsx wires the panel into the right column under the players card; reads `meta.configSchema`/`meta.maxPlayers` from the client registry and `room.maxPlayers`/`room.config`/`room.players.length` from RoomState. Stepper upper bound is `meta.maxPlayers` (absolute) while current override lives in `room.maxPlayers`.
+- i18n: added `room.options.{title,maxPlayers,decrement,increment,onlyHostCanEdit}` to en + zh common.json. US-015 will cover the rest of the options string set (save/restoreDefaults/changesSaved + game-ui draw).
+- Tests: 7 new tests in `RoomOptionsPanel.test.tsx` covering status guard, stepper lower/upper bound disable, emitted payload on valid step, non-host read-only + no-emit, auto-generated boolean input emit, and auto-form disabled for non-host.
+- Files changed:
+  - packages/client/src/components/room/RoomOptionsPanel.tsx (new, ~230 lines)
+  - packages/client/src/components/room/RoomOptionsPanel.test.tsx (new, 7 tests)
+  - packages/client/src/hooks/useRoom.ts (+updateOptions)
+  - packages/client/src/pages/Room.tsx (import + destructure + render)
+  - packages/shared/src/types/engine.ts (ClientGamePlugin meta Pick +2 fields)
+  - packages/client/src/i18n/locales/en/common.json (+room.options.*)
+  - packages/client/src/i18n/locales/zh/common.json (+room.options.*)
+- Browser verification: deferred. `.test.tsx` files fail to collect locally on macOS (documented `html-encoding-sniffer` jsdom issue). A live browser check needs a 2+ player room and another client to see the non-host disabled state; left for human reviewer on the dev server. Typecheck + biome error-count are clean on all changed files; the only remaining biome warnings are the 6 pre-existing ones in Room.tsx (array-as-key) and playerColors.
+- **Learnings for future iterations:**
+  - Zod schemas have a stable `_def.typeName` you can read ('ZodObject', 'ZodDefault', 'ZodOptional', 'ZodNullable', 'ZodBoolean', 'ZodNumber'). Doing a shallow walk with `removeDefault()` / `unwrap()` is enough to auto-render a form from a game's configSchema without importing zod-to-json-schema in the client bundle.
+  - `ClientGamePlugin.meta` Pick: when adding a field the game uses at runtime but the client also wants to read (e.g. configSchema), just append to the Pick union. No runtime change needed — the registry already eagerly imports the full shared.ts.
+  - Server-side `room:updateOptions` rejects maxPlayers below the current player count (US-008). Mirror that in the UI: `lowerBound = max(minPlayers, currentPlayerCount)` so the stepper can't even propose a rejected value.
+  - React checkbox onChange under testing-library needs `fireEvent.click`, not `fireEvent.change` — the `checked` mutation only fires through `click` when the input is controlled.
 ---

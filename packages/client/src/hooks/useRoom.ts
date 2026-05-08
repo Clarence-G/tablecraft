@@ -79,6 +79,16 @@ export function useRoom(socket: AppSocket | null, onRoomChange?: () => void) {
   }, [socket]);
 
   const kick = useCallback((playerId: string) => socket?.emit('room:kick', playerId), [socket]);
+
+  const updateOptions = useCallback(
+    (payload: { maxPlayers?: number; config?: Record<string, unknown> }) =>
+      new Promise<Ack>((resolve) => {
+        if (!socket) return resolve({ ok: false, error: 'Not connected' });
+        socket.emit('room:updateOptions', payload, (result) => resolve(result));
+      }),
+    [socket],
+  );
+
   const restart = useCallback(
     () =>
       new Promise<Ack>((resolve) => {
@@ -99,5 +109,5 @@ export function useRoom(socket: AppSocket | null, onRoomChange?: () => void) {
     [socket],
   );
 
-  return { room, create, join, leave, ready, start, kick, restart, listRooms };
+  return { room, create, join, leave, ready, start, kick, restart, updateOptions, listRooms };
 }

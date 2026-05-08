@@ -1,5 +1,6 @@
 import { GameCoverImage } from '@/components/GameCoverImage';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
+import { RoomOptionsPanel } from '@/components/room/RoomOptionsPanel';
 import { Button } from '@/components/ui/button';
 import { Check, Clock, Copy, Users } from 'lucide-react';
 import { useState } from 'react';
@@ -31,7 +32,7 @@ export function Room({
     const val = i18n.t(key, { ns, defaultValue: fallback ?? '' });
     return typeof val === 'string' ? val : (fallback ?? '');
   };
-  const { room, ready, start, leave, restart } = roomCtx;
+  const { room, ready, start, leave, restart, updateOptions } = roomCtx;
 
   const [copied, setCopied] = useState(false);
   const handleCopyRoomCode = async () => {
@@ -248,6 +249,22 @@ export function Room({
                 ))}
               </div>
             </div>
+
+            {/* Host-facing room options (maxPlayers + per-game config).
+                Component internally no-ops when status !== 'waiting'. */}
+            <RoomOptionsPanel
+              status={room.status}
+              isHost={isHost}
+              currentMaxPlayers={room.maxPlayers}
+              currentPlayerCount={room.players.length}
+              minPlayers={room.minPlayers}
+              maxPlayers={meta?.maxPlayers ?? room.maxPlayers}
+              currentConfig={(room.config ?? undefined) as Record<string, unknown> | undefined}
+              configSchema={meta?.configSchema}
+              onUpdate={(payload) => {
+                void updateOptions(payload);
+              }}
+            />
 
             {/* Action buttons */}
             <div className="flex flex-col gap-3">
