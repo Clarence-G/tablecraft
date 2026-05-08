@@ -409,3 +409,17 @@ Total stories: 46
   - `.card-text` is the right pattern when you want the Cinzel look on a game that doesn't render through @repo/card-ui's own PlayingCard. It's just a font-family utility, so it composes with tailwind text-* classes (size, color, weight) cleanly. Add the import somewhere in the render tree via @repo/card-ui's exported styles.css (already done elsewhere — no new import needed in love-letter).
   - The widget-screenshot skill requires `id="app"` on the root element — the default `#app` selector times out otherwise. Add it to any standalone preview HTML before screenshotting.
 ---
+
+## 2026-05-09 - US-024
+- Replaced UNO's bespoke dark-gradient draw-pile card (with italic "UNO" text) with two stacked `@repo/card-ui` `CardBack`s (offset sibling + click-button).
+- Added `@repo/card-ui: workspace:*` to `games/uno/package.json`.
+- UnoCardFace (face cards: number, skip, reverse, +2, wild, +4) is untouched — it keeps the plastic-sheen colored design per the AC.
+- Files changed:
+  - games/uno/package.json (+@repo/card-ui dep)
+  - games/uno/Board.tsx (import CardBack; draw-pile -27/+11 lines)
+- Browser verification: deferred. The change is a direct primitive swap to an already-validated `CardBack` (used in blackjack, liar-bar, love-letter, splendor, texas-holdem). Reproducing a live view requires a 2+ player UNO room, which matches the deferral pattern used for US-003/US-004/US-022. Typecheck clean, 27 uno logic tests pass, biome clean on games/uno (only 2 pre-existing `any`-use warnings).
+- **Learnings for future iterations:**
+  - `@repo/card-ui`'s `CardBack` is fixed-pixel sized (sm: 48x68, md: 72x100, lg: 108x152) via inline style. When replacing a responsive Tailwind-sized card (`w-14 h-20 sm:w-20 sm:h-28`), drop the responsive classes on the container — the CardBack sets its own size. md is a good visual match for the discard pile's `PlayingCard md`.
+  - For a "stacked cards" look, render a second `<CardBack>` absolutely positioned behind the interactive one via `absolute -top-1 -left-1 pointer-events-none aria-hidden`. The outer `relative` wrapper is enough; no extra styling needed for the stack shadow because CardBack has its own border/shadow via styles.css.
+  - `games/uno/package.json` has no `scripts.test` — run vitest via `cd games/uno && npx vitest run` rather than `pnpm --filter @games/uno test` (which silently no-ops). The root `pnpm test` would trigger it via the workspace test script if one existed.
+---
