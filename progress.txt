@@ -251,3 +251,15 @@ Total stories: 46
   - Server-side `room:updateOptions` rejects maxPlayers below the current player count (US-008). Mirror that in the UI: `lowerBound = max(minPlayers, currentPlayerCount)` so the stepper can't even propose a rejected value.
   - React checkbox onChange under testing-library needs `fireEvent.click`, not `fireEvent.change` — the `checked` mutation only fires through `click` when the input is controlled.
 ---
+
+## 2026-05-08 - US-015
+- Added room.options.save, room.options.restoreDefaults, room.options.changesSaved keys to en/zh common.json under the existing `room.options` block.
+- game-ui namespace already has the `draw` key in both en and zh (added during US-012); no edits needed there.
+- Files changed:
+  - packages/client/src/i18n/locales/en/common.json
+  - packages/client/src/i18n/locales/zh/common.json
+- **Learnings for future iterations:**
+  - The PRD AC referenced `packages/game-ui/src/i18n/` but that path does not exist. Game-ui translations live in `packages/client/src/i18n/locales/{en,zh}/game-ui.json` and are merged by the client at runtime. Future stories adding game-ui i18n keys should edit those files.
+  - i18next keys can be added before consumers use them — no runtime error. Writing keys ahead of UI is safe (matches the US-014 → US-015 → future save-panel ordering in this PRD).
+  - No test file needs to be added for pure i18n key additions; typecheck + biome on the changed JSON files is sufficient quality gate.
+---
