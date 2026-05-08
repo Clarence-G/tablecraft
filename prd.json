@@ -67,7 +67,7 @@
       ],
       "priority": 4,
       "passes": true,
-      "notes": "StoneView spring (stiffness 400, damping 20) removed — the ~16% overshoot paired with the AnimatePresence preview cross-fade caused the perceived flicker; stone now renders as a plain div. Scroll-to-top fixed by explicitly blurring the clicked button before canPlace flips and the browser auto-blurs the now-disabled button."
+      "notes": "StoneView spring (stiffness 400, damping 20) removed \u2014 the ~16% overshoot paired with the AnimatePresence preview cross-fade caused the perceived flicker; stone now renders as a plain div. Scroll-to-top fixed by explicitly blurring the clicked button before canPlace flips and the browser auto-blurs the now-disabled button."
     },
     {
       "id": "US-005",
@@ -83,7 +83,7 @@
       ],
       "priority": 5,
       "passes": true,
-      "notes": "Extracted startNewRound helper; always invoked at end of challenge branch (after turn-order rebuild, before return) — re-deals hands + picks new declaredSuit. checkAndReshuffleIfNeeded delegates to it."
+      "notes": "Extracted startNewRound helper; always invoked at end of challenge branch (after turn-order rebuild, before return) \u2014 re-deals hands + picks new declaredSuit. checkAndReshuffleIfNeeded delegates to it."
     },
     {
       "id": "US-006",
@@ -99,7 +99,7 @@
       ],
       "priority": 6,
       "passes": true,
-      "notes": "GameMeta.configSchema narrowed to z.ZodTypeAny; buildConfigSchemaSummary exposes it as JSON Schema via buildGameDetail — no zod leak"
+      "notes": "GameMeta.configSchema narrowed to z.ZodTypeAny; buildConfigSchemaSummary exposes it as JSON Schema via buildGameDetail \u2014 no zod leak"
     },
     {
       "id": "US-007",
@@ -285,7 +285,7 @@
       ],
       "priority": 17,
       "passes": true,
-      "notes": "PlayingCard ships 52 rank/suit faces, faceDown + selected states, 3 sizes; SVG suits + Cinzel serif (loaded via @fontsource/cinzel CSS in styles.css). Tests use renderToStaticMarkup from react-dom/server — no jsdom dependency. Visual verified via widget-screenshot at 375px and desktop (screenshots reviewed, not committed)."
+      "notes": "PlayingCard ships 52 rank/suit faces, faceDown + selected states, 3 sizes; SVG suits + Cinzel serif (loaded via @fontsource/cinzel CSS in styles.css). Tests use renderToStaticMarkup from react-dom/server \u2014 no jsdom dependency. Visual verified via widget-screenshot at 375px and desktop (screenshots reviewed, not committed)."
     },
     {
       "id": "US-018",
@@ -301,8 +301,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 18,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "CardBack + JokerCard exported from @repo/card-ui; both match PlayingCard sizes; 12 tests incl. snapshots. Visual verified via widget screenshot at tablet viewport."
     },
     {
       "id": "US-019",

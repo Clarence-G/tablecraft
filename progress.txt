@@ -309,3 +309,20 @@ Total stories: 46
   - Biome auto-formats multi-attribute SVG elements onto one-attribute-per-line; `pnpm biome check --write` on the package cleaned that up. Run `biome check --write` BEFORE the first manual test of a new component file to avoid a format-then-retest cycle.
   - When adding a new devDependency to a leaf package (`react-dom`, `@types/react-dom`), `pnpm install` at the repo root is enough — no need to `pnpm install --filter @repo/card-ui`. The root install walks the workspace and regenerates pnpm-lock.yaml.
 ---
+
+## 2026-05-08 - US-018
+- Added `CardBack` component in packages/card-ui/src/CardBack.tsx — renders diamond-grid SVG pattern with primary-border trim inside a 2-color face-down card; supports sm/md/lg matching PlayingCard dimensions
+- Added `JokerCard` component in packages/card-ui/src/JokerCard.tsx — flat court-style jester silhouette (pure inline SVG path), JOKER text in both corners, optional selected prop
+- Both export from packages/card-ui/src/index.ts alongside existing PlayingCard
+- Files changed:
+  - packages/card-ui/src/CardBack.tsx (new)
+  - packages/card-ui/src/CardBack.test.tsx (new, 5 tests incl. snapshot)
+  - packages/card-ui/src/JokerCard.tsx (new)
+  - packages/card-ui/src/JokerCard.test.tsx (new, 7 tests incl. snapshot)
+  - packages/card-ui/src/index.ts (re-export)
+- Visual verification: generated .ralph-screenshots/us-018-default-tablet.png via widget-screenshot skill — diamond grid + jester silhouette render correctly at all 3 sizes
+- **Learnings for future iterations:**
+  - `packages/card-ui` test suite uses the same `renderToStaticMarkup` pattern from react-dom/server under `environment: 'node'` (see PlayingCard.test.tsx). Keep all card-ui components testable this way — no jsdom needed.
+  - Size presets for card-family components: sm=48×68, md=72×100, lg=108×152. When adding more card components (e.g. UNO variant, special-art cards), mirror these exact widths/heights so they compose cleanly inside a CardHand fan layout.
+  - Biome auto-fix collapses JSX attributes onto a single line when a component reaches certain arity — acceptable because the generated diff was mechanical. When writing a new svg with many attributes, don't over-format; biome will normalize it on the first check.
+---
