@@ -1,5 +1,12 @@
+import {
+  CardBack,
+  CardHand,
+  type CardRank,
+  type CardSuit,
+  JokerCard,
+  PlayingCard,
+} from '@repo/card-ui';
 import { useGameHeaderStatus } from '@repo/game-ui';
-import { type CardAccent, PlayingCard } from '@repo/game-ui/card';
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
@@ -7,40 +14,27 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type Action, type Card, type PlayerView, SUIT_COLORS } from './shared';
 
-const CARD_ACCENT: Record<Card, CardAccent> = {
-  Q: 'blue',
-  K: 'purple',
-  A: 'green',
-  Joker: 'red',
+// Cosmetic suit assignment for the three liar-bar ranks so they render
+// as standard playing cards. The gameplay "suit" (Q/K/A claim) lives in
+// state.declaredSuit — the visual CardSuit here is decorative only.
+const LIAR_VISUAL_SUIT: Record<'Q' | 'K' | 'A', CardSuit> = {
+  Q: 'diamonds',
+  K: 'spades',
+  A: 'hearts',
 };
 
-function HandCard({
-  card,
-  selected,
-  disabled,
-  onClick,
-}: {
-  card: Card;
-  selected: boolean;
-  disabled: boolean;
-  onClick: () => void;
-}) {
+function HandCardDisplay({ card, selected }: { card: Card; selected: boolean }) {
+  if (card === 'Joker') {
+    return <JokerCard size="md" selected={selected} />;
+  }
   return (
     <PlayingCard
       size="md"
-      accent={CARD_ACCENT[card]}
-      backgroundClass={SUIT_COLORS[card].bgClass}
-      corner={card === 'Joker' ? 'J' : card}
-      center={card === 'Joker' ? 'Joker' : card}
+      suit={LIAR_VISUAL_SUIT[card]}
+      rank={card as CardRank}
       selected={selected}
-      disabled={disabled}
-      onClick={onClick}
     />
   );
-}
-
-function FaceDownCard() {
-  return <PlayingCard size="xs" faceDown />;
 }
 
 function RevolverDisplay({ chamber, alive }: { chamber: number; alive: boolean }) {
@@ -185,7 +179,7 @@ export function Board({
                   <div className="flex gap-0.5">
                     {Array.from({ length: info.cardCount }, (_, i) => (
                       // biome-ignore lint/suspicious/noArrayIndexKey: card count display, no stable id
-                      <FaceDownCard key={i} />
+                      <CardBack key={i} size="sm" />
                     ))}
                   </div>
                 )}
@@ -252,17 +246,25 @@ export function Board({
               {selectedIndices.length}/3
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 justify-center mb-3">
-            {state.myHand.map((card, i) => (
-              <HandCard
-                // biome-ignore lint/suspicious/noArrayIndexKey: hand cards reordered only after actions
-                key={i}
-                card={card}
-                selected={selectedIndices.includes(i)}
-                disabled={false}
-                onClick={() => toggleCard(i)}
-              />
-            ))}
+          <div className="flex justify-center mb-3">
+            <CardHand size="md">
+              {state.myHand.map((card, i) => {
+                const selected = selectedIndices.includes(i);
+                return (
+                  <button
+                    // biome-ignore lint/suspicious/noArrayIndexKey: hand cards reordered only after actions
+                    key={i}
+                    type="button"
+                    onClick={() => toggleCard(i)}
+                    aria-label={`${card}${selected ? ' (selected)' : ''}`}
+                    aria-pressed={selected}
+                    className="appearance-none bg-transparent border-0 p-0 cursor-pointer"
+                  >
+                    <HandCardDisplay card={card} selected={selected} />
+                  </button>
+                );
+              })}
+            </CardHand>
           </div>
           {selectedIndices.length > 0 && (
             <button
@@ -283,11 +285,13 @@ export function Board({
       {amAlive && !gameOver && state.phase === 'playing' && !isMyTurn && (
         <div className="border-2 border-border rounded-[12px] bg-card p-3">
           <div className="text-xs font-medium text-muted-foreground mb-2">{t('yourHandView')}</div>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {state.myHand.map((card, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: hand cards reordered only after actions
-              <HandCard key={i} card={card} selected={false} disabled onClick={() => {}} />
-            ))}
+          <div className="flex justify-center">
+            <CardHand size="md">
+              {state.myHand.map((card, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: hand cards reordered only after actions
+                <HandCardDisplay key={i} card={card} selected={false} />
+              ))}
+            </CardHand>
           </div>
         </div>
       )}
@@ -296,11 +300,13 @@ export function Board({
       {amAlive && !gameOver && state.phase === 'challenging' && (
         <div className="border-2 border-border rounded-[12px] bg-card p-3">
           <div className="text-xs font-medium text-muted-foreground mb-2">{t('yourHandView')}</div>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {state.myHand.map((card, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: hand cards reordered only after actions
-              <HandCard key={i} card={card} selected={false} disabled onClick={() => {}} />
-            ))}
+          <div className="flex justify-center">
+            <CardHand size="md">
+              {state.myHand.map((card, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: hand cards reordered only after actions
+                <HandCardDisplay key={i} card={card} selected={false} />
+              ))}
+            </CardHand>
           </div>
         </div>
       )}

@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "@repo/shared": "workspace:*",
-    "@repo/game-ui": "workspace:*"
+    "@repo/game-ui": "workspace:*",
+    "@repo/card-ui": "workspace:*"
   },
   "devDependencies": {
     "vitest": "^1.6.0",
