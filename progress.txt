@@ -326,3 +326,20 @@ Total stories: 46
   - Size presets for card-family components: sm=48×68, md=72×100, lg=108×152. When adding more card components (e.g. UNO variant, special-art cards), mirror these exact widths/heights so they compose cleanly inside a CardHand fan layout.
   - Biome auto-fix collapses JSX attributes onto a single line when a component reaches certain arity — acceptable because the generated diff was mechanical. When writing a new svg with many attributes, don't over-format; biome will normalize it on the first check.
 ---
+
+## 2026-05-08 - US-019
+- New `CardHand` component at packages/card-ui/src/CardHand.tsx — absolutely-positioned slots anchored `bottom: 0; left: 50%` with per-slot `transform: translate(-50%,0) translate(rx, ry) rotate(rot)`. Formulas live in exported helpers `computeFanSlot(i, count, size)` + `computeHandDimensions(count, size)` so consumers and tests share the math.
+- Fan math: center = (count-1)/2; offset = i - center. `rx = offset * SPREAD_X[size]`, `rotateDeg = offset * ROT_STEP[size]`, `translateY = |offset| * ARC_STEP[size]` (downward arc at edges). Container width/height computed from the same numbers so the hand never reflows when a child's `selected` state changes.
+- Hover/selected lift comes from PlayingCard's existing CSS (`.card-ui-card:not(.card-ui-selected):hover` and `.card-ui-card.card-ui-selected`) — CardHand does NOT apply transforms on the card itself, only on its slot wrapper. This means lifting a card does not translate siblings (the slot wrapper is untouched; the card inside it transforms within the wrapper's coordinate space).
+- 11 new tests in CardHand.test.tsx covering: helper symmetry + monotonicity, container dimensions scale with count and size, one slot per child, deterministic transform per index, selected-middle-card leaves sibling slot transforms byte-identical, and empty hand renders without error.
+- Visual verification via widget-screenshot skill: rendered 3/5/7-card fans (middle card of 5-hand selected) at tablet viewport to .ralph-screenshots/us-019-cardhand-default-tablet.png. Fan looks clean, edges tilt down, selected card lifts without shifting its neighbors.
+- Files changed:
+  - packages/card-ui/src/CardHand.tsx (new)
+  - packages/card-ui/src/CardHand.test.tsx (new, 11 tests)
+  - packages/card-ui/src/styles.css (+.card-ui-hand + .card-ui-hand-slot rules)
+  - packages/card-ui/src/index.ts (re-export CardHand + helpers)
+- **Learnings for future iterations:**
+  - When you need a layout that MUST NOT reflow on interaction, position children absolutely and keep the container dimensions computed from a count-based formula — don't rely on flex/inline layout which will re-measure whenever a child's transform grows its bounding box. The slot wrapper + inner card split is the cleanest way: apply layout transform (rotate/translate) to the wrapper, state transform (hover/selected lift) to the card.
+  - For presentational components testable via `renderToStaticMarkup` (node env), assert the emitted CSS via regex: `class="card-ui-hand-slot"[^>]*style="([^"]+)"` captures slot transforms one at a time. Comparing the arrays before-and-after a state change is a cheap substitute for a full-DOM layout-thrash test (and avoids the jsdom html-encoding-sniffer bug).
+  - US-022's liar-bar migration can now lift `CardHand`-from-card-ui + drop its own fan math. The hover rule is PlayingCard's responsibility; don't try to re-implement a lift in liar-bar. For non-card children (text placeholders etc.), CardHand is agnostic — it only cares about count for fan math and sizes for container dims.
+---

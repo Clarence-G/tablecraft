@@ -318,8 +318,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 19,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "CardHand uses absolutely-positioned slots anchored bottom-center. Pure helpers computeFanSlot + computeHandDimensions are exported so consumers and tests can share the deterministic formulas. Hover lift continues to come from PlayingCard's own CSS :hover (per-card, not per-slot) so neighbors never translate."
     },
     {
       "id": "US-020",
