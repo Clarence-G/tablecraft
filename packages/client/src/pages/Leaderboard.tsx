@@ -32,6 +32,7 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
   const [me, setMe] = useState<MyRank | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: depending on authedUser?.id only re-runs when the user actually changes; depending on the whole object would re-fire on every auth hook re-render
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
@@ -60,8 +61,7 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
   }, [tab, authedUser?.id]);
 
   const meInTop = Boolean(authedUser && entries.some((e) => e.userId === authedUser.id));
-  const showMeRow =
-    Boolean(authedUser) && !meInTop && me?.rank != null && (me?.points ?? 0) > 0;
+  const showMeRow = Boolean(authedUser) && !meInTop && me?.rank != null && (me?.points ?? 0) > 0;
 
   return (
     <div data-testid="leaderboard-page" className="min-h-screen">

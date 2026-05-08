@@ -27,7 +27,7 @@ export function useSocket(userId: string, userName: string, isGuest = true) {
         // server restarts reconnect quickly, cap backoff at 2s so stale
         // tabs don't wait up to 5s (the socket.io default max).
         reconnection: true,
-        reconnectionAttempts: Infinity,
+        reconnectionAttempts: Number.POSITIVE_INFINITY,
         reconnectionDelay: 300,
         reconnectionDelayMax: 2000,
         timeout: 10000,

@@ -1,3 +1,10 @@
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { useGameHeaderStatus } from '@repo/game-ui';
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { useGameLog } from '@repo/game-ui/log';
@@ -7,13 +14,6 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import {
   type Action,
   NUM_CATEGORIES,
@@ -93,8 +93,7 @@ function DieFace({
   const reduced = useReducedMotion();
 
   useEffect(() => {
-    const isSpin =
-      prevValue.current !== value && value > 0 && prevValue.current > 0;
+    const isSpin = prevValue.current !== value && value > 0 && prevValue.current > 0;
     prevValue.current = value;
 
     if (!isSpin || reduced) {
@@ -155,7 +154,11 @@ function DieFace({
           }}
           style={{ transformOrigin: '50% 50%', willChange: 'transform, filter' }}
         >
-          <image href={DICE_ICON_PATHS[displayValue] ?? DICE_ICON_PATHS[value]} width={512} height={512} />
+          <image
+            href={DICE_ICON_PATHS[displayValue] ?? DICE_ICON_PATHS[value]}
+            width={512}
+            height={512}
+          />
         </motion.svg>
       )}
       {held && (
@@ -291,10 +294,7 @@ function OpponentScorecardBody({
   const hasBonus = upperSum >= UPPER_BONUS_THRESHOLD;
 
   return (
-    <div
-      className="mt-2 p-3 rounded-[10px] border-2 border-foreground/40"
-      style={paperStyle}
-    >
+    <div className="mt-2 p-3 rounded-[10px] border-2 border-foreground/40" style={paperStyle}>
       <div className="mb-2 text-xs text-muted-foreground">
         {t('upperSectionSum')} {upperSum}/{UPPER_BONUS_THRESHOLD}
         {hasBonus ? (
@@ -602,19 +602,15 @@ function BoardInner({
             className={[
               'w-full py-3 rounded-[8px] font-semibold text-base border-2 transition-colors',
               canRoll
-                // Amber/honey-gold CTA driven by scene accent. Contrasts
-                // against both the cream platform chrome and the walnut
-                // scene surface — avoids the "dark button on dark wood"
-                // mud reported by the vision review. Dark-brown text
-                // keeps the on-paper feel.
-                ? 'text-[#2a1f14] border-[#2a1f14] active:translate-y-[2px]'
+                ? // Amber/honey-gold CTA driven by scene accent. Contrasts
+                  // against both the cream platform chrome and the walnut
+                  // scene surface — avoids the "dark button on dark wood"
+                  // mud reported by the vision review. Dark-brown text
+                  // keeps the on-paper feel.
+                  'text-[#2a1f14] border-[#2a1f14] active:translate-y-[2px]'
                 : 'bg-muted text-muted-foreground border-border cursor-not-allowed',
             ].join(' ')}
-            style={
-              canRoll
-                ? { backgroundColor: 'var(--scene-accent, #f4c744)' }
-                : undefined
-            }
+            style={canRoll ? { backgroundColor: 'var(--scene-accent, #f4c744)' } : undefined}
             animate={
               canRoll && !reducedMotion
                 ? {
@@ -625,9 +621,7 @@ function BoardInner({
                     ],
                   }
                 : {
-                    boxShadow: canRoll
-                      ? '4px 4px 0px 0px #2a1f14'
-                      : '0 0 0 0 rgba(0,0,0,0)',
+                    boxShadow: canRoll ? '4px 4px 0px 0px #2a1f14' : '0 0 0 0 rgba(0,0,0,0)',
                   }
             }
             transition={

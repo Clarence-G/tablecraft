@@ -64,7 +64,11 @@ export async function signUpEmail(
       (result.body as any)?.message ??
       (result.body as any)?.error?.message ??
       String(result.status);
-    throw new E2EAuthError(`signUpEmail failed (${result.status}): ${msg}`, result.status, result.body);
+    throw new E2EAuthError(
+      `signUpEmail failed (${result.status}): ${msg}`,
+      result.status,
+      result.body,
+    );
   }
 }
 
@@ -99,7 +103,11 @@ export async function signInEmail(
       (result.body as any)?.message ??
       (result.body as any)?.error?.message ??
       String(result.status);
-    throw new E2EAuthError(`signInEmail failed (${result.status}): ${msg}`, result.status, result.body);
+    throw new E2EAuthError(
+      `signInEmail failed (${result.status}): ${msg}`,
+      result.status,
+      result.body,
+    );
   }
 }
 
@@ -222,6 +230,10 @@ export async function resetPassword(
       (result.body as any)?.message ??
       (result.body as any)?.error?.message ??
       String(result.status);
-    throw new E2EAuthError(`resetPassword failed (${result.status}): ${msg}`, result.status, result.body);
+    throw new E2EAuthError(
+      `resetPassword failed (${result.status}): ${msg}`,
+      result.status,
+      result.body,
+    );
   }
 }

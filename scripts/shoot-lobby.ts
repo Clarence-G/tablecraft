@@ -26,7 +26,11 @@ const wantMobile = process.argv.includes('--mobile');
 const desktop = { width: 1440, height: 900 };
 const mobile = { width: 390, height: 844 };
 
-async function shoot(viewport: { width: number; height: number }, label: string, hoverCard?: boolean) {
+async function shoot(
+  viewport: { width: number; height: number },
+  label: string,
+  hoverCard?: boolean,
+) {
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 2 });
   const page = await ctx.newPage();

@@ -54,11 +54,14 @@ async function botJoin(token: string, roomId: string): Promise<void> {
 }
 
 async function botAction(token: string, roomId: string, action: unknown): Promise<unknown> {
-  const j = await fetchJson<{ ok: boolean; data?: unknown }>(`${SERVER}/api/rooms/${roomId}/action`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ action }),
-  });
+  const j = await fetchJson<{ ok: boolean; data?: unknown }>(
+    `${SERVER}/api/rooms/${roomId}/action`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ action }),
+    },
+  );
   if (!j.ok) throw new Error(`bot action failed: ${JSON.stringify(j)}`);
   return j.data;
 }
@@ -70,7 +73,10 @@ async function getState<T = unknown>(token: string, roomId: string): Promise<T> 
   return j.data.view;
 }
 
-async function newPage(browser: Browser, vp: { width: number; height: number }): Promise<{ page: Page; ctx: BrowserContext }> {
+async function newPage(
+  browser: Browser,
+  vp: { width: number; height: number },
+): Promise<{ page: Page; ctx: BrowserContext }> {
   const ctx = await browser.newContext({ viewport: vp });
   const page = await ctx.newPage();
   await page.addInitScript(() => {
@@ -233,8 +239,12 @@ async function shootCodenames(
     await page.waitForTimeout(600); // wait for UI to reflect all assignments
 
     // CommitTeams — bot1 (red spymaster) sends it
-    const commitResult = await botAction(tok1, roomCode, { type: 'commitTeams' }) as { view?: { phase?: string; activeTeam?: string } };
-    console.log(`  [debug] commitTeams response phase=${JSON.stringify(commitResult?.view?.phase)} activeTeam=${JSON.stringify(commitResult?.view?.activeTeam)}`);
+    const commitResult = (await botAction(tok1, roomCode, { type: 'commitTeams' })) as {
+      view?: { phase?: string; activeTeam?: string };
+    };
+    console.log(
+      `  [debug] commitTeams response phase=${JSON.stringify(commitResult?.view?.phase)} activeTeam=${JSON.stringify(commitResult?.view?.activeTeam)}`,
+    );
     await page.waitForTimeout(2000);
 
     // Screenshot 3: Board in clue phase (board visible with team grid)
@@ -243,17 +253,29 @@ async function shootCodenames(
     console.log(`  [codenames/${vp.name}] ingame (clue phase) -> ${ingamePath}`);
 
     // Check which team goes first
-    interface CellView { word: string; revealed: boolean; color: string | null }
-    interface StateView { board: CellView[]; activeTeam: string; phase: string }
+    interface CellView {
+      word: string;
+      revealed: boolean;
+      color: string | null;
+    }
+    interface StateView {
+      board: CellView[];
+      activeTeam: string;
+      phase: string;
+    }
     const stateAfterCommit = await getState<StateView>(tok1, roomCode);
-    console.log(`  [debug] state from getState: phase=${stateAfterCommit.phase} activeTeam=${stateAfterCommit.activeTeam}`);
+    console.log(
+      `  [debug] state from getState: phase=${stateAfterCommit.phase} activeTeam=${stateAfterCommit.activeTeam}`,
+    );
     const firstTeam = stateAfterCommit.activeTeam;
     const firstSpyTok = firstTeam === 'red' ? tok1 : tok3;
     const firstOpTok = firstTeam === 'red' ? tok2 : tok4;
 
     // First team's spymaster gives a clue
     const preClueState = await getState<StateView>(firstSpyTok, roomCode);
-    console.log(`  [debug] state right before giveClue: phase=${preClueState.phase} activeTeam=${preClueState.activeTeam} myRole=${(preClueState as { myRole?: string }).myRole} myTeam=${(preClueState as { myTeam?: string }).myTeam}`);
+    console.log(
+      `  [debug] state right before giveClue: phase=${preClueState.phase} activeTeam=${preClueState.activeTeam} myRole=${(preClueState as { myRole?: string }).myRole} myTeam=${(preClueState as { myTeam?: string }).myTeam}`,
+    );
     await botAction(firstSpyTok, roomCode, { type: 'giveClue', word: 'ANIMAL', count: 2 });
     await page.waitForTimeout(1000);
 
@@ -283,7 +305,6 @@ async function shootCodenames(
     const guessingPath = `${outDir}/codenames_guessing${suffix}.png`;
     await page.screenshot({ path: guessingPath, fullPage: false });
     console.log(`  [codenames/${vp.name}] guessing -> ${guessingPath}`);
-
   } catch (err) {
     console.error(`  [codenames/${vp.name}] FAILED:`, err instanceof Error ? err.message : err);
     try {

@@ -8,11 +8,7 @@ import type { Action, CardType, PlayerView, Team } from './shared';
 
 // ---- Cell tile color classes ----
 
-function cellColorClass(
-  color: CardType | null,
-  revealed: boolean,
-  isSpymaster: boolean,
-): string {
+function cellColorClass(color: CardType | null, revealed: boolean, isSpymaster: boolean): string {
   if (revealed) {
     if (color === 'red') return 'bg-red-600 text-white border-red-700';
     if (color === 'blue') return 'bg-blue-600 text-white border-blue-700';
@@ -23,7 +19,8 @@ function cellColorClass(
     if (color === 'red') return 'bg-red-100 text-red-900 border-red-400 ring-1 ring-red-400';
     if (color === 'blue') return 'bg-blue-100 text-blue-900 border-blue-400 ring-1 ring-blue-400';
     if (color === 'bystander') return 'bg-amber-50 text-amber-700 border-amber-300';
-    if (color === 'assassin') return 'bg-gray-200 text-gray-900 border-gray-500 ring-1 ring-gray-600';
+    if (color === 'assassin')
+      return 'bg-gray-200 text-gray-900 border-gray-500 ring-1 ring-gray-600';
   }
   return 'bg-card text-foreground border-border hover:bg-muted/60';
 }
@@ -57,7 +54,7 @@ export function Board({
   const isSpymaster = state.myRole === 'spymaster';
   const isOperative = state.myRole === 'operative';
 
-  useGameHeaderStatus(gameOver ? undefined : state.activeTeam ?? undefined, state.phase);
+  useGameHeaderStatus(gameOver ? undefined : (state.activeTeam ?? undefined), state.phase);
 
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
 
@@ -69,21 +66,26 @@ export function Board({
 
         <div className="grid grid-cols-2 gap-3">
           {(['red', 'blue'] as Team[]).map((team) => (
-            <div key={team} className={`rounded-xl p-3 border ${team === 'red' ? 'border-red-300 bg-red-50' : 'border-blue-300 bg-blue-50'}`}>
-              <div className={`font-bold text-sm mb-2 ${team === 'red' ? 'text-red-700' : 'text-blue-700'}`}>
+            <div
+              key={team}
+              className={`rounded-xl p-3 border ${team === 'red' ? 'border-red-300 bg-red-50' : 'border-blue-300 bg-blue-50'}`}
+            >
+              <div
+                className={`font-bold text-sm mb-2 ${team === 'red' ? 'text-red-700' : 'text-blue-700'}`}
+              >
                 {t(`team.${team}`)}
               </div>
               {(['spymaster', 'operative'] as const).map((role) => {
-                const occupant = state.playersInfo.find(
-                  (p) => p.team === team && p.role === role,
-                );
+                const occupant = state.playersInfo.find((p) => p.team === team && p.role === role);
                 const isMe = occupant?.id === myId;
                 const isMine = state.myTeam === team && state.myRole === role;
                 return (
                   <div key={role} className="mb-1.5">
                     <div className="text-xs text-muted-foreground mb-1">{t(`role.${role}`)}</div>
                     {occupant ? (
-                      <div className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg ${isMine ? 'bg-primary/20 font-semibold' : 'bg-white/60'}`}>
+                      <div
+                        className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg ${isMine ? 'bg-primary/20 font-semibold' : 'bg-white/60'}`}
+                      >
                         <span>{playerNames[occupant.id] ?? occupant.id}</span>
                         {isMe && <span className="text-muted-foreground">({t('setup.you')})</span>}
                       </div>
@@ -107,7 +109,11 @@ export function Board({
         {/* Players not yet assigned */}
         {state.playersInfo.filter((p) => !p.team).length > 0 && (
           <div className="text-xs text-muted-foreground text-center">
-            {t('setup.unassigned')}: {state.playersInfo.filter((p) => !p.team).map((p) => playerNames[p.id] ?? p.id).join(', ')}
+            {t('setup.unassigned')}:{' '}
+            {state.playersInfo
+              .filter((p) => !p.team)
+              .map((p) => playerNames[p.id] ?? p.id)
+              .join(', ')}
           </div>
         )}
 
@@ -121,9 +127,7 @@ export function Board({
           {t('setup.start')}
         </button>
 
-        {lastReject && (
-          <div className="text-xs text-destructive text-center">{lastReject}</div>
-        )}
+        {lastReject && <div className="text-xs text-destructive text-center">{lastReject}</div>}
       </div>
     );
   }
@@ -131,10 +135,8 @@ export function Board({
   // ---- Playing Phase UI ----
   const board = state.board ?? [];
 
-  const canGiveClue =
-    state.phase === 'clue' && isMyTeam && isSpymaster;
-  const canGuess =
-    state.phase === 'guess' && isMyTeam && isOperative;
+  const canGiveClue = state.phase === 'clue' && isMyTeam && isSpymaster;
+  const canGuess = state.phase === 'guess' && isMyTeam && isOperative;
   const canEndGuessing =
     state.phase === 'guess' &&
     isMyTeam &&
@@ -143,8 +145,12 @@ export function Board({
 
   function handleGiveClue() {
     if (!clueWord.trim()) return;
-    const countVal = clueCount === 'unlimited' ? 'unlimited' : parseInt(clueCount, 10);
-    sendAction({ type: 'giveClue', word: clueWord.trim(), count: countVal as number | 'unlimited' });
+    const countVal = clueCount === 'unlimited' ? 'unlimited' : Number.parseInt(clueCount, 10);
+    sendAction({
+      type: 'giveClue',
+      word: clueWord.trim(),
+      count: countVal as number | 'unlimited',
+    });
     setClueWord('');
   }
 
@@ -153,15 +159,21 @@ export function Board({
       {/* Score and turn status */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex gap-2 items-center">
-          <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${teamBadgeClass('red')}`}>
+          <span
+            className={`text-xs px-2 py-0.5 rounded-full font-semibold ${teamBadgeClass('red')}`}
+          >
             {t('team.red')} {state.redRemaining}
           </span>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${teamBadgeClass('blue')}`}>
+          <span
+            className={`text-xs px-2 py-0.5 rounded-full font-semibold ${teamBadgeClass('blue')}`}
+          >
             {t('team.blue')} {state.blueRemaining}
           </span>
         </div>
         {state.phase !== 'over' && state.activeTeam && (
-          <div className={`text-xs font-medium px-2 py-0.5 rounded-full ${teamBadgeClass(state.activeTeam)}`}>
+          <div
+            className={`text-xs font-medium px-2 py-0.5 rounded-full ${teamBadgeClass(state.activeTeam)}`}
+          >
             {t(`team.${state.activeTeam}`)} {t('turn')}
           </div>
         )}
@@ -212,10 +224,12 @@ export function Board({
       {!gameOver && (
         <div className="text-xs text-center text-muted-foreground">
           {state.phase === 'clue' && isMyTeam && isSpymaster && t('hint.giveClue')}
-          {state.phase === 'clue' && (!isMyTeam || !isSpymaster) &&
+          {state.phase === 'clue' &&
+            (!isMyTeam || !isSpymaster) &&
             t('hint.waitClue', { team: t(`team.${state.activeTeam}`) })}
           {state.phase === 'guess' && isMyTeam && isOperative && t('hint.guess')}
-          {state.phase === 'guess' && (!isMyTeam || !isOperative) &&
+          {state.phase === 'guess' &&
+            (!isMyTeam || !isOperative) &&
             t('hint.waitGuess', { team: t(`team.${state.activeTeam}`) })}
         </div>
       )}
@@ -268,15 +282,18 @@ export function Board({
         </button>
       )}
 
-      {lastReject && (
-        <div className="text-xs text-destructive text-center">{lastReject}</div>
-      )}
+      {lastReject && <div className="text-xs text-destructive text-center">{lastReject}</div>}
 
       {/* Team roster */}
       <div className="grid grid-cols-2 gap-2 mt-1">
         {(['red', 'blue'] as Team[]).map((team) => (
-          <div key={team} className={`rounded-xl p-2 border ${team === 'red' ? 'border-red-200 bg-red-50/50' : 'border-blue-200 bg-blue-50/50'}`}>
-            <div className={`text-xs font-semibold mb-1 ${team === 'red' ? 'text-red-700' : 'text-blue-700'}`}>
+          <div
+            key={team}
+            className={`rounded-xl p-2 border ${team === 'red' ? 'border-red-200 bg-red-50/50' : 'border-blue-200 bg-blue-50/50'}`}
+          >
+            <div
+              className={`text-xs font-semibold mb-1 ${team === 'red' ? 'text-red-700' : 'text-blue-700'}`}
+            >
               {t(`team.${team}`)}
             </div>
             <div className="flex flex-wrap gap-1">
@@ -286,13 +303,7 @@ export function Board({
                   const pl = players.find((pp) => pp.id === p.id);
                   return (
                     <div key={p.id} className="flex items-center gap-1">
-                      {pl && (
-                        <PlayerBadge
-                          player={pl}
-                          isCurrentTurn={false}
-                          isMe={p.id === myId}
-                        />
-                      )}
+                      {pl && <PlayerBadge player={pl} isCurrentTurn={false} isMe={p.id === myId} />}
                       {p.role === 'spymaster' && (
                         <span className="text-[9px] bg-yellow-100 text-yellow-700 px-1 rounded">
                           {t('role.spymaster')}

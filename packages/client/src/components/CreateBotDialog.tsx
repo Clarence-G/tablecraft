@@ -1,15 +1,10 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { AlertTriangle, Check, Copy } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { apiFetch, ApiError } from '../lib/api';
+import { ApiError, apiFetch } from '../lib/api';
 import type { BotRow } from './BotManager';
 
 interface CreateBotDialogProps {
@@ -96,11 +91,12 @@ export function CreateBotDialog({ open, onClose, onCreated }: CreateBotDialogPro
 
         {!showToken ? (
           <div className="space-y-3">
-            <label className="block">
+            <label className="block" htmlFor="create-bot-name">
               <span className="text-xs font-semibold text-muted-foreground">
                 {t('me.bots.nameLabel')}
               </span>
               <Input
+                id="create-bot-name"
                 type="text"
                 autoFocus
                 value={name}
@@ -132,9 +128,7 @@ export function CreateBotDialog({ open, onClose, onCreated }: CreateBotDialogPro
           <div className="space-y-3">
             <div className="flex gap-2 items-start rounded-lg border-2 border-destructive/40 bg-destructive/5 p-3">
               <AlertTriangle className="size-4 text-destructive shrink-0 mt-0.5" />
-              <p className="text-xs text-destructive leading-snug">
-                {t('me.bots.tokenWarning')}
-              </p>
+              <p className="text-xs text-destructive leading-snug">{t('me.bots.tokenWarning')}</p>
             </div>
 
             <div className="space-y-1">

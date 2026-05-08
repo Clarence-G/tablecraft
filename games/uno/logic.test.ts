@@ -361,7 +361,14 @@ describe('getCardAriaLabel', () => {
   });
 
   it('every colored hand card label matches a color word', () => {
-    const cards = ['red_5', 'blue_skip', 'green_reverse', 'yellow_draw_two', 'wild', 'wild_draw_four'];
+    const cards = [
+      'red_5',
+      'blue_skip',
+      'green_reverse',
+      'yellow_draw_two',
+      'wild',
+      'wild_draw_four',
+    ];
     for (const card of cards) {
       const label = getCardAriaLabel(card, mockT);
       expect(label).toMatch(/红色|蓝色|绿色|黄色|变色牌/);

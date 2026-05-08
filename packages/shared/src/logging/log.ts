@@ -90,10 +90,12 @@ export function logAction(
  */
 export function logSystem(
   messageKey: string,
-  opts?: Record<string, string | number | boolean> | {
-    actorId?: string;
-    messageParams?: Record<string, string | number | boolean>;
-  },
+  opts?:
+    | Record<string, string | number | boolean>
+    | {
+        actorId?: string;
+        messageParams?: Record<string, string | number | boolean>;
+      },
 ): LogNotifyAllEvent {
   const payload: LogNotificationPayload = {
     channel: 'log',

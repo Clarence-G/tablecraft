@@ -6,8 +6,7 @@ import { toNodeHandler } from 'better-auth/node';
 import express, { Router } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as schema from '../db/schema.js';
-import { createTestDb, type TestDb } from '../db/testing.js';
-
+import { type TestDb, createTestDb } from '../db/testing.js';
 
 function buildAuth(database: TestDb['db']) {
   return betterAuth({
@@ -205,7 +204,9 @@ describe('bots REST routes', () => {
       headers: { 'content-type': 'application/json', cookie: alice.cookie },
       body: JSON.stringify({ name: 'Alice Bot' }),
     });
-    const { data: { bot } } = await create.json();
+    const {
+      data: { bot },
+    } = await create.json();
 
     // Bob tries to revoke Alice's bot
     const del = await fetch(`${baseUrl}/api/me/bots/${bot.userId}`, {

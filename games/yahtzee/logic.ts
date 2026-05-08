@@ -1,4 +1,10 @@
-import { type ActionResult, type GameContext, type GameLogic, logAction, logSystem } from '@repo/shared';
+import {
+  type ActionResult,
+  type GameContext,
+  type GameLogic,
+  logAction,
+  logSystem,
+} from '@repo/shared';
 import {
   type Action,
   ActionSchema,
@@ -94,9 +100,7 @@ export const logic: GameLogic<YahtzeeState, Action, PlayerView> = {
           rollsLeft: newRollsLeft,
           phase: 'scoring',
         },
-        events: [
-          logAction(playerID, 'log.roll', { dice: newDice.join(' '), rolls: newRollsLeft }),
-        ],
+        events: [logAction(playerID, 'log.roll', { dice: newDice.join(' '), rolls: newRollsLeft })],
       };
     }
 
@@ -193,11 +197,7 @@ export const logic: GameLogic<YahtzeeState, Action, PlayerView> = {
           .map((p) => p.id);
 
         const scoreEvents = [
-          logAction(
-            playerID,
-            score === 0 ? 'log.zeroScore' : 'log.score',
-            { category, score },
-          ),
+          logAction(playerID, score === 0 ? 'log.zeroScore' : 'log.score', { category, score }),
         ];
         if (newYahtzeeBonus > playerState.yahtzeeBonus) {
           scoreEvents.push(logAction(playerID, 'log.yahtzeeBonus'));
@@ -223,11 +223,7 @@ export const logic: GameLogic<YahtzeeState, Action, PlayerView> = {
       }
 
       const scoreEvents = [
-        logAction(
-          playerID,
-          score === 0 ? 'log.zeroScore' : 'log.score',
-          { category, score },
-        ),
+        logAction(playerID, score === 0 ? 'log.zeroScore' : 'log.score', { category, score }),
       ];
       if (newYahtzeeBonus > playerState.yahtzeeBonus) {
         scoreEvents.push(logAction(playerID, 'log.yahtzeeBonus'));

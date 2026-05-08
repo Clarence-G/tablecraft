@@ -28,11 +28,14 @@ interface ApiGame {
 async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   const text = await res.text();
-  if (!res.ok) throw new Error(`${init?.method ?? 'GET'} ${url} -> ${res.status}: ${text.slice(0, 200)}`);
+  if (!res.ok)
+    throw new Error(`${init?.method ?? 'GET'} ${url} -> ${res.status}: ${text.slice(0, 200)}`);
   return JSON.parse(text) as T;
 }
 
-async function getBotToken(name: string): Promise<{ token: string; userId: string; userName: string }> {
+async function getBotToken(
+  name: string,
+): Promise<{ token: string; userId: string; userName: string }> {
   const j = await fetchJson<{ data: { token: string; userId: string; userName: string } }>(
     `${SERVER}/api/admin/token`,
     {
@@ -107,10 +110,7 @@ async function shootGame(
     await ctx.addInitScript(
       ({ userId, userName, token }) => {
         localStorage.setItem('tablecraft:locale', 'zh');
-        localStorage.setItem(
-          'tabletop:identity',
-          JSON.stringify({ userId, userName }),
-        );
+        localStorage.setItem('tabletop:identity', JSON.stringify({ userId, userName }));
         localStorage.setItem('tabletop:adminToken', token);
       },
       { userId: host.userId, userName: host.userName, token: host.token },
@@ -137,13 +137,17 @@ async function shootGame(
     if (ingame) {
       // App sync will navigate to /rooms/:id/play because status='playing'.
       // Wait for the URL to land on /play.
-      await page.waitForURL((u) => u.toString().includes('/play'), { timeout: 20_000 }).catch(() => {});
+      await page
+        .waitForURL((u) => u.toString().includes('/play'), { timeout: 20_000 })
+        .catch(() => {});
       // Wait for the loading spinner to clear.
       await page
         .waitForFunction(
           () => {
             const body = document.body?.innerText || '';
-            return body.length > 20 && !/^[\s·]*加载中/.test(body) && !/^Loading/i.test(body.trim());
+            return (
+              body.length > 20 && !/^[\s·]*加载中/.test(body) && !/^Loading/i.test(body.trim())
+            );
           },
           null,
           { timeout: 20_000 },
@@ -168,7 +172,11 @@ async function shootGame(
   }
 }
 
-async function shootLobby(browser: Browser, vp: { width: number; height: number }, suffix: string): Promise<void> {
+async function shootLobby(
+  browser: Browser,
+  vp: { width: number; height: number },
+  suffix: string,
+): Promise<void> {
   const ctx = await browser.newContext({ viewport: vp });
   const page = await ctx.newPage();
   try {

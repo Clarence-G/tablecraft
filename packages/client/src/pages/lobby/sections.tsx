@@ -22,9 +22,7 @@ import { Eye, Plus, Users } from 'lucide-react';
  */
 function HeroShell({ children }: { children: React.ReactNode }) {
   return (
-    <section
-      className="relative overflow-hidden bg-card border-thick border-foreground rounded-[16px] shadow-card min-h-[200px] sm:min-h-[260px] md:min-h-[320px]"
-    >
+    <section className="relative overflow-hidden bg-card border-thick border-foreground rounded-[16px] shadow-card min-h-[200px] sm:min-h-[260px] md:min-h-[320px]">
       <img
         src="/hero-bg.webp"
         alt=""
@@ -145,7 +143,14 @@ interface RoomCardProps {
 }
 
 /** Horizontally-scrolled room card used in the Active rooms carousel. */
-export function RoomCard({ room, onJoin, onSpectate, joinLabel, spectateLabel, disabled }: RoomCardProps) {
+export function RoomCard({
+  room,
+  onJoin,
+  onSpectate,
+  joinLabel,
+  spectateLabel,
+  disabled,
+}: RoomCardProps) {
   const isPlaying = room.status === 'playing';
   return (
     <div className="snap-start shrink-0 w-[220px] bg-card border-2 border-foreground rounded-[12px] shadow-card p-3 flex flex-col gap-2">

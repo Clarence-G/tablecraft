@@ -6,8 +6,7 @@ import { toNodeHandler } from 'better-auth/node';
 import express, { Router } from 'express';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as schema from '../db/schema.js';
-import { createTestDb, type TestDb } from '../db/testing.js';
-
+import { type TestDb, createTestDb } from '../db/testing.js';
 
 function buildAuth(database: TestDb['db']) {
   return betterAuth({
@@ -380,7 +379,7 @@ describe('friends REST routes', () => {
       headers: { cookie: alice.cookie },
     });
     expect(delResp.status).toBe(200);
-    expect((await db.select().from(schema.friendships))).toHaveLength(0);
+    expect(await db.select().from(schema.friendships)).toHaveLength(0);
   });
 
   // ---- Bug 2 regression: decline → re-request creates a new pending row ----

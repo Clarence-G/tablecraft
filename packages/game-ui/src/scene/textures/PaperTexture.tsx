@@ -10,24 +10,26 @@ function perceivedLuminance(input?: string): number {
   if (!input) return 1;
   const s = input.trim().toLowerCase();
 
-  let r = 255, g = 255, b = 255;
+  let r = 255;
+  let g = 255;
+  let b = 255;
   if (s.startsWith('#')) {
     const h = s.slice(1);
     if (h.length === 3) {
-      r = parseInt(h[0] + h[0], 16);
-      g = parseInt(h[1] + h[1], 16);
-      b = parseInt(h[2] + h[2], 16);
+      r = Number.parseInt(h[0] + h[0], 16);
+      g = Number.parseInt(h[1] + h[1], 16);
+      b = Number.parseInt(h[2] + h[2], 16);
     } else if (h.length === 6) {
-      r = parseInt(h.slice(0, 2), 16);
-      g = parseInt(h.slice(2, 4), 16);
-      b = parseInt(h.slice(4, 6), 16);
+      r = Number.parseInt(h.slice(0, 2), 16);
+      g = Number.parseInt(h.slice(2, 4), 16);
+      b = Number.parseInt(h.slice(4, 6), 16);
     }
   } else {
     const m = s.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/);
     if (m) {
-      r = parseInt(m[1], 10);
-      g = parseInt(m[2], 10);
-      b = parseInt(m[3], 10);
+      r = Number.parseInt(m[1], 10);
+      g = Number.parseInt(m[2], 10);
+      b = Number.parseInt(m[3], 10);
     }
   }
 
@@ -68,14 +70,14 @@ export function PaperTexture({ color, accent: _accent }: TextureProps) {
 
   // High-frequency dust noise (paper "grain") -- same tint, lower alpha.
   const dustTint = isLight
-    ? { r: 0.18, g: 0.12, b: 0.05, a: 0.10 }
+    ? { r: 0.18, g: 0.12, b: 0.05, a: 0.1 }
     : { r: 0.98, g: 0.92, b: 0.78, a: 0.07 };
 
   // Foxing pool color -- organic age spots. Deep sepia on light paper,
   // soft gold-cream on dark paper so it reads as "glow" not "stain".
   const foxingTint = isLight
-    ? { r: 0.55, g: 0.32, b: 0.10, a: 0.24 }
-    : { r: 0.88, g: 0.74, b: 0.50, a: 0.16 };
+    ? { r: 0.55, g: 0.32, b: 0.1, a: 0.24 }
+    : { r: 0.88, g: 0.74, b: 0.5, a: 0.16 };
 
   // Edge vignette: warm foxed border on light paper, soft darkness on dark paper.
   const vignetteStops = isLight

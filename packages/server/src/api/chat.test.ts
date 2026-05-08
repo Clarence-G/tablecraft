@@ -2,8 +2,8 @@ import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import express from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type TestDb, createTestDb } from '../db/testing.js';
 import type { GameRoom } from '../engine/GameRoom.js';
-import { createTestDb, type TestDb } from '../db/testing.js';
 
 describe('chat REST routes', () => {
   let testDb: TestDb;
@@ -14,7 +14,11 @@ describe('chat REST routes', () => {
   let roomId: string;
   let room: GameRoom;
   let emitted: Array<{ event: string; data: unknown }>;
-  let mgr: { destroy: () => void; createRoom: (...a: any[]) => GameRoom; onPlayerJoin: (r: string, u: string) => void };
+  let mgr: {
+    destroy: () => void;
+    createRoom: (...a: any[]) => GameRoom;
+    onPlayerJoin: (r: string, u: string) => void;
+  };
   let tokenStoreRef: { generate: (name: string) => Promise<{ token: string; userId: string }> };
 
   beforeEach(async () => {

@@ -27,14 +27,16 @@ export function useRoom(socket: AppSocket | null) {
           return;
         }
         // socket.io ack timeout: if server doesn't respond in 10s, reject.
-        socket.timeout(10000).emit('room:create', gameId, playerName, config, (timeoutErr, result) => {
-          if (timeoutErr) {
-            reject(new Error('Server did not respond. Please try again.'));
-            return;
-          }
-          if (result.ok) resolve(result.data);
-          else reject(new Error(result.error));
-        });
+        socket
+          .timeout(10000)
+          .emit('room:create', gameId, playerName, config, (timeoutErr, result) => {
+            if (timeoutErr) {
+              reject(new Error('Server did not respond. Please try again.'));
+              return;
+            }
+            if (result.ok) resolve(result.data);
+            else reject(new Error(result.error));
+          });
       });
     },
     [socket],

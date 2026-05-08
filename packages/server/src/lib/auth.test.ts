@@ -1,22 +1,22 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EmailMessage, EmailTransport } from './email.js';
 import * as schema from '../db/schema.js';
-import { createTestDb, type TestDb } from '../db/testing.js';
-
+import { type TestDb, createTestDb } from '../db/testing.js';
+import type { EmailMessage, EmailTransport } from './email.js';
 
 describe('BetterAuth integration', () => {
   let auth: ReturnType<typeof createTestAuth>;
   let db: TestDb['db'];
   let testDb: TestDb;
 
-  function createTestAuth(
-    database: TestDb['db'],
-    transport?: EmailTransport,
-  ) {
+  function createTestAuth(database: TestDb['db'], transport?: EmailTransport) {
     const sendResetPassword = transport
-      ? async ({ user, url, token }: { user: { email: string; name?: string | null }; url: string; token: string }) => {
+      ? async ({
+          user,
+          url,
+          token,
+        }: { user: { email: string; name?: string | null }; url: string; token: string }) => {
           await transport.send({
             to: user.email,
             subject: 'TableCraft — Reset your password',

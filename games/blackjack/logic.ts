@@ -1,4 +1,10 @@
-import { type ActionResult, type GameContext, type GameLogic, logAction, logSystem } from '@repo/shared';
+import {
+  type ActionResult,
+  type GameContext,
+  type GameLogic,
+  logAction,
+  logSystem,
+} from '@repo/shared';
 import {
   type Action,
   ActionSchema,
@@ -253,7 +259,11 @@ export const logic: GameLogic<BlackjackState, Action, PlayerView> = {
         return {
           ok: true,
           state: next,
-          events: [...hitEvents, logSystem('log.win', { actorId: next.winner! }), { type: 'END_GAME', rankings }],
+          events: [
+            ...hitEvents,
+            logSystem('log.win', { actorId: next.winner! }),
+            { type: 'END_GAME', rankings },
+          ],
         };
       }
 
@@ -269,7 +279,11 @@ export const logic: GameLogic<BlackjackState, Action, PlayerView> = {
         return {
           ok: true,
           state: next,
-          events: [logAction(playerID, 'log.stand'), logSystem('log.win', { actorId: next.winner! }), { type: 'END_GAME', rankings }],
+          events: [
+            logAction(playerID, 'log.stand'),
+            logSystem('log.win', { actorId: next.winner! }),
+            { type: 'END_GAME', rankings },
+          ],
         };
       }
 
@@ -307,7 +321,11 @@ export const logic: GameLogic<BlackjackState, Action, PlayerView> = {
         return {
           ok: true,
           state: next,
-          events: [...ddEvents, logSystem('log.win', { actorId: next.winner! }), { type: 'END_GAME', rankings }],
+          events: [
+            ...ddEvents,
+            logSystem('log.win', { actorId: next.winner! }),
+            { type: 'END_GAME', rankings },
+          ],
         };
       }
 

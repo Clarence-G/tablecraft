@@ -220,11 +220,7 @@ function prependLogs(
     const winner = (result.state as SplendorState).winner;
     return {
       ...result,
-      events: [
-        ...logs,
-        logSystem('log.win', { actorId: winner ?? undefined }),
-        ...events,
-      ],
+      events: [...logs, logSystem('log.win', { actorId: winner ?? undefined }), ...events],
     };
   }
   return { ...result, events: [...logs, ...events] };

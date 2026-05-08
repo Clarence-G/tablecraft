@@ -103,27 +103,42 @@ export class RoomManager {
 
   /** Load all playing/waiting rooms from DB into memory. Called once on boot. */
   async hydrate(registry: Record<string, ServerGamePlugin>): Promise<number> {
-    const rows = await db.select().from(rooms).where(
-      or(eq(rooms.status, 'playing'), eq(rooms.status, 'waiting')),
-    );
+    const rows = await db
+      .select()
+      .from(rooms)
+      .where(or(eq(rooms.status, 'playing'), eq(rooms.status, 'waiting')));
     let count = 0;
     for (const row of rows) {
       try {
         if (!row.stateJson) continue;
         const plugin = registry[row.gameId];
         if (!plugin) {
-          logger.warn({ roomId: row.id, gameId: row.gameId, mod: 'room-manager' }, 'hydrate: unknown gameId, skipping');
+          logger.warn(
+            { roomId: row.id, gameId: row.gameId, mod: 'room-manager' },
+            'hydrate: unknown gameId, skipping',
+          );
           continue;
         }
         const state: unknown = JSON.parse(row.stateJson);
-        const players = await db.select().from(roomPlayers)
+        const players = await db
+          .select()
+          .from(roomPlayers)
           .where(eq(roomPlayers.roomId, row.id))
           .orderBy(roomPlayers.seatIndex);
-        const recentChat = await db.select().from(chatMessages)
+        const recentChat = await db
+          .select()
+          .from(chatMessages)
           .where(eq(chatMessages.roomId, row.id))
           .orderBy(desc(chatMessages.createdAt))
           .limit(50);
-        const room = GameRoom.fromPersisted(row, state, players, recentChat.reverse(), plugin.meta, plugin.logic);
+        const room = GameRoom.fromPersisted(
+          row,
+          state,
+          players,
+          recentChat.reverse(),
+          plugin.meta,
+          plugin.logic,
+        );
         this.rooms.set(row.id, room);
         count++;
       } catch (err) {

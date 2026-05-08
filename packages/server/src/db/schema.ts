@@ -217,7 +217,9 @@ export const pointsLedger = pgTable(
 export const chatMessages = pgTable(
   'chat_messages',
   {
-    id: text('id').primaryKey().$defaultFn(() => nanoid()),
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => nanoid()),
     roomId: text('room_id').notNull(),
     userId: text('user_id').notNull(),
     userName: text('user_name').notNull(),
@@ -236,13 +238,15 @@ export const chatMessages = pgTable(
 export const reports = pgTable(
   'reports',
   {
-    id: text('id').primaryKey().$defaultFn(() => nanoid()),
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => nanoid()),
     reporterId: text('reporter_id').notNull(),
     targetUserId: text('target_user_id').notNull(),
     roomId: text('room_id'),
-    reason: text('reason').notNull(),   // 'harassment' | 'cheating' | 'spam' | 'other'
-    detail: text('detail'),              // free-form user-provided text, max 500 chars
-    status: text('status').notNull().default('pending'),  // 'pending' | 'reviewed' | 'actioned' | 'dismissed'
+    reason: text('reason').notNull(), // 'harassment' | 'cheating' | 'spam' | 'other'
+    detail: text('detail'), // free-form user-provided text, max 500 chars
+    status: text('status').notNull().default('pending'), // 'pending' | 'reviewed' | 'actioned' | 'dismissed'
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
     reviewedAt: timestamp('reviewed_at', { withTimezone: true, mode: 'date' }),
   },
@@ -277,10 +281,10 @@ export const userBlocks = pgTable(
 export const friendships = pgTable(
   'friendships',
   {
-    userA: text('user_a').notNull(),    // lexicographically smaller id
-    userB: text('user_b').notNull(),    // lexicographically larger id
-    requestedBy: text('requested_by').notNull(),  // either userA or userB
-    status: text('status').notNull().default('pending'),  // 'pending' | 'accepted'
+    userA: text('user_a').notNull(), // lexicographically smaller id
+    userB: text('user_b').notNull(), // lexicographically larger id
+    requestedBy: text('requested_by').notNull(), // either userA or userB
+    status: text('status').notNull().default('pending'), // 'pending' | 'accepted'
     createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' }).notNull().defaultNow(),
     acceptedAt: timestamp('accepted_at', { withTimezone: true, mode: 'date' }),
   },

@@ -18,11 +18,13 @@ export async function dropSocket(page: Page, timeoutMs = 3000): Promise<void> {
   );
   await page.evaluate(() => {
     const s = (window as unknown as { __socket?: { disconnect(): unknown } }).__socket;
-    if (!s) throw new Error('window.__socket is not exposed — client must be built in dev/test mode');
+    if (!s)
+      throw new Error('window.__socket is not exposed — client must be built in dev/test mode');
     s.disconnect();
   });
   await page.waitForFunction(
-    () => (window as unknown as { __socket?: { connected: boolean } }).__socket?.connected === false,
+    () =>
+      (window as unknown as { __socket?: { connected: boolean } }).__socket?.connected === false,
     undefined,
     { timeout: timeoutMs },
   );

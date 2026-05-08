@@ -43,7 +43,9 @@ export function ForgotPassword({ onBack }: ForgotPasswordProps) {
           {t('auth.backToLogin')}
         </button>
         <div className="bg-card border-2 border-border rounded-xl shadow-[4px_4px_0_var(--border)] p-6">
-          <h1 className="text-xl font-bold mb-2 text-foreground">{t('auth.forgotPasswordTitle')}</h1>
+          <h1 className="text-xl font-bold mb-2 text-foreground">
+            {t('auth.forgotPasswordTitle')}
+          </h1>
           <p className="text-sm text-muted-foreground mb-4">{t('auth.forgotPasswordDesc')}</p>
 
           {submitted ? (

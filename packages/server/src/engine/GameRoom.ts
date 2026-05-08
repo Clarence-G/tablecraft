@@ -15,8 +15,8 @@ import { eq } from 'drizzle-orm';
 import { customAlphabet, nanoid } from 'nanoid';
 import { db } from '../db/index.js';
 import { rooms } from '../db/schema.js';
-import { logger } from '../lib/logger.js';
 import { recordPoints } from '../lib/ledger.js';
+import { logger } from '../lib/logger.js';
 import { RandomProvider } from './RandomProvider';
 import { TimerManager } from './TimerManager';
 
@@ -101,10 +101,24 @@ export class GameRoom {
 
   /** Restore a room from a persisted DB row + related records. */
   static fromPersisted(
-    row: { id: string; gameId: string; status: string; configJson: string | null; seed: string | null; createdAt: Date | null; finishedAt: Date | null },
+    row: {
+      id: string;
+      gameId: string;
+      status: string;
+      configJson: string | null;
+      seed: string | null;
+      createdAt: Date | null;
+      finishedAt: Date | null;
+    },
     state: unknown,
     players: Array<{ userId: string; seatIndex: number; ready: boolean }>,
-    chatMessages: Array<{ id: string; userId: string; userName: string; text: string; createdAt: Date | null }>,
+    chatMessages: Array<{
+      id: string;
+      userId: string;
+      userName: string;
+      text: string;
+      createdAt: Date | null;
+    }>,
     meta: GameMeta,
     logic: GameLogic,
   ): GameRoom {
@@ -573,7 +587,8 @@ export class GameRoom {
   async persistState(): Promise<void> {
     if (this.state == null) return;
     try {
-      await db.update(rooms)
+      await db
+        .update(rooms)
         .set({
           stateJson: JSON.stringify(this.state),
           status: this.status,
@@ -598,7 +613,10 @@ export class GameRoom {
       try {
         result = this.logic.onPlayerDisconnect(this.state, userId, this.ctx);
       } catch (e) {
-        logger.error({ err: e, roomId: this.roomId, userId, mod: 'afk' }, 'onPlayerDisconnect threw');
+        logger.error(
+          { err: e, roomId: this.roomId, userId, mod: 'afk' },
+          'onPlayerDisconnect threw',
+        );
         return { stateChanged: false };
       }
       if (!result.ok) return { stateChanged: false };

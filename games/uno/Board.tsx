@@ -6,7 +6,15 @@ import type { BoardProps } from '@repo/shared';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type Action, COLORS, UNO_COLORS, type PlayerView, type UnoColor, deserializeCard, getCardAriaLabel } from './shared';
+import {
+  type Action,
+  COLORS,
+  type PlayerView,
+  UNO_COLORS,
+  type UnoColor,
+  deserializeCard,
+  getCardAriaLabel,
+} from './shared';
 
 // ---- Card color styling ----
 
@@ -353,7 +361,8 @@ export function Board({
             <div
               className="absolute -top-1 -left-1 w-14 h-20 sm:w-20 sm:h-28 rounded-[10px] border-2 border-[hsl(var(--shadow))]"
               style={{
-                background: 'linear-gradient(160deg, #2a1810 0%, hsl(var(--shadow)) 60%, #0d0805 100%)',
+                background:
+                  'linear-gradient(160deg, #2a1810 0%, hsl(var(--shadow)) 60%, #0d0805 100%)',
                 boxShadow: '0 2px 0 -1px rgba(26,17,8,0.5)',
               }}
               aria-hidden
@@ -369,7 +378,8 @@ export function Board({
                   : 'cursor-default'
               }`}
               style={{
-                background: 'linear-gradient(160deg, #2a1810 0%, hsl(var(--shadow)) 60%, #0d0805 100%)',
+                background:
+                  'linear-gradient(160deg, #2a1810 0%, hsl(var(--shadow)) 60%, #0d0805 100%)',
                 boxShadow: '0 4px 0 -1px rgba(26,17,8,0.55), 0 8px 12px -4px rgba(0,0,0,0.35)',
               }}
             >
@@ -397,7 +407,7 @@ export function Board({
             <AnimatePresence mode="popLayout" initial={false}>
               {topCard !== '' && (
                 <motion.div
-                  key={topCard + '|' + state.activeColor}
+                  key={`${topCard}|${state.activeColor}`}
                   className="absolute inset-0"
                   initial={
                     reduced
@@ -408,7 +418,11 @@ export function Board({
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: reduced ? 0 : 0.35, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <UnoCardFace serialized={topCard} size="normal" activeColor={topCardIsWild ? state.activeColor : undefined} />
+                  <UnoCardFace
+                    serialized={topCard}
+                    size="normal"
+                    activeColor={topCardIsWild ? state.activeColor : undefined}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>

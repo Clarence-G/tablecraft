@@ -7,9 +7,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   type Action,
+  POKER_CHIP_COLORS,
   type PlayerInfo,
   type PlayerView,
-  POKER_CHIP_COLORS,
   SUIT_PATHS,
   displayRank,
   isRedSuit,
@@ -128,7 +128,9 @@ function PlayerSeat({
           </span>
         )}
         {player.currentBet > 0 && (
-          <span className={`text-xs font-semibold ${POKER_CHIP_COLORS.gold.textClass} inline-flex items-center gap-1`}>
+          <span
+            className={`text-xs font-semibold ${POKER_CHIP_COLORS.gold.textClass} inline-flex items-center gap-1`}
+          >
             <span
               aria-hidden
               className={`inline-block w-2 h-2 rounded-full bg-[var(--scene-accent,#d4a056)] ring-1 ${POKER_CHIP_COLORS.gold.ringClass}`}

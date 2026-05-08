@@ -1,8 +1,8 @@
 import { GameChatProvider } from '@repo/game-ui/chat';
-import { useEffect, useState } from 'react';
-import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import type { ClientEvents, ServerEvents } from '@repo/shared';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import type { Socket } from 'socket.io-client';
 import { useChat } from './hooks/useChat';
 import { useGame } from './hooks/useGame';
@@ -165,10 +165,7 @@ export function App() {
         <Route
           path="/reset-password"
           element={
-            <ResetPassword
-              onSuccess={() => navigate('/login')}
-              onBack={() => navigate('/login')}
-            />
+            <ResetPassword onSuccess={() => navigate('/login')} onBack={() => navigate('/login')} />
           }
         />
         <Route
@@ -231,11 +228,7 @@ export function App() {
         <Route
           path="/rooms/:roomId/watch"
           element={
-            <SpectatorRoute
-              userId={actorUserId}
-              socket={socket}
-              onLeave={() => navigate('/')}
-            />
+            <SpectatorRoute userId={actorUserId} socket={socket} onLeave={() => navigate('/')} />
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />

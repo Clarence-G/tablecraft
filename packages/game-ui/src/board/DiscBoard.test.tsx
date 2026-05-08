@@ -14,11 +14,7 @@ function makeBoard(fills: { row: number; col: number; player: 1 | 2 }[]): number
   return board;
 }
 
-function renderBoard(
-  board: number[],
-  canPlay: boolean,
-  onColumnClick = vi.fn(),
-) {
+function renderBoard(board: number[], canPlay: boolean, onColumnClick = vi.fn()) {
   return render(
     <DiscBoard
       rows={ROWS}

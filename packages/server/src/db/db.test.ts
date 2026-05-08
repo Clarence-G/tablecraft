@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as schema from './schema';
-import { createTestDb, type TestDb } from './testing';
+import { type TestDb, createTestDb } from './testing';
 
 describe('db: Postgres + drizzle pg-core schema', () => {
   let testDb: TestDb;

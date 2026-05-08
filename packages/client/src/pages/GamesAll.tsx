@@ -4,7 +4,7 @@ import { ArrowLeft, Clock, Search, Users } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { clientRegistry } from '../../../../games/client-registry';
-import { allTags, buildTagTranslation, TAG_COLORS } from '../lib/tags';
+import { TAG_COLORS, allTags, buildTagTranslation } from '../lib/tags';
 
 interface GamesAllProps {
   userName: string;

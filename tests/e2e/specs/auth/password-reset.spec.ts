@@ -1,6 +1,13 @@
-import { test, expect } from '@playwright/test';
-import { signUpEmail, signInEmail, signOut, requestPasswordReset, resetPassword, E2EAuthError } from '../../helpers/auth';
+import { expect, test } from '@playwright/test';
 import { resetDb } from '../../fixtures/db-reset';
+import {
+  E2EAuthError,
+  requestPasswordReset,
+  resetPassword,
+  signInEmail,
+  signOut,
+  signUpEmail,
+} from '../../helpers/auth';
 
 // Previously blocked by a server bug where POST /api/auth/sign-up/email returned
 // HTTP 500 under pglite. Fixed in commit 77e2c07 (feat(stage1.5): migrate
@@ -26,7 +33,12 @@ test.describe('Password reset flow', () => {
     const oldPassword = 'oldPassword1';
     const newPassword = 'newPassword2';
 
-    await signUpEmail(page, { email, password: oldPassword, name: 'ResetUser', serverUrl: server.serverUrl });
+    await signUpEmail(page, {
+      email,
+      password: oldPassword,
+      name: 'ResetUser',
+      serverUrl: server.serverUrl,
+    });
     await signOut(page, server.serverUrl);
 
     const token = await requestPasswordReset(page, email, server.logPath, {
@@ -52,7 +64,12 @@ test.describe('Password reset flow', () => {
     const oldPassword = 'oldPass11';
     const newPassword = 'newPass22';
 
-    await signUpEmail(page, { email, password: oldPassword, name: 'OldPassUser', serverUrl: server.serverUrl });
+    await signUpEmail(page, {
+      email,
+      password: oldPassword,
+      name: 'OldPassUser',
+      serverUrl: server.serverUrl,
+    });
     await signOut(page, server.serverUrl);
 
     const token = await requestPasswordReset(page, email, server.logPath, {

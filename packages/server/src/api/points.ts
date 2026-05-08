@@ -231,7 +231,11 @@ export function registerPointsRoutes(router: Router): void {
     const period = rawPeriod === 'week' || rawPeriod === 'day' ? rawPeriod : 'all';
     const now = Date.now();
     const sinceMs =
-      period === 'week' ? now - 7 * 24 * 60 * 60 * 1000 : period === 'day' ? now - 24 * 60 * 60 * 1000 : null;
+      period === 'week'
+        ? now - 7 * 24 * 60 * 60 * 1000
+        : period === 'day'
+          ? now - 24 * 60 * 60 * 1000
+          : null;
     const since = sinceMs !== null ? new Date(sinceMs) : null;
 
     const conditions = [isNotNull(pointsLedger.userId)];
@@ -257,7 +261,9 @@ export function registerPointsRoutes(router: Router): void {
         total: pointsSubquery.total,
         isBot: sql<boolean>`(${botTokens.userId} IS NOT NULL)`,
         // Scalar subquery for owner name avoids a second alias on the user table
-        ownerName: sql<string | null>`(SELECT name FROM "user" WHERE id = ${botTokens.ownerUserId})`,
+        ownerName: sql<
+          string | null
+        >`(SELECT name FROM "user" WHERE id = ${botTokens.ownerUserId})`,
       })
       .from(pointsSubquery)
       .leftJoin(user, eq(user.id, pointsSubquery.userId))

@@ -7,8 +7,7 @@ import express from 'express';
 import { Router } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as schema from '../db/schema.js';
-import { createTestDb, type TestDb } from '../db/testing.js';
-
+import { type TestDb, createTestDb } from '../db/testing.js';
 
 /**
  * End-to-end style: real HTTP server with BetterAuth mounted on /api/auth,
@@ -374,11 +373,7 @@ describe('points REST routes', () => {
     ]);
 
     // 2. Guest signs up.
-    const { cookie, userId } = await signUp(
-      'smoke@e.com',
-      'correct-horse-battery-staple',
-      'Smoke',
-    );
+    const { cookie, userId } = await signUp('smoke@e.com', 'correct-horse-battery-staple', 'Smoke');
 
     // 3. Sign-up-time claim merges the guest rows onto the new user.
     const claim = await fetch(`${baseUrl}/api/me/claim-guest`, {
@@ -432,14 +427,42 @@ describe('points REST routes', () => {
 
     // Sorted by points desc: Alice(20), B1(10), B2(5), Unowned(3)
     const [first, second, third, fourth] = body.data.entries;
-    expect(first).toMatchObject({ rank: 1, userId: alice.userId, points: 20, isBot: false, ownerName: null });
-    expect(second).toMatchObject({ rank: 2, userId: botB1UserId, points: 10, isBot: true, ownerName: 'Alice' });
-    expect(third).toMatchObject({ rank: 3, userId: botB2UserId, points: 5, isBot: true, ownerName: 'Bob' });
-    expect(fourth).toMatchObject({ rank: 4, userId: botUnownedId, points: 3, isBot: true, ownerName: null });
+    expect(first).toMatchObject({
+      rank: 1,
+      userId: alice.userId,
+      points: 20,
+      isBot: false,
+      ownerName: null,
+    });
+    expect(second).toMatchObject({
+      rank: 2,
+      userId: botB1UserId,
+      points: 10,
+      isBot: true,
+      ownerName: 'Alice',
+    });
+    expect(third).toMatchObject({
+      rank: 3,
+      userId: botB2UserId,
+      points: 5,
+      isBot: true,
+      ownerName: 'Bob',
+    });
+    expect(fourth).toMatchObject({
+      rank: 4,
+      userId: botUnownedId,
+      points: 3,
+      isBot: true,
+      ownerName: null,
+    });
   });
 
   it('GET /api/me returns bots list for logged-in user', async () => {
-    const { cookie, userId } = await signUp('alice@example.com', 'correct-horse-battery-staple', 'Alice');
+    const { cookie, userId } = await signUp(
+      'alice@example.com',
+      'correct-horse-battery-staple',
+      'Alice',
+    );
 
     // Seed an owned bot
     await db.insert(schema.botTokens).values({

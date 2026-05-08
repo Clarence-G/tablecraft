@@ -17,7 +17,14 @@ interface RoomsAllProps {
   onSpectateRoom: (roomId: string) => void;
 }
 
-export function RoomsAll({ socket, listRooms, onBack, onGoToAllGames, onJoinRoom, onSpectateRoom }: RoomsAllProps) {
+export function RoomsAll({
+  socket,
+  listRooms,
+  onBack,
+  onGoToAllGames,
+  onJoinRoom,
+  onSpectateRoom,
+}: RoomsAllProps) {
   const { t, i18n } = useTranslation('common');
   const gt = (id: string, key: string) => i18n.t(key, { ns: id });
 
@@ -75,9 +82,9 @@ export function RoomsAll({ socket, listRooms, onBack, onGoToAllGames, onJoinRoom
     }
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: games list and gt are stable; intentionally re-memoize only on locale change
   const gameOptions = useMemo(
     () => games.map((g) => ({ id: g.meta.id, label: String(gt(g.meta.id, 'name')) })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [i18n.language],
   );
 

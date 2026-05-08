@@ -82,9 +82,12 @@ async function getBot(name: string): Promise<{ token: string; userId: string }> 
   // key on first render. With the bot's userId, the socket handshake claims
   // to be an in-room player, so /play stops redirecting us to the lobby and
   // we exercise the exact GameRoute render path that users hit.
-  await ctx.addInitScript((identity: { userId: string; userName: string }) => {
-    localStorage.setItem('tabletop:identity', JSON.stringify(identity));
-  }, { userId: host.userId, userName: 'MobileHost3' });
+  await ctx.addInitScript(
+    (identity: { userId: string; userName: string }) => {
+      localStorage.setItem('tabletop:identity', JSON.stringify(identity));
+    },
+    { userId: host.userId, userName: 'MobileHost3' },
+  );
 
   const page = await ctx.newPage();
 

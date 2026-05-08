@@ -78,48 +78,51 @@ export function GameLogProvider({
     });
   }, []);
 
-  const ingestNotifications = useCallback((notifications: unknown[]) => {
-    if (!Array.isArray(notifications) || notifications.length === 0) return;
-    const fresh: PushLogEntry[] = [];
-    for (const n of notifications) {
-      // Only ingest entries on the 'log' sub-channel. Game-specific UI
-      // payloads (e.g. private card reveals) flow through the same
-      // `notifications` array but are consumed by the Board component.
-      if (n === null || typeof n !== 'object') continue;
-      const record = n as Record<string, unknown>;
-      if (record.channel !== 'log') continue;
-      if (typeof record.messageKey !== 'string') continue;
+  const ingestNotifications = useCallback(
+    (notifications: unknown[]) => {
+      if (!Array.isArray(notifications) || notifications.length === 0) return;
+      const fresh: PushLogEntry[] = [];
+      for (const n of notifications) {
+        // Only ingest entries on the 'log' sub-channel. Game-specific UI
+        // payloads (e.g. private card reveals) flow through the same
+        // `notifications` array but are consumed by the Board component.
+        if (n === null || typeof n !== 'object') continue;
+        const record = n as Record<string, unknown>;
+        if (record.channel !== 'log') continue;
+        if (typeof record.messageKey !== 'string') continue;
 
-      // Dedupe by object identity so repeated re-renders of the same
-      // notifications array don't double-append.
-      if (seenNotifications.current.has(n as object)) continue;
-      seenNotifications.current.add(n as object);
+        // Dedupe by object identity so repeated re-renders of the same
+        // notifications array don't double-append.
+        if (seenNotifications.current.has(n as object)) continue;
+        seenNotifications.current.add(n as object);
 
-      const kindRaw = typeof record.kind === 'string' ? record.kind : 'system';
-      const kind: PushLogEntry['kind'] =
-        kindRaw === 'action' || kindRaw === 'info' ? kindRaw : 'system';
-      const messageParams =
-        record.messageParams && typeof record.messageParams === 'object'
-          ? (record.messageParams as Record<string, string | number>)
-          : undefined;
-      const actorId = typeof record.actorId === 'string' ? record.actorId : undefined;
-      fresh.push({
-        kind,
-        actorId,
-        messageKey: qualifyMessageKey(record.messageKey, defaultNs),
-        messageParams,
-      });
-    }
-    if (fresh.length === 0) return;
-    setEntries((prev) => {
-      const appended = [...prev];
-      for (const entry of fresh) {
-        appended.push({ id: nextId(seqRef.current), at: Date.now(), ...entry });
+        const kindRaw = typeof record.kind === 'string' ? record.kind : 'system';
+        const kind: PushLogEntry['kind'] =
+          kindRaw === 'action' || kindRaw === 'info' ? kindRaw : 'system';
+        const messageParams =
+          record.messageParams && typeof record.messageParams === 'object'
+            ? (record.messageParams as Record<string, string | number>)
+            : undefined;
+        const actorId = typeof record.actorId === 'string' ? record.actorId : undefined;
+        fresh.push({
+          kind,
+          actorId,
+          messageKey: qualifyMessageKey(record.messageKey, defaultNs),
+          messageParams,
+        });
       }
-      const overflow = appended.length - MAX_ENTRIES;
-      return overflow > 0 ? appended.slice(overflow) : appended;
-    });
-  }, [defaultNs]);
+      if (fresh.length === 0) return;
+      setEntries((prev) => {
+        const appended = [...prev];
+        for (const entry of fresh) {
+          appended.push({ id: nextId(seqRef.current), at: Date.now(), ...entry });
+        }
+        const overflow = appended.length - MAX_ENTRIES;
+        return overflow > 0 ? appended.slice(overflow) : appended;
+      });
+    },
+    [defaultNs],
+  );
 
   const clear = useCallback(() => setEntries([]), []);
 

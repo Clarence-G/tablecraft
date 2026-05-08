@@ -73,11 +73,7 @@ export function GameScene({ scene, className, children }: GameSceneProps) {
       className={`relative flex-1 min-h-0 flex flex-col items-stretch overflow-hidden ${className ?? ''}`}
       style={style}
     >
-      <TextureLayer
-        kind={texture}
-        color={surface.color ?? 'transparent'}
-        accent={surface.accent}
-      />
+      <TextureLayer kind={texture} color={surface.color ?? 'transparent'} accent={surface.accent} />
       {ambienceBackground && (
         <div
           aria-hidden="true"

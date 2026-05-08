@@ -1,11 +1,11 @@
-import { Button } from '@/components/ui/button';
 import { GameCoverImage } from '@/components/GameCoverImage';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
+import { Button } from '@/components/ui/button';
 import { Check, Clock, Copy, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { useRoom } from '../hooks/useRoom';
 import { clientRegistry } from '../../../../games/client-registry';
+import type { useRoom } from '../hooks/useRoom';
 import { TAG_COLORS } from '../lib/tags';
 
 type RoomCtx = ReturnType<typeof useRoom>;
@@ -18,12 +18,18 @@ interface RoomPageProps {
   onLeave: () => void;
 }
 
-export function Room({ roomId, userId, roomCtx, onGameStart: _onGameStart, onLeave }: RoomPageProps) {
+export function Room({
+  roomId,
+  userId,
+  roomCtx,
+  onGameStart: _onGameStart,
+  onLeave,
+}: RoomPageProps) {
   const { t, i18n } = useTranslation('common');
   // Per-game i18n namespace (each game registers its own ns = gameId).
   const gt = (ns: string, key: string, fallback?: string) => {
     const val = i18n.t(key, { ns, defaultValue: fallback ?? '' });
-    return typeof val === 'string' ? val : fallback ?? '';
+    return typeof val === 'string' ? val : (fallback ?? '');
   };
   const { room, ready, start, leave, restart } = roomCtx;
 
@@ -54,13 +60,11 @@ export function Room({ roomId, userId, roomCtx, onGameStart: _onGameStart, onLea
 
   const gamePlugin = clientRegistry[room.gameId];
   const meta = gamePlugin?.meta;
-  const gameName = meta ? (gt(meta.id, 'name', meta.name) || meta.name) : room.gameId;
+  const gameName = meta ? gt(meta.id, 'name', meta.name) || meta.name : room.gameId;
   const gameDescription = meta
     ? gt(meta.id, 'description', meta.description ?? '') || meta.description
     : '';
-  const gameRules = meta
-    ? gt(meta.id, 'rules', meta.rules ?? '') || meta.rules
-    : '';
+  const gameRules = meta ? gt(meta.id, 'rules', meta.rules ?? '') || meta.rules : '';
   const durationMinutes = meta?.estimatedMinutes;
   const tags = meta?.tags ?? [];
 
@@ -90,7 +94,10 @@ export function Room({ roomId, userId, roomCtx, onGameStart: _onGameStart, onLea
             {copied ? (
               <Check className="w-4 h-4 text-success" aria-hidden="true" />
             ) : (
-              <Copy className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" aria-hidden="true" />
+              <Copy
+                className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors"
+                aria-hidden="true"
+              />
             )}
           </button>
         </div>
@@ -130,7 +137,10 @@ export function Room({ roomId, userId, roomCtx, onGameStart: _onGameStart, onLea
               <span className="inline-flex items-center gap-1.5 bg-card border-2 border-foreground rounded-full px-3 py-1 text-sm font-medium shadow-[#3d2e1e_-2px_2px_0px]">
                 <Users className="w-3.5 h-3.5" />
                 {room.minPlayers === room.maxPlayers
-                  ? t('room.playerCountExact', { n: room.minPlayers, defaultValue: `${room.minPlayers} 人` })
+                  ? t('room.playerCountExact', {
+                      n: room.minPlayers,
+                      defaultValue: `${room.minPlayers} 人`,
+                    })
                   : t('room.playerCountRange', {
                       min: room.minPlayers,
                       max: room.maxPlayers,

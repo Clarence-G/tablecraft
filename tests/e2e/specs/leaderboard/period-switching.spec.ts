@@ -1,6 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import zh from '../../../../packages/client/src/i18n/locales/zh/common.json' assert {
+  type: 'json',
+};
 import { signUpEmail } from '../../helpers/auth';
-import zh from '../../../../packages/client/src/i18n/locales/zh/common.json' assert { type: 'json' };
 
 const SERVER_URL = 'http://localhost:3001';
 
@@ -22,15 +24,11 @@ test.describe('Leaderboard — full page', () => {
   test('page is publicly accessible without authentication', async ({ page }) => {
     // No sign-in — visit directly as a guest
     await page.goto('/leaderboard');
-    await expect(
-      page.locator('[data-testid="leaderboard-page"]'),
-    ).toBeVisible({ timeout: 8000 });
+    await expect(page.locator('[data-testid="leaderboard-page"]')).toBeVisible({ timeout: 8000 });
     // Title present
     await expect(page.locator(`h1:has-text("${zh.leaderboard.title}")`)).toBeVisible();
     // Overall tab visible (the default)
-    await expect(
-      page.getByRole('button', { name: zh.leaderboard.overall }),
-    ).toBeVisible();
+    await expect(page.getByRole('button', { name: zh.leaderboard.overall })).toBeVisible();
   });
 
   test('shows empty state when no points data exists', async ({ page }) => {
@@ -116,13 +114,10 @@ test.describe('Leaderboard — lobby panel period switching', () => {
 
     // Switch to weekly ─ waitForRequest BEFORE click to avoid race
     const weekReqPromise = page.waitForRequest(
-      (req) =>
-        req.url().includes('/api/leaderboard') && req.url().includes('period=week'),
+      (req) => req.url().includes('/api/leaderboard') && req.url().includes('period=week'),
       { timeout: 5000 },
     );
-    await panel
-      .getByRole('button', { name: zh.lobbyPanel.leaderboard.periodWeek })
-      .click();
+    await panel.getByRole('button', { name: zh.lobbyPanel.leaderboard.periodWeek }).click();
     await weekReqPromise;
     await expect(
       panel.getByRole('button', {
@@ -133,13 +128,10 @@ test.describe('Leaderboard — lobby panel period switching', () => {
 
     // Switch to daily
     const dayReqPromise = page.waitForRequest(
-      (req) =>
-        req.url().includes('/api/leaderboard') && req.url().includes('period=day'),
+      (req) => req.url().includes('/api/leaderboard') && req.url().includes('period=day'),
       { timeout: 5000 },
     );
-    await panel
-      .getByRole('button', { name: zh.lobbyPanel.leaderboard.periodDay })
-      .click();
+    await panel.getByRole('button', { name: zh.lobbyPanel.leaderboard.periodDay }).click();
     await dayReqPromise;
     await expect(
       panel.getByRole('button', {
@@ -150,13 +142,10 @@ test.describe('Leaderboard — lobby panel period switching', () => {
 
     // Switch back to all-time
     const allReqPromise = page.waitForRequest(
-      (req) =>
-        req.url().includes('/api/leaderboard') && req.url().includes('period=all'),
+      (req) => req.url().includes('/api/leaderboard') && req.url().includes('period=all'),
       { timeout: 5000 },
     );
-    await panel
-      .getByRole('button', { name: zh.lobbyPanel.leaderboard.periodAll })
-      .click();
+    await panel.getByRole('button', { name: zh.lobbyPanel.leaderboard.periodAll }).click();
     await allReqPromise;
     await expect(
       panel.getByRole('button', {
@@ -166,29 +155,26 @@ test.describe('Leaderboard — lobby panel period switching', () => {
     ).toBeVisible({ timeout: 3000 });
   });
 
-  test(
-    'leaderboard tab shows rows or empty state (no crash) for authenticated user',
-    async ({ page }) => {
-      const u = uniqueUser('lb-auth');
-      await signUpEmail(page, u);
-      await page.goto('/');
-      const panel = page.locator('[data-testid="lobby-side-panel-desktop"]');
-      await panel.waitFor({ timeout: 8000 });
-      // Activate leaderboard tab explicitly — for authenticated users the
-      // default active tab can be recent / friends.
-      await panel
-        .getByRole('button', { name: zh.lobbyPanel.tab.leaderboard })
-        .click();
-      await page.waitForLoadState('networkidle', { timeout: 10000 });
+  test('leaderboard tab shows rows or empty state (no crash) for authenticated user', async ({
+    page,
+  }) => {
+    const u = uniqueUser('lb-auth');
+    await signUpEmail(page, u);
+    await page.goto('/');
+    const panel = page.locator('[data-testid="lobby-side-panel-desktop"]');
+    await panel.waitFor({ timeout: 8000 });
+    // Activate leaderboard tab explicitly — for authenticated users the
+    // default active tab can be recent / friends.
+    await panel.getByRole('button', { name: zh.lobbyPanel.tab.leaderboard }).click();
+    await page.waitForLoadState('networkidle', { timeout: 10000 });
 
-      const rowCount = await panel.locator('[data-testid^="leaderboard-row"]').count();
-      const emptyVisible = await panel
-        .locator(`text=${zh.lobbyPanel.leaderboard.empty}`)
-        .isVisible()
-        .catch(() => false);
-      expect(rowCount > 0 || emptyVisible).toBeTruthy();
-    },
-  );
+    const rowCount = await panel.locator('[data-testid^="leaderboard-row"]').count();
+    const emptyVisible = await panel
+      .locator(`text=${zh.lobbyPanel.leaderboard.empty}`)
+      .isVisible()
+      .catch(() => false);
+    expect(rowCount > 0 || emptyVisible).toBeTruthy();
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -198,9 +184,7 @@ test.describe('Leaderboard — lobby panel period switching', () => {
 test.describe('Leaderboard — API contract', () => {
   test('invalid period param silently falls back to all-time', async ({ page }) => {
     await page.goto('/');
-    const resp = await page.request.get(
-      `${SERVER_URL}/api/leaderboard?period=invalid&limit=5`,
-    );
+    const resp = await page.request.get(`${SERVER_URL}/api/leaderboard?period=invalid&limit=5`);
     expect(resp.status()).toBe(200);
     const body = await resp.json();
     expect(body.ok).toBe(true);

@@ -195,7 +195,7 @@ export function Board({
         className="border-4 rounded-[16px] bg-card/85 backdrop-blur-sm p-4 text-center"
         style={{
           borderColor: SUIT_COLORS[state.declaredSuit].border,
-          boxShadow: `6px 6px 0px 0px hsl(var(--shadow))`,
+          boxShadow: '6px 6px 0px 0px hsl(var(--shadow))',
         }}
       >
         <div className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground mb-1">

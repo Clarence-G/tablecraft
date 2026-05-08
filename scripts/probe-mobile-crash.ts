@@ -7,7 +7,8 @@ const URL_TO_TEST = process.argv[2] || 'http://localhost:5173/rooms/VOEC0I/play'
   const browser = await chromium.launch();
   const context = await browser.newContext({
     viewport: { width: 375, height: 667 }, // iPhone SE
-    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+    userAgent:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
   });
   const page = await context.newPage();
 

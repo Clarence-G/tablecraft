@@ -132,10 +132,7 @@
       "compositePrimaryKeys": {
         "room_players_room_id_user_id_pk": {
           "name": "room_players_room_id_user_id_pk",
-          "columns": [
-            "room_id",
-            "user_id"
-          ]
+          "columns": ["room_id", "user_id"]
         }
       },
       "uniqueConstraints": {},

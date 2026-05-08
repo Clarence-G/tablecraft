@@ -1,13 +1,13 @@
-import { ArrowLeft, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import Avatar from 'boring-avatars';
+import { ArrowLeft, LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
 import { clientRegistry } from '../../../../games/client-registry';
-import { authClient } from '../lib/authClient';
-import { apiFetch } from '../lib/api';
-import { useSession } from '../hooks/useSession';
 import { BotManager, type BotRow } from '../components/BotManager';
+import { useSession } from '../hooks/useSession';
+import { apiFetch } from '../lib/api';
+import { authClient } from '../lib/authClient';
 
 interface MeApiResponse {
   user: { id: string; email: string; name: string; image: string | null };
@@ -74,9 +74,7 @@ export function Me({ onBack, onSignedOut }: MeProps) {
     );
   }
 
-  const byGameEntries = data
-    ? Object.entries(data.points.byGame).sort((a, b) => b[1] - a[1])
-    : [];
+  const byGameEntries = data ? Object.entries(data.points.byGame).sort((a, b) => b[1] - a[1]) : [];
 
   return (
     <div className="min-h-screen">

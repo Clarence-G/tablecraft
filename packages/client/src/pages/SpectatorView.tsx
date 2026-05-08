@@ -112,14 +112,13 @@ export function SpectatorView({ socket, userId, roomId, onLeave }: SpectatorView
         onReturnToLobby={onLeave}
       >
         {/* Persistent top banner — high-contrast warning so spectator mode is unmistakable. */}
-        <div
-          role="status"
+        <output
           aria-live="polite"
           className="sticky top-0 z-30 mb-3 flex items-center gap-2 rounded-[10px] border-2 border-foreground bg-warning px-4 py-2.5 text-sm font-bold text-foreground shadow-card"
         >
           <Eye className="size-5 shrink-0" />
           <span className="truncate">{t('spectator.banner')}</span>
-        </div>
+        </output>
         {/* Read-only shell: blocks all click/drag interactions AND applies a
             visual downgrade so spectators never mistake the board for playable.
             - pointer-events-none: hard lock on all inputs

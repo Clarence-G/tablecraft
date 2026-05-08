@@ -6,8 +6,7 @@ import { toNodeHandler } from 'better-auth/node';
 import express, { Router } from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as schema from '../db/schema.js';
-import { createTestDb, type TestDb } from '../db/testing.js';
-
+import { type TestDb, createTestDb } from '../db/testing.js';
 
 describe('reports REST routes', () => {
   let db: TestDb['db'];
@@ -94,7 +93,11 @@ describe('reports REST routes', () => {
     const resp = await fetch(`${baseUrl}/api/reports`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', cookie },
-      body: JSON.stringify({ targetUserId: 'other-user-id', reason: 'harassment', detail: 'said bad things' }),
+      body: JSON.stringify({
+        targetUserId: 'other-user-id',
+        reason: 'harassment',
+        detail: 'said bad things',
+      }),
     });
     expect(resp.status).toBe(200);
     const body = await resp.json();
@@ -120,7 +123,11 @@ describe('reports REST routes', () => {
   });
 
   it('POST /api/reports 429 after 10 reports in an hour', async () => {
-    const { cookie, userId } = await signUp('carol@test.com', 'correct-horse-battery-staple', 'Carol');
+    const { cookie, userId } = await signUp(
+      'carol@test.com',
+      'correct-horse-battery-staple',
+      'Carol',
+    );
     // Insert 10 existing reports directly
     for (let i = 0; i < 10; i++) {
       await db.insert(schema.reports).values({
@@ -169,7 +176,11 @@ describe('reports REST routes', () => {
   });
 
   it('DELETE /api/reports/blocks/:id removes the block row', async () => {
-    const { cookie, userId } = await signUp('frank@test.com', 'correct-horse-battery-staple', 'Frank');
+    const { cookie, userId } = await signUp(
+      'frank@test.com',
+      'correct-horse-battery-staple',
+      'Frank',
+    );
     await db.insert(schema.userBlocks).values({ blockerId: userId, blockedId: 'to-unblock' });
 
     const resp = await fetch(`${baseUrl}/api/reports/blocks/to-unblock`, {
@@ -182,7 +193,11 @@ describe('reports REST routes', () => {
   });
 
   it('GET /api/reports/blocks returns the blocklist', async () => {
-    const { cookie, userId } = await signUp('grace@test.com', 'correct-horse-battery-staple', 'Grace');
+    const { cookie, userId } = await signUp(
+      'grace@test.com',
+      'correct-horse-battery-staple',
+      'Grace',
+    );
     await db.insert(schema.userBlocks).values([
       { blockerId: userId, blockedId: 'user-a' },
       { blockerId: userId, blockedId: 'user-b' },

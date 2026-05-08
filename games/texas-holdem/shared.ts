@@ -60,7 +60,12 @@ Hand rankings (high to low): Royal Flush, Straight Flush, Four of a Kind, Full H
 // `bg`, `text`, `hex` expose raw hex for inline style objects.
 export const POKER_CHIP_COLORS = {
   surface: { bg: '#f5ecd6', bgClass: 'bg-[#f5ecd6]', text: '#4a3528', textClass: 'text-[#4a3528]' },
-  gold: { hex: '#8b6f3d', borderClass: 'border-[#8b6f3d]', textClass: 'text-[#8b6f3d]', ringClass: 'ring-[#8b6f3d]' },
+  gold: {
+    hex: '#8b6f3d',
+    borderClass: 'border-[#8b6f3d]',
+    textClass: 'text-[#8b6f3d]',
+    ringClass: 'ring-[#8b6f3d]',
+  },
 } as const;
 
 // ---- Card utilities ----

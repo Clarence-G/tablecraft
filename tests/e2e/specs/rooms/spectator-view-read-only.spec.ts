@@ -1,20 +1,25 @@
-import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { expect, test } from '@playwright/test';
 import { seedGuestIdentity } from '../../helpers/identity';
-import { createRoom, joinRoomByCode, readyUp, startGame, spectateRoom } from '../../helpers/rooms';
+import { createRoom, joinRoomByCode, readyUp, spectateRoom, startGame } from '../../helpers/rooms';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Read the locale string without ESM JSON import (Node.js 20 requires import assertions for JSON)
 const zhCommon = JSON.parse(
-  readFileSync(resolve(__dirname, '../../../../packages/client/src/i18n/locales/zh/common.json'), 'utf8'),
+  readFileSync(
+    resolve(__dirname, '../../../../packages/client/src/i18n/locales/zh/common.json'),
+    'utf8',
+  ),
 ) as { spectator: { banner: string } };
 
 test.describe('Spectator view — read-only properties', () => {
-  test('spectator wrapper has pointer-events-none, opacity-55, saturate-50 classes', async ({ browser }) => {
+  test('spectator wrapper has pointer-events-none, opacity-55, saturate-50 classes', async ({
+    browser,
+  }) => {
     const ctx1 = await browser.newContext();
     const ctx2 = await browser.newContext();
     const ctx3 = await browser.newContext();
@@ -98,16 +103,26 @@ test.describe('Spectator view — read-only properties', () => {
     await spectateRoom(charlie, code);
 
     // Click several cells inside Charlie's board, all at force (bypassing pointer-events)
-    const cells = ['[data-row="5"][data-col="5"]', '[data-row="6"][data-col="6"]', '[data-row="7"][data-col="7"]'];
+    const cells = [
+      '[data-row="5"][data-col="5"]',
+      '[data-row="6"][data-col="6"]',
+      '[data-row="7"][data-col="7"]',
+    ];
     for (const sel of cells) {
-      await charlie.locator(sel).click({ force: true }).catch(() => {});
+      await charlie
+        .locator(sel)
+        .click({ force: true })
+        .catch(() => {});
     }
     await charlie.waitForTimeout(600);
 
     // Alice's board must not have any stones at those positions from Charlie's clicks
     // (Alice is the current player; if her board changed, Charlie's clicks leaked)
     for (const sel of cells) {
-      const occupied = await alice.locator(sel).getAttribute('data-occupied').catch(() => null);
+      const occupied = await alice
+        .locator(sel)
+        .getAttribute('data-occupied')
+        .catch(() => null);
       // Either null (attribute absent) or '0' / 'false' — not a truthy stone value
       expect(occupied ?? '0').not.toBe('1');
     }

@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { connectBotSocket, mintBotToken } from '../../helpers/bots';
 import { seedGuestIdentity } from '../../helpers/identity';
-import { createRoom, joinRoomByCode, readyUp, startGame, spectateRoom } from '../../helpers/rooms';
-import { mintBotToken, connectBotSocket } from '../../helpers/bots';
+import { createRoom, joinRoomByCode, readyUp, spectateRoom, startGame } from '../../helpers/rooms';
 
 const APP = 'http://localhost:5173';
 
@@ -47,10 +47,19 @@ test.describe('Spectator mode — happy path', () => {
 
     // Charlie tries to click a board cell — no state change on Alice's board
     const cellSelector = '[data-row="0"][data-col="0"]';
-    const cellBeforeClick = await alice.locator(cellSelector).getAttribute('data-occupied').catch(() => null);
-    await charlie.locator(cellSelector).click({ force: true }).catch(() => {});
+    const cellBeforeClick = await alice
+      .locator(cellSelector)
+      .getAttribute('data-occupied')
+      .catch(() => null);
+    await charlie
+      .locator(cellSelector)
+      .click({ force: true })
+      .catch(() => {});
     await charlie.waitForTimeout(500);
-    const cellAfterClick = await alice.locator(cellSelector).getAttribute('data-occupied').catch(() => null);
+    const cellAfterClick = await alice
+      .locator(cellSelector)
+      .getAttribute('data-occupied')
+      .catch(() => null);
     expect(cellAfterClick).toBe(cellBeforeClick);
 
     // Charlie navigates back to lobby
@@ -81,7 +90,11 @@ test.describe('Spectator mode — negative scenarios', () => {
 
     // Mint a bot token for Charlie (the spectator) and connect a raw socket
     const { token, userId: charlieId } = await mintBotToken({ name: 'CharlieSpectBot' });
-    const charlieSocket = await connectBotSocket({ token, userId: charlieId, botName: 'CharlieSpectBot' });
+    const charlieSocket = await connectBotSocket({
+      token,
+      userId: charlieId,
+      botName: 'CharlieSpectBot',
+    });
 
     // Charlie's socket joins as spectator (room:spectate)
     // socket.io ack is single-arg — the server handler calls ack({ ok, data } | { ok: false, error }).
@@ -96,7 +109,10 @@ test.describe('Spectator mode — negative scenarios', () => {
 
     // Charlie's socket attempts a game action — must be rejected
     const result = await new Promise<{ ok: boolean; error?: string }>((resolve) => {
-      const timer = setTimeout(() => resolve({ ok: true, error: 'timeout — no rejection received' }), 3000);
+      const timer = setTimeout(
+        () => resolve({ ok: true, error: 'timeout — no rejection received' }),
+        3000,
+      );
       charlieSocket.once('game:reject', (reason: string) => {
         clearTimeout(timer);
         resolve({ ok: false, error: reason });

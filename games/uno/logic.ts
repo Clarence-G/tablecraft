@@ -266,7 +266,10 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
     if (newHand.length === 0) {
       const rankings = [playerID, ...state.players.filter((p) => p !== playerID)];
       newState = { ...newState, phase: 'finished', winner: playerID };
-      events.push(playLog, logSystem('log.win', { actorId: playerID }), { type: 'END_GAME', rankings });
+      events.push(playLog, logSystem('log.win', { actorId: playerID }), {
+        type: 'END_GAME',
+        rankings,
+      });
       return { ok: true, state: newState, events };
     }
 
@@ -341,7 +344,9 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
     if (drawCount > 0) {
       const targetId = state.players[drawTargetIdx];
       if (targetId !== undefined) {
-        events.push(logSystem('log.drawMany', { actorId: targetId, messageParams: { count: drawCount } }));
+        events.push(
+          logSystem('log.drawMany', { actorId: targetId, messageParams: { count: drawCount } }),
+        );
       }
     } else if (skipCount > 0) {
       const skippedId = state.players[drawTargetIdx];

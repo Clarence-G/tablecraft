@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as schema from '../db/schema.js';
-import { createTestDb, type TestDb } from '../db/testing.js';
+import { type TestDb, createTestDb } from '../db/testing.js';
 import { TokenStore } from './token-store.js';
-
 
 describe('TokenStore', () => {
   let db: TestDb['db'];

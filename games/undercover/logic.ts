@@ -1,8 +1,14 @@
 import type { ActionResult, EngineEvent, GameContext, GameLogic } from '@repo/shared';
 import { logAction, logSystem } from '@repo/shared';
-import { type Action, ActionSchema, type DescriptionEntry, type PlayerView, type VoteEntry } from './shared';
 import enPairs from './i18n/en/pairs.json';
 import zhPairs from './i18n/zh/pairs.json';
+import {
+  type Action,
+  ActionSchema,
+  type DescriptionEntry,
+  type PlayerView,
+  type VoteEntry,
+} from './shared';
 
 // ---- Internal State ----
 
@@ -83,13 +89,21 @@ function buildRankings(state: UndercoverState, winner: 'civilian' | 'undercover'
   const dead = state.players.filter((p) => !p.alive).map((p) => p.id);
   if (winner === 'civilian') {
     // Civilians first, then undercovers (eliminated order irrelevant for summarized view)
-    const aliveCivilians = alivePlayers(state).filter((p) => p.role === 'civilian').map((p) => p.id);
-    const aliveUndercovers = alivePlayers(state).filter((p) => p.role === 'undercover').map((p) => p.id);
+    const aliveCivilians = alivePlayers(state)
+      .filter((p) => p.role === 'civilian')
+      .map((p) => p.id);
+    const aliveUndercovers = alivePlayers(state)
+      .filter((p) => p.role === 'undercover')
+      .map((p) => p.id);
     return [...aliveCivilians, ...aliveUndercovers, ...dead];
   }
   // Undercovers win: undercovers first
-  const aliveUndercovers = alivePlayers(state).filter((p) => p.role === 'undercover').map((p) => p.id);
-  const aliveCivilians = alivePlayers(state).filter((p) => p.role === 'civilian').map((p) => p.id);
+  const aliveUndercovers = alivePlayers(state)
+    .filter((p) => p.role === 'undercover')
+    .map((p) => p.id);
+  const aliveCivilians = alivePlayers(state)
+    .filter((p) => p.role === 'civilian')
+    .map((p) => p.id);
   return [...aliveUndercovers, ...aliveCivilians, ...dead];
 }
 
@@ -97,7 +111,9 @@ function buildRankings(state: UndercoverState, winner: 'civilian' | 'undercover'
 function firstSpeakerForDescribe(state: UndercoverState): number {
   if (state.tiePlayerIds.length > 0) {
     // Start from the first alive tied player in seat order
-    const idx = state.seatOrder.findIndex((id) => state.tiePlayerIds.includes(id) && getPlayer(state, id).alive);
+    const idx = state.seatOrder.findIndex(
+      (id) => state.tiePlayerIds.includes(id) && getPlayer(state, id).alive,
+    );
     return idx >= 0 ? idx : nextAliveSpeakerIdx(state, 0);
   }
   return nextAliveSpeakerIdx(state, 0);
@@ -142,7 +158,10 @@ export const logic: GameLogic<UndercoverState, Action, PlayerView> = {
     }));
 
     const seatOrder = shuffled;
-    const firstIdx = nextAliveSpeakerIdx({ players: playerStates, seatOrder } as UndercoverState, 0);
+    const firstIdx = nextAliveSpeakerIdx(
+      { players: playerStates, seatOrder } as UndercoverState,
+      0,
+    );
 
     return {
       players: playerStates,
@@ -190,7 +209,11 @@ export const logic: GameLogic<UndercoverState, Action, PlayerView> = {
       const newPlayers = state.players.map((p) =>
         p.id === playerID ? { ...p, hasDescribed: true } : p,
       );
-      let newState: UndercoverState = { ...state, players: newPlayers, descriptions: newDescriptions };
+      let newState: UndercoverState = {
+        ...state,
+        players: newPlayers,
+        descriptions: newDescriptions,
+      };
 
       const events: EngineEvent[] = [
         logAction(playerID, 'log.describe', { round: state.round, text: action.text }),
@@ -204,7 +227,11 @@ export const logic: GameLogic<UndercoverState, Action, PlayerView> = {
         const candidateIdx = (currentIdx + i) % n;
         const candidateId = state.seatOrder[candidateIdx];
         const candidate = newPlayers.find((p) => p.id === candidateId)!;
-        if (candidate.alive && !candidate.hasDescribed && needsToDescribeAfterUpdate(newState, candidateId)) {
+        if (
+          candidate.alive &&
+          !candidate.hasDescribed &&
+          needsToDescribeAfterUpdate(newState, candidateId)
+        ) {
           nextIdx = candidateIdx;
           break;
         }
@@ -238,15 +265,16 @@ export const logic: GameLogic<UndercoverState, Action, PlayerView> = {
         return { ok: false, reason: 'Target is eliminated' };
       }
 
-      const newVotes: VoteEntry[] = [...state.votes, { voterId: playerID, targetId: action.targetId }];
+      const newVotes: VoteEntry[] = [
+        ...state.votes,
+        { voterId: playerID, targetId: action.targetId },
+      ];
       const newPlayers = state.players.map((p) =>
         p.id === playerID ? { ...p, hasVoted: true } : p,
       );
       let newState: UndercoverState = { ...state, players: newPlayers, votes: newVotes };
 
-      const events: EngineEvent[] = [
-        logAction(playerID, 'log.voteSubmitted'),
-      ];
+      const events: EngineEvent[] = [logAction(playerID, 'log.voteSubmitted')];
 
       // Check if all alive players have voted
       const alive = alivePlayers(newState);
@@ -278,7 +306,9 @@ export const logic: GameLogic<UndercoverState, Action, PlayerView> = {
         };
 
         events.push(
-          logSystem('log.eliminated', { messageParams: { targetId: eliminatedId, role: eliminatedRole } }),
+          logSystem('log.eliminated', {
+            messageParams: { targetId: eliminatedId, role: eliminatedRole },
+          }),
         );
 
         // Check win condition
@@ -294,7 +324,11 @@ export const logic: GameLogic<UndercoverState, Action, PlayerView> = {
 
         // Start new describe round
         const nextRound = state.round + 1;
-        const resetPS = newState.players.map((p) => ({ ...p, hasDescribed: false, hasVoted: false }));
+        const resetPS = newState.players.map((p) => ({
+          ...p,
+          hasDescribed: false,
+          hasVoted: false,
+        }));
         newState = {
           ...newState,
           players: resetPS,
@@ -324,7 +358,11 @@ export const logic: GameLogic<UndercoverState, Action, PlayerView> = {
         };
 
         events.push(logSystem('log.tieEliminated'));
-        events.push(logSystem('log.eliminated', { messageParams: { targetId: eliminatedId, role: eliminatedRole } }));
+        events.push(
+          logSystem('log.eliminated', {
+            messageParams: { targetId: eliminatedId, role: eliminatedRole },
+          }),
+        );
 
         const winResult = checkWin(newState);
         if (winResult) {
@@ -338,7 +376,11 @@ export const logic: GameLogic<UndercoverState, Action, PlayerView> = {
 
         // New round
         const nextRound = state.round + 1;
-        const resetPS = newState.players.map((p) => ({ ...p, hasDescribed: false, hasVoted: false }));
+        const resetPS = newState.players.map((p) => ({
+          ...p,
+          hasDescribed: false,
+          hasVoted: false,
+        }));
         newState = {
           ...newState,
           players: resetPS,
@@ -371,7 +413,9 @@ export const logic: GameLogic<UndercoverState, Action, PlayerView> = {
         tiePlayerIds: topTargets,
         currentSpeakerIdx: firstTieIdx >= 0 ? firstTieIdx : 0,
       };
-      events.push(logSystem('log.tieReDescribe', { messageParams: { tieCount: topTargets.length } }));
+      events.push(
+        logSystem('log.tieReDescribe', { messageParams: { tieCount: topTargets.length } }),
+      );
       return { ok: true, state: newState, events };
     }
 
@@ -381,21 +425,22 @@ export const logic: GameLogic<UndercoverState, Action, PlayerView> = {
   getPlayerView(state, playerID): PlayerView {
     const me = getPlayer(state, playerID);
     const currentSpeaker =
-      state.phase === 'describe' ? state.seatOrder[state.currentSpeakerIdx] ?? null : null;
+      state.phase === 'describe' ? (state.seatOrder[state.currentSpeakerIdx] ?? null) : null;
 
     const players = state.players.map((p) => ({
       id: p.id,
       alive: p.alive,
       // Reveal role only when eliminated or game finished
-      role: (!p.alive || state.phase === 'finished') ? p.role : null,
+      role: !p.alive || state.phase === 'finished' ? p.role : null,
       hasDescribed: p.hasDescribed,
       hasVoted: p.hasVoted,
     }));
 
     // In vote phase, reveal votes after tally (all voted) or during game over
-    const revealVotes = state.phase === 'vote'
-      ? alivePlayers(state).every((p) => p.hasVoted)
-      : state.phase === 'finished';
+    const revealVotes =
+      state.phase === 'vote'
+        ? alivePlayers(state).every((p) => p.hasVoted)
+        : state.phase === 'finished';
 
     return {
       phase: state.phase,
@@ -415,12 +460,12 @@ export const logic: GameLogic<UndercoverState, Action, PlayerView> = {
 
   getSpectatorView(state): PlayerView {
     const currentSpeaker =
-      state.phase === 'describe' ? state.seatOrder[state.currentSpeakerIdx] ?? null : null;
+      state.phase === 'describe' ? (state.seatOrder[state.currentSpeakerIdx] ?? null) : null;
 
     const players = state.players.map((p) => ({
       id: p.id,
       alive: p.alive,
-      role: (!p.alive || state.phase === 'finished') ? p.role : null,
+      role: !p.alive || state.phase === 'finished' ? p.role : null,
       hasDescribed: p.hasDescribed,
       hasVoted: p.hasVoted,
     }));

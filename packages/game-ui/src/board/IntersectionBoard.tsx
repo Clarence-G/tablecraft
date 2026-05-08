@@ -150,9 +150,10 @@ export function IntersectionBoard({
   };
 
   // Clear armed state when board is disabled
+  // biome-ignore lint/correctness/useExhaustiveDependencies: clearArmed identity is stable from useCallback/ref; intentionally only re-run on disabled change
   useEffect(() => {
     if (disabled) clearArmed();
-  }, [disabled]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [disabled]);
 
   // Cleanup timeout on unmount
   useEffect(() => {

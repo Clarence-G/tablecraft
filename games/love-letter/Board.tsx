@@ -44,11 +44,7 @@ function CardFace({
 
 function CardBack({ size = 'small' }: { size?: 'small' | 'normal' }) {
   return (
-    <PlayingCard
-      size={size === 'small' ? 'sm' : 'lg'}
-      faceDown
-      backArt={LOVE_LETTER_CARD_BACK}
-    />
+    <PlayingCard size={size === 'small' ? 'sm' : 'lg'} faceDown backArt={LOVE_LETTER_CARD_BACK} />
   );
 }
 

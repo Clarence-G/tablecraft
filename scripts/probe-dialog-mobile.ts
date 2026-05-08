@@ -31,9 +31,7 @@ const CLIENT = process.env.CLIENT ?? 'http://localhost:5173';
     .filter({ hasText: '战舰' })
     .first();
 
-  const tileCount = await page
-    .locator('[data-testid^="game-card-"]')
-    .count();
+  const tileCount = await page.locator('[data-testid^="game-card-"]').count();
   console.log(`[tiles] total game tiles visible: ${tileCount}`);
 
   if (tileCount === 0) {
@@ -104,8 +102,7 @@ const CLIENT = process.env.CLIENT ?? 'http://localhost:5173';
   console.log('hero:', heroRect);
   console.log('cta:', ctaRect);
 
-  const ctaInViewport =
-    ctaRect && !('error' in ctaRect) && ctaRect.bottom <= 667 && ctaRect.y >= 0;
+  const ctaInViewport = ctaRect && !('error' in ctaRect) && ctaRect.bottom <= 667 && ctaRect.y >= 0;
   console.log(`\n[assert] CTA visible in viewport = ${ctaInViewport}`);
 
   await page.screenshot({ path: '/tmp/dialog-mobile-375-before.png', fullPage: false });
@@ -114,9 +111,7 @@ const CLIENT = process.env.CLIENT ?? 'http://localhost:5173';
   // Try click CTA
   let clickable = false;
   try {
-    await page
-      .locator('[data-testid="dialog-create-room-btn"]')
-      .click({ timeout: 2000 });
+    await page.locator('[data-testid="dialog-create-room-btn"]').click({ timeout: 2000 });
     clickable = true;
     console.log('[click] CTA clicked successfully');
     await page.waitForTimeout(500);

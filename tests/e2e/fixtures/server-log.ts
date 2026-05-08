@@ -1,7 +1,7 @@
-import { mkdirSync, existsSync } from 'node:fs';
-import { createWriteStream } from 'node:fs';
 import { spawn } from 'node:child_process';
-import { join, dirname } from 'node:path';
+import { existsSync, mkdirSync } from 'node:fs';
+import { createWriteStream } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -45,21 +45,17 @@ export async function startServerWithLog(opts: {
   const logPath = join(logDir, `server-${port}-${Date.now()}.log`);
   const logStream = createWriteStream(logPath, { flags: 'a' });
 
-  const child = spawn(
-    'pnpm',
-    ['--filter', '@repo/server', 'exec', 'tsx', 'src/index.ts'],
-    {
-      cwd: REPO_ROOT,
-      env: {
-        ...process.env,
-        PORT: String(port),
-        DATABASE_URL: databaseUrl,
-        BETTER_AUTH_URL: `http://localhost:${port}`,
-        NODE_ENV: 'development',
-      },
-      stdio: ['ignore', 'pipe', 'pipe'],
+  const child = spawn('pnpm', ['--filter', '@repo/server', 'exec', 'tsx', 'src/index.ts'], {
+    cwd: REPO_ROOT,
+    env: {
+      ...process.env,
+      PORT: String(port),
+      DATABASE_URL: databaseUrl,
+      BETTER_AUTH_URL: `http://localhost:${port}`,
+      NODE_ENV: 'development',
     },
-  );
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
 
   child.stdout?.pipe(logStream);
   child.stderr?.pipe(logStream);
@@ -97,5 +93,7 @@ async function waitForServerReady(url: string, timeoutMs: number): Promise<void>
     await new Promise((r) => setTimeout(r, 300));
   }
 
-  throw new Error(`startServerWithLog: server at ${url} did not become ready within ${timeoutMs}ms`);
+  throw new Error(
+    `startServerWithLog: server at ${url} did not become ready within ${timeoutMs}ms`,
+  );
 }

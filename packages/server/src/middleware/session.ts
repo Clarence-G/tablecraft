@@ -1,7 +1,7 @@
 import type { IncomingHttpHeaders } from 'node:http';
 import type { NextFunction, Request, Response } from 'express';
-import { ensureDailyCheckin } from '../lib/ledger.js';
 import type { Auth } from '../lib/auth.js';
+import { ensureDailyCheckin } from '../lib/ledger.js';
 
 export type Session = Awaited<ReturnType<Auth['api']['getSession']>>;
 
@@ -43,10 +43,7 @@ export interface SessionMiddlewareOptions {
   dailyCheckin?: boolean;
 }
 
-export function createSessionMiddleware(
-  auth: Auth,
-  options: SessionMiddlewareOptions = {},
-) {
+export function createSessionMiddleware(auth: Auth, options: SessionMiddlewareOptions = {}) {
   const dailyCheckin = options.dailyCheckin ?? true;
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {

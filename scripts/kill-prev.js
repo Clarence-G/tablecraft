@@ -41,7 +41,10 @@ function killPortOccupants(port) {
   // kill things listening on our dev ports, never random processes.
   let out = '';
   try {
-    out = execSync(`lsof -tiTCP:${port} -sTCP:LISTEN`, { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] });
+    out = execSync(`lsof -tiTCP:${port} -sTCP:LISTEN`, {
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
   } catch {
     return;
   }

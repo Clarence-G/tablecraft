@@ -1,6 +1,6 @@
-import { describe, beforeEach, it, expect, vi } from 'vitest';
-import { seedGuestIdentity, IDENTITY_KEY } from './identity';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mintBotToken } from './bots';
+import { IDENTITY_KEY, seedGuestIdentity } from './identity';
 
 // ---------------------------------------------------------------------------
 // seedGuestIdentity
@@ -28,7 +28,9 @@ describe('seedGuestIdentity', () => {
     // Simulate running the script with a fake localStorage to verify behavior
     const store: Record<string, string> = {};
     const mockLocalStorage = {
-      setItem: (k: string, v: string) => { store[k] = v; },
+      setItem: (k: string, v: string) => {
+        store[k] = v;
+      },
       getItem: (k: string) => store[k] ?? null,
     };
     // Execute the captured fn against a sandboxed localStorage

@@ -1,5 +1,5 @@
-import type { RoomState } from '@repo/shared';
 import { GameLogProvider, useGameLog } from '@repo/game-ui/log';
+import type { RoomState } from '@repo/shared';
 import { Suspense, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { clientRegistry } from '../../../../games/client-registry';

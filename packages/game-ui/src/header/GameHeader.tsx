@@ -145,12 +145,7 @@ export function GameHeader({
       className="sticky top-0 z-40 h-[56px] bg-card border-b-2 border-foreground px-2 sm:px-5 flex items-center gap-2 sm:gap-3"
     >
       {/* Left: back + identity */}
-      <button
-        type="button"
-        aria-label={t('header.back')}
-        onClick={onBack}
-        className={iconBtn}
-      >
+      <button type="button" aria-label={t('header.back')} onClick={onBack} className={iconBtn}>
         <ArrowLeft className="size-4" />
       </button>
 

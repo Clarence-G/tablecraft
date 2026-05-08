@@ -1,10 +1,10 @@
 import type { ClientEvents, ServerEvents } from '@repo/shared';
 import type { ServerGamePlugin } from '@repo/shared';
-import type { Server, Socket } from 'socket.io';
-import type { RoomManager } from '../engine/RoomManager';
 import { and, eq } from 'drizzle-orm';
+import type { Server, Socket } from 'socket.io';
 import { db } from '../db/index.js';
 import { userBlocks } from '../db/schema.js';
+import type { RoomManager } from '../engine/RoomManager';
 import { track } from '../lib/analytics';
 import { logger } from '../lib/logger';
 import { moderateChat } from '../lib/moderation';
@@ -236,9 +236,11 @@ export function setupHandlers(
         try {
           const hostId = room.hostId;
           if (hostId) {
-            const blocked = await db.select().from(userBlocks).where(
-              and(eq(userBlocks.blockerId, userId), eq(userBlocks.blockedId, hostId)),
-            ).limit(1);
+            const blocked = await db
+              .select()
+              .from(userBlocks)
+              .where(and(eq(userBlocks.blockerId, userId), eq(userBlocks.blockedId, hostId)))
+              .limit(1);
             if (blocked.length > 0) return ack({ ok: false, error: 'blocked' });
           }
         } catch {

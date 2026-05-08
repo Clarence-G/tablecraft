@@ -5,10 +5,19 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Action, PlayerInfo, PlayerView } from './shared';
 
-export function Board({ state, myId, players, sendAction, isSending, lastReject }: BoardProps<PlayerView, Action>) {
+export function Board({
+  state,
+  myId,
+  players,
+  sendAction,
+  isSending,
+  lastReject,
+}: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('undercover');
   const [descText, setDescText] = useState('');
-  const [eliminationBanner, setEliminationBanner] = useState<{ name: string; role: string } | null>(null);
+  const [eliminationBanner, setEliminationBanner] = useState<{ name: string; role: string } | null>(
+    null,
+  );
   const prevElimCount = useRef(state.players.filter((p) => !p.alive).length);
 
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
@@ -18,12 +27,13 @@ export function Board({ state, myId, players, sendAction, isSending, lastReject 
   useEffect(() => {
     const elimCount = state.players.filter((p) => !p.alive).length;
     if (elimCount > prevElimCount.current) {
-      const justEliminated = state.players.find(
-        (p) => !p.alive && p.role !== null,
-      );
+      const justEliminated = state.players.find((p) => !p.alive && p.role !== null);
       if (justEliminated) {
         const roleKey = justEliminated.role === 'undercover' ? 'undercover' : 'civilian';
-        setEliminationBanner({ name: playerNames[justEliminated.id] ?? justEliminated.id, role: t(roleKey) });
+        setEliminationBanner({
+          name: playerNames[justEliminated.id] ?? justEliminated.id,
+          role: t(roleKey),
+        });
         const timer = setTimeout(() => setEliminationBanner(null), 3000);
         prevElimCount.current = elimCount;
         return () => clearTimeout(timer);
@@ -35,7 +45,8 @@ export function Board({ state, myId, players, sendAction, isSending, lastReject 
   const isMyTurnDescribe =
     state.phase === 'describe' && state.currentSpeaker === myId && state.myAlive;
 
-  const canVote = state.phase === 'vote' && state.myAlive && !state.players.find((p) => p.id === myId)?.hasVoted;
+  const canVote =
+    state.phase === 'vote' && state.myAlive && !state.players.find((p) => p.id === myId)?.hasVoted;
 
   function handleDescribe() {
     const trimmed = descText.trim();
@@ -71,7 +82,11 @@ export function Board({ state, myId, players, sendAction, isSending, lastReject 
       {/* Phase + Round header */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <span className="font-medium">
-          {state.phase === 'describe' ? t('phase_describe') : state.phase === 'vote' ? t('phase_vote') : t('gameOver')}
+          {state.phase === 'describe'
+            ? t('phase_describe')
+            : state.phase === 'vote'
+              ? t('phase_vote')
+              : t('gameOver')}
         </span>
         <span>{t('round', { round: state.round })}</span>
       </div>
@@ -96,11 +111,7 @@ export function Board({ state, myId, players, sendAction, isSending, lastReject 
                 isSpeaker ? 'bg-primary/20 ring-1 ring-primary' : 'bg-card/40'
               } ${isEliminated ? 'opacity-50' : ''}`}
             >
-              <PlayerBadge
-                player={p}
-                isCurrentTurn={isSpeaker}
-                isMe={p.id === myId}
-              />
+              <PlayerBadge player={p} isCurrentTurn={isSpeaker} isMe={p.id === myId} />
               <div className="text-[10px] text-muted-foreground text-center">
                 {isEliminated ? (
                   <span className="text-destructive">
@@ -108,7 +119,9 @@ export function Board({ state, myId, players, sendAction, isSending, lastReject 
                     {info?.role ? ` (${t(info.role)})` : ''}
                   </span>
                 ) : isSpeaker ? (
-                  <span className="text-primary">{t('currentSpeaker', { name: '' }).replace(': ', '')}</span>
+                  <span className="text-primary">
+                    {t('currentSpeaker', { name: '' }).replace(': ', '')}
+                  </span>
                 ) : null}
               </div>
             </div>
@@ -120,7 +133,9 @@ export function Board({ state, myId, players, sendAction, isSending, lastReject 
       <div className="bg-card/60 rounded-xl ring-1 ring-foreground/15 p-3">
         <div className="text-xs font-medium text-muted-foreground mb-2">{t('descriptions')}</div>
         {state.descriptions.length === 0 ? (
-          <div className="text-xs text-muted-foreground/60 text-center py-2">{t('noDescriptions')}</div>
+          <div className="text-xs text-muted-foreground/60 text-center py-2">
+            {t('noDescriptions')}
+          </div>
         ) : (
           <div className="space-y-1.5">
             {state.descriptions.map((d, i) => (
@@ -163,7 +178,9 @@ export function Board({ state, myId, players, sendAction, isSending, lastReject 
       {/* Waiting for describe */}
       {state.phase === 'describe' && !isMyTurnDescribe && state.myAlive && state.currentSpeaker && (
         <div className="text-center text-sm text-muted-foreground">
-          {t('waitingForDescribe', { name: playerNames[state.currentSpeaker] ?? state.currentSpeaker })}
+          {t('waitingForDescribe', {
+            name: playerNames[state.currentSpeaker] ?? state.currentSpeaker,
+          })}
         </div>
       )}
 
@@ -196,9 +213,7 @@ export function Board({ state, myId, players, sendAction, isSending, lastReject 
             </div>
           ) : (
             <div className="text-sm text-muted-foreground text-center">
-              {state.myAlive
-                ? t('waitingForVotes')
-                : t('observing')}
+              {state.myAlive ? t('waitingForVotes') : t('observing')}
             </div>
           )}
 
@@ -218,17 +233,11 @@ export function Board({ state, myId, players, sendAction, isSending, lastReject 
       )}
 
       {/* Error */}
-      {lastReject && (
-        <div className="text-center text-sm text-destructive">{lastReject}</div>
-      )}
+      {lastReject && <div className="text-center text-sm text-destructive">{lastReject}</div>}
 
       {/* Game Over */}
       {gameOver && (
-        <GameOverModal
-          rankings={state.rankings}
-          playerNames={playerNames}
-          myId={myId}
-        />
+        <GameOverModal rankings={state.rankings} playerNames={playerNames} myId={myId} />
       )}
     </div>
   );

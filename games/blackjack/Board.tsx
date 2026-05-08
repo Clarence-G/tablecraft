@@ -362,9 +362,7 @@ export function Board({
             <div className="text-center text-sm font-bold text-destructive mt-1">{t('bust')}</div>
           )}
           {state.myTotal === 21 && state.myHand.length === 2 && (
-            <div className="text-center text-sm font-bold text-success mt-1">
-              {t('blackjack')}
-            </div>
+            <div className="text-center text-sm font-bold text-success mt-1">{t('blackjack')}</div>
           )}
         </div>
       )}

@@ -5,14 +5,14 @@ import express from 'express';
 import type { Server as IOServer } from 'socket.io';
 import type { GameRoom } from '../engine/GameRoom.js';
 import type { RoomManager } from '../engine/RoomManager.js';
+import { moderateChat } from '../lib/moderation.js';
+import { tryConsumeChatToken } from '../socket/handlers.js';
 import { createApiAuth } from './auth.js';
 import { registerBotsRoutes } from './bots.js';
 import { registerFriendsRoutes } from './friends.js';
 import { registerPointsRoutes } from './points.js';
 import { registerReportsRoutes } from './reports.js';
 import type { TokenStore } from './token-store.js';
-import { tryConsumeChatToken } from '../socket/handlers.js';
-import { moderateChat } from '../lib/moderation.js';
 
 function gameStateResponse(room: GameRoom, userId: string) {
   const view =
@@ -149,7 +149,10 @@ export function createApiRouter(
     // first (useful for test scripts that reuse bot names across runs).
     const existingRoom = roomManager.findRoomByUser(userId);
     if (existingRoom && existingRoom.status !== 'finished') {
-      const force = req.body && typeof req.body === 'object' && (req.body as Record<string, unknown>).force === true;
+      const force =
+        req.body &&
+        typeof req.body === 'object' &&
+        (req.body as Record<string, unknown>).force === true;
       if (force) {
         existingRoom.leave(userId);
         roomManager.onPlayerLeave(userId);

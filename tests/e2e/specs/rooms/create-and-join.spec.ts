@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { connectBotSocket, mintBotToken } from '../../helpers/bots';
 import { seedGuestIdentity } from '../../helpers/identity';
 import { createRoom, joinRoomByCode, readyUp, startGame } from '../../helpers/rooms';
-import { mintBotToken, connectBotSocket } from '../../helpers/bots';
 
 const APP = 'http://localhost:5173';
 
@@ -37,7 +37,9 @@ test.describe('Create and join room — happy path', () => {
 });
 
 test.describe('Create and join room — negative scenarios', () => {
-  test('joining a non-existent room code shows an error and does not navigate', async ({ page }) => {
+  test('joining a non-existent room code shows an error and does not navigate', async ({
+    page,
+  }) => {
     await seedGuestIdentity(page, { userName: 'JoinFail' });
     await page.goto(APP);
 
@@ -49,8 +51,15 @@ test.describe('Create and join room — negative scenarios', () => {
     expect(page.url()).toBe(`${APP}/`);
 
     // An error message should appear somewhere on the page
-    const errorVisible = await page.locator('[role="alert"]').isVisible().catch(() => false) ||
-      await page.locator('.text-destructive').isVisible().catch(() => false);
+    const errorVisible =
+      (await page
+        .locator('[role="alert"]')
+        .isVisible()
+        .catch(() => false)) ||
+      (await page
+        .locator('.text-destructive')
+        .isVisible()
+        .catch(() => false));
     expect(errorVisible).toBe(true);
   });
 

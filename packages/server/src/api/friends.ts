@@ -18,9 +18,10 @@ export function registerFriendsRoutes(router: Router, roomManager: RoomManager):
     const userId = req.session?.user?.id;
     if (!userId) return void res.status(401).json({ ok: false, error: { code: 'UNAUTH' } });
 
-    const rows = await db.select().from(friendships).where(
-      or(eq(friendships.userA, userId), eq(friendships.userB, userId)),
-    );
+    const rows = await db
+      .select()
+      .from(friendships)
+      .where(or(eq(friendships.userA, userId), eq(friendships.userB, userId)));
 
     const accepted = rows.filter((r) => r.status === 'accepted');
     const pending = rows.filter((r) => r.status === 'pending');
@@ -69,7 +70,10 @@ export function registerFriendsRoutes(router: Router, roomManager: RoomManager):
       return { userId: uid, name: userMap.get(uid) ?? uid };
     });
 
-    res.json({ ok: true, data: { friends: friendList, pending: { incoming: incomingList, outgoing: outgoingList } } });
+    res.json({
+      ok: true,
+      data: { friends: friendList, pending: { incoming: incomingList, outgoing: outgoingList } },
+    });
   });
 
   // GET /api/friends/search?q=
@@ -81,12 +85,14 @@ export function registerFriendsRoutes(router: Router, roomManager: RoomManager):
     if (!q) return void res.json({ ok: true, data: { users: [] } });
 
     const [blocks, myFriendships] = await Promise.all([
-      db.select().from(userBlocks).where(
-        or(eq(userBlocks.blockerId, userId), eq(userBlocks.blockedId, userId)),
-      ),
-      db.select().from(friendships).where(
-        or(eq(friendships.userA, userId), eq(friendships.userB, userId)),
-      ),
+      db
+        .select()
+        .from(userBlocks)
+        .where(or(eq(userBlocks.blockerId, userId), eq(userBlocks.blockedId, userId))),
+      db
+        .select()
+        .from(friendships)
+        .where(or(eq(friendships.userA, userId), eq(friendships.userB, userId))),
     ]);
 
     const blockedIds = new Set(
@@ -112,7 +118,9 @@ export function registerFriendsRoutes(router: Router, roomManager: RoomManager):
       .limit(40);
 
     const filtered = results
-      .filter((u) => u.id !== userId && !blockedIds.has(u.id) && relationMap.get(u.id) !== 'accepted')
+      .filter(
+        (u) => u.id !== userId && !blockedIds.has(u.id) && relationMap.get(u.id) !== 'accepted',
+      )
       .slice(0, 20)
       .map((u) => ({
         userId: u.id,
@@ -136,21 +144,25 @@ export function registerFriendsRoutes(router: Router, roomManager: RoomManager):
       return void res.status(400).json({ ok: false, error: { code: 'SELF_REQUEST' } });
     }
 
-    const block = await db.select().from(userBlocks).where(
-      or(
-        and(eq(userBlocks.blockerId, userId), eq(userBlocks.blockedId, targetUserId)),
-        and(eq(userBlocks.blockerId, targetUserId), eq(userBlocks.blockedId, userId)),
-      ),
-    );
+    const block = await db
+      .select()
+      .from(userBlocks)
+      .where(
+        or(
+          and(eq(userBlocks.blockerId, userId), eq(userBlocks.blockedId, targetUserId)),
+          and(eq(userBlocks.blockerId, targetUserId), eq(userBlocks.blockedId, userId)),
+        ),
+      );
     if (block.length > 0) {
       return void res.status(400).json({ ok: false, error: { code: 'BLOCKED' } });
     }
 
     const [a, b] = normalizePair(userId, targetUserId);
 
-    const existing = await db.select().from(friendships).where(
-      and(eq(friendships.userA, a), eq(friendships.userB, b)),
-    );
+    const existing = await db
+      .select()
+      .from(friendships)
+      .where(and(eq(friendships.userA, a), eq(friendships.userB, b)));
 
     if (existing.length > 0) {
       const row = existing[0]!;
@@ -159,7 +171,8 @@ export function registerFriendsRoutes(router: Router, roomManager: RoomManager):
       }
       // Other party already requested: auto-accept
       if (row.requestedBy !== userId) {
-        await db.update(friendships)
+        await db
+          .update(friendships)
           .set({ status: 'accepted', acceptedAt: new Date() })
           .where(and(eq(friendships.userA, a), eq(friendships.userB, b)));
         return void res.json({ ok: true, data: { status: 'accepted' } });
@@ -168,7 +181,9 @@ export function registerFriendsRoutes(router: Router, roomManager: RoomManager):
       return void res.json({ ok: true, data: { status: 'pending' } });
     }
 
-    await db.insert(friendships).values({ userA: a, userB: b, requestedBy: userId, status: 'pending' });
+    await db
+      .insert(friendships)
+      .values({ userA: a, userB: b, requestedBy: userId, status: 'pending' });
     res.json({ ok: true, data: { status: 'pending' } });
   });
 
@@ -184,16 +199,18 @@ export function registerFriendsRoutes(router: Router, roomManager: RoomManager):
 
     const [a, b] = normalizePair(userId, requesterId);
 
-    const existing = await db.select().from(friendships).where(
-      and(eq(friendships.userA, a), eq(friendships.userB, b)),
-    );
+    const existing = await db
+      .select()
+      .from(friendships)
+      .where(and(eq(friendships.userA, a), eq(friendships.userB, b)));
 
     const row = existing[0];
     if (!row || row.status !== 'pending' || row.requestedBy !== requesterId) {
       return void res.status(404).json({ ok: false, error: { code: 'NOT_FOUND' } });
     }
 
-    await db.update(friendships)
+    await db
+      .update(friendships)
       .set({ status: 'accepted', acceptedAt: new Date() })
       .where(and(eq(friendships.userA, a), eq(friendships.userB, b)));
 
@@ -212,18 +229,17 @@ export function registerFriendsRoutes(router: Router, roomManager: RoomManager):
 
     const [a, b] = normalizePair(userId, requesterId);
 
-    const existing = await db.select().from(friendships).where(
-      and(eq(friendships.userA, a), eq(friendships.userB, b)),
-    );
+    const existing = await db
+      .select()
+      .from(friendships)
+      .where(and(eq(friendships.userA, a), eq(friendships.userB, b)));
 
     const row = existing[0];
     if (!row || row.status !== 'pending' || row.requestedBy === userId) {
       return void res.status(404).json({ ok: false, error: { code: 'NOT_FOUND' } });
     }
 
-    await db.delete(friendships).where(
-      and(eq(friendships.userA, a), eq(friendships.userB, b)),
-    );
+    await db.delete(friendships).where(and(eq(friendships.userA, a), eq(friendships.userB, b)));
 
     res.json({ ok: true });
   });
@@ -236,9 +252,10 @@ export function registerFriendsRoutes(router: Router, roomManager: RoomManager):
     const targetId = req.params.userId;
     const [a, b] = normalizePair(userId, targetId);
 
-    const deleted = await db.delete(friendships).where(
-      and(eq(friendships.userA, a), eq(friendships.userB, b)),
-    ).returning();
+    const deleted = await db
+      .delete(friendships)
+      .where(and(eq(friendships.userA, a), eq(friendships.userB, b)))
+      .returning();
 
     if (deleted.length === 0) {
       return void res.status(404).json({ ok: false, error: { code: 'NOT_FOUND' } });

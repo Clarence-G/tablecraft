@@ -371,173 +371,173 @@ export function Board({
         className="flex-1 text-foreground flex flex-col items-center p-3 sm:p-4 gap-3 w-full bg-warning/5"
         data-testid="game-board"
       >
-      {/* Players */}
-      <div className="flex gap-3 flex-wrap justify-center">
-        {players.map((p) => (
-          <PlayerBadge
-            key={p.id}
-            player={p}
-            isCurrentTurn={state.phase === 'playing' && state.currentPlayer === p.id}
-            isMe={p.id === myId}
-          />
-        ))}
-      </div>
+        {/* Players */}
+        <div className="flex gap-3 flex-wrap justify-center">
+          {players.map((p) => (
+            <PlayerBadge
+              key={p.id}
+              player={p}
+              isCurrentTurn={state.phase === 'playing' && state.currentPlayer === p.id}
+              isMe={p.id === myId}
+            />
+          ))}
+        </div>
 
-      {/* Phase: Placement */}
-      {state.phase === 'placement' && !state.myPlaced && (
-        <div className="flex flex-col items-center gap-3 w-full max-w-sm">
-          <div className="text-sm font-semibold text-foreground">{t('deployFleet')}</div>
+        {/* Phase: Placement */}
+        {state.phase === 'placement' && !state.myPlaced && (
+          <div className="flex flex-col items-center gap-3 w-full max-w-sm">
+            <div className="text-sm font-semibold text-foreground">{t('deployFleet')}</div>
 
-          {/* Ship Selector */}
-          <ShipSelector
-            selectedShipIdx={selectedShipIdx}
-            placedShips={placedShips}
-            onSelect={(idx) => {
-              setSelectedShipIdx(idx === selectedShipIdx ? null : idx);
-            }}
-          />
+            {/* Ship Selector */}
+            <ShipSelector
+              selectedShipIdx={selectedShipIdx}
+              placedShips={placedShips}
+              onSelect={(idx) => {
+                setSelectedShipIdx(idx === selectedShipIdx ? null : idx);
+              }}
+            />
 
-          {/* Rotation + Preview */}
-          {selectedShipIdx !== null && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>{t('direction')}</span>
-              {rotatedOffsets.length > 0 && (
-                <div
-                  className="inline-grid gap-px"
-                  style={{
-                    gridTemplateRows: `repeat(${shipPreviewRows}, 8px)`,
-                    gridTemplateColumns: `repeat(${shipPreviewCols}, 8px)`,
-                  }}
+            {/* Rotation + Preview */}
+            {selectedShipIdx !== null && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{t('direction')}</span>
+                {rotatedOffsets.length > 0 && (
+                  <div
+                    className="inline-grid gap-px"
+                    style={{
+                      gridTemplateRows: `repeat(${shipPreviewRows}, 8px)`,
+                      gridTemplateColumns: `repeat(${shipPreviewCols}, 8px)`,
+                    }}
+                  >
+                    {Array.from({ length: shipPreviewRows * shipPreviewCols }).map((_, idx) => {
+                      const r = Math.floor(idx / shipPreviewCols);
+                      const c = idx % shipPreviewCols;
+                      const filled = rotatedOffsets.some(([or, oc]) => or === r && oc === c);
+                      return (
+                        <div
+                          // biome-ignore lint/suspicious/noArrayIndexKey: preview cells use stable index
+                          key={idx}
+                          className={filled ? `${SHIP_COLORS.hull.bgClass} rounded-sm` : ''}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setRotation((r) => (r + 1) % 4)}
+                  className="px-2 py-0.5 text-xs bg-secondary border border-border rounded hover:border-foreground/60 transition-colors"
                 >
-                  {Array.from({ length: shipPreviewRows * shipPreviewCols }).map((_, idx) => {
-                    const r = Math.floor(idx / shipPreviewCols);
-                    const c = idx % shipPreviewCols;
-                    const filled = rotatedOffsets.some(([or, oc]) => or === r && oc === c);
-                    return (
-                      <div
-                        // biome-ignore lint/suspicious/noArrayIndexKey: preview cells use stable index
-                        key={idx}
-                        className={filled ? `${SHIP_COLORS.hull.bgClass} rounded-sm` : ''}
-                      />
-                    );
-                  })}
-                </div>
-              )}
+                  {t('rotate')}
+                </button>
+              </div>
+            )}
+
+            <PlacementGrid
+              grid={localGrid}
+              previewCells={previewCells}
+              previewValid={previewValid}
+              onCellClick={handlePlacementClick}
+              hoverCell={hoverCell}
+              setHoverCell={setHoverCell}
+            />
+
+            {/* Controls */}
+            <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setRotation((r) => (r + 1) % 4)}
-                className="px-2 py-0.5 text-xs bg-secondary border border-border rounded hover:border-foreground/60 transition-colors"
+                onClick={handleReset}
+                className="px-3 py-1.5 text-xs bg-secondary border-2 border-border rounded shadow-[2px_2px_0px_0px_hsl(var(--foreground))] hover:border-foreground/60 transition-colors"
               >
-                {t('rotate')}
+                {t('reset')}
               </button>
-            </div>
-          )}
-
-          <PlacementGrid
-            grid={localGrid}
-            previewCells={previewCells}
-            previewValid={previewValid}
-            onCellClick={handlePlacementClick}
-            hoverCell={hoverCell}
-            setHoverCell={setHoverCell}
-          />
-
-          {/* Controls */}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={handleReset}
-              className="px-3 py-1.5 text-xs bg-secondary border-2 border-border rounded shadow-[2px_2px_0px_0px_hsl(var(--foreground))] hover:border-foreground/60 transition-colors"
-            >
-              {t('reset')}
-            </button>
-            <button
-              type="button"
-              disabled={placedShips.size !== CLASSIC_SHIPS.length}
-              onClick={handleConfirmPlacement}
-              className={`px-4 py-1.5 text-xs font-semibold rounded border-2 shadow-[2px_2px_0px_0px_hsl(var(--foreground))] transition-colors
+              <button
+                type="button"
+                disabled={placedShips.size !== CLASSIC_SHIPS.length}
+                onClick={handleConfirmPlacement}
+                className={`px-4 py-1.5 text-xs font-semibold rounded border-2 shadow-[2px_2px_0px_0px_hsl(var(--foreground))] transition-colors
                 ${
                   placedShips.size === CLASSIC_SHIPS.length
                     ? 'bg-primary text-primary-foreground border-foreground hover:opacity-80'
                     : 'bg-muted text-muted-foreground border-border cursor-not-allowed'
                 }
               `}
-            >
-              {t('confirmDeploy')} ({placedShips.size}/{CLASSIC_SHIPS.length})
-            </button>
+              >
+                {t('confirmDeploy')} ({placedShips.size}/{CLASSIC_SHIPS.length})
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Placement: waiting for opponent */}
-      {state.phase === 'placement' && state.myPlaced && (
-        <div className="bg-card border-2 border-border rounded shadow-[4px_4px_0px_0px_hsl(var(--foreground))] px-6 py-4 text-center">
-          <div className="text-sm font-semibold text-foreground mb-1">{t('fleetDeployed')}</div>
-          <div className="text-xs text-muted-foreground">{t('waitingOpponent')}</div>
-        </div>
-      )}
-
-      {/* Phase: Playing */}
-      {state.phase === 'playing' && (
-        <div className="flex flex-col items-center gap-3 w-full">
-          {/* Sunk indicators */}
-          <div className="flex gap-4 text-xs">
-            <SunkIndicator
-              sunkList={state.opponentShipsSunk}
-              label={t('sunk')}
-              destroyedLabel={t('destroyed')}
-              aliveLabel={t('alive')}
-            />
-            <SunkIndicator
-              sunkList={state.myShipsSunk}
-              label={t('ourLosses')}
-              destroyedLabel={t('destroyed')}
-              aliveLabel={t('alive')}
-            />
+        {/* Placement: waiting for opponent */}
+        {state.phase === 'placement' && state.myPlaced && (
+          <div className="bg-card border-2 border-border rounded shadow-[4px_4px_0px_0px_hsl(var(--foreground))] px-6 py-4 text-center">
+            <div className="text-sm font-semibold text-foreground mb-1">{t('fleetDeployed')}</div>
+            <div className="text-xs text-muted-foreground">{t('waitingOpponent')}</div>
           </div>
+        )}
 
-          {/* Grids */}
-          <div className="flex flex-wrap gap-4 justify-center">
-            <BattleGrid
-              label={t('enemyWaters')}
-              shipGrid={new Array(GRID_SIZE * GRID_SIZE).fill(0)}
-              shotsGrid={state.myShots}
-              clickable={isMyTurn && !gameOver}
-              onCellClick={(row, col) => {
-                // Optimistic fire: assume hit (2). Feels rewarding; a miss
-                // visibly corrects ~one RTT later when the real view arrives.
-                const opponent = players.find((p) => p.id !== myId);
-                const nextShots = [...state.myShots];
-                nextShots[toIndex(row, col)] = 2;
-                const optimistic: PlayerView = {
-                  ...state,
-                  myShots: nextShots,
-                  currentPlayer: opponent ? opponent.id : state.currentPlayer,
-                };
-                sendAction({ type: 'fire', row, col }, optimistic);
-              }}
-            />
-            <BattleGrid
-              label={t('ourFleet')}
-              shipGrid={state.myGrid}
-              shotsGrid={state.opponentShots}
-              clickable={false}
-            />
+        {/* Phase: Playing */}
+        {state.phase === 'playing' && (
+          <div className="flex flex-col items-center gap-3 w-full">
+            {/* Sunk indicators */}
+            <div className="flex gap-4 text-xs">
+              <SunkIndicator
+                sunkList={state.opponentShipsSunk}
+                label={t('sunk')}
+                destroyedLabel={t('destroyed')}
+                aliveLabel={t('alive')}
+              />
+              <SunkIndicator
+                sunkList={state.myShipsSunk}
+                label={t('ourLosses')}
+                destroyedLabel={t('destroyed')}
+                aliveLabel={t('alive')}
+              />
+            </div>
+
+            {/* Grids */}
+            <div className="flex flex-wrap gap-4 justify-center">
+              <BattleGrid
+                label={t('enemyWaters')}
+                shipGrid={new Array(GRID_SIZE * GRID_SIZE).fill(0)}
+                shotsGrid={state.myShots}
+                clickable={isMyTurn && !gameOver}
+                onCellClick={(row, col) => {
+                  // Optimistic fire: assume hit (2). Feels rewarding; a miss
+                  // visibly corrects ~one RTT later when the real view arrives.
+                  const opponent = players.find((p) => p.id !== myId);
+                  const nextShots = [...state.myShots];
+                  nextShots[toIndex(row, col)] = 2;
+                  const optimistic: PlayerView = {
+                    ...state,
+                    myShots: nextShots,
+                    currentPlayer: opponent ? opponent.id : state.currentPlayer,
+                  };
+                  sendAction({ type: 'fire', row, col }, optimistic);
+                }}
+              />
+              <BattleGrid
+                label={t('ourFleet')}
+                shipGrid={state.myGrid}
+                shotsGrid={state.opponentShots}
+                clickable={false}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Game Over Modal */}
-      {gameOver && state.winner && (
-        <GameOverModal
-          rankings={[
-            state.winner,
-            ...players.filter((p) => p.id !== state.winner).map((p) => p.id),
-          ]}
-          playerNames={playerNames}
-          myId={myId}
-        />
-      )}
+        {/* Game Over Modal */}
+        {gameOver && state.winner && (
+          <GameOverModal
+            rankings={[
+              state.winner,
+              ...players.filter((p) => p.id !== state.winner).map((p) => p.id),
+            ]}
+            playerNames={playerNames}
+            myId={myId}
+          />
+        )}
       </div>
     </div>
   );

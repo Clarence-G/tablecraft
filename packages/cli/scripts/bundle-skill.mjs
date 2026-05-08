@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // Copies skill_data/tablecraft-player/ → packages/cli/skills/tablecraft-player/
 // Called from `pnpm build` so the skill ships in the npm tarball.
-import { cpSync, rmSync, existsSync, mkdirSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const src = resolve(here, '../../../skill_data/tablecraft-player');

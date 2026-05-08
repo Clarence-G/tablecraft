@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { signUpEmail, signInEmail, signOut, E2EAuthError } from '../../helpers/auth';
+import { expect, test } from '@playwright/test';
+import { E2EAuthError, signInEmail, signOut, signUpEmail } from '../../helpers/auth';
 
 // Previously blocked by a server bug where POST /api/auth/sign-up/email returned
 // HTTP 500 under pglite. Fixed in commit 77e2c07 (feat(stage1.5): migrate
@@ -29,13 +29,17 @@ test.describe('Email signup — happy path', () => {
     await expect(page.locator(`[aria-label="${name}"]`)).not.toBeVisible({ timeout: 5000 });
 
     const sessionBefore = await page.evaluate(async () => {
-      const res = await fetch('http://localhost:3001/api/auth/get-session', { credentials: 'include' });
+      const res = await fetch('http://localhost:3001/api/auth/get-session', {
+        credentials: 'include',
+      });
       const json = await res.json();
       return json?.user?.id ?? null;
     });
     await signInEmail(page, { email, password });
     const sessionAfter = await page.evaluate(async () => {
-      const res = await fetch('http://localhost:3001/api/auth/get-session', { credentials: 'include' });
+      const res = await fetch('http://localhost:3001/api/auth/get-session', {
+        credentials: 'include',
+      });
       const json = await res.json();
       return json?.user?.id ?? null;
     });

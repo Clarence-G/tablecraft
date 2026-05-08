@@ -3,12 +3,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 describe('buildEmailTransport', () => {
   beforeEach(() => {
     vi.resetModules();
+    // biome-ignore lint/performance/noDelete: Node's process.env treats `= undefined` as the literal string "undefined"; `delete` is the only way to truly unset
     delete process.env.RESEND_API_KEY;
+    // biome-ignore lint/performance/noDelete: Node's process.env treats `= undefined` as the literal string "undefined"; `delete` is the only way to truly unset
     delete process.env.EMAIL_FROM;
   });
 
   afterEach(() => {
+    // biome-ignore lint/performance/noDelete: Node's process.env treats `= undefined` as the literal string "undefined"; `delete` is the only way to truly unset
     delete process.env.RESEND_API_KEY;
+    // biome-ignore lint/performance/noDelete: Node's process.env treats `= undefined` as the literal string "undefined"; `delete` is the only way to truly unset
     delete process.env.EMAIL_FROM;
   });
 

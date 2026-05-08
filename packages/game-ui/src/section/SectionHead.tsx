@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
 import { ArrowRight } from 'lucide-react';
+import type { ReactNode } from 'react';
 
 interface SectionHeadProps {
   title: string;

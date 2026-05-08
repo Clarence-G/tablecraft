@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import zh from '../../../../packages/client/src/i18n/locales/zh/common.json';
 import { seedGuestIdentity } from '../../helpers/identity';
 import { createRoom, joinRoomByCode, readyUp, startGame } from '../../helpers/rooms';
-import zh from '../../../../packages/client/src/i18n/locales/zh/common.json';
 
 const APP = 'http://localhost:5173';
 
@@ -43,13 +43,13 @@ test.describe('Gomoku E2E — full game', () => {
     // Bob plays safe at col 8 (no interference with Alice's win path)
     const moves: Array<{ player: typeof alice; row: number; col: number }> = [
       { player: alice, row: 0, col: 7 },
-      { player: bob,   row: 0, col: 8 },
+      { player: bob, row: 0, col: 8 },
       { player: alice, row: 1, col: 7 },
-      { player: bob,   row: 1, col: 8 },
+      { player: bob, row: 1, col: 8 },
       { player: alice, row: 2, col: 7 },
-      { player: bob,   row: 2, col: 8 },
+      { player: bob, row: 2, col: 8 },
       { player: alice, row: 3, col: 7 },
-      { player: bob,   row: 3, col: 8 },
+      { player: bob, row: 3, col: 8 },
       { player: alice, row: 4, col: 7 }, // Alice wins
     ];
 

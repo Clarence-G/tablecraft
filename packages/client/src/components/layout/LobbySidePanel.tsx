@@ -1,3 +1,4 @@
+import { LeaderboardRow } from '@repo/game-ui/leaderboard';
 import Avatar from 'boring-avatars';
 import {
   Check,
@@ -15,12 +16,16 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LeaderboardRow } from '@repo/game-ui/leaderboard';
+import { useNavigate } from 'react-router-dom';
+import {
+  type FriendEntry,
+  type PendingEntry,
+  type SearchUser,
+  useFriends,
+} from '../../hooks/useFriends';
+import { type RecentGame, useRecentGames } from '../../hooks/useRecentGames';
 import { apiFetch } from '../../lib/api';
-import { useRecentGames, type RecentGame } from '../../hooks/useRecentGames';
-import { useFriends, type FriendEntry, type PendingEntry, type SearchUser } from '../../hooks/useFriends';
 
 const STORAGE_KEY = 'lobbysidepanel.expanded';
 
@@ -201,9 +206,7 @@ function LeaderboardTab({ onGoFull }: { onGoFull: () => void }) {
 
       <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-2">
         {loading ? (
-          <div className="text-xs text-muted-foreground text-center py-4">
-            {t('lobby.loading')}
-          </div>
+          <div className="text-xs text-muted-foreground text-center py-4">{t('lobby.loading')}</div>
         ) : entries.length === 0 ? (
           <div className="text-xs text-muted-foreground text-center py-4">
             {t('lobbyPanel.leaderboard.empty')}
@@ -332,11 +335,7 @@ function ProfileTab({
         className="flex flex-col items-center gap-2 pt-2 text-center group"
         title={t('lobbyPanel.profile.loggedInHint')}
       >
-        <Avatar
-          size={56}
-          name={authedUser.email ?? authedUser.id}
-          variant="beam"
-        />
+        <Avatar size={56} name={authedUser.email ?? authedUser.id} variant="beam" />
         <div className="text-sm font-bold text-foreground group-hover:underline">
           {authedUser.name}
         </div>
@@ -390,7 +389,8 @@ function ProfileTab({
 function FriendsTab({ authedUser }: { authedUser: SessionUser | null }) {
   const { t } = useTranslation('common');
   const navigate = useNavigate();
-  const { data, sendRequest, acceptRequest, declineRequest, removeFriend, searchUsers } = useFriends();
+  const { data, sendRequest, acceptRequest, declineRequest, removeFriend, searchUsers } =
+    useFriends();
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
   const [notice, setNotice] = useState('');
@@ -422,7 +422,9 @@ function FriendsTab({ authedUser }: { authedUser: SessionUser | null }) {
     try {
       await sendRequest(userId);
       showNotice(t('lobbyPanel.friends.toast.requestSent'));
-      setSearchResults((prev) => prev.map((u) => u.userId === userId ? { ...u, relation: 'pending_out' as const } : u));
+      setSearchResults((prev) =>
+        prev.map((u) => (u.userId === userId ? { ...u, relation: 'pending_out' as const } : u)),
+      );
     } catch {
       showNotice(t('lobbyPanel.friends.toast.error'));
     }
@@ -519,7 +521,10 @@ function FriendsTab({ authedUser }: { authedUser: SessionUser | null }) {
               </div>
             ) : (
               searchResults.map((u) => (
-                <div key={u.userId} className="flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] border border-border bg-card text-xs">
+                <div
+                  key={u.userId}
+                  className="flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] border border-border bg-card text-xs"
+                >
                   <span className="font-medium truncate">{u.name}</span>
                   {u.relation === 'none' && (
                     <button
@@ -561,7 +566,10 @@ function FriendsTab({ authedUser }: { authedUser: SessionUser | null }) {
             </div>
             <div className="flex flex-col gap-1">
               {data.pending.incoming.map((p: PendingEntry) => (
-                <div key={p.userId} className="flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] border border-border bg-card text-xs">
+                <div
+                  key={p.userId}
+                  className="flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] border border-border bg-card text-xs"
+                >
                   <span className="font-medium truncate">{p.name}</span>
                   <div className="flex items-center gap-1">
                     <button
@@ -595,7 +603,10 @@ function FriendsTab({ authedUser }: { authedUser: SessionUser | null }) {
             </div>
             <div className="flex flex-col gap-1">
               {data.pending.outgoing.map((p: PendingEntry) => (
-                <div key={p.userId} className="flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] border border-border bg-card text-xs">
+                <div
+                  key={p.userId}
+                  className="flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] border border-border bg-card text-xs"
+                >
                   <span className="font-medium truncate">{p.name}</span>
                   <button
                     type="button"
@@ -623,11 +634,18 @@ function FriendsTab({ authedUser }: { authedUser: SessionUser | null }) {
             {hasFriends ? (
               <div className="flex flex-col gap-1">
                 {data.friends.map((f: FriendEntry) => (
-                  <div key={f.userId} className="group flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] border border-border bg-card text-xs">
+                  <div
+                    key={f.userId}
+                    className="group flex items-center justify-between gap-2 px-3 py-2 rounded-[8px] border border-border bg-card text-xs"
+                  >
                     <div className="flex items-center gap-2 min-w-0">
                       <span
                         className={`w-2 h-2 rounded-full flex-shrink-0 ${f.status === 'online' ? 'bg-success' : 'bg-muted-foreground/40'}`}
-                        title={f.status === 'online' ? t('lobbyPanel.friends.status.online') : t('lobbyPanel.friends.status.offline')}
+                        title={
+                          f.status === 'online'
+                            ? t('lobbyPanel.friends.status.online')
+                            : t('lobbyPanel.friends.status.offline')
+                        }
                       />
                       <span className="font-medium truncate">{f.name}</span>
                     </div>
@@ -657,8 +675,12 @@ function FriendsTab({ authedUser }: { authedUser: SessionUser | null }) {
               <div className="flex flex-col items-center gap-2 py-8 px-4">
                 <Trash2 className="hidden" />
                 <Users className="w-10 h-10 text-foreground/20" strokeWidth={1.5} />
-                <div className="text-sm font-semibold text-foreground/60">{t('lobbyPanel.friends.empty.title')}</div>
-                <div className="text-xs text-muted-foreground text-center">{t('lobbyPanel.friends.empty.helper')}</div>
+                <div className="text-sm font-semibold text-foreground/60">
+                  {t('lobbyPanel.friends.empty.title')}
+                </div>
+                <div className="text-xs text-muted-foreground text-center">
+                  {t('lobbyPanel.friends.empty.helper')}
+                </div>
               </div>
             ) : null}
           </section>
@@ -750,9 +772,7 @@ function RecentRow({
         : 'border-border bg-muted text-muted-foreground';
   return (
     <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-[10px] border-2 border-border bg-card text-xs">
-      <span className="font-semibold truncate">
-        {gt(game.gameId, `${game.gameId}:meta.name`)}
-      </span>
+      <span className="font-semibold truncate">{gt(game.gameId, `${game.gameId}:meta.name`)}</span>
       <span
         className={`inline-flex items-center font-bold text-[10px] uppercase tracking-wide border rounded-full px-2 py-0.5 ${tone}`}
       >
@@ -907,21 +927,13 @@ export function LobbySidePanel(props: LobbySidePanelProps) {
             icon={Trophy}
             onClick={() => openToTab('leaderboard')}
           />
-          <RailIcon
-            label={tabLabels.friends}
-            icon={Users}
-            onClick={() => openToTab('friends')}
-          />
+          <RailIcon label={tabLabels.friends} icon={Users} onClick={() => openToTab('friends')} />
           <RailIcon
             label={tabLabels.profile}
             icon={UserIcon}
             onClick={() => openToTab('profile')}
           />
-          <RailIcon
-            label={tabLabels.recent}
-            icon={History}
-            onClick={() => openToTab('recent')}
-          />
+          <RailIcon label={tabLabels.recent} icon={History} onClick={() => openToTab('recent')} />
         </aside>
       )}
 

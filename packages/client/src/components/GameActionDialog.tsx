@@ -1,3 +1,4 @@
+import { GameCoverImage } from '@/components/GameCoverImage';
 import {
   Dialog,
   DialogContent,
@@ -5,12 +6,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { GameCoverImage } from '@/components/GameCoverImage';
+import { RoomCard } from '@/pages/lobby/sections';
 import type { RoomSummary } from '@repo/shared';
 import { Clock, Plus, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RoomCard } from '@/pages/lobby/sections';
 
 interface GameMetaLite {
   id: string;
@@ -149,13 +149,9 @@ export function GameActionDialog({
 
           {/* Active rooms for this game */}
           <div>
-            <div className="text-sm font-bold text-foreground mb-2">
-              {t('lobby.activeRooms')}
-            </div>
+            <div className="text-sm font-bold text-foreground mb-2">{t('lobby.activeRooms')}</div>
             {loading ? (
-              <div className="text-xs text-muted-foreground py-4">
-                {t('lobby.connectingHint')}
-              </div>
+              <div className="text-xs text-muted-foreground py-4">{t('lobby.connectingHint')}</div>
             ) : rooms.length === 0 ? (
               <div className="text-xs text-muted-foreground bg-secondary/50 border border-border rounded-[10px] px-3 py-3 text-center">
                 {t('lobby.noRoomsForGame', { game: displayName })}

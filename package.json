@@ -11,14 +11,7 @@
   },
   "homepage": "https://github.com/Clarence-G/tablecraft",
   "bugs": "https://github.com/Clarence-G/tablecraft/issues",
-  "keywords": [
-    "board-games",
-    "ai-agents",
-    "multiplayer",
-    "typescript",
-    "react",
-    "socket-io"
-  ],
+  "keywords": ["board-games", "ai-agents", "multiplayer", "typescript", "react", "socket-io"],
   "engines": {
     "node": ">=20 <25",
     "pnpm": ">=9"
@@ -37,10 +30,7 @@
     "typecheck": "tsc --noEmit -p packages/shared/tsconfig.json && tsc --noEmit -p packages/game-ui/tsconfig.json && tsc --noEmit -p packages/client/tsconfig.json"
   },
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "@biomejs/biome",
-      "esbuild"
-    ]
+    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
   },
   "dependencies": {
     "@games/battleship": "workspace:*",

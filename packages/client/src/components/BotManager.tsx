@@ -35,9 +35,7 @@ function formatDate(iso: string, locale: string): string {
 
 export function BotManager({ initialBots }: BotManagerProps) {
   const { t, i18n } = useTranslation('common');
-  const [bots, setBots] = useState<BotRow[]>(
-    initialBots.filter((b) => b.revokedAt === null),
-  );
+  const [bots, setBots] = useState<BotRow[]>(initialBots.filter((b) => b.revokedAt === null));
   // When the parent's `/api/me` fetch resolves AFTER mount, `initialBots`
   // transitions from `[]` to the real array. Without this effect, the
   // useState initializer above keeps the stale `[]`. We sync whenever the
@@ -142,11 +140,7 @@ export function BotManager({ initialBots }: BotManagerProps) {
                       className="inline-flex items-center text-muted-foreground hover:text-foreground p-0.5 rounded"
                       aria-label={t('me.bots.copyUserId')}
                     >
-                      {copied ? (
-                        <Check className="size-3" />
-                      ) : (
-                        <Copy className="size-3" />
-                      )}
+                      {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
                     </button>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">

@@ -28,4 +28,3 @@ function buildRegistry(): Record<string, ClientGamePlugin> {
 }
 
 export const clientRegistry: Record<string, ClientGamePlugin> = buildRegistry();
-

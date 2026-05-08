@@ -128,10 +128,7 @@ function ChatPane() {
           messages.map((m) => {
             const mine = m.from === myId;
             return (
-              <div
-                key={m.id}
-                className={`flex flex-col ${mine ? 'items-end' : 'items-start'}`}
-              >
+              <div key={m.id} className={`flex flex-col ${mine ? 'items-end' : 'items-start'}`}>
                 {!mine && (
                   <div className="text-[10px] text-muted-foreground mb-0.5 px-1">{m.fromName}</div>
                 )}

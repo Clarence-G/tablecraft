@@ -1,3 +1,7 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
 /**
  * Apply drizzle migrations to the database at DATABASE_URL.
  *
@@ -11,10 +15,6 @@
  * bookkeeping to skip already-applied migrations.
  */
 import postgres from 'postgres';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import { migrate } from 'drizzle-orm/postgres-js/migrator';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
 
 const url = process.env.DATABASE_URL;
 if (!url) {

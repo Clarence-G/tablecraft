@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { type Page, expect, test } from '@playwright/test';
 import { seedGuestIdentity } from '../../helpers/identity';
 import { createRoom, joinRoomByCode, readyUp, startGame } from '../../helpers/rooms';
 import { dropSocket, reconnectSocket } from '../../helpers/socketDrop';

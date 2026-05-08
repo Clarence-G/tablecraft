@@ -48,9 +48,7 @@ describe('GameOverModal', () => {
   it('Escape falls back to onReturnToRoom when onReturnToLobby absent', () => {
     const onReturnToRoom = vi.fn();
     const onRestart = vi.fn();
-    render(
-      <GameOverModal {...baseProps} onRestart={onRestart} onReturnToRoom={onReturnToRoom} />,
-    );
+    render(<GameOverModal {...baseProps} onRestart={onRestart} onReturnToRoom={onReturnToRoom} />);
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onReturnToRoom).toHaveBeenCalledTimes(1);
     expect(onRestart).not.toHaveBeenCalled();

@@ -14,7 +14,7 @@ export const meta: GameMeta = {
   estimatedMinutes: 30,
   scene: {
     surface: { color: '#3a2c3c', texture: 'velvet', accent: '#d4a056' },
-    ambience: { type: 'ambient', warmth: 'warm', intensity: 0.30 },
+    ambience: { type: 'ambient', warmth: 'warm', intensity: 0.3 },
   },
   rules:
     '每回合选择一个动作：(1) 取 3 颗不同颜色的宝石；(2) 取 2 颗同色宝石（该堆需至少 4 颗）；(3) 预订一张可见或牌堆顶的卡并获得 1 颗黄金；(4) 购买一张可见或预订卡（可用黄金替代任意宝石）。每张卡提供固定的宝石折扣；若你的折扣满足贵族需求，贵族自动加入你的庄园（+3 声望）。回合结束时若持有宝石超过 10 枚，必须丢弃多余。率先达到 15 声望时，当前轮完整打完后结算，声望最高者胜（同分则卡牌最少者胜）。',

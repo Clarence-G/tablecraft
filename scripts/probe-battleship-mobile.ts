@@ -104,7 +104,12 @@ async function getBot(name: string): Promise<{ token: string; userId: string }> 
     // Count buttons (the 10×10 grid = 100 cells + some control buttons)
     const allRects = buttons.map((b) => {
       const r = b.getBoundingClientRect();
-      return { w: Math.round(r.width), h: Math.round(r.height), x: Math.round(r.x), y: Math.round(r.y) };
+      return {
+        w: Math.round(r.width),
+        h: Math.round(r.height),
+        x: Math.round(r.x),
+        y: Math.round(r.y),
+      };
     });
 
     // Grid cells are square buttons — filter by aspect ratio ≈1
@@ -125,9 +130,7 @@ async function getBot(name: string): Promise<{ token: string; userId: string }> 
 
   const cellsVisible = gridData.squareButtonCount >= 100;
   const firstCellTappable =
-    gridData.firstCell !== null &&
-    gridData.firstCell.w >= 20 &&
-    gridData.firstCell.h >= 20;
+    gridData.firstCell !== null && gridData.firstCell.w >= 20 && gridData.firstCell.h >= 20;
 
   await page.screenshot({ path: '/tmp/battleship-mobile-before.png', fullPage: false });
   console.log('screenshot -> /tmp/battleship-mobile-before.png');
@@ -135,8 +138,12 @@ async function getBot(name: string): Promise<{ token: string; userId: string }> 
   console.log('\n=== VERDICT ===');
   console.log(`  board found:          ${gridData.boardFound}`);
   console.log(`  total buttons:        ${gridData.totalButtons}`);
-  console.log(`  square cells (≥100):  ${gridData.squareButtonCount} → ${cellsVisible ? 'PASS' : 'FAIL'}`);
-  console.log(`  first cell tappable:  ${JSON.stringify(gridData.firstCell)} → ${firstCellTappable ? 'PASS (≥20px)' : 'FAIL (<20px or absent)'}`);
+  console.log(
+    `  square cells (≥100):  ${gridData.squareButtonCount} → ${cellsVisible ? 'PASS' : 'FAIL'}`,
+  );
+  console.log(
+    `  first cell tappable:  ${JSON.stringify(gridData.firstCell)} → ${firstCellTappable ? 'PASS (≥20px)' : 'FAIL (<20px or absent)'}`,
+  );
   console.log(`  page errors:          ${pageErrors.length}`);
 
   await browser.close();

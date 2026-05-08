@@ -86,7 +86,9 @@ export async function connectBotSocket(opts: {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       socket.disconnect();
-      reject(new BotError(`connectBotSocket: timed out after ${timeoutMs}ms waiting for connection`));
+      reject(
+        new BotError(`connectBotSocket: timed out after ${timeoutMs}ms waiting for connection`),
+      );
     }, timeoutMs);
 
     const socket = io(serverUrl, {

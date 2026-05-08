@@ -91,7 +91,10 @@ export class TokenStore {
   }
 
   // Creates a new bot tied to an owner. Throws BotLimitError if owner already has 5 active bots.
-  async generateOwned(ownerUserId: string, name: string): Promise<{ token: string; userId: string }> {
+  async generateOwned(
+    ownerUserId: string,
+    name: string,
+  ): Promise<{ token: string; userId: string }> {
     const existing = await this.db
       .select({ id: botTokens.id })
       .from(botTokens)
@@ -114,7 +117,8 @@ export class TokenStore {
       .where(and(eq(botTokens.userId, botUserId), isNull(botTokens.revokedAt)))
       .limit(1);
     if (rows.length === 0) return false;
-    if (rows[0].ownerUserId !== ownerUserId) throw Object.assign(new Error('NOT_OWNER'), { code: 'NOT_OWNER' });
+    if (rows[0].ownerUserId !== ownerUserId)
+      throw Object.assign(new Error('NOT_OWNER'), { code: 'NOT_OWNER' });
     await this.db
       .update(botTokens)
       .set({ revokedAt: new Date() })

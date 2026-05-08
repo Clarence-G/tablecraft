@@ -132,7 +132,10 @@ export function Login({ onSuccess, onGoToRegister, onBack }: LoginProps) {
                 <label className="block text-xs font-semibold text-foreground" htmlFor="password">
                   {t('auth.password')}
                 </label>
-                <a href="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground underline">
+                <a
+                  href="/forgot-password"
+                  className="text-xs text-muted-foreground hover:text-foreground underline"
+                >
                   {t('auth.forgotPassword')}
                 </a>
               </div>

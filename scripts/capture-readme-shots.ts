@@ -1,11 +1,11 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 /**
  * Refresh README hero screenshots against production tablecraft.aster.pub.
  * Captures 1 desktop + 1 mobile lobby shot.
  */
 import { chromium, devices } from '@playwright/test';
-import path from 'node:path';
-import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
 
 const PROD = 'https://tablecraft.aster.pub';
 const OUT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../screenshots');
@@ -13,18 +13,22 @@ const OUT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../s
 async function cap(name: string, viewport: { width: number; height: number }, device?: any) {
   const browser = await chromium.launch();
   const ctx = await browser.newContext(
-    device
-      ? { ...device, viewport, deviceScaleFactor: 2 }
-      : { viewport, deviceScaleFactor: 2 },
+    device ? { ...device, viewport, deviceScaleFactor: 2 } : { viewport, deviceScaleFactor: 2 },
   );
   const page = await ctx.newPage();
   await page.goto(PROD, { waitUntil: 'domcontentloaded', timeout: 30_000 });
   // Wait for tiles to render.
-  await page.waitForSelector('[data-testid="game-tile"], .game-tile, a[href*="/rooms/"], [role="link"]', { timeout: 10_000 }).catch(() => {});
+  await page
+    .waitForSelector('[data-testid="game-tile"], .game-tile, a[href*="/rooms/"], [role="link"]', {
+      timeout: 10_000,
+    })
+    .catch(() => {});
   await page.waitForTimeout(3000);
   // Close any guest-welcome dialog if present.
   try {
-    const closeBtn = page.locator('[aria-label="Close"], button:has-text("知道了"), button:has-text("Got it")').first();
+    const closeBtn = page
+      .locator('[aria-label="Close"], button:has-text("知道了"), button:has-text("Got it")')
+      .first();
     if (await closeBtn.isVisible({ timeout: 1000 })) await closeBtn.click();
   } catch {}
   await page.waitForTimeout(500);

@@ -33,7 +33,9 @@ export const logic: GameLogic<TState, Action, PlayerView> = {
         ok: true,
         state,
         events: [
-          logAction(playerID, 'log.exampleAction', { /* messageParams */ }),
+          logAction(playerID, 'log.exampleAction', {
+            /* messageParams */
+          }),
         ],
       };
     }

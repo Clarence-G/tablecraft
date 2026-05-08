@@ -118,13 +118,22 @@ export async function leaveRoom(page: Page): Promise<void> {
 export async function getRoomStatus(page: Page): Promise<'waiting' | 'playing' | 'ended'> {
   const url = page.url();
   if (url.includes('/play')) {
-    const boardVisible = await page.locator(SEL.gameBoard).isVisible().catch(() => false);
+    const boardVisible = await page
+      .locator(SEL.gameBoard)
+      .isVisible()
+      .catch(() => false);
     if (boardVisible) return 'playing';
   }
-  const gameOverVisible = await page.locator(SEL.gameOverModal).isVisible().catch(() => false);
+  const gameOverVisible = await page
+    .locator(SEL.gameOverModal)
+    .isVisible()
+    .catch(() => false);
   if (gameOverVisible) return 'ended';
 
-  const boardVisible = await page.locator(SEL.gameBoard).isVisible().catch(() => false);
+  const boardVisible = await page
+    .locator(SEL.gameBoard)
+    .isVisible()
+    .catch(() => false);
   if (boardVisible) return 'playing';
 
   return 'waiting';

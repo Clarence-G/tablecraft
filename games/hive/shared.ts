@@ -12,7 +12,7 @@ export const meta: GameMeta = {
   estimatedMinutes: 30,
   scene: {
     surface: { color: '#4a3528', texture: 'wood', accent: '#d4a056' },
-    ambience: { type: 'spotlight', warmth: 'warm', intensity: 0.30 },
+    ambience: { type: 'spotlight', warmth: 'warm', intensity: 0.3 },
   },
   rules:
     '两人轮流在六角棋盘上放置或移动昆虫棋子，用棋子完全包围对手的蜂后即获胜。蜂后必须在第 4 回合前放置。',

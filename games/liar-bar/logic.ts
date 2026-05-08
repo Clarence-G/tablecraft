@@ -210,7 +210,12 @@ export const logic: GameLogic<LiarsBarState, Action, PlayerView> = {
       return {
         ok: true,
         state: newState,
-        events: [logAction(playerID, 'log.playCards', { count: playedCards.length, suit: state.declaredSuit })],
+        events: [
+          logAction(playerID, 'log.playCards', {
+            count: playedCards.length,
+            suit: state.declaredSuit,
+          }),
+        ],
       };
     }
 

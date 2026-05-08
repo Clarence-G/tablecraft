@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 
 interface ViewAllRowProps {
   children: ReactNode;
@@ -91,9 +91,7 @@ export function ViewAllRow({ children, className = '' }: ViewAllRowProps) {
         onClick={() => scrollBy(-320)}
         tabIndex={-1}
         className={`hidden sm:flex absolute left-1 top-1/2 -translate-y-1/2 z-10 size-8 items-center justify-center rounded-full border-2 border-foreground bg-card shadow-button transition-all duration-200 hover:-translate-y-[calc(50%+2px)] hover:shadow-button-hover active:translate-y-[calc(-50%+1px)] active:shadow-button-active ${
-          canLeft
-            ? 'opacity-0 group-hover/row:opacity-100'
-            : 'opacity-0 pointer-events-none'
+          canLeft ? 'opacity-0 group-hover/row:opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       >
         <ChevronLeft className="size-4" />
@@ -112,9 +110,7 @@ export function ViewAllRow({ children, className = '' }: ViewAllRowProps) {
         onClick={() => scrollBy(320)}
         tabIndex={-1}
         className={`hidden sm:flex absolute right-1 top-1/2 -translate-y-1/2 z-10 size-8 items-center justify-center rounded-full border-2 border-foreground bg-card shadow-button transition-all duration-200 hover:-translate-y-[calc(50%+2px)] hover:shadow-button-hover active:translate-y-[calc(-50%+1px)] active:shadow-button-active ${
-          canRight
-            ? 'opacity-0 group-hover/row:opacity-100'
-            : 'opacity-0 pointer-events-none'
+          canRight ? 'opacity-0 group-hover/row:opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       >
         <ChevronRight className="size-4" />

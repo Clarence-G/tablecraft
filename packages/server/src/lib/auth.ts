@@ -36,7 +36,14 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
-    sendResetPassword: async ({ user, url }: { user: { email: string; name?: string | null; id: string }; url: string; token: string }) => {
+    sendResetPassword: async ({
+      user,
+      url,
+    }: {
+      user: { email: string; name?: string | null; id: string };
+      url: string;
+      token: string;
+    }) => {
       await emailTransport.send({
         to: user.email,
         subject: 'TableCraft — Reset your password',

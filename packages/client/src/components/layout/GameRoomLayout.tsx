@@ -88,12 +88,8 @@ function Inner({
       <Dialog open={confirming} onOpenChange={setConfirming}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {t('header.exitConfirmTitle')}
-            </DialogTitle>
-            <DialogDescription>
-              {t('header.exitConfirmBody')}
-            </DialogDescription>
+            <DialogTitle>{t('header.exitConfirmTitle')}</DialogTitle>
+            <DialogDescription>{t('header.exitConfirmBody')}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirming(false)}>
@@ -119,9 +115,7 @@ function Inner({
           </DialogHeader>
           <div className="whitespace-pre-wrap text-sm leading-relaxed">{rulesText}</div>
           <DialogFooter>
-            <Button onClick={() => setRulesOpen(false)}>
-              {t('header.rulesClose')}
-            </Button>
+            <Button onClick={() => setRulesOpen(false)}>{t('header.rulesClose')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

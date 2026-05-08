@@ -6,7 +6,7 @@ import { Server } from 'socket.io';
 import { type Socket, io as ioClient } from 'socket.io-client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import * as schema from '../db/schema.js';
-import { createTestDb, type TestDb } from '../db/testing.js';
+import { type TestDb, createTestDb } from '../db/testing.js';
 import { setupAuth } from './auth.js';
 
 describe('socket setupAuth', () => {

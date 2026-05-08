@@ -54,7 +54,9 @@ export function useFriends() {
     }
     setIsPending(true);
     void load().finally(() => setIsPending(false));
-    intervalRef.current = setInterval(() => { void load(); }, 30_000);
+    intervalRef.current = setInterval(() => {
+      void load();
+    }, 30_000);
     return () => clearInterval(intervalRef.current);
   }, [userId, load]);
 

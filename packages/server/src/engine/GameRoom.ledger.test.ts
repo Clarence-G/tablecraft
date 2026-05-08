@@ -3,8 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { vi } from 'vitest';
 import { z } from 'zod';
 import * as schema from '../db/schema';
-import { createTestDb, type TestDb } from '../db/testing.js';
-
+import { type TestDb, createTestDb } from '../db/testing.js';
 
 // Dynamically imported after mocking db so GameRoom pulls the test db too.
 let GameRoom: typeof import('./GameRoom.js').GameRoom;

@@ -111,12 +111,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -275,16 +271,12 @@
         "bot_tokens_user_id_unique": {
           "name": "bot_tokens_user_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
-          ]
+          "columns": ["user_id"]
         },
         "bot_tokens_token_hash_unique": {
           "name": "bot_tokens_token_hash_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token_hash"
-          ]
+          "columns": ["token_hash"]
         }
       },
       "policies": {},
@@ -442,10 +434,7 @@
       "compositePrimaryKeys": {
         "friendships_user_a_user_b_pk": {
           "name": "friendships_user_a_user_b_pk",
-          "columns": [
-            "user_a",
-            "user_b"
-          ]
+          "columns": ["user_a", "user_b"]
         }
       },
       "uniqueConstraints": {},
@@ -576,12 +565,8 @@
           "name": "points_ledger_user_id_user_id_fk",
           "tableFrom": "points_ledger",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -738,10 +723,7 @@
       "compositePrimaryKeys": {
         "room_players_room_id_user_id_pk": {
           "name": "room_players_room_id_user_id_pk",
-          "columns": [
-            "room_id",
-            "user_id"
-          ]
+          "columns": ["room_id", "user_id"]
         }
       },
       "uniqueConstraints": {},
@@ -917,12 +899,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -932,9 +910,7 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -1004,16 +980,12 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         },
         "user_claimed_guest_id_unique": {
           "name": "user_claimed_guest_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "claimed_guest_id"
-          ]
+          "columns": ["claimed_guest_id"]
         }
       },
       "policies": {},
@@ -1065,10 +1037,7 @@
       "compositePrimaryKeys": {
         "user_blocks_blocker_id_blocked_id_pk": {
           "name": "user_blocks_blocker_id_blocked_id_pk",
-          "columns": [
-            "blocker_id",
-            "blocked_id"
-          ]
+          "columns": ["blocker_id", "blocked_id"]
         }
       },
       "uniqueConstraints": {},

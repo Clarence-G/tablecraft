@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import './index.css';
 import { initAnalytics } from './lib/analytics';
-import { initSentry, Sentry } from './lib/sentry';
+import { Sentry, initSentry } from './lib/sentry';
 
 initSentry();
 initAnalytics();

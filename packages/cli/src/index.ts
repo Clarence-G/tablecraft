@@ -1,6 +1,14 @@
 #!/usr/bin/env node
 
-import { gameActionCommand, gameChatCommand, gameStateCommand, gameWaitCommand } from './commands/game.js';
+import { existsSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  gameActionCommand,
+  gameChatCommand,
+  gameStateCommand,
+  gameWaitCommand,
+} from './commands/game.js';
 import { gamesListCommand, gamesRulesCommand } from './commands/games.js';
 import { loginCommand, whoamiCommand } from './commands/login.js';
 import {
@@ -11,9 +19,6 @@ import {
   roomsShowCommand,
   roomsStartCommand,
 } from './commands/rooms.js';
-import { existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
 import { ApiClient } from './lib/client.js';
 import { resolveConfig } from './lib/config.js';
 
@@ -181,7 +186,7 @@ async function main() {
           result = {
             ok: true,
             path: p,
-            hint: 'For Claude Code: ln -s "' + p + '" ~/.claude/skills/tablecraft-player',
+            hint: `For Claude Code: ln -s "${p}" ~/.claude/skills/tablecraft-player`,
           };
         }
         break;

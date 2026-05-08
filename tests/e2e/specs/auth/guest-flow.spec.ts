@@ -1,5 +1,5 @@
-import { test, expect } from '@playwright/test';
-import { seedGuestIdentity, IDENTITY_KEY } from '../../helpers/identity';
+import { expect, test } from '@playwright/test';
+import { IDENTITY_KEY, seedGuestIdentity } from '../../helpers/identity';
 import { createRoom, readyUp, startGame } from '../../helpers/rooms';
 
 const APP = 'http://localhost:5173';

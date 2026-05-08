@@ -13,10 +13,10 @@ import { createApiRouter } from './api/router.js';
 import { TokenStore } from './api/token-store.js';
 import { closeDb, initDb } from './db/index.js';
 import { RoomManager } from './engine/RoomManager.js';
-import { auth } from './lib/auth.js';
 import { flushAnalytics } from './lib/analytics.js';
+import { auth } from './lib/auth.js';
 import { logger } from './lib/logger.js';
-import { initSentry, Sentry } from './lib/sentry.js';
+import { Sentry, initSentry } from './lib/sentry.js';
 import { createSessionMiddleware } from './middleware/session.js';
 import { setupAuth } from './socket/auth.js';
 import { setupHandlers } from './socket/handlers.js';
@@ -72,10 +72,12 @@ async function main() {
   // Security headers. contentSecurityPolicy disabled because our SPA assets
   // and Vite dev server don't align with the default CSP; we rely on origin
   // checks for API and CORS for cross-origin.
-  app.use(helmet({
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false,
-  }));
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+    }),
+  );
 
   // General API rate limit: 300 req/min per IP in production, 3000 in
   // development (so e2e suites and dev tooling don't self-throttle). Skip

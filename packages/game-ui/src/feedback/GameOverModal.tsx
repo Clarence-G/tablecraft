@@ -47,6 +47,7 @@ export function GameOverModal({
   }, []);
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: native <dialog> requires imperative showModal()/close() wiring; keep ARIA-annotated <div> for existing focus-trap + backdrop-block logic
     <div
       role="dialog"
       aria-modal="true"

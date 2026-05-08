@@ -71,7 +71,8 @@ describe('Undercover Logic', () => {
     it('rejects describe out of turn', () => {
       const h = createGame(['A', 'B', 'C']);
       // currentSpeaker is the first speaker; find who is NOT the speaker
-      const speakerId = h.view('A').currentSpeaker ?? h.view('B').currentSpeaker ?? h.view('C').currentSpeaker;
+      const speakerId =
+        h.view('A').currentSpeaker ?? h.view('B').currentSpeaker ?? h.view('C').currentSpeaker;
       const nonSpeaker = ['A', 'B', 'C'].find((id) => id !== speakerId)!;
       const result = h.action(nonSpeaker, { type: 'describe', text: 'something' });
       expect(result.ok).toBe(false);
@@ -124,7 +125,9 @@ describe('Undercover Logic', () => {
       if (h.view('B').phase === 'describe') {
         // A was eliminated successfully; move to next vote
         for (let i = 0; i < 3; i++) {
-          const speakerId = ['B', 'C', 'D'].find((id) => h.view(id).myAlive && h.view(id).currentSpeaker === id);
+          const speakerId = ['B', 'C', 'D'].find(
+            (id) => h.view(id).myAlive && h.view(id).currentSpeaker === id,
+          );
           if (speakerId) h.action(speakerId, { type: 'describe', text: `clue ${i}` });
         }
         const result = h.action('B', { type: 'vote', targetId: 'A' });
@@ -149,7 +152,7 @@ describe('Undercover Logic', () => {
       // Describe round
       for (let i = 0; i < 3; i++) {
         const speakerId = ['A', 'B', 'C'].find((id) => h.view(id).currentSpeaker === id)!;
-        h.action(speakerId, { type: 'describe', text: `clue` });
+        h.action(speakerId, { type: 'describe', text: 'clue' });
       }
 
       // All civilians vote for undercover; undercover votes for anyone else
