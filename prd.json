@@ -216,8 +216,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 13,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "BoardProps gained ties + canReturnToRoom; 13 Boards forward pointsDelta/ties/onReturnToRoom/canReturnToRoom/onReturnToLobby; GameOverModal renders disabled \"Waiting for host\" label when canReturnToRoom=false; Game.tsx computes canReturnToRoom from room.hostId===userId"
     },
     {
       "id": "US-014",

@@ -202,3 +202,27 @@ Total stories: 46
   - i18n tests use `vi.mock('react-i18next')` that returns the key as-is, so all `t('foo')` calls resolve to `'foo'`. `screen.getByText('match')` / `getByText('draw')` in tests is actually asserting against the key, not the English string. Real text ("Match", "Draw") is verified by existing end-to-end tests, not by unit tests.
   - PointsBadge is imported from the sibling package path `../points` (not `@repo/game-ui/points`) to avoid the circular re-export: `game-ui/src/feedback/GameOverModal.tsx` is itself re-exported by `game-ui/src/feedback/index.ts` which is imported by clients — pulling back in through `@repo/game-ui` would be a package-private circular edge.
 ---
+
+## 2026-05-08 - US-013
+- Added `ties?: string[][]` and `canReturnToRoom?: boolean` to `BoardProps` (packages/shared/src/types/board.ts). `canReturnToRoom` gates the "Return to Room" button per non-host viewer; default true.
+- Extended `GameOverModal`: when `canReturnToRoom === false` and `onReturnToRoom` is provided, render a disabled button with i18n key `waitingForHost` instead of the active "Return to Room" button. Escape key skips onReturnToRoom for non-hosts. Focus ref shifts to Return-to-Lobby so keyboard users land on the first actionable button.
+- Added i18n key `waitingForHost` to en ("Waiting for host") and zh ("等待房主").
+- `Game.tsx` now forwards `ties={gameOver?.ties}` and `canReturnToRoom={room.hostId === userId}` into every Board.
+- Wired the 4 new props (`pointsDelta`, `ties`, `onReturnToRoom`, `canReturnToRoom`, `onReturnToLobby`) through all 13 Boards that render GameOverModal: undercover, texas-holdem, connect-four (x2 modal instances), liar-bar, battleship, blackjack, love-letter, uno, hive, yahtzee (via BoardInner + spread in outer Board), splendor, gomoku, codenames. No `werewolf/Board.tsx` exists yet — skipped.
+- Added 2 tests to `GameOverModal.test.tsx`: canReturnToRoom=false renders disabled + skips onReturnToRoom on both click and Escape; canReturnToRoom=true (default) keeps the active button clickable. (9 -> 11 tests — runs in CI; collection blocked locally by the known html-encoding-sniffer issue.)
+- Files changed:
+  - packages/shared/src/types/board.ts (+ties, +canReturnToRoom)
+  - packages/game-ui/src/feedback/GameOverModal.tsx (+canReturnToRoom branch, +focus-ref adjustment, +Escape guard)
+  - packages/game-ui/src/feedback/GameOverModal.test.tsx (+2 tests)
+  - packages/client/src/i18n/locales/en/game-ui.json (+waitingForHost)
+  - packages/client/src/i18n/locales/zh/game-ui.json (+waitingForHost)
+  - packages/client/src/pages/Game.tsx (+ties/canReturnToRoom forwarding)
+  - 13 games/*/Board.tsx files (destructure + forward to GameOverModal)
+- Browser verification: deferred — the acceptance flow requires a fully completed 2-player match at the moment the `game:over` event fires, for EACH affected game. jsdom local tests are blocked (documented) so visual verification happens via CI/staging or on-demand human review. The fix is typecheck-safe (all new props are optional and additive) and the added unit tests cover the new disabled-state branch.
+- **Learnings for future iterations:**
+  - When wiring the same prop set into many Board.tsx files, destructure the full set (`pointsDelta, ties, onReturnToRoom, canReturnToRoom, onReturnToLobby`) even if a given Board only renders one of the two modals — it's idiomatic with BoardProps and avoids future drift when someone adds a second modal instance.
+  - `games/yahtzee/Board.tsx` splits into outer `Board` + inner `BoardInner` with `<BoardInner {...props} />`. The spread automatically forwards new BoardProps — only BoardInner needs destructuring changes. Guard-clause + inner-component splits are common in this repo for state-shape-sensitive Boards; always check whether the public Board is a thin wrapper before editing.
+  - `games/connect-four/Board.tsx` renders `GameOverModal` twice (winner path + draw path) — remember both when wiring.
+  - Biome baseline remains at 3 errors pre-existing in playerColors.{ts,test.ts} + GameHeader.tsx; US-013 did not introduce new errors (run `pnpm biome check --diagnostic-level=error <changed-files>` to verify locally without fighting the 83-diag cap on the full run).
+  - `GameOverModal` focus-ref logic now needs a 3-way decision: `onRestart → (onReturnToRoom && canReturnToRoom) → onReturnToLobby`. Future prop additions (e.g. a "Kick Host" button) should slot into the same chain rather than introduce a second useRef.
+---
