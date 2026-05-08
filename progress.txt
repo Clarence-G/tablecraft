@@ -392,3 +392,20 @@ Total stories: 46
   - `@repo/game-ui/card`'s `PlayingCard` supports rich freeform `corner`/`center` ReactNode slots and custom `backgroundClass`/`accent` — features the new `@repo/card-ui` `PlayingCard` does not have. Migrations lose per-rank background coloring (Q=blue, K=purple, A=green in liar-bar). Acceptable tradeoff here because the card-ui red/black is the canonical playing-card look; semantic rank color now lives only in the declared-suit banner.
   - `@repo/card-ui` is now used by 3 game boards (blackjack, texas-holdem, liar-bar). Two more migrations pending in this PRD (US-023 love-letter, US-024 uno). Those both involve non-standard card types (roles, color+number) — likely cannot reuse `PlayingCard` directly and will need new card-ui components or wrapper approaches.
 ---
+
+## 2026-05-09 - US-023
+- Added `.card-text` utility alongside existing `.card-ui-text` in packages/card-ui/src/styles.css (shares the Cinzel font stack). Exposed so games that render through game-ui's PlayingCard (not card-ui's) can still opt into the artistic serif.
+- games/love-letter/Board.tsx: removed the bespoke local CardBack wrapper (was forwarding to game-ui PlayingCard+backArt); now imports `CardBack` from `@repo/card-ui` and calls it with `size="sm"` for the 3 other-player hand stacks. `LOVE_LETTER_CARD_BACK` art is no longer referenced from Board.tsx — cardArt.ts still exports it in case anything else links (harmless).
+- Card text (corner number, center name, subtitle description) now wrapped in `<span className="card-text">` so it renders in Cinzel. `cardArt` face illustrations untouched — only back + typography unify.
+- games/love-letter/package.json: added `@repo/card-ui: workspace:*` dep.
+- Files changed:
+  - packages/card-ui/src/styles.css (+.card-text alias)
+  - games/love-letter/Board.tsx (-local CardBack, +@repo/card-ui import, card-text spans on face text)
+  - games/love-letter/package.json (+@repo/card-ui dep)
+  - pnpm-lock.yaml
+- Browser verification: captured `.ralph-screenshots/us-023-love-letter-default-mobile.png` and `us-023-love-letter-default-tablet.png` via the standalone preview HTML. Both show the shared warm-red CardBack on the other-players row and Cinzel rendering on the face text ("PRIEST", "GUARD", "BARON"). Live browser test on dev server deferred (requires a 2+ player Love Letter room to reproduce the Board layout and other-players hands) — left for human reviewer.
+- **Learnings for future iterations:**
+  - `@repo/card-ui`'s `PlayingCard` and game-ui's `PlayingCard` are DIFFERENT components with different APIs. Love Letter must keep using game-ui's PlayingCard for face cards because only that variant supports `cardArt`/`backArt` art layouts. Use @repo/card-ui just for `CardBack` (and plain suit/rank PlayingCard in blackjack/texas-holdem). Don't mix them up — the prop sets don't overlap.
+  - `.card-text` is the right pattern when you want the Cinzel look on a game that doesn't render through @repo/card-ui's own PlayingCard. It's just a font-family utility, so it composes with tailwind text-* classes (size, color, weight) cleanly. Add the import somewhere in the render tree via @repo/card-ui's exported styles.css (already done elsewhere — no new import needed in love-letter).
+  - The widget-screenshot skill requires `id="app"` on the root element — the default `#app` selector times out otherwise. Add it to any standalone preview HTML before screenshotting.
+---
