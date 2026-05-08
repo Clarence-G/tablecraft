@@ -51,6 +51,10 @@ export interface GameMeta {
 export interface GameContext {
   players: string[];
   random: SeededRandom;
+  /** Per-room config (validated against meta.configSchema). Undefined means
+   * use meta.defaultConfig. Exposed here so logic.setup/onAction/onTimer can
+   * read options without threading a separate parameter through every call. */
+  config?: unknown;
 }
 
 export interface SeededRandom {

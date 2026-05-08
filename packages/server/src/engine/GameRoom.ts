@@ -45,6 +45,9 @@ export class GameRoom {
   status: RoomStatus;
   players: Map<string, PlayerInfo>;
   state: unknown;
+  /** Per-room maxPlayers override. Initialized from meta.maxPlayers; can be
+   * adjusted (within [meta.minPlayers, meta.maxPlayers]) via room:updateOptions. */
+  maxPlayers: number;
   config: unknown;
   logic: GameLogic;
   ctx: GameContext;
@@ -84,9 +87,10 @@ export class GameRoom {
     this.status = 'waiting';
     this.players = new Map();
     this.state = null;
+    this.maxPlayers = meta.maxPlayers;
     this.config = config ?? meta.defaultConfig;
     this.logic = logic!;
-    this.ctx = { players: [], random: new RandomProvider(nanoid()) };
+    this.ctx = { players: [], random: new RandomProvider(nanoid()), config: this.config };
     this.timerManager = new TimerManager();
     this.lastSeq = new Map();
     this.lastActionTime = new Map();
@@ -132,6 +136,7 @@ export class GameRoom {
     room.ctx = {
       players: players.map((p) => p.userId),
       random: new RandomProvider(row.seed ?? nanoid()),
+      config: room.config,
     };
     for (const p of players) {
       room.players.set(p.userId, {
@@ -191,7 +196,7 @@ export class GameRoom {
     if (this.status !== 'waiting') {
       return { ok: false, error: 'Game already started' };
     }
-    if (this.players.size >= this.meta.maxPlayers) {
+    if (this.players.size >= this.maxPlayers) {
       return { ok: false, error: 'Room is full' };
     }
     const seatIndex = this.players.size;
@@ -239,6 +244,7 @@ export class GameRoom {
     this.ctx = {
       players: playerList.map((p) => p.id),
       random: new RandomProvider(seed),
+      config: this.config,
     };
     this.state = this.logic.setup(this.ctx, this.config);
     this.status = 'playing';
@@ -414,11 +420,10 @@ export class GameRoom {
       hostId: this.hostId,
       players: [...this.players.values()],
       minPlayers: this.meta.minPlayers,
-      // Always report the game's declared max — not the current seat count —
-      // so the client can render "1/4" progress and compute the remaining-slot
-      // affordances. Using ctx.players.length here incorrectly reported a
-      // shrinking capacity (e.g. "2-1 人") for a fresh 2-player game.
-      maxPlayers: this.meta.maxPlayers,
+      // Report the per-room maxPlayers override (defaults to meta.maxPlayers).
+      // Using ctx.players.length here incorrectly reported a shrinking capacity
+      // (e.g. "2-1 人") for a fresh 2-player game.
+      maxPlayers: this.maxPlayers,
       config: this.config,
       createdAt: this.createdAt,
       spectatorCount: this.spectators.size,
@@ -433,7 +438,7 @@ export class GameRoom {
       gameName: this.meta.name,
       hostName: host?.name ?? '',
       playerCount: this.players.size,
-      maxPlayers: this.meta.maxPlayers,
+      maxPlayers: this.maxPlayers,
       status: this.status,
     };
   }

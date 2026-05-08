@@ -87,3 +87,34 @@ Total stories: 46
   - Liar Bar's challenge branch has two early-return sites (sole survivor / all dead) before the "continue play" path. New logic that modifies state for the next round goes AFTER both early-returns so it only fires on continuing games.
   - When re-dealing via `startNewRound`, the spread `{ ...newState, declaredSuit, lastPlay: null }` preserves `challengeResult` — client UIs that render the last challenge outcome continue to see it until the next `play_cards` action clears it.
 ---
+
+## 2026-05-08 - US-006
+- Narrowed `GameMeta.configSchema?: z.ZodType` to `z.ZodTypeAny` (keeps inference friendly for `.safeParse`)
+- Added `buildConfigSchemaSummary(meta)` in plugin-meta.ts: returns the JSON Schema form, or null
+- Extended `GameDetailResponse` with `configSchema: unknown|null` and `defaultConfig: unknown|null`; `buildGameDetail` populates both so `/api/games/:gameId` can render per-game options without zod in the client
+- Files changed:
+  - packages/shared/src/types/engine.ts (type narrowed to ZodTypeAny)
+  - packages/shared/src/plugin-meta.ts (new export + response fields)
+  - packages/shared/src/plugin-meta.test.ts (+4 tests, 5 -> 9)
+- **Learnings for future iterations:**
+  - `configSchema` and `defaultConfig` were already wired end-to-end on the server (handlers.ts `room:create` already calls `meta.configSchema.safeParse`). The missing piece was the public summary on `/api/games/:gameId` — future stories that render per-game options in the client should consume `detail.configSchema` (JSON Schema) rather than re-import zod.
+  - `z.ZodTypeAny` is preferable over `z.ZodType` for meta fields because `safeParse` and `zodToJsonSchema` both accept it without extra generics; `z.ZodType<Output>` forces callers to supply a type parameter to keep inference working.
+  - Existing `packages/shared` test file already unused-imports `GameContext` and `GameLogic` — leave it alone per "surgical changes" rule.
+---
+
+## 2026-05-08 - US-007
+- `GameContext` gained optional `config?: unknown` (non-breaking — existing games that only read `ctx.players`/`ctx.random` compile unchanged).
+- `GameRoom.maxPlayers: number` added, initialized from `meta.maxPlayers` in the constructor. Used by `join()` capacity check, `toRoomState()`, `toRoomSummary()` instead of `meta.maxPlayers`.
+- `GameRoom.ctx` now carries `config` at every assignment site (constructor, `fromPersisted`, `start()`) so any logic that reads `ctx.config` gets the per-room value. `logic.setup(ctx, config)` signature preserved for back-compat.
+- `RoomManager.listWaitingRooms` / `listActiveRooms` and `router.ts` POST `/rooms/:id/join` use `room.maxPlayers` so future room-level overrides are respected.
+- Files changed:
+  - packages/shared/src/types/engine.ts (+config?: unknown on GameContext)
+  - packages/server/src/engine/GameRoom.ts (field + init in ctor/fromPersisted/start + join/toRoomState/toRoomSummary)
+  - packages/server/src/engine/RoomManager.ts (2 sites: listWaitingRooms, listActiveRooms)
+  - packages/server/src/api/router.ts (bot join capacity check)
+  - packages/server/src/engine/GameRoom.test.ts (+4 tests: init from meta, defaultConfig, ctx.config into setup, per-room maxPlayers override capacity)
+- **Learnings for future iterations:**
+  - `GameContext` is referenced by every `games/*/logic.ts` — keep additions optional. `logic.setup(ctx, config?)` has two active styles in the codebase (codenames reads the separate `config` param; the rest ignore it), so passing config BOTH via `ctx.config` and as the second param is the safest migration path. US-008 can plumb `room:updateOptions` → `room.maxPlayers`/`room.config` without touching any game's logic.
+  - `GameRoom.ctx` is rebuilt in three places (ctor, `fromPersisted`, `start`) — any future GameContext field must be set in all three to avoid "works in live game, undefined on hydrate" bugs.
+  - `router.ts` has pre-existing Biome warnings (non-null assertions); they're not errors and are untouched by this story per Codebase Patterns rule #12.
+---

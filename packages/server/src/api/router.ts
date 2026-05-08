@@ -230,11 +230,11 @@ export function createApiRouter(
       return;
     }
 
-    if (room.players.size >= room.meta.maxPlayers) {
+    if (room.players.size >= room.maxPlayers) {
       res.status(409).json({
         ok: false,
         error: 'ROOM_FULL',
-        message: `Room is full (${room.meta.maxPlayers} players max)`,
+        message: `Room is full (${room.maxPlayers} players max)`,
         hint: 'Create a new room or join a different one',
       });
       return;

@@ -78,7 +78,7 @@ export class RoomManager {
     const result: RoomSummary[] = [];
     for (const room of this.rooms.values()) {
       if (room.status !== 'waiting') continue;
-      if (room.players.size >= room.meta.maxPlayers) continue;
+      if (room.players.size >= room.maxPlayers) continue;
       if (gameId && room.gameId !== gameId) continue;
       result.push(room.toRoomSummary());
     }
@@ -90,7 +90,7 @@ export class RoomManager {
     const result: RoomSummary[] = [];
     for (const room of this.rooms.values()) {
       if (room.status === 'finished') continue;
-      if (room.status === 'waiting' && room.players.size >= room.meta.maxPlayers) continue;
+      if (room.status === 'waiting' && room.players.size >= room.maxPlayers) continue;
       if (gameId && room.gameId !== gameId) continue;
       result.push(room.toRoomSummary());
     }

@@ -98,8 +98,8 @@
         "Tests pass"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "GameMeta.configSchema narrowed to z.ZodTypeAny; buildConfigSchemaSummary exposes it as JSON Schema via buildGameDetail — no zod leak"
     },
     {
       "id": "US-007",
@@ -116,8 +116,8 @@
         "Tests pass"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "GameContext gained optional config?: unknown; GameRoom.maxPlayers initialized from meta.maxPlayers and threaded into join/toRoomState/toRoomSummary + RoomManager + router bot-join; ctx.config populated in constructor, fromPersisted, and start()"
     },
     {
       "id": "US-008",

@@ -316,3 +316,49 @@ describe('GameRoom: submitAction (REST) shares pipeline with handleAction', () =
     expect(second).toMatchObject({ ok: false, error: 'THROTTLED' });
   });
 });
+
+describe('GameRoom: maxPlayers + config plumbing (US-007)', () => {
+  it('initializes maxPlayers from meta.maxPlayers when no override is given', () => {
+    const room = new GameRoom('test', makeMeta({ maxPlayers: 4 }), undefined, makeLogic());
+    expect(room.maxPlayers).toBe(4);
+    expect(room.toRoomState().maxPlayers).toBe(4);
+    expect(room.toRoomSummary().maxPlayers).toBe(4);
+  });
+
+  it('initializes config from meta.defaultConfig when no override is given', () => {
+    const defaults = { mode: 'normal', rounds: 3 };
+    const room = new GameRoom(
+      'test',
+      makeMeta({ defaultConfig: defaults }),
+      undefined,
+      makeLogic(),
+    );
+    expect(room.config).toEqual(defaults);
+    expect(room.toRoomState().config).toEqual(defaults);
+  });
+
+  it('passes config through GameContext into logic.setup', () => {
+    const seen: unknown[] = [];
+    const logic = makeLogic({
+      setup(ctx: GameContext): State {
+        seen.push(ctx.config);
+        return { turn: ctx.players[0]!, lastDisconnected: null, ticks: 0 };
+      },
+    });
+    const config = { rounds: 5 };
+    const room = new GameRoom('test', makeMeta(), config, logic);
+    seatTwoPlayers(room);
+    expect(seen).toEqual([config]);
+    expect(room.ctx.config).toEqual(config);
+  });
+
+  it('honors a per-room maxPlayers override on join (capacity uses room.maxPlayers)', () => {
+    const room = new GameRoom('test', makeMeta({ maxPlayers: 4 }), undefined, makeLogic());
+    // Simulate an option override (future room:updateOptions)
+    room.maxPlayers = 2;
+    expect(room.join('A', 'Alice')).toEqual({ ok: true, data: undefined });
+    expect(room.join('B', 'Bob')).toEqual({ ok: true, data: undefined });
+    const third = room.join('C', 'Charlie');
+    expect(third).toEqual({ ok: false, error: 'Room is full' });
+  });
+});
