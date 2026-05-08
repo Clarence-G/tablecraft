@@ -80,7 +80,10 @@
       "maxPlayers": "最大玩家数",
       "decrement": "减少最大玩家数",
       "increment": "增加最大玩家数",
-      "onlyHostCanEdit": "只有房主可以修改这些选项"
+      "onlyHostCanEdit": "只有房主可以修改这些选项",
+      "save": "保存",
+      "restoreDefaults": "恢复默认",
+      "changesSaved": "已保存"
     }
   },
   "game": {

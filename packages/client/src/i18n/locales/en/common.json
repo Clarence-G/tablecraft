@@ -80,7 +80,10 @@
       "maxPlayers": "Max players",
       "decrement": "Decrease max players",
       "increment": "Increase max players",
-      "onlyHostCanEdit": "Only the host can change these options"
+      "onlyHostCanEdit": "Only the host can change these options",
+      "save": "Save",
+      "restoreDefaults": "Restore defaults",
+      "changesSaved": "Changes saved"
     }
   },
   "game": {
