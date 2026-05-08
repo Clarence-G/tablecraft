@@ -79,6 +79,19 @@ export interface ServerEvents {
   'game:reject': (reason: string) => void;
   'game:notify': (payload: unknown) => void;
   'game:end': (rankings: string[]) => void;
+  /**
+   * Emitted once to every player in the room immediately after the ledger
+   * write for a finished match. Additive to `game:end` — clients that only
+   * care about the final rankings can keep listening to `game:end`; clients
+   * that want to animate a points delta (end-game modal) should listen to
+   * `game:over`. `pointsDelta[pid]` is the POINTS value for the reason the
+   * ledger recorded for that player (win=10, draw=3, loss=0).
+   */
+  'game:over': (payload: {
+    rankings: string[];
+    ties?: string[][];
+    pointsDelta: Record<string, number>;
+  }) => void;
   'chat:message': (msg: ChatMessage) => void;
   'chat:history': (msgs: ChatMessage[]) => void;
   'chat:blocked': (payload: { reason: string | undefined }) => void;

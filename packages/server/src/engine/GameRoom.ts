@@ -17,6 +17,7 @@ import { db } from '../db/index.js';
 import { rooms } from '../db/schema.js';
 import { recordPoints } from '../lib/ledger.js';
 import { logger } from '../lib/logger.js';
+import { POINTS } from '../lib/points.js';
 import { RandomProvider } from './RandomProvider';
 import { TimerManager } from './TimerManager';
 
@@ -543,7 +544,7 @@ export class GameRoom {
             this.emitToPlayer(pid, 'game:notify', event.payload);
           }
           break;
-        case 'END_GAME':
+        case 'END_GAME': {
           this.rankings = event.rankings;
           this.status = 'finished';
           this.finishedAt = Date.now();
@@ -551,8 +552,21 @@ export class GameRoom {
           for (const pid of this.players.keys()) {
             this.emitToPlayer(pid, 'game:end', event.rankings);
           }
-          this.writePointsLedger(event.rankings, event.ties);
+          const pointsDelta = this.writePointsLedger(event.rankings, event.ties);
+          const overPayload: {
+            rankings: string[];
+            ties?: string[][];
+            pointsDelta: Record<string, number>;
+          } = {
+            rankings: event.rankings,
+            pointsDelta,
+            ...(event.ties !== undefined && { ties: event.ties }),
+          };
+          for (const pid of this.players.keys()) {
+            this.emitToPlayer(pid, 'game:over', overPayload);
+          }
           break;
+        }
       }
     }
   }
@@ -569,9 +583,14 @@ export class GameRoom {
    * with reason 'draw' (POINTS.draw) instead of 'win'/'loss'. Tie groups that
    * don't contain the winner don't affect the ledger (they're rank-ties below
    * first, which don't earn bonus points).
+   *
+   * Returns `pointsDelta` — a `{ [playerId]: POINTS[recordedReason] }` map that
+   * the caller forwards to the `game:over` socket event. When `rankings` is
+   * empty, returns `{}` (no ledger rows, no delta).
    */
-  private writePointsLedger(rankings: string[], ties?: string[][]): void {
-    if (rankings.length === 0) return;
+  private writePointsLedger(rankings: string[], ties?: string[][]): Record<string, number> {
+    const pointsDelta: Record<string, number> = {};
+    if (rankings.length === 0) return pointsDelta;
     const winnerId = rankings[0];
     const drawIds = new Set<string>();
     if (ties) {
@@ -589,6 +608,7 @@ export class GameRoom {
         : pid === winnerId
           ? 'win'
           : 'loss';
+      pointsDelta[pid] = POINTS[reason];
       void recordPoints({
         userId: isGuest ? null : pid,
         guestId: isGuest ? pid : null,
@@ -597,6 +617,7 @@ export class GameRoom {
         reason,
       });
     }
+    return pointsDelta;
   }
 
   private broadcastViews(): void {

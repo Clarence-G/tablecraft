@@ -208,4 +208,110 @@ describe('GameRoom END_GAME → points_ledger integration', () => {
     expect(rowB?.reason).toBe('draw');
     expect(rowB?.points).toBe(3);
   });
+
+  describe('game:over socket event', () => {
+    interface EmittedEvent {
+      playerID: string;
+      event: string;
+      data: unknown;
+    }
+
+    function setupRoomWithEmitCapture(
+      m: GameMeta,
+      logic: GameLogic<State, Action, State>,
+      players: Array<[string, string, boolean /*isGuest*/]>,
+    ) {
+      const room = new GameRoom('test', m, undefined, logic);
+      const emits: EmittedEvent[] = [];
+      room.emitToPlayer = (playerID, event, data) => {
+        emits.push({ playerID, event, data });
+      };
+      for (const [id, name, isGuest] of players) {
+        room.join(id, name, /* isBot */ false, isGuest);
+        room.ready(id);
+      }
+      room.start();
+      return { room, emits };
+    }
+
+    it('emits game:over with win/loss pointsDelta to every player', () => {
+      const twoPlayerMeta: GameMeta = { ...meta, minPlayers: 2, maxPlayers: 2 };
+      const logic = makeEndGameLogic(['guestA', 'guestB']);
+      const { room, emits } = setupRoomWithEmitCapture(twoPlayerMeta, logic, [
+        ['guestA', 'A', true],
+        ['guestB', 'B', true],
+      ]);
+
+      room.handleAction('guestA', { type: 'end' }, 1);
+
+      const overEvents = emits.filter((e) => e.event === 'game:over');
+      expect(overEvents).toHaveLength(2);
+      const recipients = new Set(overEvents.map((e) => e.playerID));
+      expect(recipients).toEqual(new Set(['guestA', 'guestB']));
+      // Every recipient sees the same payload.
+      for (const ev of overEvents) {
+        expect(ev.data).toEqual({
+          rankings: ['guestA', 'guestB'],
+          pointsDelta: { guestA: 10, guestB: 0 },
+        });
+      }
+    });
+
+    it('emits game:over with draw pointsDelta when ties cover the winner', () => {
+      const twoPlayerMeta: GameMeta = { ...meta, minPlayers: 2, maxPlayers: 2 };
+      const logic = makeEndGameLogic(['guestA', 'guestB'], [['guestA', 'guestB']]);
+      const { room, emits } = setupRoomWithEmitCapture(twoPlayerMeta, logic, [
+        ['guestA', 'A', true],
+        ['guestB', 'B', true],
+      ]);
+
+      room.handleAction('guestA', { type: 'end' }, 1);
+
+      const overEvents = emits.filter((e) => e.event === 'game:over');
+      expect(overEvents).toHaveLength(2);
+      for (const ev of overEvents) {
+        expect(ev.data).toEqual({
+          rankings: ['guestA', 'guestB'],
+          ties: [['guestA', 'guestB']],
+          pointsDelta: { guestA: 3, guestB: 3 },
+        });
+      }
+    });
+
+    it('emits game:over after game:end so clients can overwrite with delta', () => {
+      const twoPlayerMeta: GameMeta = { ...meta, minPlayers: 2, maxPlayers: 2 };
+      const logic = makeEndGameLogic(['guestA', 'guestB']);
+      const { room, emits } = setupRoomWithEmitCapture(twoPlayerMeta, logic, [
+        ['guestA', 'A', true],
+        ['guestB', 'B', true],
+      ]);
+
+      room.handleAction('guestA', { type: 'end' }, 1);
+
+      const firstEndIdx = emits.findIndex((e) => e.event === 'game:end');
+      const firstOverIdx = emits.findIndex((e) => e.event === 'game:over');
+      expect(firstEndIdx).toBeGreaterThanOrEqual(0);
+      expect(firstOverIdx).toBeGreaterThan(firstEndIdx);
+    });
+
+    it('still emits game:over with empty pointsDelta when rankings is empty', () => {
+      const logic = makeEndGameLogic([]);
+      const { room, emits } = setupRoomWithEmitCapture(meta, logic, [
+        ['guestA', 'A', true],
+        ['guestB', 'B', true],
+        ['guestC', 'C', true],
+      ]);
+
+      room.handleAction('guestA', { type: 'end' }, 1);
+
+      // Empty rankings → no ledger rows and an empty pointsDelta. We still emit
+      // game:over (additive to game:end) with an empty delta so a client that
+      // listens only to game:over still sees the match-end signal.
+      const overEvents = emits.filter((e) => e.event === 'game:over');
+      expect(overEvents).toHaveLength(3);
+      for (const ev of overEvents) {
+        expect(ev.data).toEqual({ rankings: [], pointsDelta: {} });
+      }
+    });
+  });
 });

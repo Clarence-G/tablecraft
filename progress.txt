@@ -132,3 +132,36 @@ Total stories: 46
   - Shared `Ack<T = void>` in `@repo/shared` defaults to `{ ok: true; data: void } | ...`. Test helpers that wrap `sock.emit(..., ack)` should declare their Promise as `Promise<Ack>` (not `Promise<{ ok: true; data: undefined } | ...>` — those are not assignable because `void` is not assignable to `undefined` under strict TS).
   - Server-emit pattern for room option changes: send `room:updated` (options delta) AND `room:state` (full state for existing listeners). Avoids forcing every current `room:state` consumer to also subscribe to the new event, while letting US-014's `RoomOptionsPanel` receive a focused payload.
 ---
+
+## 2026-05-08 - US-009
+- `ClientEvents['room:restart']` gained an `ack: (result: Ack) => void` parameter; handler now validates host + `status === 'finished'` and surfaces errors through the ack
+- `GameRoom.restart()` rewritten to return `Ack<void>` — rejects when not finished; on success rebuilds `ctx` (fresh seed, current players, current config), calls `logic.setup(ctx, config)`, flips status back to `'playing'`, clears rankings/finishedAt/seq/timers, and bumps `seq` via `onStateChanged()`
+- Handler broadcasts `room:state` + `rooms:updated` + a per-player `game:state` (same pattern as `room:start`) after a successful restart
+- Client `useRoom.restart()` now returns `Promise<Ack>`; onClick sites in Room.tsx continue to compile because the promise is ignored
+- Files changed:
+  - packages/shared/src/types/socket.ts (room:restart ack signature + doc comment)
+  - packages/server/src/engine/GameRoom.ts (restart rewrite)
+  - packages/server/src/socket/handlers.ts (host + finished check, new broadcast block)
+  - packages/server/src/engine/GameRoom.test.ts (+3 tests)
+  - packages/server/src/socket/handlers.test.ts (+3 tests in new describe block; now 16 tests)
+  - packages/client/src/hooks/useRoom.ts (restart wraps emit in Ack promise; Ack import)
+- **Learnings for future iterations:**
+  - Old `GameRoom.restart()` flipped the room back to `'waiting'` and cleared `state`, requiring players to re-ready. The new semantic is "immediate re-start with identical players" — if any story later wants the old behavior (send room back to lobby / re-ready flow), it needs a different method; don't conflate the two.
+  - `room:restart` is the first server → player fan-out that needs to re-send `game:state` outside of `room:start` / action processing. Copy the `room:start` socket loop verbatim (iterate `io.sockets.adapter.rooms.get(roomId)`, filter by `room.players.has(s.data.userId)`) — don't rely on `broadcastViews()` because that's wired through `setBroadcast` and only fires after an action.
+  - For handler tests that need a "finished" state, the cleanest path is to start the game normally via the socket flow, then mutate `room.status`/`room.rankings`/`room.finishedAt` directly on the `roomManager.getRoom(roomId)` instance. Trying to drive an actual END_GAME through a test plugin's `onAction` adds a lot of ceremony for no extra coverage.
+---
+
+## 2026-05-08 - US-010
+- `ServerEvents['game:over']` added with payload `{ rankings, ties?, pointsDelta }`; additive to the existing `game:end` event so old listeners still work
+- `GameRoom.writePointsLedger` now returns `Record<pid, number>` (POINTS[reason] per player) instead of void; empty rankings → empty delta
+- `END_GAME` processor in `processEvents` forwards the returned delta + event.rankings + event.ties to every room member via `emitToPlayer(pid, 'game:over', payload)`, fired AFTER the existing `game:end` fan-out so a client applying the delta overwrites whatever `game:end` prepped
+- Files changed:
+  - packages/shared/src/types/socket.ts (+game:over ServerEvent)
+  - packages/server/src/engine/GameRoom.ts (import POINTS; writePointsLedger returns delta; END_GAME case emits game:over)
+  - packages/server/src/engine/GameRoom.ledger.test.ts (+4 tests in a new `game:over socket event` describe: win/loss delta, draw delta, ordering game:end -> game:over, empty-rankings empty-delta; 5 -> 9 tests)
+- **Learnings for future iterations:**
+  - `POINTS` (packages/server/src/lib/points.ts) is the single source of truth for point values — US-012 will need to render these client-side; consider surfacing the constant via `@repo/shared` if the client starts duplicating the numbers, or (cheaper) just trust the `pointsDelta` payload from the server and avoid re-computing on the client.
+  - The END_GAME emit ordering chosen here is `game:end` first, `game:over` second. Clients that set a modal on `game:end` and enrich it with delta on `game:over` get a smooth reveal. If a future story wants to collapse into a single event, delete `game:end` entirely (no current consumers on the client side) — but don't change the ordering; tests assert it.
+  - The test helper `setupRoomWithEmitCapture` monkey-patches `room.emitToPlayer` with an array push. Keep this over `vi.spyOn(socket.emit)` because GameRoom never touches socket.io directly — it calls an injected callback — so wiring through the real socket layer adds no coverage but a lot of setup.
+  - `writePointsLedger` now has a non-void return. Call sites that used the void form need no change (JS ignores returns), but any future caller that actually consumes the delta must not read from the return when rankings is empty — it's `{}`, not a fallback per-player map with zeros. Document this at the call site.
+---
