@@ -9,6 +9,34 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+
+    services:
+      # Postgres service container for unit tests. createTestDb() opens a
+      # maintenance connection, then CREATE DATABASE test_xxx per test file.
+      # The 'postgres' role is a superuser by default in the official image,
+      # which implicitly has CREATEDB privilege.
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          # Our code uses this as the maintenance DB (can't drop a DB you're
+          # connected to, so tests connect here to CREATE/DROP test_xxx).
+          POSTGRES_DB: tablecraft_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      # createTestDb() reads TEST_DATABASE_URL (or DATABASE_URL) to find the
+      # Postgres host. Points at the service container above.
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/tablecraft_test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/tablecraft_test
+
     steps:
       - uses: actions/checkout@v4
 
@@ -35,6 +63,26 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     needs: check
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tablecraft_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/tablecraft_test
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/tablecraft_test
+
     steps:
       - uses: actions/checkout@v4
 
