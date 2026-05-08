@@ -3,3 +3,5 @@ export type CardRank = 'A' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10
 export type CardSize = 'sm' | 'md' | 'lg';
 
 export { PlayingCard, type PlayingCardProps } from './PlayingCard.js';
+export { CardBack, type CardBackProps } from './CardBack.js';
+export { JokerCard, type JokerCardProps } from './JokerCard.js';
