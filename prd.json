@@ -284,8 +284,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 17,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "PlayingCard ships 52 rank/suit faces, faceDown + selected states, 3 sizes; SVG suits + Cinzel serif (loaded via @fontsource/cinzel CSS in styles.css). Tests use renderToStaticMarkup from react-dom/server — no jsdom dependency. Visual verified via widget-screenshot at 375px and desktop (screenshots reviewed, not committed)."
     },
     {
       "id": "US-018",

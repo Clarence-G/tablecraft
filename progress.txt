@@ -16,6 +16,7 @@ Total stories: 46
 - Engine `EngineEvent` is exported from `packages/shared/src/types/engine.ts`. `END_GAME` now carries optional `ties?: string[][]`; consumers in GameRoom treat any tie group containing the rank-1 player as a shared first place. Existing games that don't emit `ties` keep their win/loss behavior unchanged.
 - `GameRoom.ledger.test.ts` uses `createTestDb()` and `vi.doMock('../db/index.js', ...)` pattern — integration tests against a real postgres. Poll the ledger (~20ms intervals, 50 iterations) since `recordPoints` is fire-and-forget.
 - In pure game-logic changes (e.g. games/liar-bar/logic.ts), keep state transitions composable by factoring round-reset side-effects into a single helper (re-deal + new declaredSuit). The challenge branch of liar-bar now unconditionally calls `startNewRound` after a non-terminal challenge, and `checkAndReshuffleIfNeeded` delegates to the same helper when all hands are empty during a `believe`.
+- For presentational React components, `renderToStaticMarkup` from `react-dom/server` is a zero-setup unit-test path that avoids the macOS jsdom `html-encoding-sniffer` bug. Works under `environment: 'node'` — assert on the HTML string for class/attr/aria-label checks. Use jsdom only when interaction (fireEvent, useEffect side-effects) is actually under test.
 
 ## 2026-05-08 - US-001
 - Added `GameStore.resetForRoom()` that zeroes all snapshot fields and clears pending timers
@@ -285,4 +286,26 @@ Total stories: 46
   - Root `tsconfig.json` in this monorepo has no `paths` — cross-package typing is via `references` + per-package `tsconfig.json paths`. `packages/client/tsconfig.json` is the only place that declares `@repo/*` path aliases because the client is the runtime entry.
   - `vitest.workspace.ts` is NOT glob-based despite the PRD's hint (it globs only `games/*`). Every `packages/*/vitest.config.ts` is listed explicitly — forget to add your new one and `pnpm test` silently skips your tests.
   - `packages/card-ui` is set up with `environment: 'node'` by default to avoid the macOS-local jsdom html-encoding-sniffer breakage documented above. Stories implementing React components (US-017+) should keep it node-env and test via unit helpers, or flip to jsdom only when visual behavior genuinely can't be asserted otherwise (CI will run it either way).
+---
+
+## 2026-05-08 - US-017
+- New `PlayingCard` React component in `packages/card-ui/src/PlayingCard.tsx`. Props: `suit, rank, size?: 'sm'|'md'|'lg', faceDown?, selected?`. Renders four inline-SVG suit glyphs (hearts/diamonds/clubs/spades), rank text in top-left corner plus bottom-right rotated corner, large centered suit glyph. Face-down variant renders a diamond-grid SVG pattern on a warm-red background. Selected applies `translateY(-12px)` + stronger drop shadow; non-selected hover applies `translateY(-6px)` (CSS-only, no JS state).
+- Loaded Cinzel via `@fontsource/cinzel` at the top of `packages/card-ui/src/styles.css` (weights 400/600/700) and imported the CSS from the component so any consumer that bundles the component picks up fonts + card styles transparently.
+- Exported the component + styles sub-path from `package.json` (`./styles.css`) and re-exported from `src/index.ts` alongside the existing type primitives.
+- `packages/card-ui/vitest.config.ts` now globs `.test.{ts,tsx}` — kept env as node. Tests use `renderToStaticMarkup` from `react-dom/server` (added `react-dom` + `@types/react-dom` as devDependencies). 11 new tests cover all 52 rank/suit combos, all 3 sizes, red/black color split, faceDown + selected states, aria-labels, and a canonical snapshot for `A of spades (md)`.
+- Visual verification via the `widget-screenshot` skill: created a standalone HTML preview at `packages/card-ui/preview.html` rendering all four suits (A,K,Q,10), a selected card, and a face-down card against the cream background with brown borders. Captured screenshots at 375px mobile and desktop — both match spec (SVG suits readable, Cinzel rank text, selected lift visible, diamond-grid face-down pattern). Preview + screenshots reviewed then removed (not committed — they're review artifacts, not source).
+- Files changed:
+  - packages/card-ui/src/PlayingCard.tsx (new)
+  - packages/card-ui/src/PlayingCard.test.tsx (new, 11 tests)
+  - packages/card-ui/src/styles.css (new)
+  - packages/card-ui/src/index.ts (+PlayingCard export)
+  - packages/card-ui/package.json (+react-dom/@types/react-dom devDeps, +./styles.css subpath export)
+  - packages/card-ui/vitest.config.ts (include tsx)
+  - pnpm-lock.yaml (regenerated)
+- **Learnings for future iterations:**
+  - `react-dom/server` + `renderToStaticMarkup` is a zero-setup way to unit-test React components under `environment: 'node'` — avoids the macOS jsdom `html-encoding-sniffer` bug entirely. You lose interaction assertions (fireEvent, etc.) but for presentational components that just check classes/attrs/aria-labels, it's strictly simpler than jsdom. CardHand (US-019) will need interaction tests — switch that test file to jsdom only if needed; PlayingCard + CardBack (US-018) stay node-env.
+  - `@fontsource/cinzel` ships multiple weight files (`400.css`, `600.css`, `700.css`) that each import a single font-face. Import each weight you use, NOT the umbrella `@fontsource/cinzel` (which only imports the default 400). Same pattern for any future @fontsource packages.
+  - CSS-level hover effect (`.pc:not(.selected):hover { transform: translateY(-6px) }`) is cheaper than React state + framer-motion for a simple lift. The US-017 AC for hover-translate came out to ~3 lines of CSS with no runtime cost — don't reach for framer-motion unless there's spring physics or gesture choreography involved.
+  - Biome auto-formats multi-attribute SVG elements onto one-attribute-per-line; `pnpm biome check --write` on the package cleaned that up. Run `biome check --write` BEFORE the first manual test of a new component file to avoid a format-then-retest cycle.
+  - When adding a new devDependency to a leaf package (`react-dom`, `@types/react-dom`), `pnpm install` at the repo root is enough — no need to `pnpm install --filter @repo/card-ui`. The root install walks the workspace and regenerates pnpm-lock.yaml.
 ---

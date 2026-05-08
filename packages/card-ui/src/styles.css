@@ -1,0 +1,81 @@
+@import "@fontsource/cinzel/400.css";
+@import "@fontsource/cinzel/600.css";
+@import "@fontsource/cinzel/700.css";
+
+.card-ui-card {
+  --card-ui-face-bg: #fcf8f0;
+  --card-ui-border: #2a1810;
+  --card-ui-red: #c62828;
+  --card-ui-black: #1a1a1a;
+  --card-ui-shadow: 0 4px 0 var(--card-ui-border);
+  --card-ui-shadow-lift: 0 10px 12px -6px rgba(0, 0, 0, 0.35), 0 4px 0 var(--card-ui-border);
+
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  background: var(--card-ui-face-bg);
+  border: 2px solid var(--card-ui-border);
+  border-radius: 8px;
+  box-shadow: var(--card-ui-shadow);
+  font-family: "Cinzel", "Playfair Display", "Times New Roman", serif;
+  overflow: hidden;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+  transform: translateY(0);
+}
+
+.card-ui-card.card-ui-red {
+  color: var(--card-ui-red);
+}
+
+.card-ui-card.card-ui-black {
+  color: var(--card-ui-black);
+}
+
+.card-ui-card:not(.card-ui-selected):hover {
+  transform: translateY(-6px);
+  box-shadow: var(--card-ui-shadow-lift);
+}
+
+.card-ui-card.card-ui-selected {
+  transform: translateY(-12px);
+  box-shadow: var(--card-ui-shadow-lift);
+}
+
+.card-ui-card.card-ui-face-down {
+  background: #b84a3a;
+  color: #fcf8f0;
+}
+
+.card-ui-corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  font-weight: 600;
+}
+
+.card-ui-corner-tl {
+  top: 6%;
+  left: 8%;
+}
+
+.card-ui-corner-br {
+  bottom: 6%;
+  right: 8%;
+  transform: rotate(180deg);
+}
+
+.card-ui-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.card-ui-text {
+  font-family: "Cinzel", "Playfair Display", "Times New Roman", serif;
+}
