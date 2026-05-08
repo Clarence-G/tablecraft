@@ -200,3 +200,12 @@ export function calculateTotalScore(scores: number[], yahtzeeBonus: number): num
 export function allCategoriesFilled(scores: number[]): boolean {
   return scores.every((s) => s >= 0);
 }
+
+// Decides whether the player's own scoresheet rows should render in the main
+// panel. Keeping this pure lets us unit-test the invariant that viewing an
+// opponent's scorecard (which does not mutate `showExpanded` or `isMyTurn`)
+// can never cause the panel to collapse. The panel must also stay visible
+// when `showExpanded` is true regardless of turn — that is what US-003 fixes.
+export function shouldShowOwnScoreRows(showExpanded: boolean, isMyTurn: boolean): boolean {
+  return showExpanded || isMyTurn;
+}

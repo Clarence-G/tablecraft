@@ -24,6 +24,7 @@ import {
   calculateScore,
   calculateTotalScore,
   getUpperSectionSum,
+  shouldShowOwnScoreRows,
 } from './shared';
 
 // ---- Dice Face SVG ----
@@ -409,7 +410,11 @@ function BoardInner({
   const { t } = useTranslation('yahtzee');
   const { push } = useGameLog();
   const reducedMotion = useReducedMotion();
-  const [showFullScorecard, setShowFullScorecard] = useState(false);
+  // Default open so the player's own scoresheet rows stay visible across
+  // turns. Previously this defaulted to `false` and the main panel collapsed
+  // whenever it wasn't your turn — creating the illusion that viewing another
+  // player's scorecard had wiped your own entries.
+  const [showFullScorecard, setShowFullScorecard] = useState(true);
 
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = state.phase === 'finished';
@@ -674,7 +679,7 @@ function BoardInner({
             />
           </div>
 
-          {(showFullScorecard || isMyTurn) && (
+          {shouldShowOwnScoreRows(showFullScorecard, isMyTurn) && (
             <>
               {/* Upper section */}
               <SectionHeader label={t('upperSection')} />

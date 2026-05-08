@@ -7,6 +7,7 @@ import {
   calculateScore,
   calculateTotalScore,
   getUpperSectionSum,
+  shouldShowOwnScoreRows,
 } from './shared';
 
 function createGame(players = ['Alice', 'Bob'], seed = 'test') {
@@ -255,6 +256,46 @@ describe('Yahtzee Logic', () => {
       // score could be 0 (log.zeroScore) or positive (log.score)
       expect((notify as any)?.payload?.channel).toBe('log');
       expect((notify as any)?.payload?.actorId).toBe('Alice');
+    });
+  });
+
+  describe('scoresheet visibility — US-003 regression', () => {
+    // The bug: viewing another player's scorecard made the viewer's own rows
+    // appear empty. Root cause was the UI gating `shouldShowOwnScoreRows` on
+    // `showExpanded || isMyTurn` while defaulting `showExpanded` to false —
+    // so on every other-player turn the panel collapsed, and toggling the
+    // opponent dialog made the empty state obvious. The fix defaults
+    // `showExpanded` to true; this suite pins the pure predicate's contract.
+    it('renders own rows when expanded, regardless of whose turn it is', () => {
+      expect(shouldShowOwnScoreRows(true, false)).toBe(true);
+      expect(shouldShowOwnScoreRows(true, true)).toBe(true);
+    });
+
+    it('renders own rows on my turn even when collapsed', () => {
+      expect(shouldShowOwnScoreRows(false, true)).toBe(true);
+    });
+
+    it('hides own rows only when explicitly collapsed during another turn', () => {
+      expect(shouldShowOwnScoreRows(false, false)).toBe(false);
+    });
+
+    it('opponent view transitions do not mutate own score state', () => {
+      // Simulates "switch to another player then back to self": Alice scores,
+      // then Bob scores, then we inspect Alice's player-view — her scores
+      // array must be unchanged. Any client-side "selection" of another
+      // player is a pure view concern and cannot touch server state, so this
+      // test pins the invariant that enables the UI fix to be safe.
+      const h = createGame(['Alice', 'Bob']);
+      h.action('Alice', { type: 'score', category: 12 });
+      const aliceBefore = h.view('Alice').players.find((p) => p.id === 'Alice');
+      const scoresSnapshot = [...(aliceBefore?.scores ?? [])];
+
+      // Bob plays through (roll is automatic on turn-start via setup semantics
+      // of Yahtzee; he just needs to score).
+      h.action('Bob', { type: 'score', category: 12 });
+
+      const aliceAfter = h.view('Alice').players.find((p) => p.id === 'Alice');
+      expect(aliceAfter?.scores).toEqual(scoresSnapshot);
     });
   });
 });
