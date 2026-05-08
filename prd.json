@@ -365,8 +365,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 22,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Hand renders via CardHand+PlayingCard/JokerCard (Q\u2192diamonds, K\u2192spades, A\u2192hearts cosmetic mapping); selection states come from card-ui CSS, fan-layout's absolute positioning prevents layout reflow on select toggle"
     },
     {
       "id": "US-023",

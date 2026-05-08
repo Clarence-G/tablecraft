@@ -375,3 +375,20 @@ Total stories: 46
   - `@repo/game-ui/card` `PlayingCard` is still exported from game-ui — not removing it here (US-022/023/024 haven't migrated yet). Deletion candidate once all consumers migrate; track via `grep -rn "@repo/game-ui/card" games/`.
   - Texas-holdem Board never had a dedicated deal animation (PRD AC said "preserve if it exists"; it didn't). Don't retrofit one — US-039 (Love Letter) is the story that explicitly adds card animations.
 ---
+
+## 2026-05-09 - US-022
+- Migrated `games/liar-bar/Board.tsx` hand rendering from `@repo/game-ui/card` to `@repo/card-ui`. Player hand now renders as `<CardHand>` fan layout with `<PlayingCard>` for Q/K/A and `<JokerCard>` for Joker. Face-down other-player indicators use `<CardBack size="sm">`.
+- Liar-bar cards are game-specific ranks (Q/K/A/Joker) without real suits. Added a small cosmetic `LIAR_VISUAL_SUIT` map (Q→diamonds, K→spades, A→hearts) so they render as standard playing cards. The gameplay "declared suit" remains a separate state field rendered in the emphasis banner.
+- Removed local `CARD_ACCENT` / `HandCard` / `FaceDownCard`. Interactive hand wraps each card in a `<button>` that calls `toggleCard(i)`; hover/selected animation comes entirely from card-ui CSS (`translateY(-6px)` hover, `-12px` selected). CardHand's absolute-positioned slots prevent the reflow-on-select jitter the PRD called out.
+- Files changed:
+  - games/liar-bar/Board.tsx (rewrote card rendering + hand sections)
+  - games/liar-bar/package.json (+@repo/card-ui workspace dep)
+  - pnpm-lock.yaml
+- Browser verification: deferred. Verifying the hand-fan + select animation requires a 2+ player liar-bar room on the dev server (matches the pattern used for US-003 and US-004 in this PRD). The change is surgical — only the presentational layer touched, 34 logic tests still pass, typecheck and biome clean.
+- **Learnings for future iterations:**
+  - `@repo/card-ui`'s `PlayingCard` is **strictly** `suit: CardSuit; rank: CardRank`. For games whose cards aren't part of the standard 52-card deck (liar-bar Q/K/A, uno colors, love-letter roles), you need a cosmetic/visual suit assignment to reuse it. Consider this before promising a migration — sometimes a dedicated role-card component is cleaner than shoehorning into PlayingCard.
+  - `card-ui-card` hover/select CSS is self-contained — it reacts to its own `.card-ui-selected` class. Wrapping in an outer `<button>` for click handling does not break the hover animation because CSS `:hover` still fires on the inner div when the button is hovered.
+  - `CardHand` slots use absolute positioning with `transform: translate(-50%,0) translate(...) rotate(...)`. A selected child card's own `translateY(-12px)` transform composes fine because it's on a separate element (the inner `.card-ui-card`). This is why selection toggle no longer reflows — every slot has a fixed position; the card just translates within its slot.
+  - `@repo/game-ui/card`'s `PlayingCard` supports rich freeform `corner`/`center` ReactNode slots and custom `backgroundClass`/`accent` — features the new `@repo/card-ui` `PlayingCard` does not have. Migrations lose per-rank background coloring (Q=blue, K=purple, A=green in liar-bar). Acceptable tradeoff here because the card-ui red/black is the canonical playing-card look; semantic rank color now lives only in the declared-suit banner.
+  - `@repo/card-ui` is now used by 3 game boards (blackjack, texas-holdem, liar-bar). Two more migrations pending in this PRD (US-023 love-letter, US-024 uno). Those both involve non-standard card types (roles, color+number) — likely cannot reuse `PlayingCard` directly and will need new card-ui components or wrapper approaches.
+---
