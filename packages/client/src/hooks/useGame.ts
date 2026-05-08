@@ -114,6 +114,23 @@ export class GameStore {
     this._snapshot = EMPTY_SNAPSHOT;
   }
 
+  resetForRoom = () => {
+    if (this.rejectTimer) {
+      clearTimeout(this.rejectTimer);
+      this.rejectTimer = null;
+    }
+    this.clearSendTimer();
+    this._snapshot = {
+      authoritativeState: null,
+      optimisticView: null,
+      lastReject: null,
+      notifications: [],
+      matchStartedAt: null,
+      isSending: false,
+    };
+    this.notify();
+  };
+
   private clearSendTimer() {
     if (this.sendTimer) {
       clearTimeout(this.sendTimer);
@@ -156,5 +173,6 @@ export function useGame(socket: AppSocket | null) {
     matchStartedAt: snapshot.matchStartedAt,
     isSending: snapshot.isSending,
     sendAction: storeRef.current?.sendAction ?? noop,
+    resetForRoom: storeRef.current?.resetForRoom ?? noop,
   };
 }

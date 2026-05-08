@@ -4,7 +4,7 @@ import type { Socket } from 'socket.io-client';
 
 type AppSocket = Socket<ServerEvents, ClientEvents>;
 
-export function useRoom(socket: AppSocket | null) {
+export function useRoom(socket: AppSocket | null, onRoomChange?: () => void) {
   const [room, setRoom] = useState<RoomState | null>(null);
 
   useEffect(() => {
@@ -34,12 +34,14 @@ export function useRoom(socket: AppSocket | null) {
               reject(new Error('Server did not respond. Please try again.'));
               return;
             }
-            if (result.ok) resolve(result.data);
-            else reject(new Error(result.error));
+            if (result.ok) {
+              onRoomChange?.();
+              resolve(result.data);
+            } else reject(new Error(result.error));
           });
       });
     },
-    [socket],
+    [socket, onRoomChange],
   );
 
   const join = useCallback(
@@ -54,12 +56,14 @@ export function useRoom(socket: AppSocket | null) {
             reject(new Error('Server did not respond. Please try again.'));
             return;
           }
-          if (result.ok) resolve();
-          else reject(new Error(result.error));
+          if (result.ok) {
+            onRoomChange?.();
+            resolve();
+          } else reject(new Error(result.error));
         });
       });
     },
-    [socket],
+    [socket, onRoomChange],
   );
 
   const leave = useCallback(() => socket?.emit('room:leave'), [socket]);

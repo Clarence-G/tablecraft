@@ -100,4 +100,24 @@ describe('useGameLog', () => {
       'common:player.joined',
     ]);
   });
+
+  it('clears entries when defaultNs changes', () => {
+    const holder: { current: GameLogContextValue | null } = { current: null };
+    function Harness({ ns }: { ns: string }) {
+      return (
+        <GameLogProvider defaultNs={ns}>
+          <Capture holder={holder} />
+        </GameLogProvider>
+      );
+    }
+    const { rerender } = render(<Harness ns="blackjack" />);
+    act(() => {
+      holder.current?.push({ kind: 'action', messageKey: 'a' });
+      holder.current?.push({ kind: 'action', messageKey: 'b' });
+    });
+    expect(holder.current?.entries.length).toBe(2);
+
+    rerender(<Harness ns="connect-four" />);
+    expect(holder.current?.entries).toEqual([]);
+  });
 });

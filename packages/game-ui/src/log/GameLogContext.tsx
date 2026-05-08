@@ -1,5 +1,13 @@
-import { type ReactNode, createContext, useCallback, useMemo, useRef, useState } from 'react';
 import type { PlayerInfo } from '@repo/shared';
+import {
+  type ReactNode,
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { LogEntry, PushLogEntry } from './types';
 
 const MAX_ENTRIES = 200;
@@ -59,6 +67,18 @@ export function GameLogProvider({
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const seqRef = useRef({ current: 0 });
   const seenNotifications = useRef<WeakSet<object>>(new WeakSet());
+
+  // When the host game's namespace changes (e.g. player leaves blackjack room
+  // and enters connect-four), drop the old log so stale entries from the
+  // previous game don't appear in the new activity panel.
+  const previousNsRef = useRef<string | undefined>(defaultNs);
+  useEffect(() => {
+    if (previousNsRef.current !== defaultNs) {
+      previousNsRef.current = defaultNs;
+      setEntries([]);
+      seenNotifications.current = new WeakSet();
+    }
+  }, [defaultNs]);
 
   const push = useCallback((entry: PushLogEntry) => {
     setEntries((prev) => {

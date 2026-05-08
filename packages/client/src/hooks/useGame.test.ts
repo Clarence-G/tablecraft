@@ -142,4 +142,31 @@ describe('GameStore optimistic view', () => {
     expect(snap.optimisticView).toBeNull();
     expect(effectiveView(store)).toEqual(authoritative);
   });
+
+  it('resetForRoom clears notifications and all other snapshot fields', () => {
+    const sock = makeSocket();
+    const store = new GameStore(asSocket(sock));
+
+    // Seed the store with state reminiscent of a finished match.
+    sock.listeners['game:state']?.({ turn: 5 });
+    for (let i = 0; i < 5; i++) {
+      sock.listeners['game:notify']?.({ channel: 'log', messageKey: `k${i}` });
+    }
+    sock.listeners['game:reject']?.('nope');
+
+    expect(store.getSnapshot().notifications.length).toBe(5);
+    expect(store.getSnapshot().authoritativeState).toEqual({ turn: 5 });
+    expect(store.getSnapshot().lastReject).toBe('nope');
+    expect(store.getSnapshot().matchStartedAt).not.toBeNull();
+
+    store.resetForRoom();
+
+    const snap = store.getSnapshot();
+    expect(snap.notifications).toEqual([]);
+    expect(snap.authoritativeState).toBeNull();
+    expect(snap.optimisticView).toBeNull();
+    expect(snap.lastReject).toBeNull();
+    expect(snap.matchStartedAt).toBeNull();
+    expect(snap.isSending).toBe(false);
+  });
 });

@@ -17,8 +17,8 @@
         "Tests pass"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "GameStore.resetForRoom() wired through useRoom onRoomChange callback; GameLogProvider clears on defaultNs change via useEffect+ref"
     },
     {
       "id": "US-002",

@@ -3,3 +3,28 @@ Project: TableCraft
 Branch: ralph/platform-optimization
 Total stories: 46
 
+## Codebase Patterns
+- `useGame(socket)` hook wraps a `GameStore` class exported for direct unit testing (see `packages/client/src/hooks/useGame.test.ts`). Drive the store directly rather than rendering the hook — the client project's jsdom env is currently broken in this repo.
+- `useRoom(socket, onRoomChange?)` accepts an optional callback invoked on successful `room:create`/`room:join` ack — use this to wire cross-hook cleanup (e.g. GameStore reset) without coupling hooks to each other.
+- `App.tsx` is the orchestrator: call `useGame` before `useRoom` if the latter needs a callback from the former.
+- `GameLogProvider` (packages/game-ui/src/log/GameLogContext.tsx) auto-clears its entries when `defaultNs` prop changes — so per-game log isolation is automatic once the host sets `defaultNs` to the game's namespace.
+- macOS-local only: `pnpm test` surfaces 16 "Unhandled Error … html-encoding-sniffer" failures from jsdom. All unit tests still pass (525/525). CI on ubuntu is unaffected; do not chase this.
+- Biome baseline on this branch has 4 pre-existing errors in `packages/game-ui/src/header/GameHeader.tsx`, `packages/game-ui/src/theme/playerColors.ts`/`.test.ts`, and `prd.json`. Not introduced by ralph stories — leave them unless a story explicitly touches those files.
+
+## 2026-05-08 - US-001
+- Added `GameStore.resetForRoom()` that zeroes all snapshot fields and clears pending timers
+- Threaded `onRoomChange?: () => void` through `useRoom(socket, onRoomChange)`; invoked on `room:create` and `room:join` acks
+- Wired `game.resetForRoom` into `useRoom` from `App.tsx` (reordered `useGame` before `useRoom`)
+- `GameLogProvider` now tracks the previous `defaultNs` in a ref and clears entries + dedupe weakset when the ns changes
+- Files changed:
+  - packages/client/src/hooks/useGame.ts (added resetForRoom, exposed on hook return)
+  - packages/client/src/hooks/useRoom.ts (added onRoomChange param)
+  - packages/client/src/App.tsx (reordered + wired)
+  - packages/game-ui/src/log/GameLogContext.tsx (defaultNs-change effect)
+  - packages/client/src/hooks/useGame.test.ts (+1 test)
+  - packages/game-ui/src/log/useGameLog.test.tsx (+1 test)
+- **Learnings for future iterations:**
+  - `GameStore` snapshot has 6 fields — don't spread `EMPTY_SNAPSHOT` when fully resetting; enumerate them so future field additions force a compile error or a conscious decision
+  - The room change callback fires from the socket ack, which runs BEFORE `socket.on('room:state', ...)` delivers the new RoomState to `useRoom`. Listeners that read room state on reset must tolerate the transient null window.
+  - `useGameLog.test.tsx` and any `.test.tsx` file under `packages/game-ui/src/log` uses `@testing-library/react` + jsdom — the env can throw unhandled errors locally on macOS; tests still collect and pass in CI.
+---
