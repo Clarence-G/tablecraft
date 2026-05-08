@@ -10,6 +10,8 @@ Total stories: 46
 - `GameLogProvider` (packages/game-ui/src/log/GameLogContext.tsx) auto-clears its entries when `defaultNs` prop changes — so per-game log isolation is automatic once the host sets `defaultNs` to the game's namespace.
 - macOS-local only: `pnpm test` surfaces 16 "Unhandled Error … html-encoding-sniffer" failures from jsdom. All unit tests still pass (525/525). CI on ubuntu is unaffected; do not chase this.
 - Biome baseline on this branch has 4 pre-existing errors in `packages/game-ui/src/header/GameHeader.tsx`, `packages/game-ui/src/theme/playerColors.ts`/`.test.ts`, and `prd.json`. Not introduced by ralph stories — leave them unless a story explicitly touches those files.
+- Engine `EngineEvent` is exported from `packages/shared/src/types/engine.ts`. `END_GAME` now carries optional `ties?: string[][]`; consumers in GameRoom treat any tie group containing the rank-1 player as a shared first place. Existing games that don't emit `ties` keep their win/loss behavior unchanged.
+- `GameRoom.ledger.test.ts` uses `createTestDb()` and `vi.doMock('../db/index.js', ...)` pattern — integration tests against a real postgres. Poll the ledger (~20ms intervals, 50 iterations) since `recordPoints` is fire-and-forget.
 
 ## 2026-05-08 - US-001
 - Added `GameStore.resetForRoom()` that zeroes all snapshot fields and clears pending timers
@@ -27,4 +29,18 @@ Total stories: 46
   - `GameStore` snapshot has 6 fields — don't spread `EMPTY_SNAPSHOT` when fully resetting; enumerate them so future field additions force a compile error or a conscious decision
   - The room change callback fires from the socket ack, which runs BEFORE `socket.on('room:state', ...)` delivers the new RoomState to `useRoom`. Listeners that read room state on reset must tolerate the transient null window.
   - `useGameLog.test.tsx` and any `.test.tsx` file under `packages/game-ui/src/log` uses `@testing-library/react` + jsdom — the env can throw unhandled errors locally on macOS; tests still collect and pass in CI.
+---
+
+## 2026-05-08 - US-002
+- Extended `EngineEvent` END_GAME variant with optional `ties?: string[][]`
+- `GameRoom.writePointsLedger(rankings, ties?)` records 'draw' (3 pts) for every player in any tie group that contains the rank-1 player; otherwise unchanged win/loss
+- `processEvents` END_GAME branch forwards `event.ties` to `writePointsLedger`
+- Files changed:
+  - packages/shared/src/types/engine.ts
+  - packages/server/src/engine/GameRoom.ts
+  - packages/server/src/engine/GameRoom.ledger.test.ts (+2 tests)
+- **Learnings for future iterations:**
+  - Only tie groups that contain the winner mutate the ledger — lower-rank ties are ignored (they already collapse to 'loss' in the 0-point tier). Future stories building rankings UI should mirror this semantics.
+  - The 3-player `meta` default in GameRoom.ledger.test.ts is shared — override `minPlayers`/`maxPlayers` per test if you need a 2-player scenario (spread-and-override works cleanly).
+  - `END_GAME` event's optional `ties` field is set up for US-010 (game:over socket emission). Future game logics can populate it alongside rankings without touching signature-level breakage.
 ---

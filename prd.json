@@ -34,8 +34,8 @@
         "Tests pass"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "writePointsLedger(rankings, ties?) records 'draw' for tie groups that contain the winner; END_GAME engine event gained optional ties field"
     },
     {
       "id": "US-003",

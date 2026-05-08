@@ -66,7 +66,7 @@ export type EngineEvent =
   | { type: 'CLEAR_TIMER'; name: string }
   | { type: 'NOTIFY'; to: string; payload: unknown }
   | { type: 'NOTIFY_ALL'; payload: unknown }
-  | { type: 'END_GAME'; rankings: string[] };
+  | { type: 'END_GAME'; rankings: string[]; ties?: string[][] };
 
 /** onAction / onTimer 的返回值 */
 export type ActionResult<S> =

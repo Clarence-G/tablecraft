@@ -15,7 +15,7 @@ type Action = z.infer<typeof ActionSchema>;
 interface State {
   over: boolean;
 }
-function makeEndGameLogic(rankings: string[]): GameLogic<State, Action, State> {
+function makeEndGameLogic(rankings: string[], ties?: string[][]): GameLogic<State, Action, State> {
   return {
     actions: ActionSchema,
     setup(): State {
@@ -25,7 +25,7 @@ function makeEndGameLogic(rankings: string[]): GameLogic<State, Action, State> {
       return {
         ok: true,
         state: { over: true },
-        events: [{ type: 'END_GAME', rankings }],
+        events: [{ type: 'END_GAME', rankings, ...(ties !== undefined && { ties }) }],
       };
     },
     getPlayerView(state): State {
@@ -153,5 +153,59 @@ describe('GameRoom END_GAME → points_ledger integration', () => {
 
     const rows = await db.select().from(schema.pointsLedger);
     expect(rows).toHaveLength(0);
+  });
+
+  it("rankings ['A','B'] with no ties yields A:win, B:loss", async () => {
+    const twoPlayerMeta: GameMeta = { ...meta, minPlayers: 2, maxPlayers: 2 };
+    const logic = makeEndGameLogic(['guestA', 'guestB']);
+    const room = new GameRoom('test', twoPlayerMeta, undefined, logic);
+    room.join('guestA', 'A', false, true);
+    room.join('guestB', 'B', false, true);
+    room.ready('guestA');
+    room.ready('guestB');
+    room.start();
+
+    room.handleAction('guestA', { type: 'end' }, 1);
+
+    let rows: Array<typeof schema.pointsLedger.$inferSelect> = [];
+    for (let i = 0; i < 50; i++) {
+      rows = await db.select().from(schema.pointsLedger);
+      if (rows.length >= 2) break;
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    expect(rows).toHaveLength(2);
+    const rowA = rows.find((r) => r.guestId === 'guestA');
+    const rowB = rows.find((r) => r.guestId === 'guestB');
+    expect(rowA?.reason).toBe('win');
+    expect(rowA?.points).toBe(10);
+    expect(rowB?.reason).toBe('loss');
+    expect(rowB?.points).toBe(0);
+  });
+
+  it("rankings ['A','B'] with ties=[['A','B']] yields A:draw, B:draw", async () => {
+    const twoPlayerMeta: GameMeta = { ...meta, minPlayers: 2, maxPlayers: 2 };
+    const logic = makeEndGameLogic(['guestA', 'guestB'], [['guestA', 'guestB']]);
+    const room = new GameRoom('test', twoPlayerMeta, undefined, logic);
+    room.join('guestA', 'A', false, true);
+    room.join('guestB', 'B', false, true);
+    room.ready('guestA');
+    room.ready('guestB');
+    room.start();
+
+    room.handleAction('guestA', { type: 'end' }, 1);
+
+    let rows: Array<typeof schema.pointsLedger.$inferSelect> = [];
+    for (let i = 0; i < 50; i++) {
+      rows = await db.select().from(schema.pointsLedger);
+      if (rows.length >= 2) break;
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    expect(rows).toHaveLength(2);
+    const rowA = rows.find((r) => r.guestId === 'guestA');
+    const rowB = rows.find((r) => r.guestId === 'guestB');
+    expect(rowA?.reason).toBe('draw');
+    expect(rowA?.points).toBe(3);
+    expect(rowB?.reason).toBe('draw');
+    expect(rowB?.points).toBe(3);
   });
 });

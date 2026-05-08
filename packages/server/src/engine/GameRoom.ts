@@ -539,7 +539,7 @@ export class GameRoom {
           for (const pid of this.players.keys()) {
             this.emitToPlayer(pid, 'game:end', event.rankings);
           }
-          this.writePointsLedger(event.rankings);
+          this.writePointsLedger(event.rankings, event.ties);
           break;
       }
     }
@@ -551,14 +551,32 @@ export class GameRoom {
    * - Bots always write to user_id (not guest_id) regardless of the isGuest
    *   field, because bot IDs are stable and leaderboard joins via bot_tokens.
    * - PlayerInfo.isGuest routes human rows to user_id vs guest_id.
+   *
+   * When `ties` is provided, any tie group that contains the rank-1 player is
+   * treated as a shared first place — every member of that group is recorded
+   * with reason 'draw' (POINTS.draw) instead of 'win'/'loss'. Tie groups that
+   * don't contain the winner don't affect the ledger (they're rank-ties below
+   * first, which don't earn bonus points).
    */
-  private writePointsLedger(rankings: string[]): void {
+  private writePointsLedger(rankings: string[], ties?: string[][]): void {
     if (rankings.length === 0) return;
     const winnerId = rankings[0];
+    const drawIds = new Set<string>();
+    if (ties) {
+      for (const group of ties) {
+        if (group.includes(winnerId)) {
+          for (const id of group) drawIds.add(id);
+        }
+      }
+    }
     for (const [pid, info] of this.players) {
       // Bots always write to userId; humans route by isGuest flag.
       const isGuest = !info.isBot && (info.isGuest ?? true);
-      const reason: 'win' | 'loss' = pid === winnerId ? 'win' : 'loss';
+      const reason: 'win' | 'loss' | 'draw' = drawIds.has(pid)
+        ? 'draw'
+        : pid === winnerId
+          ? 'win'
+          : 'loss';
       void recordPoints({
         userId: isGuest ? null : pid,
         guestId: isGuest ? pid : null,
