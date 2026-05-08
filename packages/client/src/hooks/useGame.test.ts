@@ -153,11 +153,19 @@ describe('GameStore optimistic view', () => {
       sock.listeners['game:notify']?.({ channel: 'log', messageKey: `k${i}` });
     }
     sock.listeners['game:reject']?.('nope');
+    sock.listeners['game:over']?.({
+      rankings: ['A', 'B'],
+      pointsDelta: { A: 10, B: 0 },
+    });
 
     expect(store.getSnapshot().notifications.length).toBe(5);
     expect(store.getSnapshot().authoritativeState).toEqual({ turn: 5 });
     expect(store.getSnapshot().lastReject).toBe('nope');
     expect(store.getSnapshot().matchStartedAt).not.toBeNull();
+    expect(store.getSnapshot().gameOver).toEqual({
+      rankings: ['A', 'B'],
+      pointsDelta: { A: 10, B: 0 },
+    });
 
     store.resetForRoom();
 
@@ -168,5 +176,27 @@ describe('GameStore optimistic view', () => {
     expect(snap.lastReject).toBeNull();
     expect(snap.matchStartedAt).toBeNull();
     expect(snap.isSending).toBe(false);
+    expect(snap.gameOver).toBeNull();
+  });
+
+  it('game:over updates the gameOver snapshot field with the payload, including ties', () => {
+    const sock = makeSocket();
+    const store = new GameStore(asSocket(sock));
+
+    expect(store.getSnapshot().gameOver).toBeNull();
+
+    const payload = {
+      rankings: ['A', 'B', 'C'],
+      ties: [['A', 'B']],
+      pointsDelta: { A: 3, B: 3, C: 0 },
+    };
+    sock.listeners['game:over']?.(payload);
+
+    expect(store.getSnapshot().gameOver).toEqual(payload);
+
+    // A second game:over (e.g. next match after a restart) overwrites the previous payload.
+    const next = { rankings: ['C', 'A', 'B'], pointsDelta: { A: 0, B: 0, C: 10 } };
+    sock.listeners['game:over']?.(next);
+    expect(store.getSnapshot().gameOver).toEqual(next);
   });
 });

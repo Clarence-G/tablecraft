@@ -165,3 +165,21 @@ Total stories: 46
   - The test helper `setupRoomWithEmitCapture` monkey-patches `room.emitToPlayer` with an array push. Keep this over `vi.spyOn(socket.emit)` because GameRoom never touches socket.io directly — it calls an injected callback — so wiring through the real socket layer adds no coverage but a lot of setup.
   - `writePointsLedger` now has a non-void return. Call sites that used the void form need no change (JS ignores returns), but any future caller that actually consumes the delta must not read from the return when rankings is empty — it's `{}`, not a fallback per-player map with zeros. Document this at the call site.
 ---
+
+## 2026-05-08 - US-011
+- Added optional `pointsDelta`, `onReturnToRoom`, `onReturnToLobby` to `BoardProps` in `packages/shared/src/types/board.ts` (PRD pointed at engine.ts but the real home is board.ts — engine.ts defines GameLogic/GameContext, not BoardProps).
+- `GameStore` now listens for `game:over` and stores the full payload as `snapshot.gameOver` (typed `{ rankings, ties?, pointsDelta } | null`). Exposed on the `useGame` return as `gameOver`. `destroy()` and `resetForRoom()` both clear the listener / payload respectively.
+- Game.tsx destructures `onReturnToRoom` from props and passes `pointsDelta={gameOver?.pointsDelta}`, `onReturnToRoom`, `onReturnToLobby` to `<Board>`. App.tsx's `RoomRoute` wires `onReturnToRoom={() => { void roomCtx.restart(); }}` so the Board sees a plain no-arg callback.
+- Files changed:
+  - packages/shared/src/types/board.ts (+3 optional fields)
+  - packages/shared/src/types/board.test.ts (+2 tests — type-level back-compat + full-shape)
+  - packages/client/src/hooks/useGame.ts (+GameOverPayload type, +snapshot.gameOver, +game:over listener, clear in destroy/resetForRoom, expose from hook)
+  - packages/client/src/hooks/useGame.test.ts (+1 test covering game:over handling + payload overwrite; existing resetForRoom test extended to seed+assert gameOver clearing; 6->7 tests)
+  - packages/client/src/pages/Game.tsx (+onReturnToRoom prop; destructure gameOver; forward three new props to Board)
+  - packages/client/src/App.tsx (RoomRoute passes onReturnToRoom)
+- **Learnings for future iterations:**
+  - `BoardProps` lives in `packages/shared/src/types/board.ts`, not `engine.ts`. The PRD acceptance criteria sometimes point at the wrong file — grep before editing. engine.ts holds `GameLogic`/`GameMeta`/`GameContext`/`EngineEvent`; anything Board-facing is board.ts.
+  - `game:over` vs `game:state` ordering on the wire: per US-010 processEvents runs `game:end` -> `game:over` BEFORE `broadcastViews()` emits `game:state`. So if the client clears `gameOver` on `game:state`, the delta is wiped right after it arrives. Leave `gameOver` sticky across game:state events; it's cleared only on `resetForRoom` (room switch) or overwritten by the next `game:over`.
+  - `useRoom.restart()` now returns `Promise<Ack>` (US-009). Call sites that don't care about the result must use `void roomCtx.restart()` (or `.catch(noop)`) to satisfy no-floating-promises. Biome didn't flag it here but leaving a bare `roomCtx.restart()` is technically a floating promise.
+  - `packages/client` has no per-package `pnpm test` script. Run its vitest project via `pnpm vitest run --workspace vitest.workspace.ts --project client` from the repo root.
+---

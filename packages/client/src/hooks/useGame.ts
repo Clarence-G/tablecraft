@@ -4,6 +4,12 @@ import type { Socket } from 'socket.io-client';
 
 type AppSocket = Socket<ServerEvents, ClientEvents>;
 
+interface GameOverPayload {
+  rankings: string[];
+  ties?: string[][];
+  pointsDelta: Record<string, number>;
+}
+
 interface GameSnapshot {
   /** Authoritative state from the last `game:state` broadcast. */
   authoritativeState: unknown;
@@ -13,6 +19,8 @@ interface GameSnapshot {
   notifications: unknown[];
   matchStartedAt: number | null;
   isSending: boolean;
+  /** Latest `game:over` payload for the just-finished match; null until the match ends. */
+  gameOver: GameOverPayload | null;
 }
 
 // 3s保底超时:服务端丢包/挂了时也要放行下一次点击
@@ -25,6 +33,7 @@ const EMPTY_SNAPSHOT: GameSnapshot = {
   notifications: [],
   matchStartedAt: null,
   isSending: false,
+  gameOver: null,
 };
 const noop = () => {};
 const noopUnsub = () => noop;
@@ -77,6 +86,14 @@ export class GameStore {
       };
       this.notify();
     });
+
+    socket.on('game:over', (payload) => {
+      this._snapshot = {
+        ...this._snapshot,
+        gameOver: payload,
+      };
+      this.notify();
+    });
   }
 
   subscribe = (listener: () => void) => {
@@ -111,6 +128,7 @@ export class GameStore {
     this.socket.off('game:state');
     this.socket.off('game:reject');
     this.socket.off('game:notify');
+    this.socket.off('game:over');
     this._snapshot = EMPTY_SNAPSHOT;
   }
 
@@ -127,6 +145,7 @@ export class GameStore {
       notifications: [],
       matchStartedAt: null,
       isSending: false,
+      gameOver: null,
     };
     this.notify();
   };
@@ -172,6 +191,7 @@ export function useGame(socket: AppSocket | null) {
     notifications: snapshot.notifications,
     matchStartedAt: snapshot.matchStartedAt,
     isSending: snapshot.isSending,
+    gameOver: snapshot.gameOver,
     sendAction: storeRef.current?.sendAction ?? noop,
     resetForRoom: storeRef.current?.resetForRoom ?? noop,
   };

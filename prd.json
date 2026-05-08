@@ -182,8 +182,8 @@
         "Tests pass"
       ],
       "priority": 11,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "BoardProps gained optional pointsDelta/onReturnToRoom/onReturnToLobby; GameStore listens for game:over and exposes gameOver payload on snapshot; Game.tsx forwards pointsDelta + callbacks to Board; App.tsx wires onReturnToRoom to useRoom.restart"
     },
     {
       "id": "US-012",

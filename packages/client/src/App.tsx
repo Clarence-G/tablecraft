@@ -306,6 +306,9 @@ function GameRoute({
         roomCtx.leave();
         navigate('/');
       }}
+      onReturnToRoom={() => {
+        void roomCtx.restart();
+      }}
     />
   );
 }

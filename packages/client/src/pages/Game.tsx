@@ -13,6 +13,8 @@ interface GamePageProps {
   room: RoomState | null;
   game: GameState;
   onReturnToLobby: () => void;
+  /** Host-only restart of the just-finished match with the same players / options. */
+  onReturnToRoom?: () => void;
 }
 
 function Loading() {
@@ -76,9 +78,16 @@ interface GameInnerProps extends GamePageProps {
   plugin: ClientPlugin;
 }
 
-function GameInner({ userId, room, game, plugin, onReturnToLobby }: GameInnerProps) {
+function GameInner({
+  userId,
+  room,
+  game,
+  plugin,
+  onReturnToLobby,
+  onReturnToRoom,
+}: GameInnerProps) {
   const { t } = useTranslation('common');
-  const { view, sendAction, lastReject, notifications, matchStartedAt, isSending } = game;
+  const { view, sendAction, lastReject, notifications, matchStartedAt, isSending, gameOver } = game;
 
   const Board = plugin.Board;
   const meta = plugin.meta;
@@ -121,6 +130,9 @@ function GameInner({ userId, room, game, plugin, onReturnToLobby }: GameInnerPro
             isSending={isSending}
             lastReject={lastReject}
             notifications={notifications}
+            pointsDelta={gameOver?.pointsDelta}
+            onReturnToRoom={onReturnToRoom}
+            onReturnToLobby={onReturnToLobby}
           />
         </Suspense>
       </GameRoomLayout>

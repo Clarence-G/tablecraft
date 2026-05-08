@@ -18,4 +18,13 @@ export interface BoardProps<TView, TAction = unknown> {
   notifications: unknown[];
   /** True when this socket is a spectator, not a seated player. Interactive controls should be hidden. */
   isSpectator?: boolean;
+  /**
+   * Per-player points delta for the just-finished match, populated from the
+   * `game:over` server event. Undefined until the match ends.
+   */
+  pointsDelta?: Record<string, number>;
+  /** Restart the match with the same players, maxPlayers, and config (host-only on the server). */
+  onReturnToRoom?: () => void;
+  /** Leave the room and navigate back to the lobby. */
+  onReturnToLobby?: () => void;
 }
