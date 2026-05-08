@@ -91,7 +91,7 @@ export function App() {
   }, [roomId, roomStatus, location.pathname, navigate]);
 
   return (
-    <GameChatProvider value={{ messages: chat.messages, send: chat.send, myId: actorUserId }}>
+    <GameChatProvider value={{ messages: chat.messages, send: chat.send, myId: actorUserId, players: roomCtx.room?.players ?? [] }}>
       {/* Resume banner: shows on lobby when socket reconnects with an active room */}
       {resumeRoomId && location.pathname === '/' && (
         <div className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-center px-4 pt-3 pointer-events-none">

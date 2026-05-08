@@ -93,7 +93,7 @@ function GameInner({ userId, room, game, plugin, onReturnToLobby }: GameInnerPro
   );
 
   return (
-    <GameLogProvider defaultNs={room.gameId} playerNames={playerNames}>
+    <GameLogProvider defaultNs={room.gameId} playerNames={playerNames} players={room.players}>
       <NotificationBridge notifications={notifications} />
       <GameRoomLayout
         gameId={room.gameId}

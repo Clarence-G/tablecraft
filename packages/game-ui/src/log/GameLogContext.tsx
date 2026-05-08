@@ -1,4 +1,5 @@
 import { type ReactNode, createContext, useCallback, useMemo, useRef, useState } from 'react';
+import type { PlayerInfo } from '@repo/shared';
 import type { LogEntry, PushLogEntry } from './types';
 
 const MAX_ENTRIES = 200;
@@ -15,6 +16,8 @@ export interface GameLogContextValue {
    * available — consumers should fall back to `actorId` in that case.
    */
   playerNames: Record<string, string>;
+  /** Full player list, used for per-player color lookup in LogRow. */
+  players?: readonly PlayerInfo[];
 }
 
 export const GameLogContext = createContext<GameLogContextValue | null>(null);
@@ -46,21 +49,12 @@ export function GameLogProvider({
   children,
   defaultNs,
   playerNames,
+  players,
 }: {
   children: ReactNode;
-  /**
-   * Default i18n namespace for log entries whose `messageKey` is bare
-   * (e.g. server-emitted `log.drop`). Pass the current `gameId` so keys
-   * resolve under that game's resource bundle. When omitted, keys are
-   * left untouched (back-compat with existing tests).
-   */
   defaultNs?: string;
-  /**
-   * Map of playerId → display name. When provided, LogRow renders
-   * `playerNames[actorId]` in place of the raw id. Safe to omit; falls
-   * back to the id string.
-   */
   playerNames?: Record<string, string>;
+  players?: readonly PlayerInfo[];
 }) {
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const seqRef = useRef({ current: 0 });
@@ -127,8 +121,8 @@ export function GameLogProvider({
   const clear = useCallback(() => setEntries([]), []);
 
   const value = useMemo<GameLogContextValue>(
-    () => ({ entries, push, ingestNotifications, clear, playerNames: playerNames ?? {} }),
-    [entries, push, ingestNotifications, clear, playerNames],
+    () => ({ entries, push, ingestNotifications, clear, playerNames: playerNames ?? {}, players }),
+    [entries, push, ingestNotifications, clear, playerNames, players],
   );
 
   return <GameLogContext.Provider value={value}>{children}</GameLogContext.Provider>;

@@ -3,6 +3,7 @@ import Avatar from 'boring-avatars';
 import { ArrowLeft, LogOut, ScrollText, Settings, icons } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getPlayerColor, getPlayerColorById } from '../theme/playerColors';
 
 export interface GameHeaderProps {
   gameName: string;
@@ -73,28 +74,35 @@ function CompactPlayer({
   player: PlayerInfo;
   isCurrentTurn: boolean;
   isMe: boolean;
-  /** Suffix appended to the local viewer's name, e.g. "·You" / "·你". */
   meSuffix: string;
 }) {
+  const color = getPlayerColor(player.seatIndex);
   return (
     <div
       data-testid={`header-player-${player.id}`}
       className={`flex items-center gap-1.5 rounded-[10px] px-1.5 py-0.5 border-2 transition-all ${
-        isCurrentTurn
-          ? 'bg-[#fef3e0] border-warning shadow-button'
-          : 'border-transparent bg-transparent'
+        isCurrentTurn ? 'shadow-button' : 'border-transparent bg-transparent'
       }`}
+      style={
+        isCurrentTurn
+          ? { backgroundColor: color.soft, borderColor: color.border }
+          : { borderColor: `${color.border}99` }
+      }
     >
       <div className="relative shrink-0">
-        <Avatar name={player.name} size={24} variant="beam" colors={AVATAR_COLORS} />
+        <Avatar
+          name={player.name}
+          size={24}
+          variant="beam"
+          colors={[color.hex, color.border, color.soft, color.text, color.hex]}
+        />
         {!player.connected && (
           <span className="absolute inset-0 rounded-full bg-card/70 border border-border" />
         )}
       </div>
       <span
-        className={`text-xs font-semibold hidden md:inline truncate max-w-[80px] ${
-          isCurrentTurn ? 'text-[#7a4006]' : 'text-foreground'
-        }`}
+        className="text-xs font-semibold hidden md:inline truncate max-w-[80px]"
+        style={{ color: color.text }}
       >
         {player.name}
         {isMe ? `·${meSuffix}` : ''}
@@ -132,6 +140,7 @@ export function GameHeader({
 
   const currentPlayer = players?.find((p) => p.id === currentPlayerId);
   const isMyTurn = !!myId && currentPlayerId === myId;
+  const currentColor = getPlayerColorById(players, currentPlayerId);
   const turnLabel = currentPlayer
     ? isMyTurn
       ? t('header.yourTurn')
@@ -175,15 +184,25 @@ export function GameHeader({
           <span
             data-testid="header-turn-indicator"
             className={`inline-flex items-center gap-1 sm:gap-1.5 border-2 rounded-[10px] px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm font-bold shadow-button transition-all max-w-full min-w-0 ${
-              isMyTurn
-                ? 'bg-[#fef3e0] border-warning text-[#7a4006] animate-[pulse_2.4s_ease-in-out_infinite]'
-                : 'bg-card border-foreground text-foreground'
+              isMyTurn ? 'animate-[pulse_2.4s_ease-in-out_infinite]' : ''
             }`}
+            style={
+              currentColor
+                ? {
+                    backgroundColor: currentColor.soft,
+                    borderColor: currentColor.border,
+                    color: currentColor.text,
+                  }
+                : undefined
+            }
           >
             <span
-              className={`inline-block size-2 rounded-full shrink-0 ${
-                isMyTurn ? 'bg-warning' : 'bg-muted-foreground'
-              }`}
+              className="inline-block size-2 rounded-full shrink-0"
+              style={
+                currentColor
+                  ? { backgroundColor: currentColor.hex }
+                  : undefined
+              }
             />
             <span className="truncate">{turnLabel}</span>
           </span>

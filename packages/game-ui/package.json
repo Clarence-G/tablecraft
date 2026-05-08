@@ -20,7 +20,8 @@
     "./points": "./src/points/index.ts",
     "./layout": "./src/layout/index.ts",
     "./leaderboard": "./src/leaderboard/index.ts",
-    "./scene": "./src/scene/index.ts"
+    "./scene": "./src/scene/index.ts",
+    "./theme": { "types": "./src/theme/index.ts", "default": "./src/theme/index.ts" }
   },
   "dependencies": {
     "@repo/shared": "workspace:*",

@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useGameChat } from '../chat/index';
 import { useGameLog } from '../log/index';
 import type { LogEntry } from '../log/types';
+import { getPlayerColorById } from '../theme/playerColors';
 
 const STORAGE_KEY = 'sidepanel.expanded';
 
@@ -44,21 +45,43 @@ function LogList({ entries }: { entries: LogEntry[] }) {
 
 function LogRow({ entry }: { entry: LogEntry }) {
   const { t } = useTranslation();
-  const { playerNames } = useGameLog();
+  const { playerNames, players } = useGameLog();
+  const actorColor = getPlayerColorById(players, entry.actorId);
   const message = t(entry.messageKey, { defaultValue: entry.messageKey, ...entry.messageParams });
   const actorDisplay = entry.actorId ? (playerNames[entry.actorId] ?? entry.actorId) : null;
-  const containerClass =
-    entry.kind === 'system'
-      ? 'bg-muted/40 border-l-2 border-border/60 text-muted-foreground'
-      : entry.kind === 'action'
-        ? 'bg-card border-l-2 border-warning/70 text-foreground'
-        : 'bg-transparent border-l-2 border-border/30 text-muted-foreground italic';
+
+  let containerClass: string;
+  if (actorColor) {
+    const bg =
+      entry.kind === 'system'
+        ? 'bg-muted/40 text-muted-foreground'
+        : entry.kind === 'action'
+          ? 'bg-card text-foreground'
+          : 'bg-transparent text-muted-foreground italic';
+    containerClass = `border-l-4 ${bg}`;
+  } else {
+    containerClass =
+      entry.kind === 'system'
+        ? 'bg-muted/40 border-l-2 border-border/60 text-muted-foreground'
+        : entry.kind === 'action'
+          ? 'bg-card border-l-2 border-warning/70 text-foreground'
+          : 'bg-transparent border-l-2 border-border/30 text-muted-foreground italic';
+  }
+
   return (
     <div
       data-kind={entry.kind}
       className={`leading-snug break-words rounded-r-[6px] px-2 py-1.5 ${containerClass}`}
+      style={actorColor ? { borderLeftColor: actorColor.hex } : undefined}
     >
-      {actorDisplay ? <span className="font-semibold mr-1">{actorDisplay}</span> : null}
+      {actorDisplay ? (
+        <span
+          className="font-semibold mr-1"
+          style={actorColor ? { color: actorColor.text } : undefined}
+        >
+          {actorDisplay}
+        </span>
+      ) : null}
       <span>{message}</span>
     </div>
   );
@@ -66,7 +89,7 @@ function LogRow({ entry }: { entry: LogEntry }) {
 
 function ChatPane() {
   const { t } = useTranslation('game-ui');
-  const { messages, send, myId } = useGameChat();
+  const { messages, send, myId, players } = useGameChat();
   const [text, setText] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
   const atBottomRef = useRef(true);
@@ -127,17 +150,24 @@ function ChatPane() {
         ) : (
           messages.map((m) => {
             const mine = m.from === myId;
+            const senderColor = mine ? null : getPlayerColorById(players, m.from);
             return (
               <div key={m.id} className={`flex flex-col ${mine ? 'items-end' : 'items-start'}`}>
                 {!mine && (
-                  <div className="text-[10px] text-muted-foreground mb-0.5 px-1">{m.fromName}</div>
+                  <div
+                    className="text-[10px] text-muted-foreground mb-0.5 px-1"
+                    style={senderColor ? { color: senderColor.text } : undefined}
+                  >
+                    {m.fromName}
+                  </div>
                 )}
                 <div
                   className={`max-w-[85%] rounded-[10px] px-3 py-1.5 break-words leading-snug ${
                     mine
                       ? 'bg-[#fef3e0] border-2 border-warning text-[#7a4006]'
-                      : 'bg-card border-2 border-foreground text-foreground'
+                      : 'bg-card border-2 text-foreground'
                   }`}
+                  style={!mine && senderColor ? { borderColor: senderColor.border } : undefined}
                 >
                   {m.text}
                 </div>
