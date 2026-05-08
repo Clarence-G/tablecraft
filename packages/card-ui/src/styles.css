@@ -79,3 +79,15 @@
 .card-ui-text {
   font-family: "Cinzel", "Playfair Display", "Times New Roman", serif;
 }
+
+.card-ui-hand {
+  position: relative;
+  display: inline-block;
+}
+
+.card-ui-hand-slot {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform-origin: 50% 100%;
+}

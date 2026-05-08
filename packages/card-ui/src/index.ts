@@ -5,3 +5,9 @@ export type CardSize = 'sm' | 'md' | 'lg';
 export { PlayingCard, type PlayingCardProps } from './PlayingCard.js';
 export { CardBack, type CardBackProps } from './CardBack.js';
 export { JokerCard, type JokerCardProps } from './JokerCard.js';
+export {
+  CardHand,
+  type CardHandProps,
+  computeFanSlot,
+  computeHandDimensions,
+} from './CardHand.js';
