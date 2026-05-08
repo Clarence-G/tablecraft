@@ -1,41 +1,31 @@
+import { CardBack, type CardRank, type CardSuit, PlayingCard } from '@repo/card-ui';
 import { useGameHeaderStatus } from '@repo/game-ui';
-import { PlayingCard } from '@repo/game-ui/card';
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type Action, type PlayerInfo, type PlayerView, SUIT_PATHS, handTotal } from './shared';
+import { type Action, type PlayerInfo, type PlayerView, handTotal } from './shared';
 
 // ---- Card Component ----
 
-function SuitIcon({ suit, className }: { suit: string; className?: string }) {
-  const d = SUIT_PATHS[suit];
-  if (!d) return null;
-  return (
-    <svg viewBox="0 0 512 512" className={className} aria-hidden>
-      <path fill="currentColor" d={d} />
-    </svg>
-  );
-}
+const SUIT_MAP: Record<string, CardSuit> = {
+  s: 'spades',
+  h: 'hearts',
+  d: 'diamonds',
+  c: 'clubs',
+};
 
 function CardFace({ card }: { card: string }) {
-  if (card === 'hidden') return <PlayingCard size="sm" faceDown />;
+  if (card === 'hidden') return <CardBack size="sm" />;
 
-  const rank = card.slice(0, -1);
-  const suit = card.slice(-1);
-  const isRed = suit === 'h' || suit === 'd';
-  const displayRank = rank === 'T' ? '10' : rank;
+  const rankPart = card.slice(0, -1);
+  const suitPart = card.slice(-1);
+  const suit = SUIT_MAP[suitPart];
+  const rank = (rankPart === 'T' ? '10' : rankPart) as CardRank;
+  if (!suit) return <CardBack size="sm" />;
 
-  return (
-    <PlayingCard
-      size="sm"
-      accent={isRed ? 'red' : 'default'}
-      corner={displayRank}
-      cornerIcon={<SuitIcon suit={suit} className="size-2.5" />}
-      center={<SuitIcon suit={suit} className="size-4" />}
-    />
-  );
+  return <PlayingCard size="sm" suit={suit} rank={rank} />;
 }
 
 function Hand({

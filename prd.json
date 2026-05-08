@@ -334,8 +334,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 20,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "CardFace now maps `<rank><suit>` (e.g. Th, As) -> { suit: 'hearts', rank: '10' } and delegates to @repo/card-ui's PlayingCard; hidden dealer card renders <CardBack size='sm'>. No SUIT_PATHS / SuitIcon references remain in Board.tsx."
     },
     {
       "id": "US-021",

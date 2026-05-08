@@ -343,3 +343,18 @@ Total stories: 46
   - For presentational components testable via `renderToStaticMarkup` (node env), assert the emitted CSS via regex: `class="card-ui-hand-slot"[^>]*style="([^"]+)"` captures slot transforms one at a time. Comparing the arrays before-and-after a state change is a cheap substitute for a full-DOM layout-thrash test (and avoids the jsdom html-encoding-sniffer bug).
   - US-022's liar-bar migration can now lift `CardHand`-from-card-ui + drop its own fan math. The hover rule is PlayingCard's responsibility; don't try to re-implement a lift in liar-bar. For non-card children (text placeholders etc.), CardHand is agnostic — it only cares about count for fan math and sizes for container dims.
 ---
+
+## 2026-05-08 - US-020
+- `games/blackjack/Board.tsx` now imports `PlayingCard`, `CardBack`, and the `CardRank`/`CardSuit` types from `@repo/card-ui` (replacing the local `SuitIcon` + `@repo/game-ui/card` PlayingCard wrapper). Card-string parsing: suit letter mapped via `{ s:'spades', h:'hearts', d:'diamonds', c:'clubs' }`; rank 'T' rewritten to '10' to fit the `CardRank` union. Hidden dealer card renders `<CardBack size="sm" />` instead of the previous `<PlayingCard faceDown>`.
+- No changes to `shared.ts` (still exports `SUIT_PATHS` for texas-holdem which hasn't migrated yet) or to `logic.ts`/`logic.test.ts`. All 32 existing blackjack tests still pass.
+- `@repo/card-ui` added as a workspace dep in `games/blackjack/package.json` (pnpm-lock.yaml regenerated).
+- Files changed:
+  - games/blackjack/Board.tsx (imports + CardFace rewrite)
+  - games/blackjack/package.json (+@repo/card-ui workspace:*)
+  - pnpm-lock.yaml
+- Visual verification via `widget-screenshot` skill at mobile 375px — rendered a standalone preview with the felt-green table background, dealer (A spades + face-down) and player (10h, Jd, Ac) hands. Red/black suit colors correct; CardBack shows solid dark-red back. Screenshot at `.ralph-screenshots/us-020-blackjack-default-mobile.png` (not committed — review artifact).
+- **Learnings for future iterations:**
+  - Texas Holdem (US-021), Liar Bar (US-022), UNO (US-024) all still import `SUIT_PATHS` from their own `shared.ts` or from `games/texas-holdem/shared.ts`. When migrating those, the pattern is: delete the `SuitIcon` component, map single-letter suits -> full suit names, handle the 'T' -> '10' rank rewrite, drop `@repo/game-ui/card` + `SUIT_PATHS` imports. `packages/game-ui/src/icons/SuitIcon.tsx` can eventually be deleted once all consumers migrate.
+  - `@repo/card-ui` types `CardRank = 'A' | '2' | ... | '10' | 'J' | 'Q' | 'K'` — NO 'T'. Every game that uses 'T' in wire format (blackjack, holdem at minimum) needs the runtime rewrite. Consider exposing a `parseCardString(s: string)` helper from `@repo/card-ui` next time we touch the package to DRY this across games.
+  - Renderer now relies on CSS from `@repo/card-ui/styles.css`. The client imports this via a component's top-level `import './styles.css';` (PlayingCard and CardBack both do it). No client-bundle-level action needed when migrating a game, but if you add a card-ui consumer outside the games/* tree, verify the CSS is reaching the bundler (vite processes CSS side-effect imports transparently).
+---
