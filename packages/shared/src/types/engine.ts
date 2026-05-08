@@ -36,7 +36,7 @@ export interface GameMeta {
   /** Estimated play time in minutes */
   estimatedMinutes?: number;
   actionThrottleMs?: number;
-  configSchema?: z.ZodType;
+  configSchema?: z.ZodTypeAny;
   defaultConfig?: unknown;
   /** Human-readable game rules (displayed in room UI) */
   rules?: string;

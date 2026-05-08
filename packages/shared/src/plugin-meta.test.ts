@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { buildActionSchema, buildGameDetail } from './plugin-meta';
+import { buildActionSchema, buildConfigSchemaSummary, buildGameDetail } from './plugin-meta';
 import type { ActionResult, GameContext, GameLogic, GameMeta } from './types/engine';
 
 function makeStubLogic<T extends z.ZodTypeAny>(
@@ -81,5 +81,49 @@ describe('buildGameDetail', () => {
     expect(detail.minPlayers).toBe(1);
     expect(detail.maxPlayers).toBe(2);
     expect(detail.actionSchema).not.toBeNull();
+  });
+
+  it('returns null configSchema and defaultConfig when meta omits them', () => {
+    const logic = makeStubLogic(z.object({ type: z.literal('tick') }));
+    const detail = buildGameDetail(STUB_META, logic);
+    expect(detail.configSchema).toBeNull();
+    expect(detail.defaultConfig).toBeNull();
+  });
+
+  it('serializes configSchema and forwards defaultConfig when declared', () => {
+    const configSchema = z.object({
+      fastMode: z.boolean().default(false),
+      maxRounds: z.number().int().min(1).max(10).default(3),
+    });
+    const meta: GameMeta = {
+      ...STUB_META,
+      configSchema,
+      defaultConfig: { fastMode: false, maxRounds: 3 },
+    };
+    const logic = makeStubLogic(z.object({ type: z.literal('tick') }));
+    const detail = buildGameDetail(meta, logic);
+    expect(detail.defaultConfig).toEqual({ fastMode: false, maxRounds: 3 });
+    const summary = detail.configSchema as Record<string, unknown>;
+    expect(summary).toBeDefined();
+    expect(summary.type).toBe('object');
+    // No zod internals leak — summary is a plain JSON Schema object
+    expect(JSON.stringify(summary)).toContain('fastMode');
+    expect(JSON.stringify(summary)).toContain('maxRounds');
+  });
+});
+
+describe('buildConfigSchemaSummary', () => {
+  it('returns null when meta has no configSchema', () => {
+    expect(buildConfigSchemaSummary(STUB_META)).toBeNull();
+  });
+
+  it('converts a declared Zod config schema into a JSON Schema object', () => {
+    const meta: GameMeta = {
+      ...STUB_META,
+      configSchema: z.object({ flag: z.boolean() }),
+    };
+    const summary = buildConfigSchemaSummary(meta) as Record<string, unknown>;
+    expect(summary).toMatchObject({ type: 'object' });
+    expect(JSON.stringify(summary)).toContain('flag');
   });
 });
