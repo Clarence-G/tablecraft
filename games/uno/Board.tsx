@@ -1,3 +1,4 @@
+import { CardBack } from '@repo/card-ui';
 import { useGameHeaderStatus } from '@repo/game-ui';
 import { HandStrip, PlayingCard } from '@repo/game-ui/card';
 import { GameOverModal } from '@repo/game-ui/feedback';
@@ -360,45 +361,24 @@ export function Board({
 
       {/* The pile zone — bare on the paper surface, no container box. */}
       <div className="flex items-center justify-center gap-6 sm:gap-12 py-4">
-        {/* Draw pile — stacked card backs, classic UNO logo center. */}
+        {/* Draw pile — stacked shared CardBacks. */}
         <div className="flex flex-col items-center gap-1.5">
           <div className="relative">
-            <div
-              className="absolute -top-1 -left-1 w-14 h-20 sm:w-20 sm:h-28 rounded-[10px] border-2 border-[hsl(var(--shadow))]"
-              style={{
-                background:
-                  'linear-gradient(160deg, #2a1810 0%, hsl(var(--shadow)) 60%, #0d0805 100%)',
-                boxShadow: '0 2px 0 -1px rgba(26,17,8,0.5)',
-              }}
-              aria-hidden
-            />
+            <div className="absolute -top-1 -left-1 pointer-events-none" aria-hidden>
+              <CardBack size="md" />
+            </div>
             <button
               type="button"
               onClick={isMyTurn && !state.hasDrawnThisTurn ? handleDraw : undefined}
               disabled={!isMyTurn || state.hasDrawnThisTurn}
               aria-label={t('drawCard')}
-              className={`relative w-14 h-20 sm:w-20 sm:h-28 rounded-[10px] border-2 border-[hsl(var(--shadow))] flex items-center justify-center text-card font-bold ${
+              className={`relative block rounded-[10px] ${
                 isMyTurn && !state.hasDrawnThisTurn
                   ? 'cursor-pointer hover:-translate-y-1 transition-transform'
                   : 'cursor-default'
               }`}
-              style={{
-                background:
-                  'linear-gradient(160deg, #2a1810 0%, hsl(var(--shadow)) 60%, #0d0805 100%)',
-                boxShadow: '0 4px 0 -1px rgba(26,17,8,0.55), 0 8px 12px -4px rgba(0,0,0,0.35)',
-              }}
             >
-              <span
-                className="italic text-base sm:text-xl font-black"
-                style={{
-                  color: 'var(--scene-accent, #f4d9a8)',
-                  textShadow: '1px 2px 0 rgba(0,0,0,0.6)',
-                  letterSpacing: '-0.03em',
-                  transform: 'rotate(-14deg)',
-                }}
-              >
-                UNO
-              </span>
+              <CardBack size="md" />
             </button>
           </div>
           <span className="text-[10px] sm:text-xs text-card/90 font-semibold">
