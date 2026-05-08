@@ -1,0 +1,5 @@
+Ralph progress log — initialized 2026-05-08
+Project: TableCraft
+Branch: ralph/platform-optimization
+Total stories: 46
+

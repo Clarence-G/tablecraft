@@ -1,0 +1,768 @@
+{
+  "project": "TableCraft",
+  "branchName": "ralph/platform-optimization",
+  "description": "Platform-wide optimization: fix cross-room notifications leak, add generic room options (maxPlayers + per-game config), unify end-game modal with points delta and return-to-room/lobby, ship @repo/card-ui for shared poker visuals, and deliver per-game UI and logic fixes across 9 games.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Fix cross-room notifications leak in GameStore",
+      "description": "As a player, when I leave one game room and join another, the activity log should be empty and not show stale events from my previous game.",
+      "acceptanceCriteria": [
+        "Add resetForRoom() method to GameStore in packages/client/src/hooks/useGame.ts that clears notifications, authoritativeState, optimisticView, lastReject, matchStartedAt",
+        "Call resetForRoom() in useRoom.ts room:join success callback (packages/client/src/hooks/useRoom.ts)",
+        "GameLogProvider in packages/game-ui/src/log/GameLogContext.tsx clears entries when defaultNs prop changes",
+        "New test: GameStore receives 5 notifies, resetForRoom is called, notifications array length is 0",
+        "New test: GameLogProvider defaultNs changes from 'blackjack' to 'connect-four', entries array is empty",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Record draw points in writePointsLedger with ties param",
+      "description": "As a player, when I tie for first place, I should earn draw points (3) instead of being silently demoted to loss (0).",
+      "acceptanceCriteria": [
+        "writePointsLedger in packages/server/src/engine/GameRoom.ts accepts optional ties?: string[][] parameter",
+        "All players in any ties group of rank 1 are recorded with reason 'draw' instead of 'win'/'loss'",
+        "When ties is undefined, existing win/loss behavior is preserved (regression test)",
+        "New test: rankings ['A','B'] with no ties yields A:win, B:loss",
+        "New test: rankings ['A','B'] with ties=[['A','B']] yields A:draw, B:draw",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Fix Yahtzee scoresheet going empty after viewing others",
+      "description": "As a Yahtzee player, when I view another player's scoresheet and switch back to mine, my scoresheet should still show my entries.",
+      "acceptanceCriteria": [
+        "Investigate games/yahtzee/Board.tsx selectedPlayer state; identify which state field is incorrectly replaced on switch",
+        "Switching selectedPlayer to another player then back to self preserves own scoreSheet entries",
+        "New test: render Board, switch to another player, switch back, assert own scoresheet rows are intact",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Fix Gomoku click flicker and scroll-to-top on move",
+      "description": "As a Gomoku player, clicking to place a stone should not cause a left-right flicker animation, and the page should not scroll to top after each move.",
+      "acceptanceCriteria": [
+        "Diagnose place animation in games/gomoku/Board.tsx; if flicker cannot be fixed cleanly, remove animation entirely",
+        "Identify root cause of scroll-to-top (focus steal, key remount, or scrollTo call) and fix it",
+        "New test: scroll window to middle, dispatch place action, assert window.scrollY is unchanged",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Reset Liar Bar round after caught-lying",
+      "description": "As a Liar Bar player, when I am caught lying and take a shot, the round state (pile, hands, claimedRank, turn) must reset for the next round.",
+      "acceptanceCriteria": [
+        "games/liar-bar/logic.ts CHALLENGE branch resets pile to [], re-deals hands, clears claimedRank, and advances turn",
+        "Reset behavior applies regardless of whether the liar was the challenger or the challenged",
+        "New test: A lies and is caught by B, A shoots (blank), next round has fresh hands and empty pile",
+        "New test: same scenario but liar survives and round still resets",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Add configSchema and defaultConfig fields to GameMeta",
+      "description": "As a developer, I need games to declare their per-game options via a Zod schema so the engine can validate and forward them.",
+      "acceptanceCriteria": [
+        "Add optional configSchema?: z.ZodTypeAny and defaultConfig?: unknown to GameMeta in packages/shared/src/plugin-meta.ts",
+        "Existing games without configSchema must continue to type-check unchanged",
+        "Add public summary export for configSchema so router can return it (do not leak zod internals)",
+        "New test: plugin-meta.test.ts verifies games may optionally define configSchema and defaults",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Add maxPlayers and config to RoomState and GameContext",
+      "description": "As a developer, I need the room state and GameContext to carry a per-room maxPlayers override and a per-room config object so logic.setup can read them.",
+      "acceptanceCriteria": [
+        "Add maxPlayers: number and config: unknown to RoomState in packages/shared/src/types/room.ts",
+        "Add config: unknown to GameContext in packages/shared/src/types/engine.ts",
+        "GameRoom in packages/server/src/engine/GameRoom.ts stores room.maxPlayers (initialized from meta.maxPlayers) and room.config (initialized from meta.defaultConfig or {})",
+        "GameRoom passes config into logic.setup via GameContext",
+        "RoomManager.findAvailableRoom and join checks use room.maxPlayers instead of meta.maxPlayers",
+        "Regression test: existing games still start with their meta defaults when no override is set",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Add room:updateOptions socket event (server)",
+      "description": "As a host, I want to adjust maxPlayers and per-game config in a waiting room via a single socket event that the server validates.",
+      "acceptanceCriteria": [
+        "Declare room:updateOptions event in packages/shared/src/types/socket.ts with payload { maxPlayers?: number, config?: Record<string, unknown> }",
+        "Handler in packages/server/src/socket/handlers.ts only accepts from host; rejects if game is in progress",
+        "maxPlayers clamped to [meta.minPlayers, meta.maxPlayers]; config validated via meta.configSchema.safeParse",
+        "On success, broadcast room:updated with new maxPlayers/config",
+        "New tests: non-host rejected, in-progress rejected, out-of-range maxPlayers rejected, invalid config rejected, valid update broadcasts room:updated",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Add room:restart socket event (server)",
+      "description": "As a host, when a game ends I want to restart with the same players, same maxPlayers, and same config without leaving the room.",
+      "acceptanceCriteria": [
+        "Declare room:restart event in packages/shared/src/types/socket.ts",
+        "Handler in packages/server/src/socket/handlers.ts only accepts from host; rejects if game is not in an ended state",
+        "GameRoom exposes restart() which preserves players + maxPlayers + config and calls logic.setup again",
+        "Broadcast fresh game:state to all players after restart",
+        "New tests: non-host rejected, restart before game ended rejected, successful restart preserves player list and broadcasts new state",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Emit game:over socket event with pointsDelta",
+      "description": "As a client, I want to know each player's points delta for the match that just ended so I can show + XX in the end-game modal.",
+      "acceptanceCriteria": [
+        "Declare game:over event in packages/shared/src/types/socket.ts with payload { rankings: string[], ties?: string[][], pointsDelta: Record<string, number> }",
+        "GameRoom emits game:over after writePointsLedger finishes; pointsDelta[pid] = POINTS[recordedReason] for each player",
+        "Existing END_GAME engine event flow is preserved; game:over is additive",
+        "New test: simulate an ended game, assert game:over payload contains correct pointsDelta for win/loss/draw cases",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Extend BoardProps with pointsDelta and return callbacks",
+      "description": "As a game author, I want BoardProps to optionally carry pointsDelta, onReturnToRoom, and onReturnToLobby so my Board can forward them to GameOverModal.",
+      "acceptanceCriteria": [
+        "Add optional fields to BoardProps in packages/shared/src/types/engine.ts: pointsDelta?: Record<string, number>, onReturnToRoom?: () => void, onReturnToLobby?: () => void",
+        "Game.tsx in packages/client/src/pages/ wires them: pointsDelta comes from useGame snapshot (from game:over event), onReturnToRoom emits room:restart, onReturnToLobby calls existing props.onReturnToLobby",
+        "useGame store tracks the latest game:over payload and exposes it as part of the snapshot",
+        "Regression test: existing games without these props still render",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Display pointsDelta and total points in GameOverModal",
+      "description": "As a player, I want the end-game modal to show my points change for this match plus my running total so I know the round result at a glance.",
+      "acceptanceCriteria": [
+        "packages/game-ui/src/feedback/GameOverModal.tsx accepts optional pointsDelta prop and ties prop (for draw detection)",
+        "Each row in the rankings list shows a trailing PointsBadge with label='+' and points=pointsDelta[pid] ?? 0",
+        "Header area shows 'Match +N' using myDelta and 'Total M' using total points (total read via a hook or prop; new prop totalPoints?: number, filled from existing usePoints)",
+        "When ties indicates I am in the top-ranked tie group, show Handshake or Equal icon with translation key 'draw' instead of Trophy/Frown",
+        "GameOverModal.test.tsx adds cases: positive delta, zero delta, draw variant",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Wire GameOverModal callbacks in all game Boards",
+      "description": "As a player, every game's end-game modal should offer both 'Return to Room' and 'Return to Lobby' buttons and display pointsDelta.",
+      "acceptanceCriteria": [
+        "Forward onReturnToRoom, onReturnToLobby, pointsDelta, ties from BoardProps to GameOverModal in every Board.tsx that already renders the modal",
+        "Call sites to update: games/undercover/Board.tsx:240, games/texas-holdem/Board.tsx:527, games/connect-four/Board.tsx:84 and :91, games/liar-bar/Board.tsx:332, games/battleship/Board.tsx:532, games/blackjack/Board.tsx:421, games/love-letter/Board.tsx:383, games/uno/Board.tsx:556, games/hive/Board.tsx:467, games/yahtzee/Board.tsx:740, games/splendor/Board.tsx:959, games/gomoku/Board.tsx:247, games/codenames/Board.tsx:322, and werewolf if present",
+        "Non-host who clicks 'Return to Room' sees disabled 'Waiting for host' state (wired via new socket-level permission check)",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Build RoomOptionsPanel UI component",
+      "description": "As a host, I want a panel in the waiting room to adjust maxPlayers with a stepper and toggle per-game options declared in configSchema.",
+      "acceptanceCriteria": [
+        "New component packages/client/src/components/room/RoomOptionsPanel.tsx renders maxPlayers stepper bounded by [meta.minPlayers, meta.maxPlayers] and emits room:updateOptions",
+        "Per-game custom options slot: if the game exports a RoomOptionsExtras React component (optional plugin export), render it; otherwise auto-generate boolean/number inputs from configSchema",
+        "Panel is read-only for non-host players; edits are disabled with a tooltip",
+        "Visible only during waiting phase",
+        "New tests: maxPlayers stepper bounds respected, non-host renders read-only, change emits correct payload",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Add common i18n keys for room options",
+      "description": "As a player, room options (maxPlayers label, save/cancel, host-only notice, draw badge) need Chinese and English translations.",
+      "acceptanceCriteria": [
+        "Add keys to packages/client/src/i18n/en/common.json and zh/common.json: room.options.maxPlayers, room.options.save, room.options.restoreDefaults, room.options.onlyHostCanEdit, room.options.changesSaved",
+        "Add keys to packages/game-ui/src/i18n/ (en, zh): draw (for draw badge)",
+        "No missing-key warnings when running client in either locale",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "Scaffold @repo/card-ui package",
+      "description": "As a developer, I need a new workspace package @repo/card-ui with TypeScript, Vitest, and font setup so shared card components can live there.",
+      "acceptanceCriteria": [
+        "Create packages/card-ui/ with package.json (name @repo/card-ui), tsconfig.json, vitest.config.ts, src/index.ts",
+        "Add to pnpm workspace; add @fontsource/cinzel or @fontsource/playfair-display as a dependency",
+        "Register package in root tsconfig paths and vitest workspace globs (already glob-based; verify picks up)",
+        "Empty src/index.ts exports placeholder type so build passes",
+        "Add a trivial test packages/card-ui/src/smoke.test.ts that runs and passes",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-017",
+      "title": "Implement PlayingCard component with SVG suits",
+      "description": "As a developer, I want a PlayingCard React component that renders all 52 faces (A through K across four suits) using SVG suits and an artistic serif font.",
+      "acceptanceCriteria": [
+        "packages/card-ui/src/PlayingCard.tsx exports PlayingCard with props suit, rank, size ('sm'|'md'|'lg'), faceDown, selected",
+        "Suits rendered as inline SVG (hearts, diamonds, clubs, spades)",
+        "Rank text uses Cinzel font loaded via @fontsource; corner indices in top-left and bottom-right (rotated)",
+        "Selected prop applies translateY(-12px) and shadow; base hover (when not selected) applies translateY(-6px)",
+        "Tests for every rank/suit combo rendering without error; snapshot test for one canonical card",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "title": "Implement CardBack and JokerCard components",
+      "description": "As a developer, I want shared CardBack and JokerCard components so all card-based games use the same back pattern and Joker art.",
+      "acceptanceCriteria": [
+        "packages/card-ui/src/CardBack.tsx exports CardBack with size prop; uses diamond-grid SVG pattern with token-based primary border",
+        "packages/card-ui/src/JokerCard.tsx exports JokerCard with size and selected props; art is flat court-style silhouette (no cartoon), SVG",
+        "Both components match PlayingCard aspect ratio and size presets",
+        "Tests render all sizes without error; snapshot test for one canonical back and one joker",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "title": "Implement CardHand fan-layout component",
+      "description": "As a developer, I want a CardHand container that lays out children in a fixed fan so hands don't reflow on hover or selection changes.",
+      "acceptanceCriteria": [
+        "packages/card-ui/src/CardHand.tsx lays out N children in a fan: rotate(i) and translateY(i) using deterministic formulas from child count",
+        "Hover on a child lifts only that child (not its neighbors); selected children stay lifted until clicked again",
+        "Layout does not reflow when a child toggles selected (parent dimensions fixed)",
+        "Test: N=5 children, simulate hover on middle child, assert siblings do not translate",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 19,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-020",
+      "title": "Migrate Blackjack cards to @repo/card-ui",
+      "description": "As a player, Blackjack should render using the shared PlayingCard and CardBack so its visuals match other card games.",
+      "acceptanceCriteria": [
+        "games/blackjack/Board.tsx replaces inline card rendering with PlayingCard and CardBack imports from @repo/card-ui",
+        "Dealer's hidden hole card uses CardBack during deal",
+        "No visual regression in existing test snapshots (or snapshots updated with reviewer note)",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 20,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-021",
+      "title": "Migrate Texas Holdem cards to @repo/card-ui",
+      "description": "As a player, Texas Holdem should render using PlayingCard and CardBack so cards look consistent with Blackjack.",
+      "acceptanceCriteria": [
+        "games/texas-holdem/Board.tsx replaces card rendering with PlayingCard and CardBack",
+        "Community cards flip from faceDown=true to faceDown=false during deal animation (if animation already exists, preserve; otherwise do not add)",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 21,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-022",
+      "title": "Migrate Liar Bar cards to @repo/card-ui",
+      "description": "As a Liar Bar player, the hand should render using PlayingCard, JokerCard, and CardHand so visuals are unified and hover/select animations no longer conflict.",
+      "acceptanceCriteria": [
+        "games/liar-bar/Board.tsx uses PlayingCard and JokerCard inside CardHand",
+        "Hover translateY(-6px) only when not selected; click toggles selected (translateY(-12px) + shadow)",
+        "Layout no longer reflows when selection toggles",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 22,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-023",
+      "title": "Migrate Love Letter to @repo/card-ui with artistic font",
+      "description": "As a Love Letter player, cards should use the shared CardBack and a more artistic serif font for card text to feel like a premium card game.",
+      "acceptanceCriteria": [
+        "games/love-letter/Board.tsx uses CardBack for the deck and discard back",
+        "Card text (name, number, effect) uses the Cinzel serif font via a new .card-text utility class defined in packages/card-ui/src/styles.css",
+        "Keep Love Letter's bespoke face art (cardArt.ts); only back and text font are unified",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 23,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-024",
+      "title": "Migrate UNO card back to @repo/card-ui",
+      "description": "As a UNO player, the draw-pile back should use the shared CardBack; UNO face cards keep their colored design.",
+      "acceptanceCriteria": [
+        "games/uno/Board.tsx uses CardBack for the draw pile",
+        "UNO face cards retain current color+number design (no change)",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 24,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-025",
+      "title": "Fix Battleship text contrast and move ship preview to side",
+      "description": "As a Battleship player, I want readable text on the dark blue board, and selecting a ship should not insert a preview bar in the middle of the layout.",
+      "acceptanceCriteria": [
+        "Audit games/battleship/Board.tsx: replace low-contrast text-* classes with tokens (text-primary-foreground, text-muted-foreground); remove any hardcoded # hex colors",
+        "Move selected-ship preview from inline-middle to a side slot: desktop right-of-board; mobile (375px) below-board with fixed min-height",
+        "When no ship is selected, preview slot still occupies its space (visibility:hidden) so the board does not shift",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 25,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-026",
+      "title": "Add Battleship fastMode option with 5 shots per turn",
+      "description": "As a host, I want to enable a fast mode in the room options so each turn lets a player fire 5 shots before passing.",
+      "acceptanceCriteria": [
+        "games/battleship/shared.ts configSchema gains fastMode: z.boolean().default(false); add to defaultConfig",
+        "games/battleship/logic.ts uses ctx.config.fastMode: when true, a player may submit up to 5 FIRE actions before an auto-pass or explicit END_TURN",
+        "New action END_TURN added to ActionSchema to let players end turn early",
+        "Board.tsx displays 'Shots remaining: X' HUD during fastMode, token-styled",
+        "Add i18n keys battleship:options.fastMode, battleship:shotsRemaining in both en and zh",
+        "New tests: fastMode=true auto-passes on 5th shot; fastMode=false passes after 1st shot; END_TURN works mid-turn in fastMode",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 26,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-027",
+      "title": "Add Battleship SHIP_SHAPES library",
+      "description": "As a developer, I need a shape library with U, Z, L, T, plus-cross, and S shapes (each as a relative-coordinate set) plus rotation and mirror helpers so ships can be non-linear.",
+      "acceptanceCriteria": [
+        "games/battleship/shapes.ts exports SHIP_SHAPES with entries { id, cells: Array<[dx,dy]> } for U, Z, L, T, plus, S (at least 5 distinct shapes)",
+        "Export rotate(shape, 0|90|180|270) and mirror(shape) pure helpers that return new coordinate sets",
+        "Export normalize(shape) that offsets coordinates so min(dx)=0 and min(dy)=0 for consistent placement math",
+        "Unit tests cover each shape times four rotations times two mirrors with expected coordinates",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 27,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-028",
+      "title": "Add Battleship irregularShips option with all-irregular fleet",
+      "description": "As a host, I want an 'irregular ships' toggle that replaces the entire fleet with shapes from the irregular library, keeping total cell count near the classic 17.",
+      "acceptanceCriteria": [
+        "games/battleship/shared.ts configSchema gains irregularShips: z.boolean().default(false)",
+        "games/battleship/logic.ts setup: when irregularShips=true build a fleet composed entirely of irregular shapes (no straight ships) totaling ~17 cells; when false keep current straight fleet",
+        "Add IRREGULAR_FLEET constant listing shape ids and counts chosen from SHIP_SHAPES to reach ~17 cells",
+        "Add i18n keys battleship:options.irregularShips in en and zh",
+        "New tests: irregularShips=true yields fleet with zero straight ships and total cells ~17; irregularShips=false is unchanged from baseline fleet",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 28,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-029",
+      "title": "Battleship place and fire logic for irregular shapes",
+      "description": "As a Battleship player, placing, colliding, hitting, and sinking an irregular ship must work correctly using the shape's full relative-coordinate set.",
+      "acceptanceCriteria": [
+        "logic.ts place action iterates each cell of normalized(rotate(mirror(shape))) when checking board bounds and collisions",
+        "Fire action: a hit marks the specific cell; a ship is sunk only when every cell in its shape is hit",
+        "New tests: place U-shape near edge fails, overlap with existing ship fails; fire hits one cell then sinks after all cells hit; placing with rotation and mirror both succeed on valid spots",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 29,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-030",
+      "title": "Battleship irregular placement UI with rotation and mirror",
+      "description": "As a Battleship player during the placement phase, I need to preview irregular ships, rotate (R key) and mirror (F key) them, and see them snap cleanly to the board.",
+      "acceptanceCriteria": [
+        "games/battleship/Board.tsx placement panel shows SVG preview of the currently selected irregular ship (uses shape coords)",
+        "Keyboard R cycles rotation through 0/90/180/270; F toggles mirror; buttons in the UI do the same for touch users (mobile)",
+        "Hover on board shows ghost overlay of the shape at target cell with green/red validity color",
+        "No layout shift when switching between ships",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 30,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-031",
+      "title": "Connect Four realistic wood board and filled pieces",
+      "description": "As a Connect Four player, I want a wood-grain board with deep holes and red/yellow pieces that fill the holes, not tiny circles floating inside.",
+      "acceptanceCriteria": [
+        "games/connect-four/Board.tsx board uses a wood-grain background (SVG filter or PNG in packages/client/public/game-assets/connect-four/)",
+        "Holes have inner shadow for depth; pieces fill ~95% of hole radius with radial gradient and a small specular highlight",
+        "Piece colors come from new tokens --piece-red and --piece-yellow registered in packages/game-ui; no hardcoded hex in Board.tsx",
+        "Existing drop animation preserved; only visuals change",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 31,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-032",
+      "title": "HIVE remove cancel-selection popup and fix white-on-white contrast",
+      "description": "As a HIVE player, I don't want a confusing 'cancel selection' popup, and white pieces in the white player's hand should be readable on the hand background.",
+      "acceptanceCriteria": [
+        "Remove the cancel-selection popup trigger in games/hive/Board.tsx; selection can still be cleared by clicking the piece again or clicking empty space",
+        "White-player hand tray uses a light wood background (new token --hand-bg-light) instead of pure white, or white pieces gain a dark stroke for contrast ratio >=4.5:1 against the tray",
+        "Visual-contrast unit test or storybook-like assertion is optional; primary check is browser review",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 32,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-033",
+      "title": "HIVE expand piece-movement rules in i18n",
+      "description": "As a HIVE player, the rules panel should explain how each piece moves (Queen, Beetle, Spider, Ant, Grasshopper) plus the one-hive rule.",
+      "acceptanceCriteria": [
+        "games/hive/i18n/en.json and zh.json rules field describes: Queen (one adjacent space), Beetle (one adjacent, can stack), Spider (must move exactly 3 empty spaces), Ant (any number of spaces), Grasshopper (jumps over straight line of contiguous pieces), plus the one-hive connectivity rule and no-gate rule",
+        "Text is human-readable with numbered bullets or headings",
+        "No additional layout changes in Board.tsx beyond what rulesText consumer already renders",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 33,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-034",
+      "title": "HIVE visually separate board from page background",
+      "description": "As a HIVE player, the playing area should visually distinguish itself from the page background so the board has clear edges.",
+      "acceptanceCriteria": [
+        "games/hive/Board.tsx board container uses bg-card or a subtle wood texture with thick foreground border (border-thick border-foreground per DESIGN.md)",
+        "Page background remains bg-background",
+        "No hardcoded colors; all tokens",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 34,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-035",
+      "title": "Liar Bar reposition claim banner to side panel",
+      "description": "As a Liar Bar player, the 'Claimed rank: X' banner should live in a compact side panel instead of a full-width row that dominates the screen.",
+      "acceptanceCriteria": [
+        "games/liar-bar/Board.tsx moves the claim banner to the right side (desktop) or top-right small badge (375px)",
+        "Banner uses tokens (bg-card + border-primary + text-primary-foreground); no hardcoded colors",
+        "Board area above/below the banner no longer shifts when the banner appears or disappears",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 35,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-036",
+      "title": "Liar Bar revolver spin animation on trigger pull",
+      "description": "As a Liar Bar player, pulling the trigger should play a revolver-spin animation and a gunshot flash so the moment has a clear visual focus.",
+      "acceptanceCriteria": [
+        "New component games/liar-bar/RevolverAnimation.tsx: SVG revolver cylinder rotates via CSS keyframes for ~600ms, then a flash frame, then resolves",
+        "Outcome (hit/blank) determines the color of the final frame; result text appears after animation completes",
+        "Respects prefers-reduced-motion: when set, skip spin and show a single flash or static icon",
+        "Board.tsx triggers the animation only on the player who pulled the trigger; other players see a condensed version synchronized via server timestamp",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 36,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-037",
+      "title": "Love Letter expand card rules in i18n",
+      "description": "As a Love Letter player, the rules panel should list every card (Guard, Priest, Baron, Handmaid, Prince, King, Countess, Princess) with its number and effect.",
+      "acceptanceCriteria": [
+        "games/love-letter/i18n/en.json and zh.json rules field lists all 8 card types in number order with effect descriptions",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 37,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-038",
+      "title": "Love Letter play log shows nicknames instead of IDs",
+      "description": "As a Love Letter player, the 'who played what' log should show opponent nicknames, not raw player IDs.",
+      "acceptanceCriteria": [
+        "games/love-letter/Board.tsx maps actorId to playerNames[actorId] before rendering in the play log",
+        "Falls back to actorId when nickname missing (parity with generic LogRow behavior)",
+        "New test: render log with known playerNames map, assert nicknames appear in output",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 38,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-039",
+      "title": "Love Letter card play and draw animations",
+      "description": "As a Love Letter player, playing a card should animate to the discard pile and drawing should animate from the deck to my hand.",
+      "acceptanceCriteria": [
+        "Board.tsx wraps played card transitions in a translateY + rotate + fade keyframe targeting the discard pile position",
+        "Draw action plays a slide-in from the deck to the hand slot",
+        "Animation duration 300-500ms; respects prefers-reduced-motion",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 39,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-040",
+      "title": "Undercover add maxRounds config and multi-round logic",
+      "description": "As an Undercover host, I want to set how many rounds are played (1-10) so the game doesn't end after a single reveal.",
+      "acceptanceCriteria": [
+        "games/undercover/shared.ts configSchema gains maxRounds: z.number().int().min(1).max(10).default(3)",
+        "games/undercover/logic.ts state machine supports phases: speak -> vote -> eliminate -> reveal -> next round",
+        "Game ends when rounds completed equals maxRounds OR all undercover eliminated OR too few civilians remain (mirrors existing single-round win conditions)",
+        "Round number is part of PlayerView",
+        "New tests: 3-round game progresses 3 phases then ends; early win (all undercover out) ends before maxRounds; round counter increments correctly",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 40,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-041",
+      "title": "Undercover round reveal and speak/vote UI polish",
+      "description": "As an Undercover player, I want clear visual phases: a speaking indicator, a vote bar, and a 3-second reveal when someone is eliminated.",
+      "acceptanceCriteria": [
+        "games/undercover/Board.tsx highlights the active speaker's avatar during the speak phase",
+        "Vote phase shows a horizontal bar with vote counts per candidate, updated live",
+        "Reveal phase shows the eliminated player's card (civilian / undercover / white) with a flip animation, holds for 3 seconds before auto-advance",
+        "Round counter badge visible in HUD",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 41,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-042",
+      "title": "UNO fix hand fan layout",
+      "description": "As a UNO player, my hand cards should stay in a stable fan layout; hovering a single card should only lift that card, not cause the whole hand to collapse or re-spread.",
+      "acceptanceCriteria": [
+        "games/uno/Board.tsx renders hand inside CardHand from @repo/card-ui (or inline equivalent with deterministic fan formula)",
+        "Hover on one card: only that card translates Y; neighbors do not reposition",
+        "Selecting a card lifts it to a tall position; reselecting lowers it; hover animation disabled while selected",
+        "No layout reflow of the hand container when a card is played or drawn",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 42,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-043",
+      "title": "UNO +4 challenge logic (server)",
+      "description": "As a UNO player, when an opponent plays +4, I should be able to challenge: if they had a valid-color card, they draw 4; otherwise I draw 6.",
+      "acceptanceCriteria": [
+        "games/uno/logic.ts after a +4 play sets state.awaitingChallenge = { challenger: nextPlayer, playedBy: player, prevPile: snapshot }",
+        "New action CHALLENGE_DRAW_FOUR accepted only from awaitingChallenge.challenger",
+        "Resolution: if playedBy held any card matching the pile color before the +4 play, challenge succeeds -> playedBy draws 4; otherwise challenge fails -> challenger draws 6",
+        "Auto-accept after a short timeout (e.g. 10s) via SET_TIMER event; otherwise challenger may also ACCEPT_DRAW_FOUR to draw 4",
+        "New tests: challenge success, challenge failure, timeout auto-accept",
+        "Typecheck passes",
+        "Tests pass"
+      ],
+      "priority": 43,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-044",
+      "title": "UNO +4 challenge UI prompt",
+      "description": "As a UNO player facing a +4, I want a clear modal offering Accept or Challenge, with the outcome animated.",
+      "acceptanceCriteria": [
+        "games/uno/Board.tsx renders a dialog when state.awaitingChallenge is present and I am the challenger",
+        "Two buttons: Accept (draw 4), Challenge (roll the dice)",
+        "After challenge resolves, flip animation reveals the playedBy player's hand briefly to show what they had (and whether they held a matching color)",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 44,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-045",
+      "title": "UNO wooden background, felt table, and play/draw/skip animations",
+      "description": "As a UNO player, I want a warm wood-grained background, a distinct felt-green play surface, and basic animations for play/draw/skip so the game feels alive.",
+      "acceptanceCriteria": [
+        "Replace current red background with a wood-grain texture via new token --bg-wood-dark in packages/game-ui; page container uses bg-wood-dark",
+        "Play surface uses a darker felt-green texture via --table-felt token, with inset shadow for depth",
+        "Animations: play card slides to discard pile with rotation; draw card slides out of the deck into the hand; skip pulses the skipped player's avatar gray; reverse pulses the direction arrow",
+        "All animations respect prefers-reduced-motion",
+        "No hardcoded colors remaining in Board.tsx",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 45,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-046",
+      "title": "Yahtzee simplify background to remove horizontal-line clash",
+      "description": "As a Yahtzee player, the background should not have horizontal lines that clash with the scoresheet's own lines, making the table hard to read.",
+      "acceptanceCriteria": [
+        "games/yahtzee/Board.tsx background uses flat bg-card or a subtle noise texture instead of the current notebook lines",
+        "Scoresheet retains its own horizontal row separators (unchanged)",
+        "Typecheck passes",
+        "Tests pass",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 46,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
+
+
+
+
+
+
