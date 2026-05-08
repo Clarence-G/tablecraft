@@ -444,6 +444,11 @@ export function Board({
   sendAction: rawSendAction,
   isSending,
   lastReject,
+  pointsDelta,
+  ties,
+  onReturnToRoom,
+  canReturnToRoom,
+  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('splendor');
   const sendAction = isSending ? () => {} : rawSendAction;
@@ -956,7 +961,18 @@ export function Board({
       )}
 
       {/* Game over */}
-      {gameOver && <GameOverModal rankings={rankingOrder} playerNames={playerNames} myId={myId} />}
+      {gameOver && (
+        <GameOverModal
+          rankings={rankingOrder}
+          playerNames={playerNames}
+          myId={myId}
+          pointsDelta={pointsDelta}
+          ties={ties}
+          onReturnToRoom={onReturnToRoom}
+          canReturnToRoom={canReturnToRoom}
+          onReturnToLobby={onReturnToLobby}
+        />
+      )}
     </div>
   );
 }

@@ -131,7 +131,9 @@ function GameInner({
             lastReject={lastReject}
             notifications={notifications}
             pointsDelta={gameOver?.pointsDelta}
+            ties={gameOver?.ties}
             onReturnToRoom={onReturnToRoom}
+            canReturnToRoom={room.hostId === userId}
             onReturnToLobby={onReturnToLobby}
           />
         </Suspense>

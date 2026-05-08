@@ -271,6 +271,11 @@ export function Board({
   sendAction: rawSendAction,
   isSending,
   lastReject,
+  pointsDelta,
+  ties,
+  onReturnToRoom,
+  canReturnToRoom,
+  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const sendAction = isSending ? () => {} : rawSendAction;
   const { t } = useTranslation('blackjack');
@@ -418,7 +423,16 @@ export function Board({
 
       {/* Game Over Modal */}
       {gameOver && rankings && (
-        <GameOverModal rankings={rankings} playerNames={playerNames} myId={myId} />
+        <GameOverModal
+          rankings={rankings}
+          playerNames={playerNames}
+          myId={myId}
+          pointsDelta={pointsDelta}
+          ties={ties}
+          onReturnToRoom={onReturnToRoom}
+          canReturnToRoom={canReturnToRoom}
+          onReturnToLobby={onReturnToLobby}
+        />
       )}
     </div>
   );

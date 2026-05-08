@@ -12,6 +12,12 @@ interface GameOverModalProps {
   ties?: string[][];
   onRestart?: () => void;
   onReturnToRoom?: () => void;
+  /**
+   * Gates the "Return to Room" button. When false and `onReturnToRoom` is
+   * provided, the button renders as disabled with a "Waiting for host" label.
+   * Defaults to true.
+   */
+  canReturnToRoom?: boolean;
   onReturnToLobby?: () => void;
 }
 
@@ -32,6 +38,7 @@ export function GameOverModal({
   ties,
   onRestart,
   onReturnToRoom,
+  canReturnToRoom = true,
   onReturnToLobby,
 }: GameOverModalProps) {
   const myRank = rankings.indexOf(myId) + 1;
@@ -43,11 +50,13 @@ export function GameOverModal({
   const firstActionRef = useRef<HTMLButtonElement | null>(null);
 
   // Escape closes the modal. Preference order matches the visible button
-  // order so the "primary" dismissal path is chosen.
+  // order so the "primary" dismissal path is chosen. Non-host viewers can't
+  // restart, so skip onReturnToRoom for them.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      const handler = onReturnToLobby ?? onReturnToRoom ?? onRestart;
+      const handler =
+        onReturnToLobby ?? (canReturnToRoom ? onReturnToRoom : undefined) ?? onRestart;
       if (handler) {
         e.preventDefault();
         handler();
@@ -55,7 +64,7 @@ export function GameOverModal({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onRestart, onReturnToRoom, onReturnToLobby]);
+  }, [onRestart, onReturnToRoom, onReturnToLobby, canReturnToRoom]);
 
   // Focus the first action button on mount so keyboard users can act
   // immediately. Backdrop clicks intentionally do NOT dismiss — users
@@ -128,21 +137,32 @@ export function GameOverModal({
               {t('playAgain')}
             </button>
           )}
-          {onReturnToRoom && (
-            <button
-              type="button"
-              ref={onRestart ? undefined : firstActionRef}
-              onClick={onReturnToRoom}
-              className="w-full bg-primary text-primary-foreground border-2 border-[#1a1108] py-2 rounded-[12px] font-semibold shadow-button transition-all hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active flex items-center justify-center gap-2"
-            >
-              <ArrowLeft className="size-4" />
-              {t('returnToRoom')}
-            </button>
-          )}
+          {onReturnToRoom &&
+            (canReturnToRoom ? (
+              <button
+                type="button"
+                ref={onRestart ? undefined : firstActionRef}
+                onClick={onReturnToRoom}
+                className="w-full bg-primary text-primary-foreground border-2 border-[#1a1108] py-2 rounded-[12px] font-semibold shadow-button transition-all hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-px active:shadow-button-active flex items-center justify-center gap-2"
+              >
+                <ArrowLeft className="size-4" />
+                {t('returnToRoom')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled
+                aria-disabled="true"
+                className="w-full bg-secondary text-muted-foreground border-2 border-border py-2 rounded-[12px] font-semibold flex items-center justify-center gap-2 cursor-not-allowed opacity-70"
+              >
+                <ArrowLeft className="size-4" />
+                {t('waitingForHost')}
+              </button>
+            ))}
           {onReturnToLobby && (
             <button
               type="button"
-              ref={onRestart || onReturnToRoom ? undefined : firstActionRef}
+              ref={onRestart || (onReturnToRoom && canReturnToRoom) ? undefined : firstActionRef}
               onClick={onReturnToLobby}
               className="w-full bg-card text-foreground border-2 border-foreground py-2 rounded-[12px] font-semibold shadow-[#3d2e1e_-4px_4px_0px] transition-all hover:-translate-y-0.5 hover:shadow-[#3d2e1e_-5px_6px_0px] active:translate-y-px active:shadow-[#3d2e1e_-2px_2px_0px] flex items-center justify-center gap-2"
             >

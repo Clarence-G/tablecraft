@@ -180,6 +180,11 @@ export function Board({
   players,
   sendAction: rawSendAction,
   isSending,
+  pointsDelta,
+  ties,
+  onReturnToRoom,
+  canReturnToRoom,
+  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   // Swallow every action while one is already in flight. Prevents duplicate
   // emits during the server round-trip so slow connections don't double-tap.
@@ -560,6 +565,11 @@ export function Board({
           ].filter(Boolean)}
           playerNames={playerNames}
           myId={myId}
+          pointsDelta={pointsDelta}
+          ties={ties}
+          onReturnToRoom={onReturnToRoom}
+          canReturnToRoom={canReturnToRoom}
+          onReturnToLobby={onReturnToLobby}
         />
       )}
     </div>

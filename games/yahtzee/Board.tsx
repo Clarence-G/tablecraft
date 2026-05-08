@@ -405,6 +405,11 @@ function BoardInner({
   players,
   sendAction: rawSendAction,
   isSending,
+  pointsDelta,
+  ties,
+  onReturnToRoom,
+  canReturnToRoom,
+  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const sendAction = isSending ? () => {} : rawSendAction;
   const { t } = useTranslation('yahtzee');
@@ -742,7 +747,16 @@ function BoardInner({
 
       {/* Game Over Modal */}
       {gameOver && rankings && (
-        <GameOverModal rankings={rankings} playerNames={playerNames} myId={myId} />
+        <GameOverModal
+          rankings={rankings}
+          playerNames={playerNames}
+          myId={myId}
+          pointsDelta={pointsDelta}
+          ties={ties}
+          onReturnToRoom={onReturnToRoom}
+          canReturnToRoom={canReturnToRoom}
+          onReturnToLobby={onReturnToLobby}
+        />
       )}
     </div>
   );

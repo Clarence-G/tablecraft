@@ -51,6 +51,11 @@ export function Board({
   sendAction,
   isSending,
   lastReject,
+  pointsDelta,
+  ties,
+  onReturnToRoom,
+  canReturnToRoom,
+  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('gomoku');
   const { push } = useGameLog();
@@ -248,6 +253,11 @@ export function Board({
           rankings={[state.winner, loserPlayer.id]}
           playerNames={playerNames}
           myId={myId}
+          pointsDelta={pointsDelta}
+          ties={ties}
+          onReturnToRoom={onReturnToRoom}
+          canReturnToRoom={canReturnToRoom}
+          onReturnToLobby={onReturnToLobby}
         />
       )}
     </div>

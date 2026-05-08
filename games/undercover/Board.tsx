@@ -12,6 +12,11 @@ export function Board({
   sendAction,
   isSending,
   lastReject,
+  pointsDelta,
+  ties,
+  onReturnToRoom,
+  canReturnToRoom,
+  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('undercover');
   const [descText, setDescText] = useState('');
@@ -237,7 +242,16 @@ export function Board({
 
       {/* Game Over */}
       {gameOver && (
-        <GameOverModal rankings={state.rankings} playerNames={playerNames} myId={myId} />
+        <GameOverModal
+          rankings={state.rankings}
+          playerNames={playerNames}
+          myId={myId}
+          pointsDelta={pointsDelta}
+          ties={ties}
+          onReturnToRoom={onReturnToRoom}
+          canReturnToRoom={canReturnToRoom}
+          onReturnToLobby={onReturnToLobby}
+        />
       )}
     </div>
   );

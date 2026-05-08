@@ -108,4 +108,38 @@ describe('GameOverModal', () => {
     expect(screen.getByText('youWin')).toBeInTheDocument();
     expect(screen.queryByText('draw')).not.toBeInTheDocument();
   });
+
+  it('canReturnToRoom=false renders disabled "waiting for host" button and skips onReturnToRoom on Escape', () => {
+    const onReturnToRoom = vi.fn();
+    const onReturnToLobby = vi.fn();
+    render(
+      <GameOverModal
+        {...baseProps}
+        onReturnToRoom={onReturnToRoom}
+        canReturnToRoom={false}
+        onReturnToLobby={onReturnToLobby}
+      />,
+    );
+    // Disabled variant shows the waiting-for-host label, not returnToRoom.
+    expect(screen.getByText('waitingForHost')).toBeInTheDocument();
+    expect(screen.queryByText('returnToRoom')).not.toBeInTheDocument();
+    // Clicking the disabled button must not fire the handler.
+    const disabled = screen.getByText('waitingForHost').closest('button');
+    expect(disabled).toBeDisabled();
+    fireEvent.click(disabled!);
+    expect(onReturnToRoom).not.toHaveBeenCalled();
+    // Escape still dismisses, but routes to the first enabled handler (lobby).
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onReturnToRoom).not.toHaveBeenCalled();
+    expect(onReturnToLobby).toHaveBeenCalledTimes(1);
+  });
+
+  it('canReturnToRoom=true (default) keeps the active button', () => {
+    const onReturnToRoom = vi.fn();
+    render(<GameOverModal {...baseProps} onReturnToRoom={onReturnToRoom} />);
+    expect(screen.getByText('returnToRoom')).toBeInTheDocument();
+    expect(screen.queryByText('waitingForHost')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('returnToRoom'));
+    expect(onReturnToRoom).toHaveBeenCalledTimes(1);
+  });
 });

@@ -14,6 +14,11 @@ export function Board({
   sendAction,
   isSending,
   lastReject,
+  pointsDelta,
+  ties,
+  onReturnToRoom,
+  canReturnToRoom,
+  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('connect-four');
   const gameOver = !!state.winner || state.isDraw;
@@ -85,10 +90,24 @@ export function Board({
           rankings={[state.winner, loserPlayer.id]}
           playerNames={playerNames}
           myId={myId}
+          pointsDelta={pointsDelta}
+          ties={ties}
+          onReturnToRoom={onReturnToRoom}
+          canReturnToRoom={canReturnToRoom}
+          onReturnToLobby={onReturnToLobby}
         />
       )}
       {state.isDraw && (
-        <GameOverModal rankings={players.map((p) => p.id)} playerNames={playerNames} myId={myId} />
+        <GameOverModal
+          rankings={players.map((p) => p.id)}
+          playerNames={playerNames}
+          myId={myId}
+          pointsDelta={pointsDelta}
+          ties={ties}
+          onReturnToRoom={onReturnToRoom}
+          canReturnToRoom={canReturnToRoom}
+          onReturnToLobby={onReturnToLobby}
+        />
       )}
     </div>
   );

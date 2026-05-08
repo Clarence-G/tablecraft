@@ -72,6 +72,11 @@ export function Board({
   players,
   sendAction: rawSendAction,
   isSending,
+  pointsDelta,
+  ties,
+  onReturnToRoom,
+  canReturnToRoom,
+  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const sendAction = isSending ? () => {} : rawSendAction;
   const { t } = useTranslation('liar-bar');
@@ -336,6 +341,11 @@ export function Board({
           ]}
           playerNames={playerNames}
           myId={myId}
+          pointsDelta={pointsDelta}
+          ties={ties}
+          onReturnToRoom={onReturnToRoom}
+          canReturnToRoom={canReturnToRoom}
+          onReturnToLobby={onReturnToLobby}
         />
       )}
     </div>

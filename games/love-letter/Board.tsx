@@ -57,6 +57,11 @@ export function Board({
   sendAction: rawSendAction,
   isSending,
   notifications,
+  pointsDelta,
+  ties,
+  onReturnToRoom,
+  canReturnToRoom,
+  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const sendAction = isSending ? () => {} : rawSendAction;
   const { t } = useTranslation('love-letter');
@@ -387,6 +392,11 @@ export function Board({
           ]}
           playerNames={playerNames}
           myId={myId}
+          pointsDelta={pointsDelta}
+          ties={ties}
+          onReturnToRoom={onReturnToRoom}
+          canReturnToRoom={canReturnToRoom}
+          onReturnToLobby={onReturnToLobby}
         />
       )}
     </div>

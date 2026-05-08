@@ -121,6 +121,11 @@ export function Board({
   players,
   sendAction,
   isSending,
+  pointsDelta,
+  ties,
+  onReturnToRoom,
+  canReturnToRoom,
+  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('hive');
   const [selectedPieceType, setSelectedPieceType] = useState<HivePieceType | null>(null);
@@ -464,7 +469,16 @@ export function Board({
 
       {/* Game over modal */}
       {gameOver && rankings && (
-        <GameOverModal rankings={rankings} playerNames={playerNames} myId={myId} />
+        <GameOverModal
+          rankings={rankings}
+          playerNames={playerNames}
+          myId={myId}
+          pointsDelta={pointsDelta}
+          ties={ties}
+          onReturnToRoom={onReturnToRoom}
+          canReturnToRoom={canReturnToRoom}
+          onReturnToLobby={onReturnToLobby}
+        />
       )}
     </div>
   );

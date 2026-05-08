@@ -241,6 +241,11 @@ export function Board({
   players,
   sendAction: rawSendAction,
   isSending,
+  pointsDelta,
+  ties,
+  onReturnToRoom,
+  canReturnToRoom,
+  onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const sendAction = isSending ? () => {} : rawSendAction;
   const [selectedShipIdx, setSelectedShipIdx] = useState<number | null>(null);
@@ -536,6 +541,11 @@ export function Board({
             ]}
             playerNames={playerNames}
             myId={myId}
+            pointsDelta={pointsDelta}
+            ties={ties}
+            onReturnToRoom={onReturnToRoom}
+            canReturnToRoom={canReturnToRoom}
+            onReturnToLobby={onReturnToLobby}
           />
         )}
       </div>
