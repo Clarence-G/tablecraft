@@ -76,7 +76,8 @@
   pointer-events: none;
 }
 
-.card-ui-text {
+.card-ui-text,
+.card-text {
   font-family: "Cinzel", "Playfair Display", "Times New Roman", serif;
 }
 

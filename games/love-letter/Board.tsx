@@ -1,3 +1,4 @@
+import { CardBack } from '@repo/card-ui';
 import { useGameHeaderStatus } from '@repo/game-ui';
 import { PlayingCard } from '@repo/game-ui/card';
 import { GameOverModal } from '@repo/game-ui/feedback';
@@ -5,7 +6,7 @@ import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { LOVE_LETTER_CARD_ART, LOVE_LETTER_CARD_BACK } from './cardArt';
+import { LOVE_LETTER_CARD_ART } from './cardArt';
 import { type Action, OTHER_TARGET_CARDS, type PlayerView } from './shared';
 
 // ---- Card Component ----
@@ -30,21 +31,17 @@ function CardFace({
   return (
     <PlayingCard
       size={isSmall ? 'sm' : 'lg'}
-      corner={value}
-      center={name}
-      subtitle={!isSmall ? t(`cardDescriptions.${value}`) : undefined}
+      corner={<span className="card-text">{value}</span>}
+      center={<span className="card-text">{name}</span>}
+      subtitle={
+        !isSmall ? <span className="card-text">{t(`cardDescriptions.${value}`)}</span> : undefined
+      }
       cardArt={LOVE_LETTER_CARD_ART[value]}
       cardArtAlt={name}
       selected={selected}
       disabled={disabled}
       onClick={onClick}
     />
-  );
-}
-
-function CardBack({ size = 'small' }: { size?: 'small' | 'normal' }) {
-  return (
-    <PlayingCard size={size === 'small' ? 'sm' : 'lg'} faceDown backArt={LOVE_LETTER_CARD_BACK} />
   );
 }
 
@@ -185,7 +182,7 @@ export function Board({
                 {info?.alive && p.id !== myId && (
                   <span className="flex gap-0.5">
                     {Array.from({ length: info?.cardCount ?? 0 }).map((_, i) => (
-                      <CardBack key={i} />
+                      <CardBack key={i} size="sm" />
                     ))}
                   </span>
                 )}
