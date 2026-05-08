@@ -8,7 +8,7 @@ Total stories: 46
 - `useRoom(socket, onRoomChange?)` accepts an optional callback invoked on successful `room:create`/`room:join` ack — use this to wire cross-hook cleanup (e.g. GameStore reset) without coupling hooks to each other.
 - `App.tsx` is the orchestrator: call `useGame` before `useRoom` if the latter needs a callback from the former.
 - `GameLogProvider` (packages/game-ui/src/log/GameLogContext.tsx) auto-clears its entries when `defaultNs` prop changes — so per-game log isolation is automatic once the host sets `defaultNs` to the game's namespace.
-- macOS-local only: `pnpm test` surfaces 16 "Unhandled Error … html-encoding-sniffer" failures from jsdom. All unit tests still pass (525/525). CI on ubuntu is unaffected; do not chase this.
+- macOS-local only: `pnpm test` surfaces "Unhandled Error … html-encoding-sniffer" failures from jsdom. These BREAK test *collection* in a package that opts into `environment: 'jsdom'` from scratch (see games/yahtzee attempt) — tests ran 0/0 on local. CI on ubuntu is unaffected. Workaround: keep game packages on `environment: 'node'`, extract UI gating logic into pure helpers (e.g. `shouldShowOwnScoreRows` in games/yahtzee/shared.ts) and unit-test those in logic.test.ts.
 - Biome baseline on this branch has 4 pre-existing errors in `packages/game-ui/src/header/GameHeader.tsx`, `packages/game-ui/src/theme/playerColors.ts`/`.test.ts`, and `prd.json`. Not introduced by ralph stories — leave them unless a story explicitly touches those files.
 - Engine `EngineEvent` is exported from `packages/shared/src/types/engine.ts`. `END_GAME` now carries optional `ties?: string[][]`; consumers in GameRoom treat any tie group containing the rank-1 player as a shared first place. Existing games that don't emit `ties` keep their win/loss behavior unchanged.
 - `GameRoom.ledger.test.ts` uses `createTestDb()` and `vi.doMock('../db/index.js', ...)` pattern — integration tests against a real postgres. Poll the ledger (~20ms intervals, 50 iterations) since `recordPoints` is fire-and-forget.
@@ -43,4 +43,19 @@ Total stories: 46
   - Only tie groups that contain the winner mutate the ledger — lower-rank ties are ignored (they already collapse to 'loss' in the 0-point tier). Future stories building rankings UI should mirror this semantics.
   - The 3-player `meta` default in GameRoom.ledger.test.ts is shared — override `minPlayers`/`maxPlayers` per test if you need a 2-player scenario (spread-and-override works cleanly).
   - `END_GAME` event's optional `ties` field is set up for US-010 (game:over socket emission). Future game logics can populate it alongside rankings without touching signature-level breakage.
+---
+
+## 2026-05-08 - US-003
+- Changed `showFullScorecard` default in games/yahtzee/Board.tsx from false to true so the main scoresheet panel stays visible across turns. The previous default collapsed the panel whenever it wasn't the viewer's turn — and opening/closing an opponent's scorecard dialog made the "empty" appearance newly obvious, which surfaced as "viewing others wipes my entries".
+- Extracted the visibility predicate into a pure helper `shouldShowOwnScoreRows(showExpanded, isMyTurn)` in games/yahtzee/shared.ts so the invariant can be unit-tested in node env.
+- Added 4 tests to games/yahtzee/logic.test.ts covering: predicate returns true when expanded regardless of turn, true on my turn, false only when both collapsed+not-my-turn, plus a logic invariant that one player scoring cannot mutate another player's scores array.
+- Files changed:
+  - games/yahtzee/Board.tsx (default true + helper import + call site)
+  - games/yahtzee/shared.ts (+shouldShowOwnScoreRows)
+  - games/yahtzee/logic.test.ts (+4 tests, 28→32)
+- Browser verification: deferred. A 2+ player Yahtzee room is needed to reproduce the original "not my turn" path; left for human reviewer to click through on the live dev server. The fix is data-invariant safe — the predicate is pure and the default flip is a 1-line semantic change.
+- **Learnings for future iterations:**
+  - `environment: 'jsdom'` in a game package's vitest.config breaks test *collection* on local macOS + Node 20.11 due to jsdom → html-encoding-sniffer ESM/CJS interop. Even `// @vitest-environment jsdom` pragmas trigger the failure. Keep games on `environment: 'node'` and extract rendering-gate logic into pure helpers testable from logic.test.ts.
+  - For US-003-style UI-perception bugs with no server-state component, a regression test on a pure predicate + an invariant test on `getPlayerView` cross-player isolation is sufficient. Full component rendering tests are not worth the jsdom infra cost in this repo right now.
+  - PRD acceptance text sometimes hallucinates state names (US-003 referenced a `selectedPlayer` state that doesn't exist — the real state is `showFullScorecard`, and viewing-others is a Dialog, not an in-panel tab). Always read the source before treating PRD implementation hints as authoritative.
 ---

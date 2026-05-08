@@ -50,8 +50,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Root cause was `showFullScorecard` defaulting to false; panel collapsed on others' turns. Fix: default true + extracted `shouldShowOwnScoreRows` helper for unit-testable invariant."
     },
     {
       "id": "US-004",
