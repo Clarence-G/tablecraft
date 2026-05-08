@@ -118,13 +118,20 @@ function checkAndReshuffleIfNeeded(state: LiarsBarState, ctx: GameContext): Liar
   const alivePlayers = getAlivePlayers(state);
   const allEmpty = alivePlayers.every((p) => p.hand.length === 0);
   if (allEmpty) {
-    // Reshuffle and redeal
-    const newSuitIdx = ctx.random.int(0, 2);
-    let newState = dealCards(state, ctx);
-    newState = { ...newState, declaredSuit: SUITS[newSuitIdx] };
-    return newState;
+    return startNewRound(state, ctx);
   }
   return state;
+}
+
+function startNewRound(state: LiarsBarState, ctx: GameContext): LiarsBarState {
+  const newSuitIdx = ctx.random.int(0, 2);
+  let newState = dealCards(state, ctx);
+  newState = {
+    ...newState,
+    declaredSuit: SUITS[newSuitIdx],
+    lastPlay: null,
+  };
+  return newState;
 }
 
 // ---- Logic ----
@@ -346,8 +353,10 @@ export const logic: GameLogic<LiarsBarState, Action, PlayerView> = {
         currentPlayerIdx: nextIdx >= 0 ? nextIdx : 0,
       };
 
-      // Check if reshuffle needed
-      newState = checkAndReshuffleIfNeeded(newState, ctx);
+      // After a challenge resolves, always start a fresh round: re-deal hands
+      // and pick a new declared suit. This holds whether the liar was caught
+      // or the challenger was wrong, and whether or not the shooter survived.
+      newState = startNewRound(newState, ctx);
 
       return { ok: true, state: newState, events };
     }

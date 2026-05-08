@@ -373,6 +373,58 @@ describe('Liar Bar Logic', () => {
     });
   });
 
+  describe('round reset after challenge', () => {
+    it('liar caught: shoots blank, next round has fresh hands and empty pile', () => {
+      const h = create2p('seed-reset-lie');
+      setDeclaredSuit(h, 'Q');
+      setHand(h, 'Alice', ['K', 'K', 'A', 'A', 'A']);
+      setHand(h, 'Bob', ['A', 'A', 'A', 'K', 'K']);
+      // Alice survives: bullet at chamber 5, current chamber 0
+      setRevolver(h, 'Alice', 0, 5);
+
+      h.action('Alice', { type: 'play_cards', cardIndices: [0, 1] });
+      const result = h.action('Bob', { type: 'challenge' });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.state.challengeResult?.wasLying).toBe(true);
+      expect(result.state.challengeResult?.shooterId).toBe('Alice');
+      expect(result.state.challengeResult?.shotDied).toBe(false);
+
+      const alice = result.state.players.find((p: any) => p.id === 'Alice');
+      const bob = result.state.players.find((p: any) => p.id === 'Bob');
+      expect(alice?.hand.length).toBe(5);
+      expect(bob?.hand.length).toBe(5);
+      expect(result.state.lastPlay).toBeNull();
+      expect(result.state.phase).toBe('playing');
+    });
+
+    it('truth challenged: challenger shoots blank, next round still resets', () => {
+      const h = create2p('seed-reset-truth');
+      setDeclaredSuit(h, 'Q');
+      setHand(h, 'Alice', ['Q', 'Q', 'A', 'A', 'A']);
+      setHand(h, 'Bob', ['K', 'K', 'K', 'A', 'A']);
+      // Bob is the shooter (wrong challenge); survives: bullet at chamber 5
+      setRevolver(h, 'Bob', 0, 5);
+
+      h.action('Alice', { type: 'play_cards', cardIndices: [0, 1] });
+      const result = h.action('Bob', { type: 'challenge' });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.state.challengeResult?.wasLying).toBe(false);
+      expect(result.state.challengeResult?.shooterId).toBe('Bob');
+      expect(result.state.challengeResult?.shotDied).toBe(false);
+
+      const alice = result.state.players.find((p: any) => p.id === 'Alice');
+      const bob = result.state.players.find((p: any) => p.id === 'Bob');
+      expect(alice?.hand.length).toBe(5);
+      expect(bob?.hand.length).toBe(5);
+      expect(result.state.lastPlay).toBeNull();
+      expect(result.state.phase).toBe('playing');
+    });
+  });
+
   describe('spectator view', () => {
     it('spectator has empty myHand', () => {
       const h = createGame();
