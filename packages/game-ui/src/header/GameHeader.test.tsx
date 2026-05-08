@@ -43,4 +43,26 @@ describe('GameHeader', () => {
     fireEvent.click(screen.getByTestId('room-code-chip'));
     expect(writeText).toHaveBeenCalledWith('A3F2');
   });
+
+  it('hides elapsed time during pre-match phases (setup / placement)', () => {
+    const { rerender } = render(
+      <GameHeader gameName="x" icon="Target" roomId="A" elapsedSeconds={754} phase="setup" />,
+    );
+    expect(screen.queryByText('12:34')).not.toBeInTheDocument();
+    expect(screen.getByText('--:--')).toBeInTheDocument();
+
+    rerender(
+      <GameHeader gameName="x" icon="Target" roomId="A" elapsedSeconds={754} phase="placement" />,
+    );
+    expect(screen.queryByText('12:34')).not.toBeInTheDocument();
+    expect(screen.getByText('--:--')).toBeInTheDocument();
+  });
+
+  it('shows elapsed time during active-play phases', () => {
+    render(
+      <GameHeader gameName="x" icon="Target" roomId="A" elapsedSeconds={754} phase="playing" />,
+    );
+    expect(screen.getByText('12:34')).toBeInTheDocument();
+    expect(screen.queryByText('--:--')).not.toBeInTheDocument();
+  });
 });

@@ -210,7 +210,7 @@ export function Board({
         </div>
         {state.removedCards.length > 0 && (
           <div className="mt-1 flex flex-wrap justify-center gap-1 sm:inline-flex sm:ml-2 sm:mt-0">
-            <span className="opacity-70">{t('removed')}:</span>
+            <span className="opacity-70">{t('removed')}</span>
             {state.removedCards.map((c, i) => (
               <span
                 key={`${c}-${i}`}

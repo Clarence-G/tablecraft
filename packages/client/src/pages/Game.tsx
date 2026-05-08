@@ -40,19 +40,45 @@ function NotificationBridge({ notifications }: { notifications: unknown[] }) {
   return null;
 }
 
-export function Game({ userId, room, game, onReturnToLobby }: GamePageProps) {
-  const { t } = useTranslation('common');
-  const { view, sendAction, lastReject, notifications, matchStartedAt, isSending } = game;
+/**
+ * Outer guard: no hooks, only conditional branching. This lets us early-return
+ * on null/missing state WITHOUT violating React Rules of Hooks (see skill
+ * `react-early-return-hooks`). Before this split, the component called
+ * `useMemo(playerNames)` AFTER two early `return`s, producing the classic
+ * "Rendered more hooks than during the previous render" error once
+ * room/view hydrated — which surfaced as codenames rendering
+ * "Something went wrong" via the Sentry error boundary.
+ */
+export function Game(props: GamePageProps) {
+  const { room, game } = props;
 
-  if (!room || !view) return <Loading />;
+  if (!room || !game.view) return <Loading />;
 
   const plugin = clientRegistry[room.gameId];
-  if (!plugin)
-    return (
-      <div className="p-8">
-        {t('game.unknownGame')}: {room.gameId}
-      </div>
-    );
+  if (!plugin) return <UnknownGame gameId={room.gameId} />;
+
+  return <GameInner {...props} room={room} plugin={plugin} />;
+}
+
+function UnknownGame({ gameId }: { gameId: string }) {
+  const { t } = useTranslation('common');
+  return (
+    <div className="p-8">
+      {t('game.unknownGame')}: {gameId}
+    </div>
+  );
+}
+
+type ClientPlugin = (typeof clientRegistry)[string];
+
+interface GameInnerProps extends GamePageProps {
+  room: RoomState;
+  plugin: ClientPlugin;
+}
+
+function GameInner({ userId, room, game, plugin, onReturnToLobby }: GameInnerProps) {
+  const { t } = useTranslation('common');
+  const { view, sendAction, lastReject, notifications, matchStartedAt, isSending } = game;
 
   const Board = plugin.Board;
   const meta = plugin.meta;
@@ -88,7 +114,7 @@ export function Game({ userId, room, game, onReturnToLobby }: GamePageProps) {
         )}
         <Suspense fallback={<Loading />}>
           <Board
-            state={view}
+            state={view!}
             myId={userId}
             players={room.players}
             sendAction={sendAction}

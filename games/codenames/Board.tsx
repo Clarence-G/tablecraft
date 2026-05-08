@@ -57,7 +57,7 @@ export function Board({
   const isSpymaster = state.myRole === 'spymaster';
   const isOperative = state.myRole === 'operative';
 
-  useGameHeaderStatus(gameOver ? undefined : state.activeTeam ?? undefined);
+  useGameHeaderStatus(gameOver ? undefined : state.activeTeam ?? undefined, state.phase);
 
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
 

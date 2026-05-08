@@ -262,7 +262,7 @@ export function Board({
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
   const isMyTurn = state.currentPlayer === myId;
   const gameOver = state.phase === 'finished';
-  useGameHeaderStatus(gameOver ? undefined : state.currentPlayer);
+  useGameHeaderStatus(gameOver ? undefined : state.currentPlayer, state.phase);
 
   // Compute preview cells for placement grid
   const previewCells = new Set<number>();

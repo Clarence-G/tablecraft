@@ -25,6 +25,13 @@ export interface GameHeaderProps {
 
 const AVATAR_COLORS = ['#d94040', '#2563eb', '#16a34a', '#d97706', '#7c3aed'];
 
+/**
+ * Phases that represent pre-match preparation (team picking, ship placement,
+ * etc.) rather than active play. When in one of these phases, the header
+ * suppresses the elapsed-time pill, since the match hasn't truly started.
+ */
+const PRE_MATCH_PHASES = new Set(['setup', 'placement']);
+
 function formatElapsed(total: number): string {
   const m = Math.floor(total / 60)
     .toString()
@@ -130,6 +137,7 @@ export function GameHeader({
       ? t('header.yourTurn')
       : t('header.playerTurn', { name: currentPlayer.name })
     : null;
+  const isPreMatch = !!phase && PRE_MATCH_PHASES.has(phase);
 
   return (
     <header
@@ -191,7 +199,7 @@ export function GameHeader({
           </span>
         )}
         <span className="hidden sm:inline-flex items-center gap-1.5 bg-secondary border-2 border-foreground rounded-[10px] px-2.5 py-1 text-xs font-mono font-bold text-foreground tabular-nums shrink-0 shadow-[#3d2e1e_-2px_2px_0px]">
-          {formatElapsed(elapsedSeconds)}
+          {isPreMatch ? '--:--' : formatElapsed(elapsedSeconds)}
         </span>
       </div>
 

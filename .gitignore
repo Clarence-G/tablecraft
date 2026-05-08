@@ -31,4 +31,6 @@ scene-gallery.html
 # Local-only generated artifacts (covers are built into public/; screenshots are for QA)
 /out/
 /screenshots/
+/screenshots-waiting/
+/.ui-review/
 packages/cli/skills/
