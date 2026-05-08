@@ -118,3 +118,17 @@ Total stories: 46
   - `GameRoom.ctx` is rebuilt in three places (ctor, `fromPersisted`, `start`) — any future GameContext field must be set in all three to avoid "works in live game, undefined on hydrate" bugs.
   - `router.ts` has pre-existing Biome warnings (non-null assertions); they're not errors and are untouched by this story per Codebase Patterns rule #12.
 ---
+
+## 2026-05-08 - US-008
+- `ClientEvents['room:updateOptions']` added with payload `{ maxPlayers?: number; config?: Record<string, unknown> }` and `Ack` callback; `ServerEvents['room:updated']` added with payload `{ maxPlayers: number; config: unknown }`
+- Handler in `packages/server/src/socket/handlers.ts` rejects non-host, non-waiting room, non-integer / out-of-[meta.minPlayers, meta.maxPlayers] / below-current-count maxPlayers, and configs that fail `meta.configSchema.safeParse`. On success mutates `room.maxPlayers`/`room.config` and broadcasts `room:updated` + `room:state` + `rooms:updated`.
+- Added 6 integration tests in a second `describe` block of `handlers.test.ts` exercising a new `makeConfigurablePlugin` (has a `z.object({...}).default(...)` configSchema and `maxPlayers: 6`) — non-host, in-progress, out-of-range maxPlayers (three sub-cases), below-player-count maxPlayers, invalid config, and happy-path broadcast to all room sockets.
+- Files changed:
+  - packages/shared/src/types/socket.ts (+room:updateOptions ClientEvent, +room:updated ServerEvent)
+  - packages/server/src/socket/handlers.ts (new handler block, ~55 lines)
+  - packages/server/src/socket/handlers.test.ts (+makeConfigurablePlugin, +second describe block with 6 tests, 7 -> 13 tests)
+- **Learnings for future iterations:**
+  - socket.io serializes `undefined` to `null` across the wire, so `client.emit('room:create', ..., undefined, ack)` arrives on the server as `config === null`. The existing `room:create` handler guards only `config !== undefined` — when a game has `configSchema: z.object({...})`, that branch runs `safeParse(null)` and rejects with `Expected object, received null`. Workaround (and pattern for all future clients): always pass `{}` or a concrete config object, not `undefined`. Fixing the handler to guard both null+undefined is out of scope for this story but worth a follow-up.
+  - Shared `Ack<T = void>` in `@repo/shared` defaults to `{ ok: true; data: void } | ...`. Test helpers that wrap `sock.emit(..., ack)` should declare their Promise as `Promise<Ack>` (not `Promise<{ ok: true; data: undefined } | ...>` — those are not assignable because `void` is not assignable to `undefined` under strict TS).
+  - Server-emit pattern for room option changes: send `room:updated` (options delta) AND `room:state` (full state for existing listeners). Avoids forcing every current `room:state` consumer to also subscribe to the new event, while letting US-014's `RoomOptionsPanel` receive a focused payload.
+---

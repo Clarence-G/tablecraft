@@ -133,8 +133,8 @@
         "Tests pass"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "room:updateOptions handler validates host, waiting status, maxPlayers bounds (int, [minPlayers,maxPlayers], >= current player count), and config via meta.configSchema.safeParse; success broadcasts room:updated + room:state + rooms:updated"
     },
     {
       "id": "US-009",

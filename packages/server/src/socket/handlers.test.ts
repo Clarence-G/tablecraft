@@ -1,6 +1,7 @@
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import type {
+  Ack,
   ActionResult,
   ClientEvents,
   GameContext,
@@ -33,6 +34,31 @@ function makePlugin(id = 'test'): ServerGamePlugin {
     description: '',
     minPlayers: 2,
     maxPlayers: 2,
+  };
+  return { meta, logic: logic as GameLogic };
+}
+
+/** Plugin with a wider player range and a configSchema so we can exercise
+ * room:updateOptions validation (maxPlayers bounds + configSchema.safeParse). */
+function makeConfigurablePlugin(id = 'configurable'): ServerGamePlugin {
+  const logic: GameLogic<Record<string, unknown>, z.infer<typeof ActionSchema>, unknown> = {
+    actions: ActionSchema,
+    setup: (_ctx: GameContext) => ({}),
+    onAction: (state): ActionResult<Record<string, unknown>> => ({ ok: true, state }),
+    getPlayerView: (state) => state,
+  };
+  const configSchema = z.object({
+    fastMode: z.boolean().default(false),
+    rounds: z.number().int().min(1).max(10).default(3),
+  });
+  const meta: GameMeta = {
+    id,
+    name: 'Configurable',
+    description: '',
+    minPlayers: 2,
+    maxPlayers: 6,
+    configSchema,
+    defaultConfig: { fastMode: false, rounds: 3 },
   };
   return { meta, logic: logic as GameLogic };
 }
@@ -294,5 +320,209 @@ describe('socket handlers: leave/kick cleanup', () => {
     alice.disconnect();
     bob.disconnect();
     charlie.disconnect();
+  });
+});
+
+describe('socket handlers: room:updateOptions', () => {
+  let httpServer: ReturnType<typeof createServer>;
+  let io: Server<ClientEvents, ServerEvents>;
+  let roomManager: RoomManager;
+  let port: number;
+
+  beforeEach(async () => {
+    httpServer = createServer();
+    io = new Server<ClientEvents, ServerEvents>(httpServer);
+    io.use((socket, next) => {
+      const { userId, userName, isGuest } = socket.handshake.auth as {
+        userId: string;
+        userName?: string;
+        isGuest?: boolean;
+      };
+      socket.data.userId = userId;
+      socket.data.userName = userName ?? userId;
+      socket.data.isGuest = isGuest ?? true;
+      next();
+    });
+
+    roomManager = new RoomManager();
+    setupHandlers(io, roomManager, { configurable: makeConfigurablePlugin('configurable') });
+
+    await new Promise<void>((resolve) => httpServer.listen(0, () => resolve()));
+    port = (httpServer.address() as AddressInfo).port;
+  });
+
+  afterEach(async () => {
+    roomManager.destroy();
+    io.close();
+    await new Promise<void>((resolve) => httpServer.close(() => resolve()));
+  });
+
+  function connect(userId: string, userName = userId): Promise<TC> {
+    return new Promise((resolve, reject) => {
+      const sock: TC = ioClient(`http://localhost:${port}`, {
+        auth: { userId, userName, isGuest: true },
+        transports: ['websocket'],
+        reconnection: false,
+        forceNew: true,
+      });
+      sock.on('connect', () => resolve(sock));
+      sock.on('connect_error', reject);
+    });
+  }
+
+  function createRoom(sock: TC, playerName: string, gameId = 'configurable'): Promise<string> {
+    return new Promise((resolve, reject) => {
+      // Pass an empty object so the configurable plugin's zod schema (with
+      // per-field defaults) resolves to meta.defaultConfig. socket.io
+      // serializes `undefined` to `null`, which fails the schema's
+      // `z.object({...})` check — that's an unrelated existing edge-case.
+      sock.emit('room:create', gameId, playerName, {}, (result) => {
+        if (result.ok) resolve(result.data.roomId);
+        else reject(new Error(result.error));
+      });
+    });
+  }
+
+  function joinRoom(sock: TC, roomId: string, playerName: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      sock.emit('room:join', roomId, playerName, (result) => {
+        if (result.ok) resolve();
+        else reject(new Error(result.error));
+      });
+    });
+  }
+
+  function flush(ms = 50): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function updateOptions(
+    sock: TC,
+    payload: { maxPlayers?: number; config?: Record<string, unknown> },
+  ): Promise<Ack> {
+    return new Promise((resolve) => {
+      sock.emit('room:updateOptions', payload, (res) => resolve(res));
+    });
+  }
+
+  it('rejects non-host', async () => {
+    const alice = await connect('alice');
+    const bob = await connect('bob');
+    const roomId = await createRoom(alice, 'Alice');
+    await joinRoom(bob, roomId, 'Bob');
+    await flush();
+
+    const res = await updateOptions(bob, { maxPlayers: 4 });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toMatch(/host/i);
+
+    alice.disconnect();
+    bob.disconnect();
+  });
+
+  it('rejects updates while the game is in progress', async () => {
+    const alice = await connect('alice');
+    const bob = await connect('bob');
+    const roomId = await createRoom(alice, 'Alice');
+    await joinRoom(bob, roomId, 'Bob');
+    alice.emit('room:ready');
+    bob.emit('room:ready');
+    await flush();
+    await new Promise<void>((resolve, reject) => {
+      alice.emit('room:start', (r) => (r.ok ? resolve() : reject(new Error(r.error))));
+    });
+    await flush();
+
+    const res = await updateOptions(alice, { maxPlayers: 4 });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toMatch(/started|progress/i);
+
+    alice.disconnect();
+    bob.disconnect();
+  });
+
+  it('rejects out-of-range maxPlayers', async () => {
+    const alice = await connect('alice');
+    const roomId = await createRoom(alice, 'Alice');
+    await flush();
+    expect(roomManager.getRoom(roomId)).toBeDefined();
+
+    const tooHigh = await updateOptions(alice, { maxPlayers: 99 });
+    expect(tooHigh.ok).toBe(false);
+
+    const tooLow = await updateOptions(alice, { maxPlayers: 1 });
+    expect(tooLow.ok).toBe(false);
+
+    const notInt = await updateOptions(alice, { maxPlayers: 3.5 });
+    expect(notInt.ok).toBe(false);
+
+    alice.disconnect();
+  });
+
+  it('rejects maxPlayers below the current player count', async () => {
+    const alice = await connect('alice');
+    const bob = await connect('bob');
+    const carol = await connect('carol');
+    const roomId = await createRoom(alice, 'Alice');
+    await joinRoom(bob, roomId, 'Bob');
+    await joinRoom(carol, roomId, 'Carol');
+    await flush();
+
+    const res = await updateOptions(alice, { maxPlayers: 2 });
+    expect(res.ok).toBe(false);
+
+    alice.disconnect();
+    bob.disconnect();
+    carol.disconnect();
+  });
+
+  it('rejects invalid config (configSchema.safeParse fails)', async () => {
+    const alice = await connect('alice');
+    await createRoom(alice, 'Alice');
+    await flush();
+
+    const res = await updateOptions(alice, {
+      config: { fastMode: 'not-a-boolean', rounds: 3 },
+    });
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toMatch(/config/i);
+
+    alice.disconnect();
+  });
+
+  it('applies a valid update and broadcasts room:updated to the room', async () => {
+    const alice = await connect('alice');
+    const bob = await connect('bob');
+    const roomId = await createRoom(alice, 'Alice');
+    await joinRoom(bob, roomId, 'Bob');
+    await flush();
+
+    const aliceUpdates: Array<{ maxPlayers: number; config: unknown }> = [];
+    const bobUpdates: Array<{ maxPlayers: number; config: unknown }> = [];
+    alice.on('room:updated', (p) => aliceUpdates.push(p));
+    bob.on('room:updated', (p) => bobUpdates.push(p));
+
+    const res = await updateOptions(alice, {
+      maxPlayers: 5,
+      config: { fastMode: true, rounds: 7 },
+    });
+    expect(res.ok).toBe(true);
+    await flush();
+
+    // Both sockets in the room receive the event.
+    expect(aliceUpdates).toHaveLength(1);
+    expect(bobUpdates).toHaveLength(1);
+    expect(aliceUpdates[0]).toEqual({
+      maxPlayers: 5,
+      config: { fastMode: true, rounds: 7 },
+    });
+
+    // Authoritative server state is updated too.
+    const room = roomManager.getRoom(roomId);
+    expect(room?.maxPlayers).toBe(5);
+    expect(room?.config).toEqual({ fastMode: true, rounds: 7 });
+
+    alice.disconnect();
+    bob.disconnect();
   });
 });

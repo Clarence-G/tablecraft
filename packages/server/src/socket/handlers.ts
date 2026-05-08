@@ -202,6 +202,58 @@ export function setupHandlers(
       io.emit('rooms:updated');
     });
 
+    // room:updateOptions — host-only while waiting
+    socket.on('room:updateOptions', (payload, ack) => {
+      const room = roomManager.findRoomByUser(userId);
+      if (!room) return ack({ ok: false, error: 'Not in a room' });
+      if (room.hostId !== userId) return ack({ ok: false, error: 'Only host can update options' });
+      if (room.status !== 'waiting') {
+        return ack({ ok: false, error: 'Cannot update options after game started' });
+      }
+
+      const next = { maxPlayers: room.maxPlayers, config: room.config };
+
+      if (payload?.maxPlayers !== undefined) {
+        const mp = payload.maxPlayers;
+        if (
+          !Number.isInteger(mp) ||
+          mp < room.meta.minPlayers ||
+          mp > room.meta.maxPlayers ||
+          mp < room.players.size
+        ) {
+          return ack({
+            ok: false,
+            error: `maxPlayers must be an integer in [${room.meta.minPlayers}, ${room.meta.maxPlayers}] and not less than current player count (${room.players.size})`,
+          });
+        }
+        next.maxPlayers = mp;
+      }
+
+      if (payload?.config !== undefined) {
+        const plugin = registry[room.gameId];
+        if (plugin?.meta.configSchema) {
+          const parsed = plugin.meta.configSchema.safeParse(payload.config);
+          if (!parsed.success) {
+            return ack({ ok: false, error: `Invalid config: ${parsed.error.message}` });
+          }
+          next.config = parsed.data;
+        } else {
+          next.config = payload.config;
+        }
+      }
+
+      room.maxPlayers = next.maxPlayers;
+      room.config = next.config;
+
+      ack({ ok: true, data: undefined });
+      io.to(room.roomId).emit('room:updated', {
+        maxPlayers: room.maxPlayers,
+        config: room.config,
+      });
+      io.to(room.roomId).emit('room:state', room.toRoomState());
+      io.emit('rooms:updated');
+    });
+
     // game:action
     socket.on('game:action', (action, seq) => {
       const room = roomManager.findRoomByUser(userId);

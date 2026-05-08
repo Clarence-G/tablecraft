@@ -32,6 +32,17 @@ export interface ClientEvents {
 
   'room:restart': () => void;
 
+  /**
+   * Host-only update of the waiting-room options: maxPlayers override and/or
+   * per-game config. Server validates: host-only, room must still be waiting,
+   * maxPlayers within [meta.minPlayers, meta.maxPlayers] and >= current player
+   * count, and config is run through meta.configSchema.safeParse when present.
+   */
+  'room:updateOptions': (
+    payload: { maxPlayers?: number; config?: Record<string, unknown> },
+    ack: (result: Ack) => void,
+  ) => void;
+
   'game:action': (action: unknown, seq: number) => void;
 
   'room:list': (gameId: string, ack: (rooms: RoomSummary[]) => void) => void;
@@ -73,5 +84,12 @@ export interface ServerEvents {
    * updates reactively.
    */
   'rooms:updated': () => void;
+  /**
+   * Sent to sockets in a room when the host adjusts the room's options
+   * (maxPlayers or per-game config) while the room is still waiting. Fired in
+   * addition to `room:state` so UI listeners can react to options-only deltas
+   * without diffing the full state.
+   */
+  'room:updated': (payload: { maxPlayers: number; config: unknown }) => void;
   error: (message: string) => void;
 }
