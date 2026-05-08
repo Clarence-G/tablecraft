@@ -358,3 +358,20 @@ Total stories: 46
   - `@repo/card-ui` types `CardRank = 'A' | '2' | ... | '10' | 'J' | 'Q' | 'K'` — NO 'T'. Every game that uses 'T' in wire format (blackjack, holdem at minimum) needs the runtime rewrite. Consider exposing a `parseCardString(s: string)` helper from `@repo/card-ui` next time we touch the package to DRY this across games.
   - Renderer now relies on CSS from `@repo/card-ui/styles.css`. The client imports this via a component's top-level `import './styles.css';` (PlayingCard and CardBack both do it). No client-bundle-level action needed when migrating a game, but if you add a card-ui consumer outside the games/* tree, verify the CSS is reaching the bundler (vite processes CSS side-effect imports transparently).
 ---
+
+## 2026-05-08 - US-021
+- `games/texas-holdem/Board.tsx` now imports `PlayingCard` and `CardBack` (aliased `SharedCardBack`) + `CardRank`/`CardSuit` types from `@repo/card-ui`. Removed local `SuitIcon` + `@repo/game-ui/card` `PlayingCard` usage and the `SUIT_PATHS`/`displayRank`/`isRedSuit` imports. Card-string parsing mirrors blackjack: `{ s, h, d, c } -> suits`, 'T' rewritten to '10'. Local `CardBack()` wrapper now renders `<SharedCardBack size="md" />`. Dealer/opponent face-down path untouched (same placeholder/back logic).
+- `shared.ts` is left intact — `SUIT_PATHS`, `displayRank`, `isRedSuit`, `suitSymbol` remain exported for tests / agent consumers; Board.tsx just no longer imports them.
+- `games/texas-holdem/package.json` gained `@repo/card-ui: workspace:*`; pnpm install regenerated the lockfile.
+- Files changed:
+  - games/texas-holdem/Board.tsx (imports + CardFace rewrite + CardBack wrapper)
+  - games/texas-holdem/package.json (+@repo/card-ui workspace:*)
+  - pnpm-lock.yaml
+- Visual verification via `widget-screenshot` skill at tablet viewport — rendered a standalone preview (community cards As/Kh/Qd/Jc/10s, hole cards Ad/Ks, 2x opponent face-down) on the felt-green table with gold pot chip. Red/black split correct, face-down diamond grid reads cleanly against the felt. Screenshot at `.ralph-screenshots/us-021-holdem-default-default-tablet.png` (review artifact, not committed).
+- All 27 existing texas-holdem tests still pass; typecheck + biome clean on changed files.
+- **Learnings for future iterations:**
+  - Previous `@repo/game-ui/card` `PlayingCard` accepted freeform `corner`/`cornerIcon`/`center` ReactNode slots. The new `@repo/card-ui` `PlayingCard` is strongly-typed (`suit`+`rank`). Migrations need to (a) map single-letter suit -> full suit name via SUIT_MAP, (b) rewrite 'T' -> '10' in the rank. This is now the third game (blackjack, texas-holdem) using the same inline mapping — strong signal to hoist a `parseCardString(s: string): { suit: CardSuit; rank: CardRank } | null` helper into `@repo/card-ui` in a later story rather than duplicating a fourth time.
+  - `CardBack` export name clashes with a local `CardBack()` wrapper component. Aliasing on import (`CardBack as SharedCardBack`) keeps existing `<CardBack />` call sites intact while the wrapper body renders `<SharedCardBack size="md" />`. Cleaner than renaming every call site.
+  - `@repo/game-ui/card` `PlayingCard` is still exported from game-ui — not removing it here (US-022/023/024 haven't migrated yet). Deletion candidate once all consumers migrate; track via `grep -rn "@repo/game-ui/card" games/`.
+  - Texas-holdem Board never had a dedicated deal animation (PRD AC said "preserve if it exists"; it didn't). Don't retrofit one — US-039 (Love Letter) is the story that explicitly adds card animations.
+---

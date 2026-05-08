@@ -274,6 +274,9 @@ importers:
 
   games/texas-holdem:
     dependencies:
+      '@repo/card-ui':
+        specifier: workspace:*
+        version: link:../../packages/card-ui
       '@repo/game-ui':
         specifier: workspace:*
         version: link:../../packages/game-ui

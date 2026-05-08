@@ -1,50 +1,37 @@
+import {
+  type CardRank,
+  type CardSuit,
+  PlayingCard,
+  CardBack as SharedCardBack,
+} from '@repo/card-ui';
 import { useGameHeaderStatus } from '@repo/game-ui';
-import { PlayingCard } from '@repo/game-ui/card';
 import { GameOverModal } from '@repo/game-ui/feedback';
 import type { BoardProps } from '@repo/shared';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  type Action,
-  POKER_CHIP_COLORS,
-  type PlayerInfo,
-  type PlayerView,
-  SUIT_PATHS,
-  displayRank,
-  isRedSuit,
-} from './shared';
+import { type Action, POKER_CHIP_COLORS, type PlayerInfo, type PlayerView } from './shared';
 
 // ---- Card Component ----
 
-function SuitIcon({ suit, className }: { suit: string; className?: string }) {
-  const d = SUIT_PATHS[suit];
-  if (!d) return null;
-  return (
-    <svg viewBox="0 0 512 512" className={className} aria-hidden>
-      <path fill="currentColor" d={d} />
-    </svg>
-  );
-}
+const SUIT_MAP: Record<string, CardSuit> = {
+  s: 'spades',
+  h: 'hearts',
+  d: 'diamonds',
+  c: 'clubs',
+};
 
 function CardFace({ card }: { card: string }) {
-  const suit = card[card.length - 1] ?? '';
-  const red = isRedSuit(suit);
-  const rank = displayRank(card);
-
-  return (
-    <PlayingCard
-      size="md"
-      accent={red ? 'red' : 'default'}
-      corner={rank}
-      cornerIcon={<SuitIcon suit={suit} className="size-3" />}
-      center={<SuitIcon suit={suit} className="size-6" />}
-    />
-  );
+  const rankPart = card.length === 3 ? card.slice(0, 2) : (card[0] ?? '');
+  const suitPart = card[card.length - 1] ?? '';
+  const suit = SUIT_MAP[suitPart];
+  const rank = (rankPart === 'T' ? '10' : rankPart) as CardRank;
+  if (!suit) return <SharedCardBack size="md" />;
+  return <PlayingCard size="md" suit={suit} rank={rank} />;
 }
 
 function CardBack() {
-  return <PlayingCard size="md" faceDown />;
+  return <SharedCardBack size="md" />;
 }
 
 function CardPlaceholder({ label }: { label?: string }) {

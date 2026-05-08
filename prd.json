@@ -349,8 +349,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 21,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "CardFace delegates to @repo/card-ui PlayingCard with SUIT_MAP + 'T'->'10' rank rewrite; CardBack (opponent hole) uses @repo/card-ui CardBack at size='md'. SUIT_PATHS/displayRank/isRedSuit imports dropped; SuitIcon removed. No animation changes (none existed)."
     },
     {
       "id": "US-022",
