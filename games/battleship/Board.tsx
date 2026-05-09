@@ -15,6 +15,7 @@ import {
   type ShipPlacement,
   buildFleet,
   getAbsolutePositions,
+  reconstructPlacements,
   rotateOffsets,
   toIndex,
 } from './shared';
@@ -408,31 +409,7 @@ export function Board({
 
   function handleConfirmPlacement() {
     if (placedShips.size !== fleet.length) return;
-
-    // Reconstruct placements from localGrid. rotateOffsets normalizes to
-    // (minR, minC) = (0, 0), so the top-left bounding cell in localGrid IS
-    // the anchor for the chosen rotation+mirror combination. Scan in
-    // row-major order to find the first occurrence.
-    const placementMap = new Map<number, ShipPlacement>();
-    for (let idx = 0; idx < localGrid.length; idx++) {
-      const v = localGrid[idx];
-      if (v > 0 && !placementMap.has(v)) {
-        const row = Math.floor(idx / GRID_SIZE);
-        const col = idx % GRID_SIZE;
-        const shipIndex = v - 1;
-        const orient = shipOrientations.get(shipIndex) ?? { rotation: 0, mirror: false };
-        const placement: ShipPlacement = {
-          shipIndex,
-          row,
-          col,
-          rotation: orient.rotation,
-        };
-        if (orient.mirror) placement.mirror = true;
-        placementMap.set(v, placement);
-      }
-    }
-
-    const placements = Array.from(placementMap.values());
+    const placements = reconstructPlacements(localGrid, shipOrientations);
     sendAction({ type: 'place_ships', placements });
   }
 

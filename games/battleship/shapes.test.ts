@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { SHIP_SHAPES, type Shape, type ShapeCell, mirror, normalize, rotate } from './shapes';
+import {
+  GRID_SIZE,
+  type ShipDefinition,
+  buildFleet,
+  getAbsolutePositions,
+  reconstructPlacements,
+} from './shared';
 
 type Orientation = { degrees: 0 | 90 | 180 | 270; mirrored: boolean };
 
@@ -280,4 +287,71 @@ describe('L shape: explicit expected coordinates for every orientation', () => {
       expect(sortCells(out.cells)).toEqual(expected[key]);
     });
   }
+});
+
+describe('reconstructPlacements (Board.tsx confirm flow)', () => {
+  // Regression for "舰船部署无效" caused by reconstructing the anchor as the
+  // first row-major-scanned cell instead of the bounding-box top-left,
+  // which broke any orientation whose top row's leftmost cell is empty
+  // (notably Z and T rotated 90°/270°).
+  const irregular = buildFleet(true);
+
+  /**
+   * Drop one ship's cells onto an empty grid at a chosen anchor+orientation,
+   * mark them with the same shipValue the UI uses, then run
+   * reconstructPlacements and assert the resulting placement reproduces the
+   * exact same cells via the server's getAbsolutePositions path.
+   */
+  function roundTripsOneShip(
+    fleet: ShipDefinition[],
+    shipIndex: number,
+    anchor: { row: number; col: number },
+    rotation: number,
+    mirror = false,
+  ): boolean {
+    const ship = fleet[shipIndex];
+    if (!ship) throw new Error(`bad shipIndex ${shipIndex}`);
+    const cells = getAbsolutePositions(ship, { ...anchor, rotation, mirror });
+    if (!cells.every(([r, c]) => r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE)) {
+      throw new Error('test anchor places ship out of bounds');
+    }
+    const grid = new Array(GRID_SIZE * GRID_SIZE).fill(0);
+    const v = shipIndex + 1;
+    for (const [r, c] of cells) grid[r * GRID_SIZE + c] = v;
+    const orientations = new Map([[shipIndex, { rotation, mirror }]]);
+    const [reconstructed] = reconstructPlacements(grid, orientations);
+    expect(reconstructed).toBeDefined();
+    if (!reconstructed) return false;
+    const replayed = getAbsolutePositions(ship, reconstructed);
+    const sortKey = (a: [number, number]) => a[0] * GRID_SIZE + a[1];
+    return (
+      JSON.stringify([...cells].sort((a, b) => sortKey(a) - sortKey(b))) ===
+      JSON.stringify([...replayed].sort((a, b) => sortKey(a) - sortKey(b)))
+    );
+  }
+
+  it('round-trips Z @ 90° at (0,0) (top-left empty after rotation)', () => {
+    const zIdx = irregular.findIndex((s) => s.name === 'Z');
+    expect(zIdx).toBeGreaterThanOrEqual(0);
+    expect(roundTripsOneShip(irregular, zIdx, { row: 0, col: 0 }, 1)).toBe(true);
+  });
+
+  it('round-trips T @ 90° at (0,0) (top-left empty after rotation)', () => {
+    const tIdx = irregular.findIndex((s) => s.name === 'T');
+    expect(tIdx).toBeGreaterThanOrEqual(0);
+    expect(roundTripsOneShip(irregular, tIdx, { row: 0, col: 0 }, 1)).toBe(true);
+  });
+
+  it('round-trips every shape × every rotation × mirror at (3, 3)', () => {
+    for (let shipIdx = 0; shipIdx < irregular.length; shipIdx++) {
+      for (let rotation = 0; rotation < 4; rotation++) {
+        for (const m of [false, true]) {
+          expect(
+            roundTripsOneShip(irregular, shipIdx, { row: 3, col: 3 }, rotation, m),
+            `${irregular[shipIdx]?.name} rot=${rotation} mirror=${m}`,
+          ).toBe(true);
+        }
+      }
+    }
+  });
 });

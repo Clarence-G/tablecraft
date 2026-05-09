@@ -280,6 +280,52 @@ export function checkShipSunk(grid: number[], shots: number[], shipValue: number
   return true;
 }
 
+/**
+ * Reconstruct placements from a localGrid where each cell holds either 0 or
+ * `shipIndex + 1`. Used by the placement UI when the user confirms.
+ *
+ * The anchor for each placement must be the bounding-box top-left, NOT the
+ * first row-major-scanned occupied cell — `getAbsolutePositions` adds the
+ * normalized offsets to the anchor, and normalized offsets always have
+ * minR=0/minC=0, so anchor = (min row of ship's cells, min col of ship's
+ * cells). For shapes with an empty top-left (e.g. `plus` rotation 0, or any
+ * shape rotated such that its top row's leftmost cell is empty) those two
+ * points differ, and using "first occupied" produced placements the server
+ * rejected with `舰船部署无效`.
+ */
+export function reconstructPlacements(
+  localGrid: number[],
+  orientations: ReadonlyMap<number, { rotation: number; mirror?: boolean }>,
+): ShipPlacement[] {
+  const minRow = new Map<number, number>();
+  const minCol = new Map<number, number>();
+  for (let idx = 0; idx < localGrid.length; idx++) {
+    const v = localGrid[idx];
+    if (v <= 0) continue;
+    const row = Math.floor(idx / GRID_SIZE);
+    const col = idx % GRID_SIZE;
+    const cur = minRow.get(v);
+    if (cur === undefined || row < cur) minRow.set(v, row);
+    const curC = minCol.get(v);
+    if (curC === undefined || col < curC) minCol.set(v, col);
+  }
+  const out: ShipPlacement[] = [];
+  for (const [v, row] of minRow) {
+    const col = minCol.get(v) ?? 0;
+    const shipIndex = v - 1;
+    const orient = orientations.get(shipIndex) ?? { rotation: 0 };
+    const placement: ShipPlacement = {
+      shipIndex,
+      row,
+      col,
+      rotation: orient.rotation,
+    };
+    if (orient.mirror) placement.mirror = true;
+    out.push(placement);
+  }
+  return out;
+}
+
 export function checkAllShipsSunk(
   grid: number[],
   shots: number[],
