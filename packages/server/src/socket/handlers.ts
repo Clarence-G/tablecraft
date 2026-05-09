@@ -75,7 +75,10 @@ export function setupHandlers(
       }
 
       let validatedConfig = plugin.meta.defaultConfig;
-      if (plugin.meta.configSchema && config !== undefined) {
+      // Treat null the same as undefined — socket.io serializes a missing
+      // optional emit arg as null, so `config: undefined` from the client
+      // arrives here as `null` and would otherwise fail z.object() validation.
+      if (plugin.meta.configSchema && config != null) {
         const result = plugin.meta.configSchema.safeParse(config);
         if (!result.success) {
           return ack({ ok: false, error: `Invalid config: ${result.error.message}` });
@@ -247,7 +250,7 @@ export function setupHandlers(
         next.maxPlayers = mp;
       }
 
-      if (payload?.config !== undefined) {
+      if (payload?.config != null) {
         const plugin = registry[room.gameId];
         if (plugin?.meta.configSchema) {
           const parsed = plugin.meta.configSchema.safeParse(payload.config);
