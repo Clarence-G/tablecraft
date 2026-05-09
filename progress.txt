@@ -589,3 +589,20 @@ Total stories: 46
   - `hsl(var(--shadow))` is the canonical way to refer to the `--shadow: #1a1108` token in arbitrary Tailwind shadow utilities. Already used by yahtzee, texas-holdem, gomoku — stay consistent.
   - When migrating board backgrounds away from `bg-foreground/5` tints, `bg-card` (pure white) is the DESIGN.md-prescribed surface for "paper-white" playing areas. The earlier tint blended into the `bg-background` cream because both derive from the foreground brown.
 ---
+
+## 2026-05-09 - US-035
+- Liar Bar Board.tsx root container switched to flex-col (mobile) / sm:flex-row (desktop); claim banner extracted into an `<aside>` with `order-1 sm:order-2 sm:w-48`, rendering as a top banner on 375px and a right-hand column on desktop.
+- Removed the full-width `declaredSuit` panel and the secondary `claimedPlayed` bar from the main column. Both facts now live in the single aside (declaredSuit letter + lastPlay player/count during `challenging`).
+- Aside has fixed `min-h-[64px]` (mobile) / `min-h-[140px]` (desktop) and toggles `visibility:hidden` via a `showClaimPanel` boolean so the board area never shifts when phase flips between playing/challenging/finished.
+- Banner uses tokens only: `border-2 border-primary`, `bg-card`, `shadow-[4px_4px_0px_0px_hsl(var(--shadow))]`, `text-foreground`/`text-muted-foreground`. No hardcoded hex in the new markup.
+- Files changed:
+  - games/liar-bar/Board.tsx (two-column flex layout + side aside; removed two old banners)
+- Screenshots captured (static HTML preview; live server not used this iteration):
+  - .ralph-screenshots/us-035-liar-bar-default-mobile.png
+  - .ralph-screenshots/us-035-liar-bar-default-desktop.png
+  - .ralph-screenshots/us-035-liar-bar-preview.html
+- **Learnings for future iterations:**
+  - Liar Bar's old layout had two banners: a 4-border declaredSuit card AND a secondary `claimedPlayed` bar that only appeared during `challenging`. A side panel naturally consolidates both — keep the declared suit always-visible in the aside and swap only its footer between "—" and "{name} claimed {count}" so the banner height stays stable.
+  - For "don't shift the board" acceptance criteria, the cheapest fix is `visibility:hidden` on a slot that already has a reserved `min-h-*`. Conditionally rendering the aside would change the flex layout and shift the main column by the gap value; `invisible` preserves layout.
+  - `order-1 sm:order-2` + `flex-col sm:flex-row` is the idiomatic pattern for "top banner on mobile, right aside on desktop" in this codebase — two utility classes do both responsive and visual reordering without media queries.
+---

@@ -576,8 +576,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 35,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Board.tsx now lays out as flex-col on mobile / flex-row on desktop. Claim banner moved into an <aside> (order-1 on mobile = top banner, order-2 sm:w-48 on desktop = right side). Banner uses border-primary + bg-card + shadow-skeuo (tokens only; no hardcoded colors). Reserved min-h-[64px] (mobile) / min-h-[140px] (desktop) with visibility:hidden when not showing so the main column never shifts on phase transition."
     },
     {
       "id": "US-036",

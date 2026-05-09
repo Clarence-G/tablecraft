@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liar Bar — US-035 claim side panel</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --background: #fdf6e8;
+      --foreground: #1a1108;
+      --card: #ffffff;
+      --primary: #3d2e1e;
+      --primary-foreground: #ffffff;
+      --muted-foreground: #6b5a45;
+      --border: #c9b896;
+      --secondary: #f0e4cc;
+      --shadow: 25 60% 20%;
+      --destructive: #b8322a;
+      --success: #2a7a3a;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--background); color: var(--foreground); margin: 0; padding: 0; }
+    .bg-background { background: var(--background); }
+    .bg-card { background: var(--card); }
+    .bg-card-85 { background: rgba(255,255,255,0.85); }
+    .bg-secondary { background: var(--secondary); }
+    .text-foreground { color: var(--foreground); }
+    .text-muted-foreground { color: var(--muted-foreground); }
+    .text-primary { color: var(--primary); }
+    .text-primary-foreground { color: var(--primary-foreground); }
+    .text-destructive { color: var(--destructive); }
+    .text-success { color: var(--success); }
+    .border-border { border-color: var(--border); }
+    .border-primary { border-color: var(--primary); }
+    .border-foreground { border-color: var(--foreground); }
+    .border-foreground-50 { border-color: rgba(26,17,8,0.5); }
+    .shadow-skeuo { box-shadow: 4px 4px 0px 0px hsl(25 60% 20%); }
+    .shadow-big { box-shadow: 6px 6px 0px 0px hsl(25 60% 20%); }
+    .rounded-12 { border-radius: 12px; }
+    .rounded-16 { border-radius: 16px; }
+  </style>
+</head>
+<body id="app" class="bg-background min-h-screen">
+
+<h2 class="px-4 pt-4 text-sm text-muted-foreground">US-035 — 375px (mobile)</h2>
+<div class="w-[375px] mx-4 my-4 text-foreground flex flex-col p-3 gap-3 bg-background">
+  <!-- Side panel (mobile = top banner) -->
+  <aside class="w-full">
+    <div class="border-2 border-primary bg-card rounded-12 p-3 shadow-skeuo flex flex-row items-center gap-3 min-h-[64px]">
+      <div class="flex-1">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-muted-foreground leading-tight">DECLARED SUIT</div>
+        <div class="text-3xl font-black leading-none text-foreground mt-1">K</div>
+      </div>
+      <div class="flex-1 text-xs text-muted-foreground min-w-0">
+        <div class="font-semibold text-foreground truncate">Alice</div>
+        <div class="mt-0.5">claimed to play <span class="font-bold text-foreground">3</span> cards</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Players row -->
+  <div class="flex flex-wrap gap-2 justify-center">
+    <div class="flex flex-col items-center gap-1.5">
+      <div class="px-2 py-1 border border-border rounded text-xs bg-card">Alice</div>
+      <div class="flex gap-1"><span class="w-3 h-3 rounded-full bg-[#b8322a]"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span></div>
+    </div>
+    <div class="flex flex-col items-center gap-1.5">
+      <div class="px-2 py-1 border border-primary rounded text-xs bg-primary text-primary-foreground">Bob (me)</div>
+      <div class="flex gap-1"><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span></div>
+    </div>
+  </div>
+
+  <!-- Challenge/Believe -->
+  <div class="flex gap-3">
+    <button class="flex-1 py-3 rounded-12 font-bold text-sm border-2 text-destructive" style="border-color:var(--destructive);background:rgba(184,50,42,0.1)">Challenge! Liar!</button>
+    <button class="flex-1 py-3 rounded-12 font-bold text-sm border-2 text-success" style="border-color:var(--success);background:rgba(42,122,58,0.1)">Believe, continue</button>
+  </div>
+</div>
+
+<hr class="my-10 border-border">
+
+<h2 class="px-4 text-sm text-muted-foreground">US-035 — desktop (>= sm, side-right panel)</h2>
+<div class="w-[900px] mx-4 my-4 text-foreground flex flex-row p-4 gap-3 bg-background">
+  <!-- Main column -->
+  <div class="flex-1 min-w-0 flex flex-col gap-3">
+    <div class="flex flex-wrap gap-2 justify-center">
+      <div class="flex flex-col items-center gap-1.5">
+        <div class="px-2 py-1 border border-border rounded text-xs bg-card">Alice</div>
+        <div class="flex gap-1"><span class="w-3 h-3 rounded-full bg-[#b8322a]"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span></div>
+      </div>
+      <div class="flex flex-col items-center gap-1.5">
+        <div class="px-2 py-1 border border-primary rounded text-xs bg-primary text-primary-foreground">Bob (me)</div>
+        <div class="flex gap-1"><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span><span class="w-3 h-3 rounded-full bg-gray-200 border"></span></div>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <button class="flex-1 py-3 rounded-12 font-bold text-sm border-2 text-destructive" style="border-color:var(--destructive);background:rgba(184,50,42,0.1)">Challenge! Liar!</button>
+      <button class="flex-1 py-3 rounded-12 font-bold text-sm border-2 text-success" style="border-color:var(--success);background:rgba(42,122,58,0.1)">Believe, continue</button>
+    </div>
+  </div>
+  <!-- Right aside -->
+  <aside class="w-48 flex-shrink-0 self-start">
+    <div class="border-2 border-primary bg-card rounded-12 p-3 shadow-skeuo flex flex-col gap-2 min-h-[140px]">
+      <div class="text-center">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-muted-foreground leading-tight">DECLARED SUIT</div>
+        <div class="text-5xl font-black leading-none text-foreground mt-1">K</div>
+      </div>
+      <div class="pt-2 border-t border-border text-xs text-muted-foreground min-w-0">
+        <div class="font-semibold text-foreground truncate">Alice</div>
+        <div class="mt-0.5">claimed to play <span class="font-bold text-foreground">3</span> cards</div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+</body>
+</html>
