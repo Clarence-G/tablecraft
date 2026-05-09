@@ -21,9 +21,8 @@
   "exclude": [
     "../../games/_template",
     "../../games/client-registry.ts",
-    "../../games/**/Board.tsx",
+    "../../games/**/*.tsx",
     "../../games/**/*.test.ts",
-    "../../games/**/*.test.tsx",
     "../../games/**/node_modules",
     "dist"
   ]
