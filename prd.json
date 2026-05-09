@@ -706,8 +706,8 @@
         "Tests pass"
       ],
       "priority": 43,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "awaitingChallenge state pauses turn; CHALLENGE_DRAW_FOUR resolves via snapshot of prev hand color match; ACCEPT_DRAW_FOUR and onTimer(uno-challenge, 10s) both route to resolveAccept."
     },
     {
       "id": "US-044",

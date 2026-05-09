@@ -714,3 +714,20 @@ Total stories: 46
   - `PlayingCard` (from `@repo/game-ui/card`) turns itself into a `<button>` whenever `onClick` is set, and applies `hover:-translate-y-0.5` automatically. To get a cleaner "wrapper owns the hover" behavior, pass `selected={false}` and let the outer slot control lift — otherwise the card's own `-translate-y-2` on selected collides with the wrapper's lift and the built-in hover re-introduces the jitter we're trying to eliminate.
   - For absolute-positioned lists where the key has to disambiguate duplicates, `${serialized}|${i}` is the honest key; silence `lint/suspicious/noArrayIndexKey` with a `biome-ignore` comment and a one-line reason rather than inventing a fake id.
 ---
+
+## 2026-05-09 - US-043
+- Added `awaitingChallenge` state field + action variants `challenge_draw_four` / `accept_draw_four` to UNO. On wild_draw_four play, the logic snapshots whether `playedBy` held any card matching the previous active color, sets `awaitingChallenge = { challenger, playedBy, playedByHadMatchingColor }`, emits `SET_TIMER` (name=`uno-challenge`, 10s), and returns WITHOUT drawing or advancing turn.
+- Extracted `resolveChallenge` and `resolveAccept` helpers. Challenge success → `playedBy` draws 4 and `currentPlayerIdx` moves to challenger; failure → challenger draws 4+2 penalty and is skipped. Accept (or timer) → challenger draws 4 and is skipped. Both emit `CLEAR_TIMER`.
+- `onTimer('uno-challenge')` delegates to `resolveAccept` — identical semantics to a manual accept.
+- Public `PlayerView.awaitingChallenge` strips `playedByHadMatchingColor` via the local `publicAwaitingChallenge()` helper so clients only discover the bluff through the resolution outcome, never via a view field.
+- While `awaitingChallenge` is set, every other action is rejected; the only accepted callers are `challenger` submitting `challenge_draw_four` or `accept_draw_four`.
+- Files changed:
+  - games/uno/shared.ts (action schema variants, PlayerView awaitingChallenge, WILD_DRAW_FOUR_* constants, agentRules updated)
+  - games/uno/logic.ts (awaitingChallenge state, resolveChallenge/resolveAccept, onTimer, onAction gating)
+  - games/uno/logic.test.ts (+7 tests, 33→40)
+- **Learnings for future iterations:**
+  - `GameTestHarness.timer(name)` lets you invoke `onTimer` without any real clock/setTimeout — perfect for auto-resolve unit tests. No vi.useFakeTimers plumbing needed.
+  - Per-view filtering for hidden fields: keep a single helper like `publicAwaitingChallenge(state)` that drops secret-only keys, and call it from both `getPlayerView` and `getSpectatorView`. Spectator and all players see the same public shape, so one helper covers both callsites.
+  - When an onAction branch produces an engine-scheduled follow-up (SET_TIMER), pair it with an explicit `CLEAR_TIMER` on every path that resolves the same state — otherwise a manual resolve leaves a dangling timer that will re-fire into empty state. `resolveChallenge` / `resolveAccept` both emit CLEAR_TIMER as their first event.
+  - Pre-existing biome warnings in games/uno/logic.ts (`noExplicitAny` on deck construction lines 55-56) are part of the baseline; don't refactor them unless a story touches those lines.
+---
