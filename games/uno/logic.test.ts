@@ -8,6 +8,7 @@ import {
   UNO_FAN_MD_MOBILE,
   computeUnoFanDimensions,
   computeUnoFanSlot,
+  detectSkippedPlayer,
 } from './shared';
 
 type Harness = GameTestHarness<any, Action, PlayerView>;
@@ -631,5 +632,39 @@ describe('UNO hand fan layout', () => {
     const desktop = computeUnoFanDimensions(7, UNO_FAN_MD);
     const mobile = computeUnoFanDimensions(7, UNO_FAN_MD_MOBILE);
     expect(mobile.width).toBeLessThan(desktop.width);
+  });
+});
+
+describe('detectSkippedPlayer', () => {
+  it('returns the skipped id when a seat is jumped over (cw)', () => {
+    const order = ['A', 'B', 'C', 'D'];
+    // A played skip → turn went from A straight to C, skipping B.
+    expect(detectSkippedPlayer(order, 'A', 'C', 1)).toBe('B');
+  });
+
+  it('returns the skipped id when a seat is jumped over (ccw)', () => {
+    const order = ['A', 'B', 'C', 'D'];
+    // Direction is -1, so the "next" of A is D. A played skip → turn went
+    // straight to C, skipping D.
+    expect(detectSkippedPlayer(order, 'A', 'C', -1)).toBe('D');
+  });
+
+  it('returns null for a normal one-step turn', () => {
+    expect(detectSkippedPlayer(['A', 'B', 'C'], 'A', 'B', 1)).toBeNull();
+  });
+
+  it('returns null with fewer than 3 players (no third party to skip)', () => {
+    // Two-player skip cards just hand the turn back — no third player pulses.
+    expect(detectSkippedPlayer(['A', 'B'], 'A', 'A', 1)).toBeNull();
+  });
+
+  it('returns null when fromId === toId', () => {
+    expect(detectSkippedPlayer(['A', 'B', 'C'], 'A', 'A', 1)).toBeNull();
+  });
+
+  it('wraps around the seat order at the end of the list', () => {
+    const order = ['A', 'B', 'C', 'D'];
+    // C played skip cw → D would have been next; jump to A, skipping D.
+    expect(detectSkippedPlayer(order, 'C', 'A', 1)).toBe('D');
   });
 });

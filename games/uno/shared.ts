@@ -41,12 +41,12 @@ PlayerView fields:
 Play rules: card must match activeColor or top card's value. Wild can always be played. Skip/Reverse/Draw Two have special effects.
 Invalid: playing a card that doesn't match, passing without drawing first.`,
   scene: {
-    // Burgundy / wine-red — deeper and less saturated than the previous
-    // "#b4322c" which read as a raw pink-orange "惨红". Hue pulled from
-    // orange-red toward wine to avoid clashing with the UNO red cards, and
-    // lightness dropped so the cream accent + card faces pop cleanly.
-    surface: { color: '#5e1f27', texture: 'paper', accent: '#f4d9a8' },
-    ambience: { type: 'ambient', warmth: 'warm', intensity: 0.18 },
+    // Dark walnut tabletop — the page backdrop for UNO. The inner
+    // pile zone (rendered by Board.tsx) sits on top as a felt-green
+    // play surface (`bg-table-felt`), the classic "UNO on a bar
+    // table" look. Values mirror --bg-wood-dark in index.css.
+    surface: { color: '#3a2414', texture: 'wood', accent: '#f4d9a8' },
+    ambience: { type: 'ambient', warmth: 'warm', intensity: 0.22 },
   },
 };
 
@@ -140,6 +140,37 @@ export interface UnoFanSlot {
   rotate: number;
   translateX: number;
   translateY: number;
+}
+
+/**
+ * Given a turn transition (the player who just acted → the new current
+ * player), return the id of the seat that was skipped, or null if no skip
+ * happened. A skip is "the seat immediately after `fromId` in the play
+ * direction was jumped over". Returns null when:
+ *   - fewer than 3 players (impossible to skip a third party)
+ *   - fromId === toId (no transition)
+ *   - seat gap !== 2 (a gap of 1 is a normal turn; larger gaps would mean
+ *     multiple simultaneous skips which the ruleset does not produce)
+ *
+ * Pure function — no React, no framer-motion. Lives in shared so it can be
+ * unit-tested under the game package's `environment: 'node'` vitest config
+ * (the macOS jsdom html-encoding-sniffer bug blocks .tsx test collection).
+ */
+export function detectSkippedPlayer(
+  order: string[],
+  fromId: string,
+  toId: string,
+  direction: 1 | -1,
+): string | null {
+  if (order.length < 3 || fromId === toId) return null;
+  const from = order.indexOf(fromId);
+  const to = order.indexOf(toId);
+  if (from === -1 || to === -1) return null;
+  const n = order.length;
+  const step = direction === 1 ? 1 : -1;
+  const gap = ((to - from) * step + n) % n;
+  if (gap !== 2) return null;
+  return order[(from + step + n) % n] ?? null;
 }
 
 export function computeUnoFanSlot(

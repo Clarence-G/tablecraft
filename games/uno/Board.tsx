@@ -19,6 +19,7 @@ import {
   computeUnoFanDimensions,
   computeUnoFanSlot,
   deserializeCard,
+  detectSkippedPlayer,
   getCardAriaLabel,
 } from './shared';
 
@@ -108,7 +109,7 @@ function UnoCardFace({
         <span
           className="relative inline-flex items-center justify-center"
           style={{
-            textShadow: '1px 2px 0 rgba(26,17,8,0.35)',
+            textShadow: '1px 2px 0 color-mix(in srgb, var(--shadow) 35%, transparent)',
             fontStyle: 'italic',
             letterSpacing: '-0.02em',
           }}
@@ -123,8 +124,8 @@ function UnoCardFace({
       style={{
         ...colorStyle,
         boxShadow: selected
-          ? '0 8px 0 -2px rgba(26,17,8,0.55), 0 10px 16px -6px rgba(26,17,8,0.45)'
-          : '0 3px 0 -1px rgba(26,17,8,0.45), 0 6px 10px -4px rgba(26,17,8,0.35)',
+          ? '0 8px 0 -2px color-mix(in srgb, var(--shadow) 55%, transparent), 0 10px 16px -6px color-mix(in srgb, var(--shadow) 45%, transparent)'
+          : '0 3px 0 -1px color-mix(in srgb, var(--shadow) 45%, transparent), 0 6px 10px -4px color-mix(in srgb, var(--shadow) 35%, transparent)',
       }}
     />
   );
@@ -229,6 +230,7 @@ function ChallengeModal({
 // reveal isn't re-animated on unrelated re-renders.
 
 const REVEAL_MS = 3200;
+const SKIP_PULSE_MS = 900;
 
 function ChallengeRevealOverlay({
   playedByName,
@@ -417,6 +419,14 @@ export function Board({
   const sendAction = isSending ? () => {} : rawSendAction;
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [pendingWild, setPendingWild] = useState<number | null>(null);
+  // Transient animation triggers. Each increments on the corresponding
+  // event so a `key=` or `animate` dependency re-fires the tween.
+  //   reverseTick — bumps when state.direction flips (pulses the arrow)
+  //   drawTick    — bumps when drawPileCount decreases (nudges the deck)
+  //   justSkipped — playerId pulsed gray for ~SKIP_PULSE_MS after a skip
+  const [reverseTick, setReverseTick] = useState(0);
+  const [drawTick, setDrawTick] = useState(0);
+  const [justSkipped, setJustSkipped] = useState<string | null>(null);
   // Tracks which `lastChallengeReveal` we've already consumed so the flip
   // animation plays exactly once per resolution — even if the state re-emits.
   const [revealKey, setRevealKey] = useState<string | null>(null);
@@ -469,8 +479,26 @@ export function Board({
           messageParams: { count: drew },
         });
       }
+      // Animation triggers — in the same effect so they fire on the same
+      // state tick as the log push. Each is gated by `reduced` at render.
+      if (p.drawPileCount > state.drawPileCount) {
+        setDrawTick((x) => x + 1);
+      }
       if (p.direction !== state.direction) {
+        setReverseTick((x) => x + 1);
         push({ kind: 'system', messageKey: 'uno.log.reverse' });
+      }
+      // Skip detection — delegates to a pure helper so the (seat-order,
+      // direction, from, to) → skipped-id mapping is unit-testable in
+      // logic.test.ts (the game package uses environment:'node').
+      if (p.currentPlayer !== state.currentPlayer) {
+        const skipped = detectSkippedPlayer(
+          p.players.map((pp) => pp.id),
+          p.currentPlayer,
+          state.currentPlayer,
+          p.direction,
+        );
+        if (skipped) setJustSkipped(skipped);
       }
       const wildInvolved =
         p.topCard === 'wild' ||
@@ -488,6 +516,13 @@ export function Board({
     }
     prev.current = state;
   }, [state, playerNames, push, t]);
+
+  // Clear skip pulse after SKIP_PULSE_MS.
+  useEffect(() => {
+    if (!justSkipped) return;
+    const id = setTimeout(() => setJustSkipped(null), SKIP_PULSE_MS);
+    return () => clearTimeout(id);
+  }, [justSkipped]);
 
   useEffect(() => {
     if (state.winner && loggedWinner.current !== state.winner) {
@@ -553,13 +588,17 @@ export function Board({
         ? t('botThinking', { name: currentPlayerName })
         : t('opponentTurn', { name: currentPlayerName });
 
+  // Soft cream halo on your-turn pulse. Pulls the color from --scene-accent
+  // (set by GameScene on the wrapper) so we don't hardcode a hex here.
+  const accentGlow = 'color-mix(in srgb, var(--scene-accent) 55%, transparent)';
+  const accentTransparent = 'color-mix(in srgb, var(--scene-accent) 0%, transparent)';
   const turnCardAnimate =
     !reduced && isMyTurn && !gameOver
       ? {
           boxShadow: [
-            'hsl(var(--shadow)) -4px 4px 0px, 0 0 0 0 rgba(244,217,168,0)',
-            'hsl(var(--shadow)) -4px 4px 0px, 0 0 0 5px rgba(244,217,168,0.55)',
-            'hsl(var(--shadow)) -4px 4px 0px, 0 0 0 0 rgba(244,217,168,0)',
+            `hsl(var(--shadow)) -4px 4px 0px, 0 0 0 0 ${accentTransparent}`,
+            `hsl(var(--shadow)) -4px 4px 0px, 0 0 0 5px ${accentGlow}`,
+            `hsl(var(--shadow)) -4px 4px 0px, 0 0 0 0 ${accentTransparent}`,
           ],
           opacity: [1, 0.94, 1],
         }
@@ -599,20 +638,32 @@ export function Board({
         )}
       </AnimatePresence>
 
-      {/* Player strip — floats on the red scene, cream chips for contrast. */}
+      {/* Player strip — cream chips float on the wood scene. Skipped
+          players pulse gray for ~SKIP_PULSE_MS via `isSkipped`. */}
       <div className="flex flex-wrap gap-1.5 justify-center">
         {players.map((p) => {
           const info = state.players.find((sp) => sp.id === p.id);
           const isCurrent = state.currentPlayer === p.id;
           const isMe = p.id === myId;
+          const isSkipped = justSkipped === p.id;
           return (
-            <div
+            <motion.div
               key={p.id}
+              animate={
+                isSkipped && !reduced
+                  ? {
+                      filter: ['grayscale(0)', 'grayscale(1)', 'grayscale(0)'],
+                      opacity: [1, 0.55, 1],
+                    }
+                  : { filter: 'grayscale(0)', opacity: 1 }
+              }
+              transition={{ duration: isSkipped && !reduced ? 0.75 : 0.2 }}
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border-2 text-xs font-semibold transition-all ${
                 isCurrent
                   ? 'bg-card border-foreground text-foreground shadow-[hsl(var(--shadow))_-2px_2px_0px]'
                   : 'bg-card/80 border-card/60 text-foreground/80'
               }`}
+              data-testid={isSkipped ? 'uno-skipped-player' : undefined}
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
@@ -630,16 +681,31 @@ export function Board({
               >
                 {info?.cardCount ?? 0}
               </span>
-            </div>
+            </motion.div>
           );
         })}
       </div>
 
-      {/* The pile zone — bare on the paper surface, no container box. */}
-      <div className="flex items-center justify-center gap-6 sm:gap-12 py-4">
-        {/* Draw pile — stacked shared CardBacks. */}
+      {/* The pile zone — felt-green play surface sitting on the wood. The
+          inset shadow carves it into the table so the draw/discard/meta
+          columns read as a proper "playing field". */}
+      <div
+        data-testid="uno-felt-table"
+        className="bg-table-felt rounded-[16px] border-2 border-[hsl(var(--shadow))] flex items-center justify-center gap-6 sm:gap-12 py-4 px-4 sm:px-6"
+        style={{
+          boxShadow:
+            'inset 0 2px 8px 0 hsl(var(--shadow)), inset 0 -3px 6px 0 color-mix(in srgb, var(--shadow) 55%, transparent)',
+        }}
+      >
+        {/* Draw pile — stacked shared CardBacks. Bumps down-right on draw. */}
         <div className="flex flex-col items-center gap-1.5">
-          <div className="relative">
+          <motion.div
+            key={`draw-${drawTick}`}
+            className="relative"
+            initial={reduced ? false : { x: 0, y: -6, opacity: 0.9 }}
+            animate={{ x: 0, y: 0, opacity: 1 }}
+            transition={{ duration: reduced ? 0 : 0.32, ease: [0.22, 1, 0.36, 1] }}
+          >
             <div className="absolute -top-1 -left-1 pointer-events-none" aria-hidden>
               <CardBack size="md" />
             </div>
@@ -656,13 +722,14 @@ export function Board({
             >
               <CardBack size="md" />
             </button>
-          </div>
+          </motion.div>
           <span className="text-[10px] sm:text-xs text-card/90 font-semibold">
             {t('drawPile')} · {state.drawPileCount}
           </span>
         </div>
 
-        {/* Discard pile — settle-in motion when the top card changes. */}
+        {/* Discard pile — card slides down-right with rotation when a new
+            top card lands (the "play" animation). */}
         <div className="flex flex-col items-center gap-1.5">
           <div className="relative w-14 h-20 sm:w-20 sm:h-28">
             <AnimatePresence mode="popLayout" initial={false}>
@@ -672,12 +739,12 @@ export function Board({
                   className="absolute inset-0"
                   initial={
                     reduced
-                      ? { opacity: 1, scale: 1, rotate: 0 }
-                      : { opacity: 0, scale: 0.6, rotate: -8, y: -18 }
+                      ? { opacity: 1, scale: 1, rotate: 0, x: 0, y: 0 }
+                      : { opacity: 0, scale: 0.55, rotate: -14, x: -28, y: -28 }
                   }
-                  animate={{ opacity: 1, scale: 1, rotate: 0, y: 0 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 0, x: 0, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: reduced ? 0 : 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: reduced ? 0 : 0.4, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <UnoCardFace
                     serialized={topCard}
@@ -693,7 +760,8 @@ export function Board({
           </span>
         </div>
 
-        {/* Meta column — active color + play direction. */}
+        {/* Meta column — active color + play direction. The arrow pulses
+            (scale + rotate flash) when `reverseTick` changes. */}
         <div className="flex flex-col items-center gap-2 sm:gap-3">
           {topCardIsWild && (
             <div className="flex flex-col items-center gap-0.5">
@@ -704,9 +772,22 @@ export function Board({
             </div>
           )}
           <div className="flex flex-col items-center gap-0.5">
-            <div className="w-8 h-8 rounded-full border-2 border-[hsl(var(--shadow))] bg-card flex items-center justify-center text-foreground text-base font-bold shadow-[hsl(var(--shadow))_-2px_2px_0px]">
+            <motion.div
+              key={`dir-${reverseTick}`}
+              initial={reduced ? false : { scale: 1 }}
+              animate={
+                reduced
+                  ? { scale: 1 }
+                  : reverseTick === 0
+                    ? { scale: 1, rotate: 0 }
+                    : { scale: [1, 1.35, 1], rotate: [0, 25, -15, 0] }
+              }
+              transition={{ duration: reduced ? 0 : 0.65, ease: [0.22, 1, 0.36, 1] }}
+              className="w-8 h-8 rounded-full border-2 border-[hsl(var(--shadow))] bg-card flex items-center justify-center text-foreground text-base font-bold shadow-[hsl(var(--shadow))_-2px_2px_0px]"
+              data-testid="uno-direction-arrow"
+            >
               {state.direction === 1 ? '↻' : '↺'}
-            </div>
+            </motion.div>
             <span className="text-[10px] text-card/90 font-semibold">{t('direction')}</span>
           </div>
         </div>

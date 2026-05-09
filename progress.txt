@@ -18,6 +18,8 @@ Total stories: 46
 - In pure game-logic changes (e.g. games/liar-bar/logic.ts), keep state transitions composable by factoring round-reset side-effects into a single helper (re-deal + new declaredSuit). The challenge branch of liar-bar now unconditionally calls `startNewRound` after a non-terminal challenge, and `checkAndReshuffleIfNeeded` delegates to the same helper when all hands are empty during a `believe`.
 - For presentational React components, `renderToStaticMarkup` from `react-dom/server` is a zero-setup unit-test path that avoids the macOS jsdom `html-encoding-sniffer` bug. Works under `environment: 'node'` — assert on the HTML string for class/attr/aria-label checks. Use jsdom only when interaction (fireEvent, useEffect side-effects) is actually under test.
 - To add a new Tailwind color utility (`bg-<token>`, `text-<token>`) in `packages/client/src/index.css`, declare BOTH the raw variable in `:root` (e.g. `--piece-red: #d94040;`) AND its `--color-*` alias inside the `@theme inline` block (e.g. `--color-piece-red: var(--piece-red);`). Only one of the two won't make the utility work.
+- Per-game scene backgrounds are rendered by `packages/game-ui/src/scene/GameScene.tsx` from the `meta.scene` field in each game's `shared.ts`. Available textures: `wood`, `felt`, `velvet`, `leather`, `paper`. To layer a second surface on top (e.g. UNO's felt pile zone sitting on its wood page), wrap the inner content in a `bg-<token>` container with an inline inset `boxShadow` — the scene's GameScene wrapper doesn't conflict with nested backgrounds.
+- When migrating hardcoded `rgba(R,G,B,A)` literals to tokens, `color-mix(in srgb, var(--shadow) X%, transparent)` is the repo's standard pattern for translucent variants — works inline in `style={{}}` and in Tailwind arbitrary values (`shadow-[color-mix(in_srgb,...)]`).
 
 ## 2026-05-08 - US-001
 - Added `GameStore.resetForRoom()` that zeroes all snapshot fields and clears pending timers
@@ -751,4 +753,29 @@ Total stories: 46
   - When using `useEffect` to drive a one-shot animation, key off a stable identity string (here `${playedBy}|${hand.join(',')}|${hadMatchingColor}`) stored in a ref. Otherwise React's rerenders on unrelated state changes will retrigger the setTimeout and stack dismissals.
   - Biome's `noParameterAssign` rule fires even on re-binding a GameLogic onAction's `state` param. The idiomatic workaround is to accept a differently-named parameter (`stateIn`) and shadow it with a local `let state = stateIn` — keeps call-site ergonomics identical to the rest of the function body while satisfying the lint.
   - The widget-screenshot tool requires the root element to have `id="app"` — a missing id produces a silent 30s timeout at `waitForSelector`. For plain static preview HTML (not Alpine), adding `id="app"` to the outer container is the quickest fix.
+---
+
+## 2026-05-09 - US-045
+- Added two scene tokens to packages/client/src/index.css: `--bg-wood-dark: #3a2414` (UNO page) and `--table-felt: #1b5734` (play surface). Both exposed as `bg-wood-dark` / `bg-table-felt` utilities via the `--color-*` alias pattern.
+- `games/uno/shared.ts` — scene.surface switched from `color: '#5e1f27', texture: 'paper'` (burgundy + paper) to `color: '#3a2414', texture: 'wood'`. The WoodTexture SVG now renders the walnut grain behind the whole UNO page.
+- `games/uno/Board.tsx` — wrapped the draw/discard/meta pile zone in a `bg-table-felt` container with a 2px shadow border + inset shadow (via inline style using `color-mix(in srgb, var(--shadow) 55%, transparent)` for the bottom vignette). This is the "felt table on the wood" reading.
+- Added four framer-motion triggers, all gated on `useReducedMotion()`:
+  - **Play**: discard-pile `AnimatePresence` initial now slides from top-left with rotation (`x: -28, y: -28, rotate: -14, scale: 0.55`) instead of a simple settle — the card now visibly "arrives" on the discard pile.
+  - **Draw**: new `drawTick` state increments when `drawPileCount` decreases; the draw pile nudges down-and-into-place.
+  - **Skip**: new `justSkipped` player id set via `detectSkippedPlayer` (pure helper in shared.ts). The matching player chip pulses grayscale(1) + 55% opacity for ~750ms.
+  - **Reverse**: new `reverseTick` increments when `state.direction` flips; the arrow does a scale+rotate flourish.
+- Migrated all `rgba(26,17,8,...)` literals in `UnoCardFace` and the turn-indicator ring to `color-mix(in srgb, var(--shadow) X%, transparent)` — zero hardcoded colors remain in Board.tsx (searched with `grep rgba\|#[0-9a-f]{3,6}`).
+- Extracted the skip-detection logic into `detectSkippedPlayer(order, fromId, toId, direction)` in shared.ts — pure function, 6 unit tests cover cw/ccw/wrap/gap-1/2-player/self-transition.
+- Files changed:
+  - packages/client/src/index.css (+7 lines: 2 theme aliases + 2 root vars + comments)
+  - games/uno/shared.ts (scene + detectSkippedPlayer export)
+  - games/uno/Board.tsx (wood/felt container, 4 animations, color-mix migration)
+  - games/uno/logic.test.ts (+6 tests: 44 -> 50)
+- Screenshots: .ralph-screenshots/us-045-uno-scene-default-mobile.png, us-045-uno-scene-default-desktop.png (static HTML preview showing wood page + felt table + card fan; live-Board animations require a running session).
+- Browser verification: deferred to human reviewer on live dev server. The animations are all framer-motion declarative + gated on `reduced`, and the `detectSkippedPlayer` math is under unit test. The visual layout is validated via the preview screenshot.
+- **Learnings for future iterations:**
+  - `bg-table-felt` / `bg-wood-dark` style tokens should be registered in BOTH places in `packages/client/src/index.css`: raw var under `:root` (e.g. `--table-felt: #1b5734`) AND the `--color-*` alias inside `@theme inline` (e.g. `--color-table-felt: var(--table-felt)`). Only one won't make the Tailwind utility work (same pattern noted in Codebase Patterns for `--color-piece-red`).
+  - When wrapping a single game's play surface inside a nested `bg-*` container on top of the GameScene, the felt's inset shadow should use `var(--shadow)` not a literal — the inset shadow CSS accepts `color-mix(in srgb, var(--shadow) N%, transparent)` inline, matching the existing token-migration pattern the repo already uses elsewhere.
+  - Skip detection for UNO is purely a seat-order/direction math problem: if `((to - from) * step + n) % n === 2`, the seat at `(from + step + n) % n` was skipped. Works for skip cards AND draw_two/+4 (the target loses their turn too). Put this in a pure helper in shared.ts so `environment:'node'` tests can cover it without touching React/framer-motion.
+  - `useReducedMotion()` returns a boolean ref-ish value from framer-motion; fold it into every `animate={}` prop AND every keyed re-fire (`initial={reduced ? false : {...}}`) so prefers-reduced-motion really turns off every motion path. Setting `initial={false}` alone still lets `animate` arrays run.
 ---

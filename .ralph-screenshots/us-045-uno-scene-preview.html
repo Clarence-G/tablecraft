@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>US-045 UNO wood + felt — preview</title>
+    <style>
+      :root {
+        --bg-wood-dark: #3a2414;
+        --table-felt: #1b5734;
+        --card-cream: #fbf6e9;
+        --foreground: #3d2e1e;
+        --muted: #82746620;
+        --shadow: #1a1108;
+        --uno-red: #d94040;
+        --uno-blue: #2563eb;
+        --uno-green: #16a34a;
+        --uno-yellow: #d97706;
+        --accent: #f4d9a8;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; background: var(--bg-wood-dark); color: var(--card-cream); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; min-height: 100%; }
+
+      /* Wood grain overlay — mimics WoodTexture SVG at a basic level. */
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(circle at 18% 78%, rgba(18,10,4,0.35) 0, rgba(18,10,4,0) 120px),
+          radial-gradient(circle at 82% 28%, rgba(18,10,4,0.28) 0, rgba(18,10,4,0) 80px),
+          repeating-linear-gradient(98deg,
+            rgba(58,36,20,0) 0px,
+            rgba(90,58,35,0.16) 2px,
+            rgba(40,24,14,0.22) 4px,
+            rgba(80,50,28,0.10) 8px,
+            rgba(58,36,20,0) 16px
+          );
+        z-index: 0;
+      }
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(circle at 50% 30%, rgba(255,223,168,0.12), transparent 70%);
+        z-index: 0;
+      }
+
+      #app { position: relative; z-index: 1; padding: 24px 16px; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
+      .label-banner { text-align: center; color: var(--accent); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; }
+
+      /* Player strip */
+      .player-strip { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+      .player-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 2px solid #d6c8af;
+        background: rgba(251,246,233,0.82);
+        color: #3d2e1eb0;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .player-chip.current {
+        background: var(--card-cream);
+        color: var(--foreground);
+        border-color: var(--foreground);
+        box-shadow: -2px 2px 0 var(--shadow);
+      }
+      .player-chip.skipped { filter: grayscale(1); opacity: 0.6; }
+      .player-chip .dot { width: 6px; height: 6px; border-radius: 50%; background: #16a34a; }
+      .player-chip .count { font-family: "SF Mono", Menlo, monospace; font-size: 10px; color: #6b5744; }
+      .player-chip.current .count { color: var(--foreground); }
+
+      /* Felt table */
+      .felt-table {
+        background: var(--table-felt);
+        border: 2px solid var(--shadow);
+        border-radius: 16px;
+        padding: 18px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        box-shadow:
+          inset 0 2px 8px 0 var(--shadow),
+          inset 0 -3px 6px 0 rgba(0,0,0,0.55);
+        position: relative;
+      }
+      /* Subtle felt nap */
+      .felt-table::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 14px;
+        pointer-events: none;
+        background:
+          linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.12) 50%, rgba(0,0,0,0.18) 100%),
+          radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.25) 100%);
+      }
+      .pile-col { display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; z-index: 1; }
+      .pile-caption { font-size: 11px; font-weight: 600; color: rgba(251,246,233,0.9); }
+      .card-face {
+        width: 64px; height: 88px;
+        border: 2px solid var(--shadow);
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--card-cream);
+        font-weight: 800;
+        font-style: italic;
+        font-size: 28px;
+        letter-spacing: -0.02em;
+        box-shadow: 0 3px 0 -1px rgba(26,17,8,0.45), 0 6px 10px -4px rgba(26,17,8,0.35);
+        position: relative;
+      }
+      .card-face.red { background: linear-gradient(160deg, #e46464 0%, #d94040 38%, #b23434 100%); }
+      .card-face.blue { background: linear-gradient(160deg, #4d80ee 0%, #2563eb 38%, #1e4fbf 100%); }
+      .card-face.green { background: linear-gradient(160deg, #3ac268 0%, #16a34a 38%, #10843c 100%); }
+      .card-face.yellow { background: linear-gradient(160deg, #ef9734 0%, #d97706 38%, #ac5e05 100%); }
+      .card-face.wild { background: conic-gradient(from 210deg at 50% 50%, #d94040, #d97706, #16a34a, #2563eb, #d94040); }
+      .card-face .corner { position: absolute; top: 4px; left: 6px; font-size: 11px; font-weight: 700; font-style: normal; letter-spacing: 0; }
+      .card-face .corner.br { top: auto; left: auto; bottom: 4px; right: 6px; transform: rotate(180deg); }
+      .card-back {
+        width: 64px; height: 88px;
+        border-radius: 10px;
+        border: 2px solid var(--shadow);
+        background:
+          repeating-linear-gradient(45deg, #7a1e1e 0 6px, #a02828 6px 12px),
+          #8b2323;
+        position: relative;
+        box-shadow: 0 3px 0 -1px rgba(26,17,8,0.45), 0 6px 10px -4px rgba(26,17,8,0.35);
+      }
+      .card-back::after {
+        content: 'UNO';
+        position: absolute; inset: 0;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 900;
+        font-style: italic;
+        color: var(--card-cream);
+        font-size: 18px;
+        letter-spacing: -0.04em;
+        text-shadow: 1px 2px 0 rgba(26,17,8,0.35);
+        transform: rotate(-18deg);
+      }
+      .draw-pile-wrap { position: relative; }
+      .draw-pile-wrap .back-shadow { position: absolute; top: -4px; left: -4px; }
+
+      .meta-col { display: flex; flex-direction: column; align-items: center; gap: 8px; position: relative; z-index: 1; }
+      .meta-dot {
+        width: 32px; height: 32px; border-radius: 999px;
+        border: 2px solid var(--shadow);
+        background: var(--card-cream);
+        color: var(--foreground);
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 800;
+        font-size: 16px;
+        box-shadow: -2px 2px 0 var(--shadow);
+      }
+      .meta-dot .color-dot { width: 14px; height: 14px; border-radius: 999px; border: 2px solid var(--shadow); background: #d94040; }
+      .meta-caption { font-size: 10px; color: rgba(251,246,233,0.9); font-weight: 600; }
+
+      /* Turn indicator */
+      .turn-pill-wrap { display: flex; justify-content: center; }
+      .turn-pill {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 6px 12px;
+        background: var(--card-cream);
+        border: 2px solid var(--foreground);
+        border-radius: 10px;
+        color: #d97706;
+        font-size: 13px;
+        font-weight: 600;
+        box-shadow: -4px 4px 0 var(--shadow), 0 0 0 4px rgba(244,217,168,0.45);
+      }
+      .turn-pill .tp-dot { width: 8px; height: 8px; border-radius: 999px; background: #d97706; }
+
+      /* Hand panel */
+      .hand-panel {
+        background: var(--card-cream);
+        color: var(--foreground);
+        border-radius: 16px;
+        border: 2px solid var(--foreground);
+        padding: 12px 14px;
+        box-shadow: -6px 6px 0 #3d2e1e, 0 2px 8px rgba(61,46,30,0.08);
+      }
+      .hand-label { font-size: 12px; color: #6b5744; font-weight: 600; margin-bottom: 10px; }
+      .hand-fan {
+        position: relative;
+        margin: 0 auto;
+        height: 100px;
+      }
+      .hand-card {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform-origin: 50% 100%;
+      }
+      .hand-card .card-face { width: 56px; height: 80px; font-size: 24px; }
+
+      @media (max-width: 500px) {
+        .felt-table { gap: 14px; padding: 14px 10px; }
+        .card-face, .card-back { width: 54px; height: 76px; }
+        .card-face { font-size: 22px; }
+        .card-back::after { font-size: 14px; }
+        .hand-card .card-face { width: 48px; height: 68px; font-size: 20px; }
+        .hand-fan { height: 86px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="label-banner">US-045 · UNO scene · wood page + felt table</div>
+
+      <div class="player-strip">
+        <div class="player-chip current"><span class="dot"></span>Alice · me<span class="count">5</span></div>
+        <div class="player-chip skipped" title="skipped pulses gray"><span class="dot"></span>Bob (skipped)<span class="count">4</span></div>
+        <div class="player-chip"><span class="dot"></span>Carol<span class="count">6</span></div>
+        <div class="player-chip"><span class="dot"></span>Dan<span class="count">2</span></div>
+      </div>
+
+      <div class="felt-table">
+        <div class="pile-col">
+          <div class="draw-pile-wrap">
+            <div class="card-back back-shadow"></div>
+            <div class="card-back"></div>
+          </div>
+          <span class="pile-caption">Draw · 32</span>
+        </div>
+
+        <div class="pile-col">
+          <div class="card-face red">
+            <span class="corner">7</span>
+            7
+            <span class="corner br">7</span>
+          </div>
+          <span class="pile-caption">Discard</span>
+        </div>
+
+        <div class="meta-col">
+          <div class="meta-dot"><span class="color-dot"></span></div>
+          <span class="meta-caption">Color</span>
+          <div class="meta-dot">↻</div>
+          <span class="meta-caption">Dir</span>
+        </div>
+      </div>
+
+      <div class="turn-pill-wrap">
+        <span class="turn-pill"><span class="tp-dot"></span>Your turn</span>
+      </div>
+
+      <div class="hand-panel">
+        <div class="hand-label">Your hand · 5 cards</div>
+        <div class="hand-fan" id="fan"></div>
+      </div>
+    </div>
+
+    <script>
+      // Simple fan layout matching packages/game-ui/src fan math at a basic level.
+      const cards = [
+        { label: '3', cls: 'blue' },
+        { label: '9', cls: 'yellow' },
+        { label: '+2', cls: 'green' },
+        { label: '★', cls: 'wild' },
+        { label: 'REV', cls: 'red' },
+      ];
+      const fan = document.getElementById('fan');
+      const n = cards.length;
+      const step = 8;  // degrees between cards
+      const center = (n - 1) / 2;
+      const spread = 22;  // px between card centers
+      cards.forEach((c, i) => {
+        const offset = i - center;
+        const rot = offset * step;
+        const tx = offset * spread;
+        const ty = Math.abs(offset) * 2;
+        const wrap = document.createElement('div');
+        wrap.className = 'hand-card';
+        wrap.style.transform = `translate(-50%, 0) translate(${tx}px, ${ty}px) rotate(${rot}deg)`;
+        wrap.style.zIndex = i;
+        wrap.innerHTML = `<div class="card-face ${c.cls}"><span class="corner">${c.label}</span>${c.label}<span class="corner br">${c.label}</span></div>`;
+        fan.appendChild(wrap);
+      });
+    </script>
+  </body>
+</html>

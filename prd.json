@@ -740,8 +740,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 45,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "scene.texture switched from 'paper' to 'wood' with --bg-wood-dark (#3a2414); pile-zone wrapped in bg-table-felt container with inset shadow; play/draw/skip/reverse animations added via framer-motion, all gated on useReducedMotion; rgba() literals migrated to color-mix(in srgb, var(--shadow), ...); skip detection extracted into pure detectSkippedPlayer helper with 6 unit tests (50 total)"
     },
     {
       "id": "US-046",

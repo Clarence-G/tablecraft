@@ -62,6 +62,12 @@
   /* Hand tray background — exposed as bg-hand-bg-light for per-color trays */
   --color-hand-bg-light: var(--hand-bg-light);
 
+  /* UNO scene — dark wood page background and darker felt table surface.
+     Consumed by the UNO GameScene surface.color (wood) and the in-Board
+     pile-zone panel (felt) respectively. Introduced with US-045. */
+  --color-bg-wood-dark: var(--bg-wood-dark);
+  --color-table-felt: var(--table-felt);
+
   /* Radius - skeuomorphic rounded corners */
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -131,6 +137,12 @@
      depth rather than a soft tint. Introduced as a token so the 50+ places
      that used the literal #1a1108 have a semantic name to migrate to. */
   --shadow: #1a1108;
+
+  /* UNO scene tokens (US-045)
+     --bg-wood-dark : dark walnut page background for UNO's GameScene.
+     --table-felt   : darker casino-green play surface sitting on the wood. */
+  --bg-wood-dark: #3a2414;
+  --table-felt: #1b5734;
 }
 
 @layer base {
