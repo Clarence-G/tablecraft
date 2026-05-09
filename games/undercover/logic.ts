@@ -7,6 +7,8 @@ import {
   ActionSchema,
   type DescriptionEntry,
   type PlayerView,
+  UNDERCOVER_DEFAULT_CONFIG,
+  UndercoverConfigSchema,
   type VoteEntry,
 } from './shared';
 
@@ -31,6 +33,8 @@ interface UndercoverState {
   seatOrder: string[];
   phase: 'describe' | 'vote' | 'finished';
   round: number;
+  /** Maximum number of rounds before the game auto-ends (undercovers win). */
+  maxRounds: number;
   /** Index into seatOrder for the current speaker (describe phase only) */
   currentSpeakerIdx: number;
   descriptions: DescriptionEntry[];
@@ -107,6 +111,11 @@ function buildRankings(state: UndercoverState, winner: 'civilian' | 'undercover'
   return [...aliveUndercovers, ...aliveCivilians, ...dead];
 }
 
+function parseConfig(raw: unknown): { maxRounds: number } {
+  const result = UndercoverConfigSchema.safeParse(raw);
+  return result.success ? result.data : UNDERCOVER_DEFAULT_CONFIG;
+}
+
 /** Determine who to speak next given a tie re-describe or a fresh round */
 function firstSpeakerForDescribe(state: UndercoverState): number {
   if (state.tiePlayerIds.length > 0) {
@@ -132,8 +141,9 @@ function needsToDescribe(state: UndercoverState, pid: string): boolean {
 export const logic: GameLogic<UndercoverState, Action, PlayerView> = {
   actions: ActionSchema,
 
-  setup(ctx: GameContext): UndercoverState {
+  setup(ctx: GameContext, config?: unknown): UndercoverState {
     const { players, random } = ctx;
+    const parsed = parseConfig(config ?? ctx.config);
 
     // Pick word pair deterministically using the seeded random
     const lang = 'zh'; // default to zh; pairs are identical in structure
@@ -168,6 +178,7 @@ export const logic: GameLogic<UndercoverState, Action, PlayerView> = {
       seatOrder,
       phase: 'describe',
       round: 1,
+      maxRounds: parsed.maxRounds,
       currentSpeakerIdx: firstIdx,
       descriptions: [],
       votes: [],
@@ -322,6 +333,15 @@ export const logic: GameLogic<UndercoverState, Action, PlayerView> = {
           return { ok: true, state: newState, events };
         }
 
+        // Max rounds reached → undercovers win (they evaded detection)
+        if (state.round >= state.maxRounds) {
+          const rankings = buildRankings(newState, 'undercover');
+          newState = { ...newState, phase: 'finished', winner: 'undercover', rankings };
+          events.push(logSystem('log.maxRoundsReached'));
+          events.push({ type: 'END_GAME', rankings });
+          return { ok: true, state: newState, events };
+        }
+
         // Start new describe round
         const nextRound = state.round + 1;
         const resetPS = newState.players.map((p) => ({
@@ -370,6 +390,15 @@ export const logic: GameLogic<UndercoverState, Action, PlayerView> = {
           newState = { ...newState, phase: 'finished', winner: winResult, rankings };
           const winKey = winResult === 'civilian' ? 'log.civilianWins' : 'log.undercoverWins';
           events.push(logSystem(winKey));
+          events.push({ type: 'END_GAME', rankings });
+          return { ok: true, state: newState, events };
+        }
+
+        // Max rounds reached → undercovers win (they evaded detection)
+        if (state.round >= state.maxRounds) {
+          const rankings = buildRankings(newState, 'undercover');
+          newState = { ...newState, phase: 'finished', winner: 'undercover', rankings };
+          events.push(logSystem('log.maxRoundsReached'));
           events.push({ type: 'END_GAME', rankings });
           return { ok: true, state: newState, events };
         }

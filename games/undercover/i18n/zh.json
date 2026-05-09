@@ -42,6 +42,7 @@
     "tieReDescribe": "平局，{{tieCount}} 名玩家重新描述",
     "tieEliminated": "平字仍存在，随机淘汰",
     "civilianWins": "平民消灭所有卧底，获胜！",
-    "undercoverWins": "卧底人数达到平民，卧底获胜！"
+    "undercoverWins": "卧底人数达到平民，卧底获胜！",
+    "maxRoundsReached": "轮数用尽，卧底逃脱！"
   }
 }

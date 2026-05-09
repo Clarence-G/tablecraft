@@ -272,4 +272,87 @@ describe('Undercover Logic', () => {
       }
     });
   });
+
+  describe('maxRounds config', () => {
+    function createGameWithConfig(playerIds: string[], config: unknown, seed = 'test-seed') {
+      const h = new GameTestHarness(logic, { players: playerIds, seed, config });
+      h.setup();
+      return h;
+    }
+
+    function runDescribeAndVoteForCivilian(h: GameTestHarness<any, any, any>, players: string[]) {
+      const alive = players.filter((id) => h.view(id).myAlive);
+      for (let i = 0; i < alive.length; i++) {
+        const speakerId = alive.find((id) => h.view(id).currentSpeaker === id);
+        if (!speakerId) break;
+        h.action(speakerId, { type: 'describe', text: `clue ${i}` });
+      }
+      const undercoverId = players.find((id) => h.view(id).myRole === 'undercover')!;
+      const civilians = alive.filter((id) => id !== undercoverId);
+      const target = civilians[0];
+      for (const pid of alive) {
+        if (pid === target) {
+          h.action(pid, { type: 'vote', targetId: undercoverId });
+        } else {
+          h.action(pid, { type: 'vote', targetId: target });
+        }
+      }
+    }
+
+    it('default config yields maxRounds=3', () => {
+      const h = createGameWithConfig(['A', 'B', 'C'], undefined);
+      expect(h.rawState.maxRounds).toBe(3);
+    });
+
+    it('custom maxRounds is honored by setup', () => {
+      const h = createGameWithConfig(['A', 'B', 'C'], { maxRounds: 5 });
+      expect(h.rawState.maxRounds).toBe(5);
+    });
+
+    it('round counter increments after each successful elimination', () => {
+      const players = ['A', 'B', 'C', 'D', 'E', 'F'];
+      const h = createGameWithConfig(players, { maxRounds: 10 });
+      expect(h.view('A').round).toBe(1);
+      runDescribeAndVoteForCivilian(h, players);
+      expect(h.view('A').round).toBe(2);
+      runDescribeAndVoteForCivilian(h, players);
+      expect(h.view('A').round).toBe(3);
+    });
+
+    it('game ends when maxRounds reached with no decisive outcome — undercovers win', () => {
+      const players = ['A', 'B', 'C', 'D', 'E', 'F'];
+      const h = createGameWithConfig(players, { maxRounds: 2 });
+      runDescribeAndVoteForCivilian(h, players);
+      expect(h.isFinished).toBe(false);
+      runDescribeAndVoteForCivilian(h, players);
+      expect(h.isFinished).toBe(true);
+      expect(h.view('A').winner).toBe('undercover');
+    });
+
+    it('early civilian win ends before maxRounds is reached', () => {
+      const h = createGameWithConfig(['A', 'B', 'C'], { maxRounds: 5 });
+      const undercoverId = ['A', 'B', 'C'].find((id) => h.view(id).myRole === 'undercover')!;
+      const civilians = ['A', 'B', 'C'].filter((id) => id !== undercoverId);
+      for (let i = 0; i < 3; i++) {
+        const speakerId = ['A', 'B', 'C'].find((id) => h.view(id).currentSpeaker === id)!;
+        h.action(speakerId, { type: 'describe', text: 'clue' });
+      }
+      for (const civ of civilians) h.action(civ, { type: 'vote', targetId: undercoverId });
+      h.action(undercoverId, { type: 'vote', targetId: civilians[0] });
+      expect(h.isFinished).toBe(true);
+      expect(h.view('A').winner).toBe('civilian');
+      expect(h.view('A').round).toBe(1);
+    });
+
+    it('emits log.maxRoundsReached when game ends by round cap', () => {
+      const players = ['A', 'B', 'C', 'D', 'E', 'F'];
+      const h = createGameWithConfig(players, { maxRounds: 2 });
+      runDescribeAndVoteForCivilian(h, players);
+      runDescribeAndVoteForCivilian(h, players);
+      const capNotify = h.allEvents.find(
+        (e) => e.type === 'NOTIFY_ALL' && (e as any).payload?.messageKey === 'log.maxRoundsReached',
+      );
+      expect(capNotify).toBeDefined();
+    });
+  });
 });

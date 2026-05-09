@@ -1,6 +1,12 @@
 import type { GameMeta } from '@repo/shared';
 import { z } from 'zod';
 
+export const UndercoverConfigSchema = z.object({
+  maxRounds: z.number().int().min(1).max(10).default(3),
+});
+export type UndercoverConfig = z.infer<typeof UndercoverConfigSchema>;
+export const UNDERCOVER_DEFAULT_CONFIG: UndercoverConfig = { maxRounds: 3 };
+
 export const meta: GameMeta = {
   id: 'undercover',
   name: '谁是卧底',
@@ -10,6 +16,8 @@ export const meta: GameMeta = {
   tags: ['推理', '派对', '语言'],
   icon: 'UserX',
   estimatedMinutes: 10,
+  configSchema: UndercoverConfigSchema,
+  defaultConfig: UNDERCOVER_DEFAULT_CONFIG,
   scene: {
     surface: { color: '#1a1a2e', texture: 'felt', accent: '#e94560' },
     ambience: { type: 'spotlight', warmth: 'cool', intensity: 0.5 },

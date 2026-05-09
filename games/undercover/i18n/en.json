@@ -42,6 +42,7 @@
     "tieReDescribe": "Tie! {{tieCount}} players re-describe",
     "tieEliminated": "Tie persists — random elimination",
     "civilianWins": "Civilians eliminated all undercovers — civilians win!",
-    "undercoverWins": "Undercovers reached parity — undercovers win!"
+    "undercoverWins": "Undercovers reached parity — undercovers win!",
+    "maxRoundsReached": "Max rounds reached — undercovers escape!"
   }
 }
