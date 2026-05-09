@@ -67,7 +67,7 @@
       ],
       "priority": 4,
       "passes": true,
-      "notes": "StoneView spring (stiffness 400, damping 20) removed — the ~16% overshoot paired with the AnimatePresence preview cross-fade caused the perceived flicker; stone now renders as a plain div. Scroll-to-top fixed by explicitly blurring the clicked button before canPlace flips and the browser auto-blurs the now-disabled button."
+      "notes": "StoneView spring (stiffness 400, damping 20) removed \u2014 the ~16% overshoot paired with the AnimatePresence preview cross-fade caused the perceived flicker; stone now renders as a plain div. Scroll-to-top fixed by explicitly blurring the clicked button before canPlace flips and the browser auto-blurs the now-disabled button."
     },
     {
       "id": "US-005",
@@ -83,7 +83,7 @@
       ],
       "priority": 5,
       "passes": true,
-      "notes": "Extracted startNewRound helper; always invoked at end of challenge branch (after turn-order rebuild, before return) — re-deals hands + picks new declaredSuit. checkAndReshuffleIfNeeded delegates to it."
+      "notes": "Extracted startNewRound helper; always invoked at end of challenge branch (after turn-order rebuild, before return) \u2014 re-deals hands + picks new declaredSuit. checkAndReshuffleIfNeeded delegates to it."
     },
     {
       "id": "US-006",
@@ -99,7 +99,7 @@
       ],
       "priority": 6,
       "passes": true,
-      "notes": "GameMeta.configSchema narrowed to z.ZodTypeAny; buildConfigSchemaSummary exposes it as JSON Schema via buildGameDetail — no zod leak"
+      "notes": "GameMeta.configSchema narrowed to z.ZodTypeAny; buildConfigSchemaSummary exposes it as JSON Schema via buildGameDetail \u2014 no zod leak"
     },
     {
       "id": "US-007",
@@ -285,7 +285,7 @@
       ],
       "priority": 17,
       "passes": true,
-      "notes": "PlayingCard ships 52 rank/suit faces, faceDown + selected states, 3 sizes; SVG suits + Cinzel serif (loaded via @fontsource/cinzel CSS in styles.css). Tests use renderToStaticMarkup from react-dom/server — no jsdom dependency. Visual verified via widget-screenshot at 375px and desktop (screenshots reviewed, not committed)."
+      "notes": "PlayingCard ships 52 rank/suit faces, faceDown + selected states, 3 sizes; SVG suits + Cinzel serif (loaded via @fontsource/cinzel CSS in styles.css). Tests use renderToStaticMarkup from react-dom/server \u2014 no jsdom dependency. Visual verified via widget-screenshot at 375px and desktop (screenshots reviewed, not committed)."
     },
     {
       "id": "US-018",
@@ -366,7 +366,7 @@
       ],
       "priority": 22,
       "passes": true,
-      "notes": "Hand renders via CardHand+PlayingCard/JokerCard (Q→diamonds, K→spades, A→hearts cosmetic mapping); selection states come from card-ui CSS, fan-layout's absolute positioning prevents layout reflow on select toggle"
+      "notes": "Hand renders via CardHand+PlayingCard/JokerCard (Q\u2192diamonds, K\u2192spades, A\u2192hearts cosmetic mapping); selection states come from card-ui CSS, fan-layout's absolute positioning prevents layout reflow on select toggle"
     },
     {
       "id": "US-023",
@@ -413,7 +413,7 @@
       ],
       "priority": 25,
       "passes": true,
-      "notes": "Replaced text-muted-foreground/text-foreground on the navy board with text-primary-foreground. Preview slot moved to a reserved side position (sm:row → right-of-grid; mobile → below-grid) with visibility:hidden when no ship selected so grid does not shift."
+      "notes": "Replaced text-muted-foreground/text-foreground on the navy board with text-primary-foreground. Preview slot moved to a reserved side position (sm:row \u2192 right-of-grid; mobile \u2192 below-grid) with visibility:hidden when no ship selected so grid does not shift."
     },
     {
       "id": "US-026",
@@ -545,7 +545,7 @@
       ],
       "priority": 33,
       "passes": true,
-      "notes": "Expanded rules field in both en.json and zh.json with placement rules, 5 numbered piece-movement bullets (Queen/Beetle/Spider/Ant/Grasshopper), One-Hive rule, and No-Gate rule. Room.tsx uses whitespace-pre-line so \\n renders as line breaks — no Board.tsx change needed."
+      "notes": "Expanded rules field in both en.json and zh.json with placement rules, 5 numbered piece-movement bullets (Queen/Beetle/Spider/Ant/Grasshopper), One-Hive rule, and No-Gate rule. Room.tsx uses whitespace-pre-line so \\n renders as line breaks \u2014 no Board.tsx change needed."
     },
     {
       "id": "US-034",
@@ -655,8 +655,8 @@
         "Tests pass"
       ],
       "priority": 40,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added UndercoverConfigSchema(maxRounds 1-10, default 3); setup reads ctx.config; after each elimination, if no standard win and round >= maxRounds, game ends with undercovers winning. Added 5 multi-round tests."
     },
     {
       "id": "US-041",

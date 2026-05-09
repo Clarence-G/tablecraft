@@ -666,3 +666,21 @@ Total stories: 46
   - Scoped `<style>` blocks inside a Board.tsx (same pattern as packages/game-ui/src/board/DiscBoard.tsx) are fine for per-game animation classes; no need to add entries to `packages/client/src/index.css` when the rule is only used by one game.
   - Static preview HTML in `.ralph-screenshots/` can stand in for browser verification when the visible change is a purely-presentational CSS addition and the only way to exercise it in the real app is a multi-player live game. Keep the preview's keyframes/durations byte-identical to the component's.
 ---
+
+## 2026-05-09 - US-040
+- Added `UndercoverConfigSchema = z.object({ maxRounds: z.number().int().min(1).max(10).default(3) })` and `UNDERCOVER_DEFAULT_CONFIG` to `games/undercover/shared.ts`; wired `configSchema` + `defaultConfig` into `meta`
+- `logic.setup(ctx, config)` now parses `config ?? ctx.config` via `UndercoverConfigSchema.safeParse` (fallback to default) and stores `maxRounds` on state
+- After each elimination (both unique-target and tie-break branches), added a post-`checkWin` guard: if `state.round >= state.maxRounds` and no standard winner, game ends with `winner: 'undercover'` + `log.maxRoundsReached` notify + END_GAME event
+- Added `log.maxRoundsReached` i18n entry to en.json/zh.json
+- 5 new tests: default config → maxRounds=3, custom config → maxRounds=5, round counter increments, maxRounds cap forces undercover win, early civilian win short-circuits cap, NOTIFY_ALL log.maxRoundsReached emitted at cap
+- Files changed:
+  - games/undercover/shared.ts (+config schema/default + meta wiring)
+  - games/undercover/logic.ts (parse config, store maxRounds, cap check in 2 branches)
+  - games/undercover/logic.test.ts (+5 tests; 18→23)
+  - games/undercover/i18n/en.json (+log.maxRoundsReached)
+  - games/undercover/i18n/zh.json (+log.maxRoundsReached)
+- **Learnings for future iterations:**
+  - `GameContext.config` is optional (`unknown`) and the GameTestHarness accepts a `config` option that it forwards into `logic.setup(ctx, config)` as the second positional arg. Games that read config should do `parsed = schema.safeParse(config ?? ctx.config)` to support both harness styles and the live server path. The battleship pattern (see games/battleship/logic.ts:58-71) is the canonical template.
+  - `biome check games/undercover` returned 3 pre-existing warnings (Board.tsx noArrayIndexKey x2, logic.ts noNonNullAssertion on line 240) — all untouched by this story. Exit code 0 is treated as passing per CLAUDE.md §quality-gate; leaving them as-is (scope drift).
+  - Semantics chosen for round cap: when `maxRounds` reached without a standard win, undercovers win (they evaded detection). PRD's "mirrors existing win conditions" is ambiguous here; this matches classic social-deduction tabletop rules. If future stories surface a different expectation, the branch is a single-line change.
+---
