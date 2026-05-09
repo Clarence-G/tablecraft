@@ -168,6 +168,138 @@ function ColorPickerModal({ onChoose }: { onChoose: (c: UnoColor) => void }) {
   );
 }
 
+// ---- Challenge Decision Modal ----
+//
+// Shown to the challenger while `awaitingChallenge` is set. Two buttons:
+// Accept (draw 4) vs Challenge (try to catch a bluff). Dismissal is only via
+// one of the two actions — the server also auto-accepts after a timer.
+
+function ChallengeModal({
+  playedByName,
+  onAccept,
+  onChallenge,
+  disabled,
+}: {
+  playedByName: string;
+  onAccept: () => void;
+  onChallenge: () => void;
+  disabled?: boolean;
+}) {
+  const { t } = useTranslation('uno');
+  return (
+    <div
+      className="fixed inset-0 bg-[hsl(var(--shadow))]/60 flex items-center justify-center z-50"
+      data-testid="uno-challenge-modal"
+    >
+      <div className="bg-card border-2 border-foreground rounded-[16px] p-6 shadow-[4px_4px_0px_0px_hsl(var(--foreground))] max-w-sm w-full mx-4 text-center">
+        <div className="text-sm font-semibold text-foreground mb-1">{t('challenge.title')}</div>
+        <div className="text-xs text-muted-foreground mb-4">
+          {t('challenge.prompt', { name: playedByName })}
+        </div>
+        <div className="flex gap-3 justify-center">
+          <button
+            type="button"
+            onClick={onAccept}
+            disabled={disabled}
+            className="bg-muted text-muted-foreground border-2 border-border px-4 py-2 rounded-[10px] font-semibold text-sm hover:bg-secondary transition-colors disabled:opacity-50"
+          >
+            {t('challenge.accept')}
+          </button>
+          <button
+            type="button"
+            onClick={onChallenge}
+            disabled={disabled}
+            className="bg-primary text-primary-foreground border-2 border-foreground px-4 py-2 rounded-[10px] font-semibold text-sm shadow-button hover:-translate-y-0.5 transition-transform disabled:opacity-50"
+          >
+            {t('challenge.challenge')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---- Challenge Reveal Overlay ----
+//
+// After the challenger sends `challenge_draw_four`, the server records the
+// revealed hand in `lastChallengeReveal`. This overlay flips in a mini
+// card-fan to show what the +4 player had (and whether they held a matching
+// color), then fades out on its own after `REVEAL_MS`. Only one flip per
+// resolution is rendered — a ref keys on (playedBy + revealedHand) so the same
+// reveal isn't re-animated on unrelated re-renders.
+
+const REVEAL_MS = 3200;
+
+function ChallengeRevealOverlay({
+  playedByName,
+  hadMatchingColor,
+  revealedHand,
+  onDone,
+}: {
+  playedByName: string;
+  hadMatchingColor: boolean;
+  revealedHand: string[];
+  onDone: () => void;
+}) {
+  const { t } = useTranslation('uno');
+  useEffect(() => {
+    const id = setTimeout(onDone, REVEAL_MS);
+    return () => clearTimeout(id);
+  }, [onDone]);
+
+  const title = hadMatchingColor
+    ? t('challenge.revealTitleSuccess', { name: playedByName })
+    : t('challenge.revealTitleFail', { name: playedByName });
+  const hint = hadMatchingColor ? t('challenge.cheatHint') : t('challenge.cleanHint');
+
+  return (
+    <div
+      data-testid="uno-challenge-reveal"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[hsl(var(--shadow))]/55"
+      style={{ perspective: '1000px' }}
+    >
+      <motion.div
+        initial={{ rotateY: 180, opacity: 0 }}
+        animate={{ rotateY: 0, opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        style={{ transformStyle: 'preserve-3d' }}
+        className="bg-card border-2 border-foreground rounded-[16px] p-4 sm:p-6 shadow-[4px_4px_0px_0px_hsl(var(--foreground))] max-w-md w-[92%] mx-4 text-center"
+      >
+        <div
+          className={`text-sm font-semibold mb-1 ${
+            hadMatchingColor ? 'text-destructive' : 'text-foreground'
+          }`}
+        >
+          {title}
+        </div>
+        <div className="text-xs text-muted-foreground mb-3">{t('challenge.revealBody')}</div>
+        <div className="flex gap-1.5 justify-center flex-wrap">
+          {revealedHand.length === 0 ? (
+            <span className="text-xs text-muted-foreground">—</span>
+          ) : (
+            revealedHand.map((serialized, i) => (
+              <UnoCardFace
+                // biome-ignore lint/suspicious/noArrayIndexKey: revealed hand is a one-shot animation snapshot; positional identity is fine
+                key={`${serialized}|${i}`}
+                serialized={serialized}
+                size="small"
+              />
+            ))
+          )}
+        </div>
+        <div
+          className={`mt-3 text-[11px] font-semibold ${
+            hadMatchingColor ? 'text-destructive' : 'text-muted-foreground'
+          }`}
+        >
+          {hint}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 // ---- Log helpers ----
 
 function describeCard(serialized: string, t: (k: string) => string): string {
@@ -285,6 +417,10 @@ export function Board({
   const sendAction = isSending ? () => {} : rawSendAction;
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [pendingWild, setPendingWild] = useState<number | null>(null);
+  // Tracks which `lastChallengeReveal` we've already consumed so the flip
+  // animation plays exactly once per resolution — even if the state re-emits.
+  const [revealKey, setRevealKey] = useState<string | null>(null);
+  const consumedReveal = useRef<string | null>(null);
   const { t } = useTranslation('uno');
   const { push } = useGameLog();
   const reduced = useReducedMotion();
@@ -296,6 +432,19 @@ export function Board({
 
   const topCard = state.topCard;
   const topCardIsWild = topCard === 'wild' || topCard === 'wild_draw_four';
+
+  // Trigger (or dismiss) the challenge reveal overlay based on state.
+  useEffect(() => {
+    const reveal = state.lastChallengeReveal;
+    if (!reveal) {
+      if (revealKey !== null) setRevealKey(null);
+      return;
+    }
+    const key = `${reveal.playedBy}|${reveal.revealedHand.join(',')}|${reveal.hadMatchingColor}`;
+    if (consumedReveal.current === key) return;
+    consumedReveal.current = key;
+    setRevealKey(key);
+  }, [state.lastChallengeReveal, revealKey]);
 
   const prev = useRef<PlayerView | null>(null);
   const loggedWinner = useRef<string | null>(null);
@@ -385,6 +534,14 @@ export function Board({
     setSelectedCardIndex(null);
   }
 
+  function handleAcceptChallenge() {
+    sendAction({ type: 'accept_draw_four' });
+  }
+
+  function handleChallenge() {
+    sendAction({ type: 'challenge_draw_four' });
+  }
+
   const currentPlayerName = playerNames[state.currentPlayer] ?? state.currentPlayer;
   const currentIsBot = !gameOver && !isMyTurn && currentPlayerName.startsWith('Bot');
 
@@ -414,6 +571,33 @@ export function Board({
       data-testid="game-board"
     >
       {pendingWild !== null && <ColorPickerModal onChoose={handleColorChosen} />}
+
+      {state.awaitingChallenge &&
+        state.awaitingChallenge.challenger === myId &&
+        !state.lastChallengeReveal && (
+          <ChallengeModal
+            playedByName={
+              playerNames[state.awaitingChallenge.playedBy] ?? state.awaitingChallenge.playedBy
+            }
+            onAccept={handleAcceptChallenge}
+            onChallenge={handleChallenge}
+            disabled={isSending}
+          />
+        )}
+
+      <AnimatePresence>
+        {revealKey && state.lastChallengeReveal && (
+          <ChallengeRevealOverlay
+            key={revealKey}
+            playedByName={
+              playerNames[state.lastChallengeReveal.playedBy] ?? state.lastChallengeReveal.playedBy
+            }
+            hadMatchingColor={state.lastChallengeReveal.hadMatchingColor}
+            revealedHand={state.lastChallengeReveal.revealedHand}
+            onDone={() => setRevealKey(null)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Player strip — floats on the red scene, cream chips for contrast. */}
       <div className="flex flex-wrap gap-1.5 justify-center">

@@ -392,6 +392,12 @@ describe('UNO Logic', () => {
       expect(result.state.currentPlayerIdx).toBe(1);
       expect(result.state.awaitingChallenge).toBeNull();
       expect(result.events?.some((e) => e.type === 'CLEAR_TIMER')).toBe(true);
+      // Challenge reveal captures hand at time of play (before the draw-4 penalty)
+      expect(result.state.lastChallengeReveal).toEqual({
+        playedBy: 'Alice',
+        revealedHand: ['red_3'],
+        hadMatchingColor: true,
+      });
     });
 
     it('challenge fails when playedBy had no matching color — challenger draws 6 and is skipped', () => {
@@ -456,6 +462,74 @@ describe('UNO Logic', () => {
       expect(byCarol.ok).toBe(false);
       const normalPlay = h.action('Bob', { type: 'play_card', cardIndex: 0 });
       expect(normalPlay.ok).toBe(false);
+    });
+
+    it('failed challenge records lastChallengeReveal with hadMatchingColor=false', () => {
+      const h = create2p();
+      setCurrentPlayerIdx(h, 0);
+      setTopCard(h, 'red_5', 'red');
+      setHand(h, 'Alice', ['wild_draw_four', 'blue_3']);
+
+      h.action('Alice', { type: 'play_card', cardIndex: 0, chosenColor: 'yellow' });
+      const result = h.action('Bob', { type: 'challenge_draw_four' });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.state.lastChallengeReveal).toEqual({
+        playedBy: 'Alice',
+        revealedHand: ['blue_3'],
+        hadMatchingColor: false,
+      });
+    });
+
+    it('accept_draw_four does NOT set lastChallengeReveal (only actual challenges reveal)', () => {
+      const h = create2p();
+      setCurrentPlayerIdx(h, 0);
+      setTopCard(h, 'red_5', 'red');
+      setHand(h, 'Alice', ['wild_draw_four', 'blue_3']);
+
+      h.action('Alice', { type: 'play_card', cardIndex: 0, chosenColor: 'green' });
+      const result = h.action('Bob', { type: 'accept_draw_four' });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.state.lastChallengeReveal).toBeNull();
+    });
+
+    it('lastChallengeReveal is cleared on the next normal action', () => {
+      const h = create2p();
+      setCurrentPlayerIdx(h, 0);
+      setTopCard(h, 'red_5', 'red');
+      setHand(h, 'Alice', ['wild_draw_four', 'red_3']);
+
+      h.action('Alice', { type: 'play_card', cardIndex: 0, chosenColor: 'blue' });
+      const challenge = h.action('Bob', { type: 'challenge_draw_four' });
+      expect(challenge.ok).toBe(true);
+      if (!challenge.ok) return;
+      expect(challenge.state.lastChallengeReveal).not.toBeNull();
+
+      // Bob's turn now — drawing clears the reveal
+      const next = h.action('Bob', { type: 'draw_card' });
+      expect(next.ok).toBe(true);
+      if (!next.ok) return;
+      expect(next.state.lastChallengeReveal).toBeNull();
+    });
+
+    it('lastChallengeReveal is exposed on every player view after a successful challenge', () => {
+      const h = create2p();
+      setCurrentPlayerIdx(h, 0);
+      setTopCard(h, 'red_5', 'red');
+      setHand(h, 'Alice', ['wild_draw_four', 'red_3']);
+
+      h.action('Alice', { type: 'play_card', cardIndex: 0, chosenColor: 'blue' });
+      h.action('Bob', { type: 'challenge_draw_four' });
+
+      for (const viewer of ['Alice', 'Bob'] as const) {
+        const view = h.view(viewer);
+        expect(view.lastChallengeReveal).toEqual({
+          playedBy: 'Alice',
+          revealedHand: ['red_3'],
+          hadMatchingColor: true,
+        });
+      }
     });
   });
 });

@@ -279,4 +279,12 @@ export interface PlayerView {
     challenger: string;
     playedBy: string;
   } | null;
+  /** Set for exactly one state transition after a +4 challenge resolves —
+   * reveals playedBy's remaining hand and whether they held a matching color.
+   * Cleared at the start of the next non-challenge action. */
+  lastChallengeReveal: {
+    playedBy: string;
+    revealedHand: string[];
+    hadMatchingColor: boolean;
+  } | null;
 }

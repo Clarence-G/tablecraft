@@ -35,6 +35,14 @@ interface UnoState {
    * resolved. While non-null, the game blocks every action except
    * challenge_draw_four / accept_draw_four from `challenger`. */
   awaitingChallenge: AwaitingChallenge | null;
+  /** Populated by resolveChallenge so every client can briefly reveal the
+   * playedBy's hand (and whether they had a matching color) after a challenge.
+   * Cleared at the start of the next non-challenge action. */
+  lastChallengeReveal: {
+    playedBy: string;
+    revealedHand: string[];
+    hadMatchingColor: boolean;
+  } | null;
 }
 
 interface AwaitingChallenge {
@@ -129,7 +137,18 @@ function resolveChallenge(state: UnoState, ctx: GameContext): ActionResult<UnoSt
   if (challengerIdx < 0) return { ok: false, reason: '找不到质疑者' };
 
   const events: EngineEvent[] = [{ type: 'CLEAR_TIMER', name: WILD_DRAW_FOUR_TIMER }];
-  let next: UnoState = { ...state, awaitingChallenge: null, hasDrawnThisTurn: false };
+  // Capture the hand BEFORE any draw penalty runs — this is what we reveal.
+  const revealedHand = [...(state.hands[pending.playedBy] ?? [])];
+  let next: UnoState = {
+    ...state,
+    awaitingChallenge: null,
+    hasDrawnThisTurn: false,
+    lastChallengeReveal: {
+      playedBy: pending.playedBy,
+      revealedHand,
+      hadMatchingColor: pending.playedByHadMatchingColor,
+    },
+  };
 
   if (pending.playedByHadMatchingColor) {
     next = drawCards(next, pending.playedBy, WILD_DRAW_FOUR_COUNT, ctx);
@@ -270,10 +289,12 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
       hasDrawnThisTurn: false,
       players: ctx.players,
       awaitingChallenge: null,
+      lastChallengeReveal: null,
     };
   },
 
-  onAction(state, action, playerID, ctx): ActionResult<UnoState> {
+  onAction(stateIn, action, playerID, ctx): ActionResult<UnoState> {
+    let state = stateIn;
     if (state.phase === 'finished') {
       return { ok: false, reason: '游戏已结束' };
     }
@@ -296,6 +317,13 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
 
     if (action.type === 'challenge_draw_four' || action.type === 'accept_draw_four') {
       return { ok: false, reason: '当前没有 +4 需要决定' };
+    }
+
+    // Clear the one-shot challenge reveal as soon as any normal action runs.
+    // The reveal stays visible only for the single state snapshot produced by
+    // resolveChallenge; the next turn drops it.
+    if (state.lastChallengeReveal !== null) {
+      state = { ...state, lastChallengeReveal: null };
     }
 
     const currentPlayer = state.players[state.currentPlayerIdx];
@@ -526,6 +554,7 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
       winner: state.winner,
       hasDrawnThisTurn: state.hasDrawnThisTurn,
       awaitingChallenge: publicAwaitingChallenge(state.awaitingChallenge),
+      lastChallengeReveal: state.lastChallengeReveal,
     };
   },
 
@@ -547,6 +576,7 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
       winner: state.winner,
       hasDrawnThisTurn: state.hasDrawnThisTurn,
       awaitingChallenge: publicAwaitingChallenge(state.awaitingChallenge),
+      lastChallengeReveal: state.lastChallengeReveal,
     };
   },
 

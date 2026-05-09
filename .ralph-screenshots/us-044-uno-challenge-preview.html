@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>US-044 UNO +4 challenge UI — preview</title>
+    <style>
+      :root {
+        --bg: #5e1f27;
+        --card: #fbf6e9;
+        --foreground: #1d140a;
+        --muted: #827466;
+        --ring: #5b3a1e;
+        --primary: #b4632b;
+        --primary-fg: #fff8ec;
+        --destructive: #c0392b;
+        --border: rgba(29,20,10,0.25);
+        --shadow: #1d140a;
+      }
+      html, body { margin: 0; padding: 0; background: var(--bg); color: var(--foreground); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .page { padding: 24px; display: grid; grid-template-columns: 1fr; gap: 24px; max-width: 900px; margin: 0 auto; }
+      @media (min-width: 700px) { .page { grid-template-columns: 1fr 1fr; } }
+      .stage { background: rgba(26,17,8,0.35); border-radius: 20px; padding: 20px; min-height: 320px; display: flex; align-items: center; justify-content: center; position: relative; }
+      .label { position: absolute; top: 10px; left: 14px; color: #fbf6e9; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; }
+
+      .modal {
+        background: var(--card);
+        border: 2px solid var(--foreground);
+        border-radius: 16px;
+        padding: 22px;
+        box-shadow: 4px 4px 0 0 var(--foreground);
+        max-width: 340px;
+        width: 90%;
+        text-align: center;
+      }
+      .modal h3 { margin: 0 0 4px; font-size: 14px; }
+      .modal p { margin: 0 0 16px; font-size: 12px; color: var(--muted); }
+      .actions { display: flex; gap: 10px; justify-content: center; }
+      button {
+        font-family: inherit;
+        border-radius: 10px;
+        padding: 8px 14px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .btn-secondary {
+        background: #e9d9b6;
+        color: var(--muted);
+        border: 2px solid var(--border);
+      }
+      .btn-primary {
+        background: var(--primary);
+        color: var(--primary-fg);
+        border: 2px solid var(--foreground);
+        box-shadow: 2px 2px 0 0 var(--foreground);
+      }
+
+      .reveal {
+        background: var(--card);
+        border: 2px solid var(--foreground);
+        border-radius: 16px;
+        padding: 20px 18px;
+        box-shadow: 4px 4px 0 0 var(--foreground);
+        max-width: 420px;
+        width: 94%;
+        text-align: center;
+        transform: rotateY(0deg);
+      }
+      .reveal h3 { margin: 0 0 4px; font-size: 14px; color: var(--destructive); }
+      .reveal .body { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+      .hand { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+      .card {
+        width: 44px;
+        height: 64px;
+        border-radius: 8px;
+        border: 2px solid var(--foreground);
+        color: #fbf6e9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-style: italic;
+        font-size: 17px;
+        box-shadow: 0 3px 0 -1px rgba(26,17,8,0.45), 0 6px 10px -4px rgba(26,17,8,0.35);
+      }
+      .card.red { background: linear-gradient(160deg, #e77070 0%, #d94040 38%, #a12a2a 100%); }
+      .card.blue { background: linear-gradient(160deg, #6391f2 0%, #2563eb 38%, #1946a8 100%); }
+      .card.green { background: linear-gradient(160deg, #4fc074 0%, #16a34a 38%, #0e7a36 100%); }
+      .card.yellow { background: linear-gradient(160deg, #edac4d 0%, #d97706 38%, #a35704 100%); }
+      .hint { margin-top: 10px; font-size: 11px; font-weight: 600; color: var(--destructive); }
+      .hint.clean { color: var(--muted); }
+    </style>
+  </head>
+  <body>
+    <div class="page" id="app">
+      <div class="stage">
+        <span class="label">Challenge modal (challenger view)</span>
+        <div class="modal">
+          <h3>Plus 4 played</h3>
+          <p>Alice played a +4. Accept or challenge?</p>
+          <div class="actions">
+            <button class="btn-secondary">Accept (+4)</button>
+            <button class="btn-primary">Challenge</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <span class="label">Reveal (challenge succeeded)</span>
+        <div class="reveal">
+          <h3>Alice was bluffing!</h3>
+          <div class="body">Their hand at the time of play</div>
+          <div class="hand">
+            <div class="card red">3</div>
+            <div class="card blue">7</div>
+            <div class="card green">+2</div>
+          </div>
+          <div class="hint">Had a matching color</div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

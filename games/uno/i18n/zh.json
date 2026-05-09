@@ -19,6 +19,17 @@
   "drawCard": "摸牌",
   "pass": "跳过",
   "chooseColor": "选择颜色",
+  "challenge": {
+    "title": "打出了 +4",
+    "prompt": "{{name}} 打出了 +4，是否质疑？",
+    "accept": "接受（+4）",
+    "challenge": "质疑",
+    "revealTitleSuccess": "{{name}} 作弊了！",
+    "revealTitleFail": "{{name}} 合法出牌",
+    "revealBody": "出牌时的手牌",
+    "cheatHint": "持有匹配颜色",
+    "cleanHint": "无匹配颜色"
+  },
   "log": {
     "play": "打出 {{card}}",
     "draw": "摸了一张牌",

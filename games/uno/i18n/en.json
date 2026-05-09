@@ -19,6 +19,17 @@
   "drawCard": "Draw",
   "pass": "Pass",
   "chooseColor": "Choose Color",
+  "challenge": {
+    "title": "Plus 4 played",
+    "prompt": "{{name}} played a +4. Accept or challenge?",
+    "accept": "Accept (+4)",
+    "challenge": "Challenge",
+    "revealTitleSuccess": "{{name}} was bluffing!",
+    "revealTitleFail": "{{name}} played legally",
+    "revealBody": "Their hand at the time of play",
+    "cheatHint": "Had a matching color",
+    "cleanHint": "No matching color"
+  },
   "log": {
     "play": "played {{card}}",
     "draw": "drew a card",
