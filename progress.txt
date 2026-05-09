@@ -459,3 +459,17 @@ Total stories: 46
   - When adding a per-room option, you must (1) add `configSchema` + `defaultConfig` to `meta`, (2) plumb it into `setup` via the second arg, (3) surface the option's *effective* value in `getPlayerView` so the Board can render mode-specific UI without re-reading config. The RoomOptionsPanel (US-014) auto-generates a checkbox for any `z.boolean()` field in the schema — nothing else is needed on the client.
   - `pnpm gen:registry` only writes `games/server-registry.ts` + the icon manifest + root deps. It does NOT touch i18n, configSchema exports, or the client registry (which is glob-based). Run it after editing `shared.ts`, but don't expect it to pick up field additions in configSchema — those flow through type inference.
 ---
+
+## 2026-05-09 - US-027
+- Created `games/battleship/shapes.ts` exporting `SHIP_SHAPES` (U, Z, L, T, plus, S — 6 shapes) with each shape stored in canonical-normalized form ([dx,dy] cells).
+- Pure helpers: `normalize(shape)` offsets to min=0 on both axes; `rotate(shape, 0|90|180|270)` applies N quarter turns CW via (x,y)→(y,−x) then normalizes; `mirror(shape)` flips along the vertical axis (x,y)→(x,−y) then normalizes. Also `getShape(id)` for lookup.
+- Wrote `games/battleship/shapes.test.ts` (73 tests): orientation matrix (6 shapes × 4 rotations × 2 mirrors = 48 tests asserting normalized + cell-count-preserved + unique + id-preserved), plus explicit L-shape expected coordinates for every orientation, plus S-mirrored==Z identity, plus-cross rotational/mirror symmetry, rotation-by-360 is identity.
+- Files changed:
+  - games/battleship/shapes.ts (new)
+  - games/battleship/shapes.test.ts (new)
+- **Learnings for future iterations:**
+  - 90° CW on [row, col] is (r, c) → (c, -r); 180° is (-r, -c); 270° is (-y, x). Always follow with `normalize` to keep coordinates non-negative — downstream placement math assumes [0..N) offsets.
+  - Biome's `useNumberNamespace` rule rejects bare `Infinity` — use `Number.POSITIVE_INFINITY` / `Number.NEGATIVE_INFINITY`. Caught at `pnpm biome check` but not at `pnpm typecheck`.
+  - When a helper like `rotate`/`mirror` accepts exactly 4 discrete values, a union literal type (`0 | 90 | 180 | 270`) surfaces call-site typos at compile time but still requires a runtime modulo since callers may pass via `rotation * 90` arithmetic.
+  - Shape library is pure data + math: no i18n, no registry, no server-side change. Safe to add before the logic/UI stories that consume it (US-028, US-029, US-030).
+---

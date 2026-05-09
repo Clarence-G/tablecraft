@@ -413,7 +413,7 @@
       ],
       "priority": 25,
       "passes": true,
-      "notes": "Replaced text-muted-foreground/text-foreground on the navy board with text-primary-foreground. Preview slot moved to a reserved side position (sm:row → right-of-grid; mobile → below-grid) with visibility:hidden when no ship selected so grid does not shift."
+      "notes": "Replaced text-muted-foreground/text-foreground on the navy board with text-primary-foreground. Preview slot moved to a reserved side position (sm:row \u2192 right-of-grid; mobile \u2192 below-grid) with visibility:hidden when no ship selected so grid does not shift."
     },
     {
       "id": "US-026",
@@ -447,8 +447,8 @@
         "Tests pass"
       ],
       "priority": 27,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "shapes.ts exports 6 shapes (U/Z/L/T/plus/S) + rotate/mirror/normalize; shapes.test.ts has 73 tests covering the 8-orientation matrix for every shape plus explicit L coordinate expectations."
     },
     {
       "id": "US-028",
