@@ -47,6 +47,15 @@
     "resultDraw": "Draw",
     "comingSoon": "More games coming soon",
     "connectingHint": "Connecting to server…",
+    "staleRoom": {
+      "title": "You're already in a room",
+      "body": "You're still in room {{roomId}} ({{game}}, {{status}}). Return to it, or leave it and create a new one?",
+      "return": "Return to room",
+      "leaveAndCreate": "Leave & create new",
+      "statusWaiting": "waiting",
+      "statusPlaying": "playing",
+      "statusFinished": "finished"
+    },
     "room": {
       "spectate": "Watch"
     }

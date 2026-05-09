@@ -3,6 +3,15 @@ import { GameCoverImage } from '@/components/GameCoverImage';
 import { GameIcon } from '@/components/GameIcon';
 import { LocaleSwitch } from '@/components/LocaleSwitch';
 import { LobbySidePanel } from '@/components/layout/LobbySidePanel';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ViewAllRow } from '@repo/game-ui/layout';
 import { SectionHead } from '@repo/game-ui/section';
 import { UserChip } from '@repo/game-ui/user';
@@ -67,9 +76,19 @@ export function Lobby({
   const tagTranslation = buildTagTranslation(i18n);
   const translateTag = (zhTag: string) => tagTranslation.get(zhTag) ?? zhTag;
 
-  const { create, join, listRooms } = roomCtx;
+  const { create, join, leave, listRooms } = roomCtx;
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  // Surfaces the server's "Already in room X" rejection as an actionable
+  // dialog instead of a silent inline error. Holds the data we need for the
+  // recovery actions (navigate to /rooms/:id, or leave-then-retry-create).
+  const [staleRoom, setStaleRoom] = useState<{
+    roomId: string;
+    gameId: string;
+    status: string;
+    /** The gameId the user was trying to create a room for, so "leave & create" can retry. */
+    pendingCreateGameId: string;
+  } | null>(null);
 
   const [rooms, setRooms] = useState<RoomSummary[]>([]);
   const [gameFilter, setGameFilter] = useState<string>('');
@@ -143,6 +162,46 @@ export function Lobby({
     }
     setLoading(true);
     try {
+      const { roomId } = await create(gameId, userName);
+      onRoomCreated(roomId);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      // Server format: `Already in room <ROOMID> (<status>). Leave it first.`
+      // Promote it from a generic error toast to an actionable dialog.
+      const m = /^Already in room (\S+) \((\w+)\)/.exec(msg);
+      if (m) {
+        const stuckRoomId = m[1];
+        const stuckStatus = m[2];
+        const stuckGameId = roomCtx.room?.roomId === stuckRoomId ? roomCtx.room.gameId : '';
+        setStaleRoom({
+          roomId: stuckRoomId,
+          gameId: stuckGameId,
+          status: stuckStatus,
+          pendingCreateGameId: gameId,
+        });
+      } else {
+        setError(msg);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Resolve the stale-room dialog by either returning to it or force-leaving
+  // it and retrying the create. The "leave & create" path waits for the
+  // server's `room:left` ack via roomCtx.room flipping to null before retrying
+  // — otherwise the retry races the leave and hits the same rejection.
+  async function handleLeaveAndRetry() {
+    if (!staleRoom) return;
+    const gameId = staleRoom.pendingCreateGameId;
+    setStaleRoom(null);
+    setLoading(true);
+    try {
+      leave();
+      // Brief settle delay — server processes leave, then accepts create.
+      // 300ms is enough in local dev; server is single-threaded per socket so
+      // ordering is guaranteed, this just smooths over the round-trip.
+      await new Promise((r) => setTimeout(r, 300));
       const { roomId } = await create(gameId, userName);
       onRoomCreated(roomId);
     } catch (e) {
@@ -541,6 +600,46 @@ export function Lobby({
         }}
         disabled={loading || !socketReady}
       />
+
+      {/* Stale-room recovery: shown when create is rejected because the user
+          is still in a previous (often disconnected) room. */}
+      <Dialog open={staleRoom !== null} onOpenChange={(open) => !open && setStaleRoom(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('lobby.staleRoom.title')}</DialogTitle>
+            <DialogDescription>
+              {staleRoom
+                ? t('lobby.staleRoom.body', {
+                    roomId: staleRoom.roomId,
+                    game: staleRoom.gameId
+                      ? String(gt(staleRoom.gameId, 'name'))
+                      : staleRoom.gameId,
+                    status: t(
+                      `lobby.staleRoom.status${staleRoom.status.charAt(0).toUpperCase() + staleRoom.status.slice(1)}`,
+                      { defaultValue: staleRoom.status },
+                    ),
+                  })
+                : ''}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!staleRoom) return;
+                const id = staleRoom.roomId;
+                setStaleRoom(null);
+                onRoomJoined(id);
+              }}
+            >
+              {t('lobby.staleRoom.return')}
+            </Button>
+            <Button variant="destructive" onClick={handleLeaveAndRetry} disabled={loading}>
+              {t('lobby.staleRoom.leaveAndCreate')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

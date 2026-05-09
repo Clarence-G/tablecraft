@@ -1,7 +1,7 @@
+import type { PlayerInfo } from '@repo/shared';
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { PLAYER_COLORS, getPlayerColor, getPlayerColorById } from './playerColors';
-import type { PlayerInfo } from '@repo/shared';
 
 function makePlayer(id: string, seatIndex: number): PlayerInfo {
   return { id, name: id, seatIndex, ready: true, connected: true, isBot: false };

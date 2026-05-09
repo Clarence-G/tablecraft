@@ -45,6 +45,7 @@ export function setupHandlers(
     const existingRoom = roomManager.findRoomByUser(userId);
     if (existingRoom) {
       existingRoom.markReconnected(userId);
+      roomManager.cancelPendingDestroy(existingRoom.roomId);
       socket.join(existingRoom.roomId);
       socket.emit('room:state', existingRoom.toRoomState());
       if (existingRoom.status === 'playing') {
@@ -112,6 +113,7 @@ export function setupHandlers(
       if (!result.ok) return ack({ ok: false, error: result.error });
 
       roomManager.onPlayerJoin(roomId, userId);
+      roomManager.cancelPendingDestroy(roomId);
       socket.join(roomId);
       ack({ ok: true, data: undefined });
       io.to(roomId).emit('room:state', room.toRoomState());
@@ -383,6 +385,11 @@ export function setupHandlers(
       if (!room) return;
       room.markDisconnected(userId);
       io.to(room.roomId).emit('room:state', room.toRoomState());
+      // If everyone in the room is now offline, schedule a destroy in 30s.
+      // Cancelled if anyone reconnects via the connection handler above.
+      roomManager.scheduleDestroyIfAllDisconnected(room.roomId, () => {
+        io.emit('rooms:updated');
+      });
     });
   });
 }

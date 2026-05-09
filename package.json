@@ -30,7 +30,10 @@
     "typecheck": "tsc --noEmit -p packages/shared/tsconfig.json && tsc --noEmit -p packages/game-ui/tsconfig.json && tsc --noEmit -p packages/card-ui/tsconfig.json && tsc --noEmit -p packages/client/tsconfig.json"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild"]
+    "onlyBuiltDependencies": ["@biomejs/biome", "esbuild"],
+    "overrides": {
+      "jsdom": "26.1.0"
+    }
   },
   "dependencies": {
     "@games/battleship": "workspace:*",

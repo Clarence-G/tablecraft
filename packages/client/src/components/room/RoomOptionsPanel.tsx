@@ -74,6 +74,7 @@ export function RoomOptionsPanel({
   onUpdate,
 }: RoomOptionsPanelProps) {
   const { t } = useTranslation('common');
+  const shape = useMemo(() => readObjectShape(configSchema), [configSchema]);
 
   if (status !== 'waiting') return null;
 
@@ -84,7 +85,6 @@ export function RoomOptionsPanel({
   const canDecrement = isHost && currentMaxPlayers > lowerBound;
   const canIncrement = isHost && currentMaxPlayers < maxPlayers;
 
-  const shape = useMemo(() => readObjectShape(configSchema), [configSchema]);
   const hostOnlyHint = t('room.options.onlyHostCanEdit', {
     defaultValue: 'Only the host can change these options.',
   });

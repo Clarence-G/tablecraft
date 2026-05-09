@@ -5,7 +5,10 @@ import type { Page } from '@playwright/test';
 // ---------------------------------------------------------------------------
 const SEL = {
   gameCard: (gameId: string) => `[data-testid="game-card-${gameId}"]`,
-  createRoomBtn: '[data-testid="create-room-btn"]',
+  // Clicking a game card opens GameActionDialog; the create button lives there.
+  // (`create-room-btn` on the lobby itself only renders when a game filter is
+  // active, which the current dialog-driven flow no longer sets.)
+  createRoomBtn: '[data-testid="dialog-create-room-btn"]',
   roomPage: '[data-testid="room-page"]',
   roomCode: '[data-testid="room-code"]',
   readyBtn: '[data-testid="ready-btn"]',
@@ -36,10 +39,10 @@ const TEXT = {
 export async function createRoom(page: Page, gameId: string): Promise<string> {
   await page.goto('/');
 
-  // Click the game card to filter active rooms for that game
+  // Click the game card to open the action dialog
   await page.click(SEL.gameCard(gameId));
 
-  // Click the "Create room" button (data-testid="create-room-btn")
+  // Click the "Create room" button inside the dialog
   await page.waitForSelector(SEL.createRoomBtn, { timeout: 5000 });
   await page.click(SEL.createRoomBtn);
 

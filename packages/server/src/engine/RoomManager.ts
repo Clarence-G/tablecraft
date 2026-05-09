@@ -10,6 +10,7 @@ export class RoomManager {
   private rooms: Map<string, GameRoom> = new Map();
   private userToRoom: Map<string, string> = new Map();
   private cleanupTimer: NodeJS.Timeout;
+  private pendingDestroyTimers: Map<string, NodeJS.Timeout> = new Map();
 
   constructor() {
     this.cleanupTimer = setInterval(() => this.cleanup(), 60_000);
@@ -38,6 +39,11 @@ export class RoomManager {
   }
 
   removeRoom(roomId: string): void {
+    const pending = this.pendingDestroyTimers.get(roomId);
+    if (pending) {
+      clearTimeout(pending);
+      this.pendingDestroyTimers.delete(roomId);
+    }
     const room = this.rooms.get(roomId);
     if (room) {
       room.timerManager.clearAll();
@@ -70,6 +76,50 @@ export class RoomManager {
     return true;
   }
 
+  /**
+   * Schedule a destroy 30s out if every player in the room is disconnected.
+   * Cancelled on reconnect/join/explicit leave. Without this, a closed-tab
+   * disconnect leaves the room in `userToRoom` so the player can't create a
+   * new room from the lobby (`Already in room X` error) until the 10-minute
+   * sweep finally collects it.
+   */
+  scheduleDestroyIfAllDisconnected(roomId: string, onDestroy?: () => void): void {
+    const room = this.rooms.get(roomId);
+    if (!room) return;
+    if (room.players.size === 0) {
+      this.removeRoom(roomId);
+      onDestroy?.();
+      return;
+    }
+    if (this.pendingDestroyTimers.has(roomId)) return;
+    const allDown = [...room.players.values()].every((p) => !p.connected);
+    if (!allDown) return;
+    const timer = setTimeout(() => {
+      this.pendingDestroyTimers.delete(roomId);
+      const r = this.rooms.get(roomId);
+      if (!r) return;
+      // Re-check at fire time — anyone may have reconnected in 30s.
+      const stillAllDown = [...r.players.values()].every((p) => !p.connected);
+      if (!stillAllDown) return;
+      logger.info(
+        { roomId, gameId: r.gameId, status: r.status, mod: 'room-manager' },
+        'destroying room: all players disconnected for 30s',
+      );
+      this.removeRoom(roomId);
+      onDestroy?.();
+    }, 30_000);
+    this.pendingDestroyTimers.set(roomId, timer);
+  }
+
+  /** Cancel any pending destroy timer (called when a player rejoins/reconnects). */
+  cancelPendingDestroy(roomId: string): void {
+    const pending = this.pendingDestroyTimers.get(roomId);
+    if (pending) {
+      clearTimeout(pending);
+      this.pendingDestroyTimers.delete(roomId);
+    }
+  }
+
   listRooms(): GameRoom[] {
     return [...this.rooms.values()];
   }
@@ -99,6 +149,8 @@ export class RoomManager {
 
   destroy(): void {
     clearInterval(this.cleanupTimer);
+    for (const timer of this.pendingDestroyTimers.values()) clearTimeout(timer);
+    this.pendingDestroyTimers.clear();
   }
 
   /** Load all playing/waiting rooms from DB into memory. Called once on boot. */

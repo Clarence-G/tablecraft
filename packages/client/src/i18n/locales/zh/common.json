@@ -47,6 +47,15 @@
     "resultDraw": "平局",
     "comingSoon": "更多游戏即将上线",
     "connectingHint": "正在连接服务器…",
+    "staleRoom": {
+      "title": "你还在另一个房间",
+      "body": "你正在房间 {{roomId}}（{{game}}，{{status}}）。要先回去看看，还是离开它后新建一个？",
+      "return": "返回房间",
+      "leaveAndCreate": "离开并新建",
+      "statusWaiting": "等待中",
+      "statusPlaying": "进行中",
+      "statusFinished": "已结束"
+    },
     "room": {
       "spectate": "围观"
     }

@@ -198,11 +198,7 @@ export function GameHeader({
           >
             <span
               className="inline-block size-2 rounded-full shrink-0"
-              style={
-                currentColor
-                  ? { backgroundColor: currentColor.hex }
-                  : undefined
-              }
+              style={currentColor ? { backgroundColor: currentColor.hex } : undefined}
             />
             <span className="truncate">{turnLabel}</span>
           </span>
