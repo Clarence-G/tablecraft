@@ -473,3 +473,21 @@ Total stories: 46
   - When a helper like `rotate`/`mirror` accepts exactly 4 discrete values, a union literal type (`0 | 90 | 180 | 270`) surfaces call-site typos at compile time but still requires a runtime modulo since callers may pass via `rotation * 90` arithmetic.
   - Shape library is pure data + math: no i18n, no registry, no server-side change. Safe to add before the logic/UI stories that consume it (US-028, US-029, US-030).
 ---
+
+## 2026-05-09 - US-028
+- Battleship `shared.ts`: added `irregularShips: z.boolean().default(false)` to `BattleshipConfigSchema`; updated `BATTLESHIP_DEFAULT_CONFIG`. Added `IRREGULAR_FLEET = ['U','Z','L','T']` — 5+4+4+4 = 17 cells, matching the classic fleet. Added `buildIrregularFleet()` (maps ids via `getShape` from `./shapes`) and `buildFleet(irregularShips)`.
+- `logic.ts`: added `fleet: ShipDefinition[]` to `BattleshipState` and populate it in `setup` via `buildFleet(parsed.irregularShips)`. Nothing else in logic consumes `state.fleet` yet — US-029 will wire it into placement/fire validation.
+- i18n: `battleship:options.irregularShips` in en ("Irregular ships (non-straight fleet)") and zh ("异形舰队（非直线形状）").
+- Tests: +5 in a new `irregularShips option` describe block (total 29 → 34): irregularShips=false keeps CLASSIC_SHIPS reference identity + all straight + 17 cells, default config identity, irregularShips=true has zero straight ships with 15-19 cells, name matches SHIP_SHAPES ids, invalid config falls back to classic. Used `h.rawState.fleet` for direct state inspection since fleet is not surfaced in PlayerView.
+- Files changed:
+  - games/battleship/shared.ts (config schema + default + IRREGULAR_FLEET + buildFleet helpers; import getShape)
+  - games/battleship/logic.ts (state.fleet + import buildFleet + ShipDefinition type)
+  - games/battleship/logic.test.ts (+5 tests, 29→34)
+  - games/battleship/i18n/en.json (+options.irregularShips)
+  - games/battleship/i18n/zh.json (+options.irregularShips)
+- **Learnings for future iterations:**
+  - `ShipDefinition.offsets` is `[number, number][]`. When deriving from `SHIP_SHAPES[i].cells` (readonly `ShapeCell[]`), shallow-copy each cell via `shape.cells.map(([r, c]) => [r, c] as [number, number])` — not a single `[...shape.cells]` — otherwise the destination type stays readonly.
+  - `buildFleet(false)` returns the module-level `CLASSIC_SHIPS` reference. Tests can assert `expect(fleet).toBe(CLASSIC_SHIPS)` because `GameTestHarness.rawState` does NOT structuredClone the initial state — only `onAction` input is cloned. Handy for detecting accidental fleet-duplication in setup.
+  - Zod `z.object({ a: z.boolean().default(false), b: z.boolean().default(false) })` returns a PROPER config for both `{}` and `{ a: true }`, but fails (falls to catch-block) when a wrong *type* is supplied: `{ a: 'oops' }`. Parse-and-fallback via `parseConfig` keeps invalid runtime input from crashing setup.
+  - RoomOptionsPanel (US-014) auto-generates a checkbox for any `z.boolean()` field at the top level of configSchema — adding `irregularShips` to the schema is sufficient to get the UI toggle for free. No Room.tsx / panel changes needed for this story.
+---
