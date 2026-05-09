@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Love Letter card-ui migration preview</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap');
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: #f6ecd9;
+      color: #2a1810;
+    }
+    .panel {
+      background: #fcf8f0;
+      color: #2a1810;
+      border: 2px solid #2a1810;
+      border-radius: 12px;
+      box-shadow: 4px 4px 0 #2a1810;
+    }
+    /* Cinzel utility from card-ui/src/styles.css */
+    .card-text {
+      font-family: 'Cinzel', 'Playfair Display', 'Times New Roman', serif;
+    }
+    /* game-ui PlayingCard face-art layout */
+    .face-card {
+      position: relative;
+      width: 108px;
+      height: 152px;
+      border: 2px solid #2a1810;
+      border-radius: 12px;
+      box-shadow: 4px 4px 0 #2a1810;
+      overflow: hidden;
+      background: #6b4a7a;
+      display: inline-flex;
+      flex-direction: column;
+    }
+    .face-card.sm { width: 64px; height: 96px; border-radius: 8px; box-shadow: 2px 2px 0 #2a1810; }
+    .face-art {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, #6b4a7a 0%, #9a6ca3 60%, #d4a0c0 100%);
+    }
+    .face-gradient {
+      position: absolute; inset-inline: 0; bottom: 0; height: 40%;
+      background: linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0.4), transparent);
+    }
+    .corner-tl, .corner-br {
+      position: absolute;
+      font-weight: 700; color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+    }
+    .corner-tl { top: 4px; left: 6px; font-size: 18px; }
+    .corner-br { bottom: 4px; right: 6px; font-size: 18px; transform: rotate(180deg); }
+    .face-center {
+      position: relative; margin-top: auto;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 4px; gap: 2px; color: #fff;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+    }
+    .face-center .name { font-weight: 700; font-size: 18px; }
+    .face-center .sub { font-size: 10px; line-height: 1.1; text-align: center; }
+
+    /* card-ui CardBack: diamond grid on warm red */
+    .card-back {
+      position: relative;
+      width: 48px; height: 68px;
+      border: 2px solid #2a1810;
+      border-radius: 8px;
+      box-shadow: 0 4px 0 #2a1810;
+      background: #b84a3a;
+      overflow: hidden;
+      display: inline-block;
+    }
+    .card-back.md { width: 72px; height: 100px; }
+  </style>
+</head>
+<body class="p-4">
+
+<div id="app" class="max-w-2xl mx-auto">
+  <h1 class="text-center text-base uppercase tracking-widest mb-3 opacity-75">Love Letter with @repo/card-ui</h1>
+  <p class="text-center text-xs opacity-70 mb-4">Face art preserved (cardArt.ts); card text uses <code>.card-text</code> (Cinzel). Deck/other players' hands show the shared <code>CardBack</code>.</p>
+
+  <!-- Other players row -->
+  <div class="panel p-3 mb-4">
+    <div class="text-xs opacity-70 mb-2">Other players</div>
+    <div class="flex gap-6 items-end justify-center">
+      <div class="flex flex-col items-center gap-1">
+        <div class="flex gap-1">
+          <div class="card-back"></div>
+          <svg class="absolute" width="0" height="0"><defs></defs></svg>
+        </div>
+        <div class="text-xs">Alice</div>
+      </div>
+      <div class="flex flex-col items-center gap-1">
+        <div class="flex gap-1"><div class="card-back"></div></div>
+        <div class="text-xs">Bob</div>
+      </div>
+      <div class="flex flex-col items-center gap-1">
+        <div class="flex gap-1"><div class="card-back"></div></div>
+        <div class="text-xs">Carol</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- My hand (large, face-up) -->
+  <div class="panel p-4">
+    <div class="text-xs opacity-70 mb-2">Your Hand</div>
+    <div class="flex gap-3 justify-center">
+      <!-- Priest (value 2) -->
+      <div class="face-card">
+        <div class="face-art"></div>
+        <div class="face-gradient"></div>
+        <div class="corner-tl card-text">2</div>
+        <div class="corner-br card-text">2</div>
+        <div class="face-center">
+          <div class="name card-text">Priest</div>
+          <div class="sub card-text">Look at another player's hand.</div>
+        </div>
+      </div>
+      <!-- Guard (value 1) -->
+      <div class="face-card">
+        <div class="face-art" style="background: linear-gradient(135deg, #4a5a7a 0%, #6c84a8 60%, #a8c0d8 100%);"></div>
+        <div class="face-gradient"></div>
+        <div class="corner-tl card-text">1</div>
+        <div class="corner-br card-text">1</div>
+        <div class="face-center">
+          <div class="name card-text">Guard</div>
+          <div class="sub card-text">Name a non-Guard card; if that player has it, they are out.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Played stacks -->
+  <div class="panel p-3 mt-4">
+    <div class="text-xs opacity-70 mb-2">Played</div>
+    <div class="flex gap-4 justify-center">
+      <div class="text-center">
+        <div class="text-[10px] opacity-70 mb-1">Alice</div>
+        <div class="flex gap-0.5">
+          <div class="face-card sm">
+            <div class="face-art" style="background: linear-gradient(135deg,#7a4a5a,#b07088);"></div>
+            <div class="face-gradient"></div>
+            <div class="corner-tl card-text" style="font-size:10px;">3</div>
+            <div class="corner-br card-text" style="font-size:10px;">3</div>
+            <div class="face-center"><div class="name card-text" style="font-size:10px;">Baron</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

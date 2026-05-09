@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US-021 Texas Holdem card-ui migration preview</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background:
+        radial-gradient(ellipse at center, #2a6b44 0%, #1f5233 55%, #153b24 100%),
+        #1f5233;
+      color: #f4d9a8;
+    }
+    /* mimic card-ui card */
+    .card-ui-card {
+      --card-ui-face-bg: #fcf8f0;
+      --card-ui-border: #2a1810;
+      --card-ui-red: #c62828;
+      --card-ui-black: #1a1a1a;
+      position: relative;
+      display: inline-flex;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      background: var(--card-ui-face-bg);
+      border: 2px solid var(--card-ui-border);
+      border-radius: 8px;
+      box-shadow: 0 4px 0 var(--card-ui-border);
+      font-family: "Cinzel", "Playfair Display", "Times New Roman", serif;
+      overflow: hidden;
+      width: 72px; height: 100px;
+    }
+    .card-ui-red { color: var(--card-ui-red); }
+    .card-ui-black { color: var(--card-ui-black); }
+    .card-ui-face-down { background: #b84a3a; color: #fcf8f0; }
+    .card-ui-corner { position: absolute; display: flex; flex-direction: column; align-items: center; line-height: 1; font-weight: 600; }
+    .card-ui-corner-tl { top: 6%; left: 8%; }
+    .card-ui-corner-br { bottom: 6%; right: 8%; transform: rotate(180deg); }
+    .card-ui-center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+    .card-ui-text { font-family: "Cinzel", "Playfair Display", "Times New Roman", serif; }
+    .suit-svg { display: inline-block; }
+  </style>
+</head>
+<body class="p-6 sm:p-10">
+
+<div id="app" class="max-w-3xl mx-auto flex flex-col gap-6">
+  <div class="text-center">
+    <div class="text-xs uppercase tracking-widest opacity-70">Texas Hold'em · flop · turn · river</div>
+    <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full border text-[11px] font-semibold uppercase tracking-wider"
+         style="border-color: rgba(244,217,168,0.35); background: rgba(0,0,0,0.22); color: rgba(244,217,168,0.9);">
+      <span aria-hidden class="inline-block w-2.5 h-2.5 rounded-full" style="background:#d4a056;"></span>
+      POT
+      <span class="text-base font-bold ml-0.5" style="color:#d4a056;">240</span>
+    </div>
+  </div>
+
+  <!-- community cards -->
+  <div class="flex gap-2 justify-center flex-wrap">
+    <!-- As -->
+    <div class="card-ui-card card-ui-black">
+      <div class="card-ui-corner card-ui-corner-tl" style="font-size:14px">
+        <span>A</span>
+        <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C9 7 4 10 4 14a5 5 0 0 0 7 4.5V21h2v-2.5A5 5 0 0 0 20 14c0-4-5-7-8-12z"/></svg>
+      </div>
+      <div class="card-ui-center"><svg width="34" height="34" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C9 7 4 10 4 14a5 5 0 0 0 7 4.5V21h2v-2.5A5 5 0 0 0 20 14c0-4-5-7-8-12z"/></svg></div>
+      <div class="card-ui-corner card-ui-corner-br" style="font-size:14px">
+        <span>A</span>
+        <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C9 7 4 10 4 14a5 5 0 0 0 7 4.5V21h2v-2.5A5 5 0 0 0 20 14c0-4-5-7-8-12z"/></svg>
+      </div>
+    </div>
+    <!-- Kh -->
+    <div class="card-ui-card card-ui-red">
+      <div class="card-ui-corner card-ui-corner-tl" style="font-size:14px">
+        <span>K</span>
+        <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21s-7-4.35-9.5-9.1C.55 8 3 4 6.5 4 8.74 4 10.63 5.35 12 7c1.37-1.65 3.26-3 5.5-3 3.5 0 5.95 4 4 7.9C19 16.65 12 21 12 21z"/></svg>
+      </div>
+      <div class="card-ui-center"><svg width="34" height="34" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21s-7-4.35-9.5-9.1C.55 8 3 4 6.5 4 8.74 4 10.63 5.35 12 7c1.37-1.65 3.26-3 5.5-3 3.5 0 5.95 4 4 7.9C19 16.65 12 21 12 21z"/></svg></div>
+      <div class="card-ui-corner card-ui-corner-br" style="font-size:14px">
+        <span>K</span>
+        <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21s-7-4.35-9.5-9.1C.55 8 3 4 6.5 4 8.74 4 10.63 5.35 12 7c1.37-1.65 3.26-3 5.5-3 3.5 0 5.95 4 4 7.9C19 16.65 12 21 12 21z"/></svg>
+      </div>
+    </div>
+    <!-- Qd -->
+    <div class="card-ui-card card-ui-red">
+      <div class="card-ui-corner card-ui-corner-tl" style="font-size:14px">
+        <span>Q</span>
+        <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 L22 12 L12 22 L2 12 Z"/></svg>
+      </div>
+      <div class="card-ui-center"><svg width="34" height="34" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 L22 12 L12 22 L2 12 Z"/></svg></div>
+      <div class="card-ui-corner card-ui-corner-br" style="font-size:14px">
+        <span>Q</span>
+        <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 L22 12 L12 22 L2 12 Z"/></svg>
+      </div>
+    </div>
+    <!-- Jc -->
+    <div class="card-ui-card card-ui-black">
+      <div class="card-ui-corner card-ui-corner-tl" style="font-size:14px">
+        <span>J</span>
+        <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a4 4 0 0 0-3.3 6.26A4 4 0 1 0 8 16.33a4 4 0 0 0 3 1.67c0 1.5-.7 2.9-2 4h6c-1.3-1.1-2-2.5-2-4a4 4 0 0 0 3-1.67 4 4 0 1 0-.7-8.07A4 4 0 0 0 12 2z"/></svg>
+      </div>
+      <div class="card-ui-center"><svg width="34" height="34" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a4 4 0 0 0-3.3 6.26A4 4 0 1 0 8 16.33a4 4 0 0 0 3 1.67c0 1.5-.7 2.9-2 4h6c-1.3-1.1-2-2.5-2-4a4 4 0 0 0 3-1.67 4 4 0 1 0-.7-8.07A4 4 0 0 0 12 2z"/></svg></div>
+      <div class="card-ui-corner card-ui-corner-br" style="font-size:14px">
+        <span>J</span>
+        <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a4 4 0 0 0-3.3 6.26A4 4 0 1 0 8 16.33a4 4 0 0 0 3 1.67c0 1.5-.7 2.9-2 4h6c-1.3-1.1-2-2.5-2-4a4 4 0 0 0 3-1.67 4 4 0 1 0-.7-8.07A4 4 0 0 0 12 2z"/></svg>
+      </div>
+    </div>
+    <!-- 10s -->
+    <div class="card-ui-card card-ui-black">
+      <div class="card-ui-corner card-ui-corner-tl" style="font-size:14px">
+        <span>10</span>
+        <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C9 7 4 10 4 14a5 5 0 0 0 7 4.5V21h2v-2.5A5 5 0 0 0 20 14c0-4-5-7-8-12z"/></svg>
+      </div>
+      <div class="card-ui-center"><svg width="34" height="34" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C9 7 4 10 4 14a5 5 0 0 0 7 4.5V21h2v-2.5A5 5 0 0 0 20 14c0-4-5-7-8-12z"/></svg></div>
+      <div class="card-ui-corner card-ui-corner-br" style="font-size:14px">
+        <span>10</span>
+        <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C9 7 4 10 4 14a5 5 0 0 0 7 4.5V21h2v-2.5A5 5 0 0 0 20 14c0-4-5-7-8-12z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- player hole cards -->
+  <div class="flex flex-col items-center gap-1">
+    <div class="text-[11px] font-semibold uppercase tracking-wider" style="color: rgba(244,217,168,0.75);">Me</div>
+    <div class="flex gap-2">
+      <!-- Ad -->
+      <div class="card-ui-card card-ui-red">
+        <div class="card-ui-corner card-ui-corner-tl" style="font-size:14px">
+          <span>A</span>
+          <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 L22 12 L12 22 L2 12 Z"/></svg>
+        </div>
+        <div class="card-ui-center"><svg width="34" height="34" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 L22 12 L12 22 L2 12 Z"/></svg></div>
+        <div class="card-ui-corner card-ui-corner-br" style="font-size:14px">
+          <span>A</span>
+          <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2 L22 12 L12 22 L2 12 Z"/></svg>
+        </div>
+      </div>
+      <!-- Ks -->
+      <div class="card-ui-card card-ui-black">
+        <div class="card-ui-corner card-ui-corner-tl" style="font-size:14px">
+          <span>K</span>
+          <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C9 7 4 10 4 14a5 5 0 0 0 7 4.5V21h2v-2.5A5 5 0 0 0 20 14c0-4-5-7-8-12z"/></svg>
+        </div>
+        <div class="card-ui-center"><svg width="34" height="34" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C9 7 4 10 4 14a5 5 0 0 0 7 4.5V21h2v-2.5A5 5 0 0 0 20 14c0-4-5-7-8-12z"/></svg></div>
+        <div class="card-ui-corner card-ui-corner-br" style="font-size:14px">
+          <span>K</span>
+          <svg width="12" height="12" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C9 7 4 10 4 14a5 5 0 0 0 7 4.5V21h2v-2.5A5 5 0 0 0 20 14c0-4-5-7-8-12z"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- opponent face-down -->
+  <div class="flex flex-col items-center gap-1 mt-2">
+    <div class="text-[11px] font-semibold uppercase tracking-wider" style="color: rgba(244,217,168,0.75);">Opponent</div>
+    <div class="flex gap-2">
+      <div class="card-ui-card card-ui-face-down">
+        <svg width="72" height="100" viewBox="0 0 72 100" preserveAspectRatio="none">
+          <defs>
+            <pattern id="diamond-grid" x="0" y="0" width="14" height="14" patternUnits="userSpaceOnUse">
+              <path d="M7 0 L14 7 L7 14 L0 7 Z" fill="none" stroke="#f4d9a8" stroke-width="1" opacity="0.55"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#diamond-grid)"/>
+        </svg>
+      </div>
+      <div class="card-ui-card card-ui-face-down">
+        <svg width="72" height="100" viewBox="0 0 72 100" preserveAspectRatio="none">
+          <rect width="100%" height="100%" fill="url(#diamond-grid)"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

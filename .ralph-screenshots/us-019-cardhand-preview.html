@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CardHand fan preview</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap');
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: #f2f2f7;
+      color: #1c1c1e;
+    }
+    .card-ui-card {
+      position: relative;
+      display: inline-flex;
+      box-sizing: border-box;
+      background: #fcf8f0;
+      border: 2px solid #2a1810;
+      border-radius: 8px;
+      box-shadow: 0 4px 0 #2a1810;
+      font-family: 'Cinzel', 'Times New Roman', serif;
+      overflow: hidden;
+      width: 72px;
+      height: 100px;
+    }
+    .card-ui-card.black { color: #1a1a1a; }
+    .card-ui-card.red { color: #c62828; }
+    .card-ui-card.selected {
+      transform: translateY(-12px);
+      box-shadow: 0 10px 12px -6px rgba(0,0,0,0.35), 0 4px 0 #2a1810;
+    }
+    .card-ui-corner { position: absolute; font-weight: 600; font-size: 14px; line-height: 1; }
+    .card-ui-corner-tl { top: 6%; left: 8%; }
+    .card-ui-corner-br { bottom: 6%; right: 8%; transform: rotate(180deg); }
+    .card-ui-center {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 34px;
+    }
+    .card-ui-hand {
+      position: relative;
+      display: inline-block;
+      outline: 1px dashed rgba(0,0,0,0.12);
+    }
+    .card-ui-hand-slot {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform-origin: 50% 100%;
+    }
+    .panel { background: white; border-radius: 20px; padding: 24px; }
+    .legend { font-size: 12px; color: #64748b; }
+  </style>
+</head>
+<body class="p-6">
+<div id="app" x-data="{
+  suits: [
+    { id: 's', glyph: '♠', color: 'black' },
+    { id: 'h', glyph: '♥', color: 'red' },
+    { id: 'd', glyph: '♦', color: 'red' },
+    { id: 'c', glyph: '♣', color: 'black' },
+    { id: 's2', glyph: '♠', color: 'black' },
+    { id: 'h2', glyph: '♥', color: 'red' },
+    { id: 'd2', glyph: '♦', color: 'red' },
+  ],
+  ranks: ['A', 'K', 'Q', 'J', '10', '9', '8'],
+  SPREAD_X: 34,
+  ROT_STEP: 6,
+  ARC_STEP: 3,
+  CARD_W: 72,
+  CARD_H: 100,
+  slot(i, count) {
+    if (count <= 1) return { rx: 0, ry: 0, rot: 0 };
+    const center = (count - 1) / 2;
+    const offset = i - center;
+    return {
+      rx: offset * this.SPREAD_X,
+      ry: Math.abs(offset) * this.ARC_STEP,
+      rot: offset * this.ROT_STEP,
+    };
+  },
+  dims(count) {
+    if (count <= 1) return { w: this.CARD_W, h: this.CARD_H + 18 };
+    const center = (count - 1) / 2;
+    return {
+      w: Math.round(this.CARD_W + 2 * center * this.SPREAD_X),
+      h: Math.round(this.CARD_H + center * this.ARC_STEP + 18),
+    };
+  },
+  transform(i, count) {
+    const s = this.slot(i, count);
+    return `translate(-50%, 0) translate(${s.rx}px, ${s.ry}px) rotate(${s.rot}deg)`;
+  }
+}">
+  <h1 class="text-xl font-semibold mb-1">CardHand fan layout preview</h1>
+  <p class="legend mb-6">Three deterministic fans — 3, 5 and 7 cards. The middle card of the 5-hand is selected (translateY -12px) to show siblings do not reflow.</p>
+
+  <template x-for="count in [3, 5, 7]" :key="count">
+    <div class="panel mb-6">
+      <div class="flex items-end gap-4 mb-3">
+        <div class="text-2xl font-bold" x-text="count"></div>
+        <div class="legend">cards · fan slots anchored bottom-center</div>
+      </div>
+      <div class="flex justify-center pt-4 pb-2">
+        <div class="card-ui-hand"
+             :style="`width:${dims(count).w}px;height:${dims(count).h}px`">
+          <template x-for="i in Array.from({length: count}, (_,k) => k)" :key="i">
+            <div class="card-ui-hand-slot"
+                 :style="`transform:${transform(i, count)}`">
+              <div class="card-ui-card"
+                   :class="[suits[i].color, (count === 5 && i === 2) ? 'selected' : '']">
+                <div class="card-ui-corner card-ui-corner-tl">
+                  <span x-text="ranks[i]"></span>
+                  <div x-text="suits[i].glyph"></div>
+                </div>
+                <div class="card-ui-center" x-text="suits[i].glyph"></div>
+                <div class="card-ui-corner card-ui-corner-br">
+                  <span x-text="ranks[i]"></span>
+                  <div x-text="suits[i].glyph"></div>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </template>
+</div>
+</body>
+</html>
