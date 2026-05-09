@@ -2,7 +2,7 @@
   "name": "Love Letter",
   "description": "A micro card game of deduction and deception",
   "tags": ["Deduction", "Cards"],
-  "rules": "Draw one card each turn, then play one of your two cards to trigger its effect. Eliminate others through deduction, or hold the highest card when the deck runs out.",
+  "rules": "Draw one card each turn, then play one of your two cards to trigger its effect. Eliminate others through deduction, or hold the highest card when the deck runs out.\n\nCards (number: name — effect):\n1. Guard (x5) — Name a card value (2-8) and a target; if they hold it, they're eliminated.\n2. Priest (x2) — Peek at another player's hand.\n3. Baron (x2) — Compare hands with another player; the lower value is eliminated.\n4. Handmaid (x2) — You cannot be targeted until your next turn.\n5. Prince (x2) — Force any player (including yourself) to discard their hand and draw a new card.\n6. King (x1) — Trade hands with another player.\n7. Countess (x1) — No effect, but must be played if you also hold King (6) or Prince (5).\n8. Princess (x1) — If you ever discard this card, you are immediately eliminated.",
   "peekHand": "Peek at hand",
   "handIs": "'s hand is",
   "baronCompare": "Baron compare",
