@@ -182,8 +182,16 @@ function normalizeOffsets(offsets: [number, number][]): [number, number][] {
   return offsets.map((o) => [o[0] - minR, o[1] - minC]);
 }
 
-export function rotateOffsets(offsets: [number, number][], rotation: number): [number, number][] {
+export function rotateOffsets(
+  offsets: [number, number][],
+  rotation: number,
+  mirror = false,
+): [number, number][] {
   let result = offsets.map((o) => [...o] as [number, number]);
+  if (mirror) {
+    // Flip across the vertical axis: (r, c) -> (r, -c). Normalized below.
+    result = result.map(([r, c]) => [r, -c] as [number, number]);
+  }
   const steps = ((rotation % 4) + 4) % 4;
   for (let i = 0; i < steps; i++) {
     result = result.map(rotate90);
@@ -193,9 +201,9 @@ export function rotateOffsets(offsets: [number, number][], rotation: number): [n
 
 export function getAbsolutePositions(
   ship: ShipDefinition,
-  placement: { row: number; col: number; rotation: number },
+  placement: { row: number; col: number; rotation: number; mirror?: boolean },
 ): [number, number][] {
-  const rotated = rotateOffsets(ship.offsets, placement.rotation);
+  const rotated = rotateOffsets(ship.offsets, placement.rotation, placement.mirror ?? false);
   return rotated.map((o) => [placement.row + o[0], placement.col + o[1]]);
 }
 
@@ -212,21 +220,27 @@ export interface ShipPlacement {
   row: number;
   col: number;
   rotation: number;
+  /** Optional horizontal flip applied before rotation. Used by irregular
+   * (chiral) shapes; classic straight ships are unaffected by mirroring. */
+  mirror?: boolean;
 }
 
-export function validateShipPlacements(placements: ShipPlacement[]): boolean {
-  if (placements.length !== CLASSIC_SHIPS.length) return false;
+export function validateShipPlacements(
+  placements: ShipPlacement[],
+  fleet: ShipDefinition[] = CLASSIC_SHIPS,
+): boolean {
+  if (placements.length !== fleet.length) return false;
 
   const usedIndices = new Set<number>();
   for (const p of placements) {
-    if (p.shipIndex < 0 || p.shipIndex >= CLASSIC_SHIPS.length) return false;
+    if (p.shipIndex < 0 || p.shipIndex >= fleet.length) return false;
     if (usedIndices.has(p.shipIndex)) return false;
     usedIndices.add(p.shipIndex);
   }
 
   const occupied = new Set<number>();
   for (const p of placements) {
-    const ship = CLASSIC_SHIPS[p.shipIndex];
+    const ship = fleet[p.shipIndex];
     if (!ship) return false;
     const positions = getAbsolutePositions(ship, p);
     if (!positionsInBounds(positions)) return false;
@@ -240,12 +254,15 @@ export function validateShipPlacements(placements: ShipPlacement[]): boolean {
   return true;
 }
 
-export function placeShipsOnGrid(placements: ShipPlacement[]): number[] | null {
-  if (!validateShipPlacements(placements)) return null;
+export function placeShipsOnGrid(
+  placements: ShipPlacement[],
+  fleet: ShipDefinition[] = CLASSIC_SHIPS,
+): number[] | null {
+  if (!validateShipPlacements(placements, fleet)) return null;
 
   const grid = new Array(TOTAL_CELLS).fill(0);
   for (const p of placements) {
-    const ship = CLASSIC_SHIPS[p.shipIndex];
+    const ship = fleet[p.shipIndex];
     if (!ship) return null;
     const positions = getAbsolutePositions(ship, p);
     const shipValue = p.shipIndex + 1;
@@ -263,8 +280,12 @@ export function checkShipSunk(grid: number[], shots: number[], shipValue: number
   return true;
 }
 
-export function checkAllShipsSunk(grid: number[], shots: number[]): boolean {
-  for (let v = 1; v <= CLASSIC_SHIPS.length; v++) {
+export function checkAllShipsSunk(
+  grid: number[],
+  shots: number[],
+  shipCount: number = CLASSIC_SHIPS.length,
+): boolean {
+  for (let v = 1; v <= shipCount; v++) {
     if (!checkShipSunk(grid, shots, v)) return false;
   }
   return true;
@@ -294,12 +315,15 @@ const ShipPlacementSchema = z.object({
   row: z.number().int().min(0).max(9),
   col: z.number().int().min(0).max(9),
   rotation: z.number().int().min(0).max(3),
+  mirror: z.boolean().optional(),
 });
 
 export const ActionSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('place_ships'),
-    placements: z.array(ShipPlacementSchema).length(5),
+    // Length is validated against the room's fleet inside logic (fleet size
+    // varies: 5 for classic, 4 for irregular). Schema enforces 1..5 max.
+    placements: z.array(ShipPlacementSchema).min(1).max(5),
   }),
   z.object({
     type: z.literal('fire'),

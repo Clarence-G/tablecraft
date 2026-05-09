@@ -11,7 +11,6 @@ import {
   BATTLESHIP_DEFAULT_CONFIG,
   type BattleshipConfig,
   BattleshipConfigSchema,
-  CLASSIC_SHIPS,
   FAST_MODE_SHOTS_PER_TURN,
   GRID_SIZE,
   type Phase,
@@ -91,11 +90,11 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
       const player = state.players[playerIdx];
       if (player.placed) return { ok: false, reason: '你已经部署过舰船了' };
 
-      if (!validateShipPlacements(action.placements)) {
+      if (!validateShipPlacements(action.placements, state.fleet)) {
         return { ok: false, reason: '舰船部署无效' };
       }
 
-      const grid = placeShipsOnGrid(action.placements);
+      const grid = placeShipsOnGrid(action.placements, state.fleet);
       if (!grid) return { ok: false, reason: '舰船部署无效' };
 
       const updatedPlayer: PlayerBattleState = { ...player, grid, placed: true };
@@ -170,7 +169,7 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
         col: col + 1,
       });
 
-      if (checkAllShipsSunk(defender.grid, newShots)) {
+      if (checkAllShipsSunk(defender.grid, newShots, state.fleet.length)) {
         const loser = defender.id;
         return {
           ok: true,
@@ -218,8 +217,8 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
         myGrid: new Array(TOTAL_CELLS).fill(0),
         myShots: new Array(TOTAL_CELLS).fill(0),
         opponentShots: new Array(TOTAL_CELLS).fill(0),
-        myShipsSunk: new Array(CLASSIC_SHIPS.length).fill(false),
-        opponentShipsSunk: new Array(CLASSIC_SHIPS.length).fill(false),
+        myShipsSunk: new Array(state.fleet.length).fill(false),
+        opponentShipsSunk: new Array(state.fleet.length).fill(false),
         phase: state.phase,
         currentPlayer: state.players[state.currentPlayerIdx].id,
         myPlaced: false,
@@ -233,8 +232,8 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
     const me = state.players[myIdx];
     const opponent = state.players[opponentIdx];
 
-    const myShipsSunk = CLASSIC_SHIPS.map((_, i) => checkShipSunk(me.grid, opponent.shots, i + 1));
-    const opponentShipsSunk = CLASSIC_SHIPS.map((_, i) =>
+    const myShipsSunk = state.fleet.map((_, i) => checkShipSunk(me.grid, opponent.shots, i + 1));
+    const opponentShipsSunk = state.fleet.map((_, i) =>
       checkShipSunk(opponent.grid, me.shots, i + 1),
     );
 
@@ -261,8 +260,8 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
       myGrid: p0.grid,
       myShots: p0.shots,
       opponentShots: p1.shots,
-      myShipsSunk: CLASSIC_SHIPS.map((_, i) => checkShipSunk(p0.grid, p1.shots, i + 1)),
-      opponentShipsSunk: CLASSIC_SHIPS.map((_, i) => checkShipSunk(p1.grid, p0.shots, i + 1)),
+      myShipsSunk: state.fleet.map((_, i) => checkShipSunk(p0.grid, p1.shots, i + 1)),
+      opponentShipsSunk: state.fleet.map((_, i) => checkShipSunk(p1.grid, p0.shots, i + 1)),
       phase: state.phase,
       currentPlayer: state.players[state.currentPlayerIdx].id,
       myPlaced: p0.placed,

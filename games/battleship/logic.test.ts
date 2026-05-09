@@ -420,4 +420,108 @@ describe('Battleship Logic', () => {
       expect(fleet).toBe(CLASSIC_SHIPS);
     });
   });
+
+  describe('irregularShips place + fire', () => {
+    // Non-overlapping placement for the 4-ship irregular fleet (U, Z, L, T).
+    // Cells: U={(0,0),(0,2),(1,0),(1,1),(1,2)}, Z={(3,0),(3,1),(4,1),(4,2)},
+    //        L={(0,5),(1,5),(2,5),(2,6)}, T={(6,0),(6,1),(6,2),(7,1)}.
+    function irregularPlacements(): ShipPlacement[] {
+      return [
+        { shipIndex: 0, row: 0, col: 0, rotation: 0 },
+        { shipIndex: 1, row: 3, col: 0, rotation: 0 },
+        { shipIndex: 2, row: 0, col: 5, rotation: 0 },
+        { shipIndex: 3, row: 6, col: 0, rotation: 0 },
+      ];
+    }
+
+    it('place U-shape near right edge fails (out of bounds)', () => {
+      const h = createGame('test', { irregularShips: true });
+      const placements = irregularPlacements();
+      // U is 2x3 in its base orientation; at col 8 it would need col 10.
+      placements[0] = { shipIndex: 0, row: 0, col: 8, rotation: 0 };
+      const result = h.action('Alice', { type: 'place_ships', placements });
+      expect(result.ok).toBe(false);
+    });
+
+    it('irregular placement rejects overlap between two shapes', () => {
+      const h = createGame('test', { irregularShips: true });
+      const placements = irregularPlacements();
+      // Move Z onto cell (1,0), which is already occupied by U.
+      placements[1] = { shipIndex: 1, row: 1, col: 0, rotation: 0 };
+      const result = h.action('Alice', { type: 'place_ships', placements });
+      expect(result.ok).toBe(false);
+    });
+
+    it('valid irregular placement accepted and matches U cell count', () => {
+      const h = createGame('test', { irregularShips: true });
+      const result = h.action('Alice', { type: 'place_ships', placements: irregularPlacements() });
+      expect(result.ok).toBe(true);
+      // Ship value 1 = U (5 cells); grid should record exactly 5 ones.
+      const grid = h.rawState.players[0].grid as number[];
+      const uCells = grid.filter((v) => v === 1).length;
+      expect(uCells).toBe(5);
+    });
+
+    it('fire hits one cell then sinks U only after all 5 cells are hit', () => {
+      const h = createGame('test', { irregularShips: true });
+      h.action('Alice', { type: 'place_ships', placements: irregularPlacements() });
+      h.action('Bob', { type: 'place_ships', placements: irregularPlacements() });
+      // Bob's U occupies (0,0),(0,2),(1,0),(1,1),(1,2). Alice fires them one by
+      // one, with a harmless Bob shot between each to keep turn parity.
+      const uCells: [number, number][] = [
+        [0, 0],
+        [0, 2],
+        [1, 0],
+        [1, 1],
+        [1, 2],
+      ];
+      const bobDecoys: [number, number][] = [
+        [9, 9],
+        [9, 8],
+        [9, 7],
+        [9, 6],
+      ];
+      for (let i = 0; i < uCells.length; i++) {
+        const [row, col] = uCells[i];
+        h.action('Alice', { type: 'fire', row, col });
+        // After the 4th hit, U is still not sunk (one cell remaining), so
+        // overall game continues and Bob still has a turn.
+        if (i < uCells.length - 1) {
+          expect(h.view('Alice').opponentShipsSunk[0]).toBe(false);
+          const [br, bc] = bobDecoys[i];
+          h.action('Bob', { type: 'fire', row: br, col: bc });
+        }
+      }
+      // Final cell hit sinks U.
+      expect(h.view('Alice').opponentShipsSunk[0]).toBe(true);
+      // Other ships not sunk yet.
+      expect(h.view('Alice').opponentShipsSunk[1]).toBe(false);
+    });
+
+    it('placement with rotation and with mirror both succeed on valid spots', () => {
+      // L rotated 90°: cells collapse to (0,0),(0,1),(0,2),(1,0) — fits at (0,0).
+      const rotated: ShipPlacement[] = [
+        { shipIndex: 0, row: 5, col: 0, rotation: 0 },
+        { shipIndex: 1, row: 3, col: 5, rotation: 0 },
+        { shipIndex: 2, row: 0, col: 0, rotation: 1 },
+        { shipIndex: 3, row: 8, col: 0, rotation: 0 },
+      ];
+      const h1 = createGame('test', { irregularShips: true });
+      expect(h1.action('Alice', { type: 'place_ships', placements: rotated }).ok).toBe(true);
+
+      // L mirrored: cells (0,0),(1,0),(2,0),(2,-1) -> normalize -> (0,1),(1,1),(2,0),(2,1).
+      // Fits at (0, 0) occupying (0,1),(1,1),(2,0),(2,1) — does not collide with
+      // U at (0,0) because U uses (0,0),(0,2),(1,0),(1,1),(1,2). Wait — U's
+      // (1,1) and mirrored-L's (1,1) would clash. Place mirrored L at (5, 5)
+      // instead for guaranteed isolation.
+      const mirrored: ShipPlacement[] = [
+        { shipIndex: 0, row: 0, col: 0, rotation: 0 },
+        { shipIndex: 1, row: 3, col: 0, rotation: 0 },
+        { shipIndex: 2, row: 5, col: 5, rotation: 0, mirror: true },
+        { shipIndex: 3, row: 6, col: 0, rotation: 0 },
+      ];
+      const h2 = createGame('test', { irregularShips: true });
+      expect(h2.action('Alice', { type: 'place_ships', placements: mirrored }).ok).toBe(true);
+    });
+  });
 });

@@ -491,3 +491,19 @@ Total stories: 46
   - Zod `z.object({ a: z.boolean().default(false), b: z.boolean().default(false) })` returns a PROPER config for both `{}` and `{ a: true }`, but fails (falls to catch-block) when a wrong *type* is supplied: `{ a: 'oops' }`. Parse-and-fallback via `parseConfig` keeps invalid runtime input from crashing setup.
   - RoomOptionsPanel (US-014) auto-generates a checkbox for any `z.boolean()` field at the top level of configSchema — adding `irregularShips` to the schema is sufficient to get the UI toggle for free. No Room.tsx / panel changes needed for this story.
 ---
+
+## 2026-05-09 - US-029
+- Generalized battleship shared.ts: validateShipPlacements / placeShipsOnGrid / checkAllShipsSunk now accept the runtime fleet (defaulting to CLASSIC_SHIPS for callers that have not been updated). logic.ts threads state.fleet through these and replaces CLASSIC_SHIPS usage in getPlayerView / getSpectatorView with state.fleet so the 4-ship irregular variant does not report ghost ship #5.
+- Added `mirror?: boolean` to ShipPlacement and to rotateOffsets/getAbsolutePositions. Mirror is applied as `(r, c) -> (r, -c)` before the rotation steps, then re-normalized so the bounding box is anchored at (0, 0). Classic straight ships are symmetric — setting mirror has no observable effect on them — so the new flag only matters for chiral irregular shapes (L, Z, S, etc.).
+- Relaxed the ActionSchema `place_ships.placements` constraint from `.length(5)` to `.min(1).max(5)` so the schema accepts both classic (5) and irregular (4) fleet sizes. Exact-count enforcement moved into `validateShipPlacements(placements, fleet)` which compares against the room's fleet length at the logic layer.
+- Added 5 tests in `games/battleship/logic.test.ts` under `irregularShips place + fire`: U-shape near right edge out-of-bounds, irregular overlap rejected, valid irregular placement records correct cell count, U-shape hit/sink progression across 5 shots, and placement with rotation + placement with mirror both succeed on valid spots.
+- Files changed:
+  - games/battleship/shared.ts
+  - games/battleship/logic.ts
+  - games/battleship/logic.test.ts (+5 tests, 34->39 in logic.test.ts, shapes.test.ts unchanged at 73)
+- **Learnings for future iterations:**
+  - The battleship `place_ships` Zod schema was `z.array(...).length(5)`. For multi-variant fleets, move exact-count validation into the logic layer (where `state.fleet.length` is known) and keep schema bounds as `min..max`. The discriminated union does not rely on the exact count, so this does not widen the action surface meaningfully.
+  - Mirror-before-rotate is the conventional chirality convention (mirror flips the base shape; rotation then orients it). Applying in the opposite order yields the same 8-orientation group but different `{rotation, mirror}` coordinates — code + UI must agree. Existing rotateOffsets(offsets, rotation) callers pass `mirror = false` by default, so the new optional arg is non-breaking.
+  - `GameTestHarness.action(pid, action)` requires the action to pass the Zod schema before hitting `onAction`. When relaxing schema constraints to delegate validation to logic, always test the rejection path still bounces at the logic layer (see "irregular overlap" test — the placements pass schema but logic returns ok=false).
+  - getPlayerView/getSpectatorView previously used `CLASSIC_SHIPS.map(...)` to build the `myShipsSunk` / `opponentShipsSunk` arrays. After migrating to `state.fleet.map(...)` the array length shrinks to 4 in irregular mode — any Board.tsx code that iterates a fixed 5-element sunk list (none today, but flag for UI stories) must switch to `state.fleet.length` or `view.opponentShipsSunk.length`.
+---
