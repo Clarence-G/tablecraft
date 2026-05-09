@@ -237,10 +237,18 @@ export function Board({
       return;
     }
 
-    // Select own moveable tile
+    // Select own moveable tile (or toggle off if same tile clicked again)
     if (tile.color === state.myColor && moveableTileSet.has(key)) {
-      setSelectedTileCoord(tile.coord);
-      setSelectedPieceType(null);
+      if (
+        selectedTileCoord &&
+        selectedTileCoord.q === tile.coord.q &&
+        selectedTileCoord.r === tile.coord.r
+      ) {
+        clearSelection();
+      } else {
+        setSelectedTileCoord(tile.coord);
+        setSelectedPieceType(null);
+      }
     }
   }
 
@@ -394,7 +402,7 @@ export function Board({
 
       {/* Piece inventory / placement panel */}
       {!gameOver && (
-        <div className="w-full max-w-lg bg-card/85 backdrop-blur-sm border-2 border-foreground/40 rounded-[12px] p-3 shadow-[4px_4px_0px_0px_rgba(26,17,8,0.4)]">
+        <div className="w-full max-w-lg bg-hand-bg-light border-2 border-foreground/40 rounded-[12px] p-3 shadow-[4px_4px_0px_0px_rgba(26,17,8,0.4)]">
           <div className="text-xs text-muted-foreground font-medium mb-2">
             {isMyTurn ? t('selectPiece') : t('waiting')}
           </div>
@@ -425,7 +433,10 @@ export function Board({
                       width={512}
                       height={512}
                       style={{
-                        filter: state.myColor === 'white' ? 'none' : 'invert(1)',
+                        filter:
+                          state.myColor === 'white'
+                            ? 'invert(1) drop-shadow(0 0 3px rgba(26,17,8,0.9)) drop-shadow(0 0 1px rgba(26,17,8,1))'
+                            : 'none',
                       }}
                     />
                   </svg>
@@ -437,24 +448,6 @@ export function Board({
               );
             })}
           </div>
-          {selectedPieceType && (
-            <button
-              type="button"
-              onClick={clearSelection}
-              className="mt-2 text-xs text-muted-foreground underline"
-            >
-              {t('deselect')}
-            </button>
-          )}
-          {selectedTileCoord && (
-            <button
-              type="button"
-              onClick={clearSelection}
-              className="mt-2 text-xs text-muted-foreground underline"
-            >
-              {t('deselectPiece')}
-            </button>
-          )}
           {canPass && (
             <button
               type="button"

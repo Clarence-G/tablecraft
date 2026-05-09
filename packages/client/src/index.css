@@ -59,6 +59,9 @@
   --color-piece-red: var(--piece-red);
   --color-piece-yellow: var(--piece-yellow);
 
+  /* Hand tray background — exposed as bg-hand-bg-light for per-color trays */
+  --color-hand-bg-light: var(--hand-bg-light);
+
   /* Radius - skeuomorphic rounded corners */
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -118,6 +121,10 @@
   /* Connect Four piece colors — solid fills used as the radial gradient base */
   --piece-red: #d94040;
   --piece-yellow: #d97706;
+
+  /* Hand tray backgrounds — darker than --secondary so white pieces
+     sitting in a hand panel keep >=4.5:1 contrast against their tray. */
+  --hand-bg-light: #d6c8af;
 
   /* Skeuomorphic shadow offset — slightly darker than --foreground so the
      4px/4px/0/0 drop-shadows on boards, cards, and buttons read as punchy
