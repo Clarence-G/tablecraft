@@ -1,8 +1,8 @@
 import { GameTestHarness } from '@repo/shared/testing';
 import { describe, expect, it } from 'vitest';
 import { logic } from './logic';
-import type { Action, PlayerView, ShipPlacement } from './shared';
-import { CLASSIC_SHIPS, FAST_MODE_SHOTS_PER_TURN, GRID_SIZE } from './shared';
+import type { Action, PlayerView, ShipDefinition, ShipPlacement } from './shared';
+import { CLASSIC_SHIPS, FAST_MODE_SHOTS_PER_TURN, GRID_SIZE, IRREGULAR_FLEET } from './shared';
 
 type Harness = GameTestHarness<any, Action, PlayerView>;
 
@@ -370,6 +370,54 @@ describe('Battleship Logic', () => {
       placeBoth(h);
       expect(h.view('Alice').fastMode).toBe(false);
       expect(h.view('Alice').shotsRemaining).toBe(1);
+    });
+  });
+
+  describe('irregularShips option', () => {
+    function isStraight(ship: ShipDefinition): boolean {
+      if (ship.offsets.length <= 1) return true;
+      const allSameRow = ship.offsets.every((o) => o[0] === ship.offsets[0][0]);
+      const allSameCol = ship.offsets.every((o) => o[1] === ship.offsets[0][1]);
+      return allSameRow || allSameCol;
+    }
+
+    it('irregularShips=false keeps the classic straight fleet unchanged', () => {
+      const h = createGame('test', { irregularShips: false });
+      const fleet = h.rawState.fleet as ShipDefinition[];
+      expect(fleet).toBe(CLASSIC_SHIPS);
+      expect(fleet).toHaveLength(CLASSIC_SHIPS.length);
+      expect(fleet.every(isStraight)).toBe(true);
+      const totalCells = fleet.reduce((sum, s) => sum + s.offsets.length, 0);
+      expect(totalCells).toBe(17);
+    });
+
+    it('defaults irregularShips=false when config omitted', () => {
+      const h = createGame();
+      const fleet = h.rawState.fleet as ShipDefinition[];
+      expect(fleet).toBe(CLASSIC_SHIPS);
+    });
+
+    it('irregularShips=true yields zero straight ships and ~17 total cells', () => {
+      const h = createGame('test', { irregularShips: true });
+      const fleet = h.rawState.fleet as ShipDefinition[];
+      expect(fleet).toHaveLength(IRREGULAR_FLEET.length);
+      expect(fleet.some(isStraight)).toBe(false);
+      const totalCells = fleet.reduce((sum, s) => sum + s.offsets.length, 0);
+      expect(totalCells).toBeGreaterThanOrEqual(15);
+      expect(totalCells).toBeLessThanOrEqual(19);
+    });
+
+    it('irregularShips=true fleet names come from SHIP_SHAPES ids', () => {
+      const h = createGame('test', { irregularShips: true });
+      const fleet = h.rawState.fleet as ShipDefinition[];
+      const names = fleet.map((s) => s.name);
+      expect(names).toEqual([...IRREGULAR_FLEET]);
+    });
+
+    it('invalid irregularShips config falls back to classic fleet', () => {
+      const h = createGame('test', { irregularShips: 'nope' });
+      const fleet = h.rawState.fleet as ShipDefinition[];
+      expect(fleet).toBe(CLASSIC_SHIPS);
     });
   });
 });

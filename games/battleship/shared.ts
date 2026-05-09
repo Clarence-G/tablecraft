@@ -1,11 +1,16 @@
 import type { GameMeta } from '@repo/shared';
 import { z } from 'zod';
+import { getShape } from './shapes';
 
 export const BattleshipConfigSchema = z.object({
   fastMode: z.boolean().default(false),
+  irregularShips: z.boolean().default(false),
 });
 export type BattleshipConfig = z.infer<typeof BattleshipConfigSchema>;
-export const BATTLESHIP_DEFAULT_CONFIG: BattleshipConfig = { fastMode: false };
+export const BATTLESHIP_DEFAULT_CONFIG: BattleshipConfig = {
+  fastMode: false,
+  irregularShips: false,
+};
 export const FAST_MODE_SHOTS_PER_TURN = 5;
 
 export const meta: GameMeta = {
@@ -126,6 +131,31 @@ export const CLASSIC_SHIPS: ShipDefinition[] = [
 ];
 
 export const SHIP_NAMES_ZH: string[] = ['航母', '战列舰', '巡洋舰', '潜艇', '驱逐舰'];
+
+/**
+ * Shape ids (from `SHIP_SHAPES` in `./shapes.ts`) used when the host
+ * enables `irregularShips`. The selected entries total 17 cells —
+ * matching the classic fleet — so hit counts stay balanced:
+ *   U (5) + Z (4) + L (4) + T (4) = 17
+ * Only non-straight polyominoes are listed; a "straight" ship has
+ * every offset on the same row or column after normalization.
+ */
+export const IRREGULAR_FLEET: readonly string[] = ['U', 'Z', 'L', 'T'];
+
+export function buildIrregularFleet(): ShipDefinition[] {
+  return IRREGULAR_FLEET.map((id) => {
+    const shape = getShape(id);
+    if (!shape) throw new Error(`Unknown ship shape: ${id}`);
+    return {
+      name: id,
+      offsets: shape.cells.map(([r, c]) => [r, c] as [number, number]),
+    };
+  });
+}
+
+export function buildFleet(irregularShips: boolean): ShipDefinition[] {
+  return irregularShips ? buildIrregularFleet() : CLASSIC_SHIPS;
+}
 
 /**
  * i18n keys matching the order of CLASSIC_SHIPS. Look up via

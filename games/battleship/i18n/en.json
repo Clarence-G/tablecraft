@@ -14,7 +14,8 @@
   "shotsRemaining": "Shots remaining: {{count}}",
   "endTurn": "End turn",
   "options": {
-    "fastMode": "Fast mode (5 shots per turn)"
+    "fastMode": "Fast mode (5 shots per turn)",
+    "irregularShips": "Irregular ships (non-straight fleet)"
   },
   "sunk": "Sunk",
   "ourLosses": "Our Losses",

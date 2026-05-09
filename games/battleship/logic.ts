@@ -16,7 +16,9 @@ import {
   GRID_SIZE,
   type Phase,
   type PlayerView,
+  type ShipDefinition,
   TOTAL_CELLS,
+  buildFleet,
   checkAllShipsSunk,
   checkShipSunk,
   placeShipsOnGrid,
@@ -38,6 +40,8 @@ interface BattleshipState {
   /** Shots fired by the current player so far this turn (for fastMode). */
   shotsThisTurn: number;
   fastMode: boolean;
+  /** Fleet definition for this match (classic or irregular, chosen from config). */
+  fleet: ShipDefinition[];
   winner: string | null;
 }
 
@@ -70,6 +74,7 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
       currentPlayerIdx: 0,
       shotsThisTurn: 0,
       fastMode: parsed.fastMode,
+      fleet: buildFleet(parsed.irregularShips),
       winner: null,
     };
   },

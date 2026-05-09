@@ -14,7 +14,8 @@
   "shotsRemaining": "剩余炮弹：{{count}}",
   "endTurn": "结束回合",
   "options": {
-    "fastMode": "快速模式（每回合 5 发）"
+    "fastMode": "快速模式（每回合 5 发）",
+    "irregularShips": "异形舰队（非直线形状）"
   },
   "sunk": "已击沉",
   "ourLosses": "我方损失",
