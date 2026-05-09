@@ -39,19 +39,20 @@ const DICE_ICON_PATHS: Record<number, string> = {
 };
 
 // ---- Paper-textured scorecard background ----
-// Cream base + faint horizontal ruled lines + a red left margin, like a
-// classic Yahtzee paper scoresheet. Pure CSS gradients — no assets needed.
+// Cream base + red left margin + subtle paper grain, like a classic Yahtzee
+// paper scoresheet. The previous version also drew horizontal ruled lines
+// every 28px, but those clashed with the score rows' own borders — the
+// scoresheet keeps its own horizontal separators, so the notebook ruling is
+// dropped.
 const paperStyle: CSSProperties = {
   backgroundColor: '#fbf4df',
   backgroundImage: [
     // red left margin line
     'linear-gradient(90deg, transparent 0, transparent 18px, rgba(217, 70, 64, 0.35) 18px, rgba(217, 70, 64, 0.35) 19px, transparent 19px)',
-    // horizontal ruled lines every 28px
-    'repeating-linear-gradient(180deg, transparent 0, transparent 27px, rgba(120, 75, 20, 0.12) 27px, rgba(120, 75, 20, 0.12) 28px)',
     // subtle paper grain
     'radial-gradient(ellipse at top left, rgba(255,255,255,0.4), transparent 60%)',
   ].join(','),
-  backgroundRepeat: 'no-repeat, repeat, no-repeat',
+  backgroundRepeat: 'no-repeat, no-repeat',
 };
 
 function SectionHeader({ label }: { label: string }) {

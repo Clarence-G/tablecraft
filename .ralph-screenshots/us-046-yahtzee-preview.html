@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>US-046 Yahtzee scorecard paper background (simplified)</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: #efe4c9;
+      color: #2a1f14;
+      margin: 0;
+      padding: 16px;
+    }
+    /* The actual paperStyle used in games/yahtzee/Board.tsx AFTER the fix —
+       cream + red left margin + subtle grain. No horizontal ruled lines. */
+    .paper {
+      background-color: #fbf4df;
+      background-image:
+        linear-gradient(90deg, transparent 0, transparent 18px, rgba(217, 70, 64, 0.35) 18px, rgba(217, 70, 64, 0.35) 19px, transparent 19px),
+        radial-gradient(ellipse at top left, rgba(255,255,255,0.4), transparent 60%);
+      background-repeat: no-repeat, no-repeat;
+    }
+    .row {
+      border: 1px solid rgba(42, 31, 20, 0.25);
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      background: transparent;
+    }
+    .row .hint { font-size: 11px; color: rgba(42,31,20,0.5); }
+    .section-head { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; color: rgba(42,31,20,0.7); padding: 0 4px; margin-bottom: 6px; }
+    .divider { margin: 12px 0; border-top: 2px solid rgba(42,31,20,0.5); border-bottom: 1px solid rgba(42,31,20,0.5); background: rgba(42,31,20,0.05); height: 3px; }
+    .total { margin-top: 12px; padding-top: 8px; border-top: 2px double rgba(42,31,20,0.6); display: flex; justify-content: space-between; align-items: center; }
+    .card-outer {
+      border: 2px solid #2a1f14;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 4px 4px 0 0 rgba(80, 55, 25, 0.55);
+    }
+  </style>
+</head>
+<body>
+<div id="app" style="max-width: 480px; margin: 0 auto;">
+  <div class="card-outer paper">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <span style="font-weight:600;">My Scorecard</span>
+      <span style="font-size:12px; color:rgba(42,31,20,0.6); text-decoration:underline;">Collapse</span>
+    </div>
+    <div style="font-size:12px; color:rgba(42,31,20,0.6); margin-bottom:8px;">
+      Upper section sum 22/63 <span>need 41 more for +35 bonus</span>
+    </div>
+    <div style="width:100%; height:6px; background:rgba(42,31,20,0.15); border-radius:999px; overflow:hidden; margin-bottom:12px;">
+      <div style="width:35%; height:100%; background:#6b9f4a; border-radius:999px;"></div>
+    </div>
+
+    <div class="section-head">Upper</div>
+    <div style="display:flex; flex-direction:column; gap:4px; margin-bottom:8px;">
+      <div class="row"><div><div style="font-weight:500;">Ones</div><div class="hint">Sum of 1s</div></div><div style="font-family:ui-monospace,monospace; font-weight:600;">3</div></div>
+      <div class="row"><div><div style="font-weight:500;">Twos</div><div class="hint">Sum of 2s</div></div><div style="font-family:ui-monospace,monospace; font-weight:600;">6</div></div>
+      <div class="row"><div><div style="font-weight:500;">Threes</div><div class="hint">Sum of 3s</div></div><div style="font-family:ui-monospace,monospace; font-weight:600;">9</div></div>
+      <div class="row"><div><div style="font-weight:500;">Fours</div><div class="hint">Sum of 4s</div></div><div style="font-family:ui-monospace,monospace; font-weight:600;">--</div></div>
+      <div class="row"><div><div style="font-weight:500;">Fives</div><div class="hint">Sum of 5s</div></div><div style="font-family:ui-monospace,monospace; font-weight:600;">--</div></div>
+      <div class="row"><div><div style="font-weight:500;">Sixes</div><div class="hint">Sum of 6s</div></div><div style="font-family:ui-monospace,monospace; font-weight:600;">--</div></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-head">Lower</div>
+    <div style="display:flex; flex-direction:column; gap:4px;">
+      <div class="row"><div><div style="font-weight:500;">Three of a kind</div><div class="hint">Sum of all dice</div></div><div style="font-family:ui-monospace,monospace; font-weight:600;">21</div></div>
+      <div class="row"><div><div style="font-weight:500;">Four of a kind</div><div class="hint">Sum of all dice</div></div><div style="font-family:ui-monospace,monospace; font-weight:600;">--</div></div>
+      <div class="row"><div><div style="font-weight:500;">Full House</div><div class="hint">25 pts</div></div><div style="font-family:ui-monospace,monospace; font-weight:600;">25</div></div>
+      <div class="row"><div><div style="font-weight:500;">Small Straight</div><div class="hint">30 pts</div></div><div style="font-family:ui-monospace,monospace; font-weight:600;">--</div></div>
+      <div class="row"><div><div style="font-weight:500;">Large Straight</div><div class="hint">40 pts</div></div><div style="font-family:ui-monospace,monospace; font-weight:600;">--</div></div>
+      <div class="row"><div><div style="font-weight:500;">Yahtzee</div><div class="hint">50 pts</div></div><div style="font-family:ui-monospace,monospace; font-weight:600;">--</div></div>
+      <div class="row"><div><div style="font-weight:500;">Chance</div><div class="hint">Sum of all dice</div></div><div style="font-family:ui-monospace,monospace; font-weight:600;">--</div></div>
+    </div>
+
+    <div class="total">
+      <span style="font-weight:600;">Total score</span>
+      <span style="font-size:18px; font-weight:700;">64</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>
