@@ -2,7 +2,7 @@
   "name": "Hive",
   "description": "Insect chess, surround your opponent's Queen Bee",
   "tags": ["Strategy", "Board"],
-  "rules": "Two players take turns placing or moving insect pieces on a hex board. Completely surround the opponent's Queen Bee to win. Queen must be placed by turn 4.",
+  "rules": "Two players take turns placing or moving insect pieces on a hex board. Completely surround the opponent's Queen Bee (all 6 neighbor spaces filled) to win.\n\nPlacement:\n- On your turn, place a new piece from your reserve OR move a piece already on the board.\n- New pieces must touch one of your own and never touch an opponent's piece (except the very first placement).\n- Your Queen Bee must be placed by your 4th turn.\n\nPiece movement:\n1. Queen Bee — slides 1 adjacent space.\n2. Beetle — moves 1 adjacent space; may climb on top of other pieces and stack (the top piece defines that stack's color).\n3. Spider — slides exactly 3 empty spaces around the hive (no backtracking).\n4. Ant — slides any number of empty spaces around the hive.\n5. Grasshopper — jumps in a straight line over one or more contiguous pieces, landing on the first empty space beyond them.\n\nOne-Hive rule: the hive must stay a single connected group at every moment, including mid-move — a piece that would split the hive cannot be moved.\n\nNo-Gate rule: a sliding piece cannot squeeze through a 1-space gap flanked by pieces on both sides (Grasshoppers and Beetles are unaffected).",
   "draw": "Draw!",
   "won": "You Win!",
   "yourTurn": "Your Turn",
