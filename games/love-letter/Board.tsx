@@ -7,7 +7,7 @@ import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LOVE_LETTER_CARD_ART } from './cardArt';
-import { type Action, OTHER_TARGET_CARDS, type PlayerView } from './shared';
+import { type Action, OTHER_TARGET_CARDS, type PlayerView, renderPlayLogEffect } from './shared';
 
 // ---- Card Component ----
 
@@ -239,7 +239,9 @@ export function Board({
                   {entry.guess !== undefined &&
                     ` ${t('guess')}${t(`cardNames.${entry.guess}`)}(${entry.guess})`}
                 </span>
-                <span className="text-muted-foreground/80 ml-auto shrink-0">{entry.effect}</span>
+                <span className="text-muted-foreground/80 ml-auto shrink-0">
+                  {renderPlayLogEffect(entry.effect, playerNames)}
+                </span>
               </div>
             ))}
           </div>

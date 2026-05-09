@@ -626,3 +626,29 @@ Total stories: 46
   - When a game package's vitest config has `include: ['**/*.test.ts']` (not `.tsx`), React component files cannot be imported directly by a test (vite tries to compile `.tsx` through its own transform, which needs jsx-runtime). Workaround: extract any pure helpers into a `.ts` sibling and test those; keep `.tsx` out of the test file graph. This repo's broader jsdom brokenness on macOS already nudged games toward node-env tests, so the pattern lines up with existing conventions.
   - `triggerKey` prop is a clean React idiom for "this animation should restart whenever identity X changes": make it a string built from whatever fields identify the moment (here: shooterId + chamberIndex). In the `useEffect` dep array it naturally drives restarts, and the cleanup function unregisters previous setTimeouts so back-to-back identical-value updates don't stack timers.
 ---
+
+## 2026-05-09 - US-037
+- Expanded `rules` field in games/love-letter/i18n/en.json and zh.json from one-sentence summary to full 8-card listing in number order with counts and effects.
+- shared.ts `rules` (fallback, only shown if i18n lookup fails) left untouched — the agentRules field already contains the full list for bots.
+- Files changed:
+  - games/love-letter/i18n/en.json
+  - games/love-letter/i18n/zh.json
+- **Learnings for future iterations:**
+  - Rules fields are rendered as multi-line strings — use `\n` escapes in JSON with section headers + numbered lists (matches hive/chess conventions established in earlier stories).
+  - `shared.ts.rules` vs `i18n/*.rules` — i18n takes precedence at runtime. Updating only i18n is sufficient for PRDs that scope changes to i18n; don't bundle shared.ts edits unless acceptance criteria call them out.
+---
+
+## 2026-05-09 - US-038
+- Added pure helper `renderPlayLogEffect(effect, playerNames)` in games/love-letter/shared.ts that replaces raw player IDs embedded in server-generated effect strings (e.g. "猜测 alice-uuid 持有...") with their nicknames. Longest-ID-first to avoid substring-of-ID corruption; falls back to the raw ID when no name is registered.
+- games/love-letter/Board.tsx routes `entry.effect` through the helper. `entry.playerId` and `entry.target` were already being mapped via `playerNames[id] ?? id`.
+- Added 3 unit tests under `renderPlayLogEffect` describe block in games/love-letter/logic.test.ts (47 tests total, up from 44): simple substitution, fallback when name missing, and substring-safe multi-ID scenario.
+- Files changed:
+  - games/love-letter/shared.ts (+renderPlayLogEffect)
+  - games/love-letter/Board.tsx (import + wrap effect span)
+  - games/love-letter/logic.test.ts (+3 tests)
+- Browser verification: deferred. Reproducing the bug needs a live 2+ player Love Letter room where opponent IDs are UUIDs and at least one targeted card (Guard/Priest/Baron/Prince/King) has resolved. The helper is a pure string replacer with test coverage for the substitution rule; left to human reviewer on the dev server.
+- **Learnings for future iterations:**
+  - Love Letter's per-card effect strings are built server-side in `logic.ts` and embed `action.target` (raw player ID) verbatim (e.g. ``猜测 ${action.target} 持有...``). The Board component maps structured fields (`playerId`, `target`) but the `effect` text was rendered unmodified — anytime server emits a display string interpolating IDs, the client needs a resolver or a server refactor to structured i18n keys.
+  - When a pure helper post-processes an opaque server string, replacing IDs must sort keys longest-first: if one ID is a prefix of another (e.g. `alice` vs `alice-2`), iterating in key-insertion order can corrupt the longer ID.
+  - `pnpm biome check` flags a multi-line function signature as a format error; biome prefers single-line signatures under its 100-col budget. If a 3-param signature fits on one line, keep it single-line or biome blocks commits.
+---

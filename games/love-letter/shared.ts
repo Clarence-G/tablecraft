@@ -125,3 +125,19 @@ export interface PlayerView {
   removedCards: number[];
   winner: string | null;
 }
+
+/**
+ * Swap raw player IDs embedded in a play-log effect string for their nicknames.
+ * Falls back to the original ID when a name is missing. IDs are substituted
+ * longest-first so that one ID being a substring of another doesn't corrupt
+ * the result.
+ */
+export function renderPlayLogEffect(effect: string, playerNames: Record<string, string>): string {
+  const ids = Object.keys(playerNames).sort((a, b) => b.length - a.length);
+  let result = effect;
+  for (const id of ids) {
+    if (!id) continue;
+    result = result.split(id).join(playerNames[id] ?? id);
+  }
+  return result;
+}

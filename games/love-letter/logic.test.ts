@@ -3,6 +3,7 @@ import { GameTestHarness } from '@repo/shared/testing';
 import { describe, expect, it } from 'vitest';
 import { logic } from './logic';
 import type { Action, PlayerView } from './shared';
+import { renderPlayLogEffect } from './shared';
 
 type Harness = GameTestHarness<any, Action, PlayerView>;
 
@@ -567,6 +568,32 @@ describe('Love Letter Logic', () => {
         messageKey: 'log.win',
         actorId: 'Alice',
       });
+    });
+  });
+
+  describe('renderPlayLogEffect', () => {
+    it('replaces raw player IDs in effect strings with nicknames', () => {
+      const names = {
+        'alice-uuid-123': 'Alice',
+        'bob-uuid-456': 'Bob',
+      };
+      const input = '猜测 bob-uuid-456 持有公主(8)，猜对了！';
+      expect(renderPlayLogEffect(input, names)).toBe('猜测 Bob 持有公主(8)，猜对了！');
+    });
+
+    it('falls back to the raw ID when a nickname is missing', () => {
+      const input = '与 alice-uuid-123 比较手牌，平局';
+      expect(renderPlayLogEffect(input, {})).toBe('与 alice-uuid-123 比较手牌，平局');
+    });
+
+    it('handles multiple IDs in one string and ID-is-substring-of-ID safely', () => {
+      const names = { alice: 'Alice', 'alice-2': 'Alice2' };
+      const input = '与 alice-2 交换了手牌；猜测 alice 持有公主(8)';
+      // Longest ID replaced first — alice-2 -> Alice2 without corrupting the
+      // standalone alice occurrence.
+      expect(renderPlayLogEffect(input, names)).toBe(
+        '与 Alice2 交换了手牌；猜测 Alice 持有公主(8)',
+      );
     });
   });
 });
