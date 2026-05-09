@@ -1,6 +1,6 @@
 import { CardBack } from '@repo/card-ui';
 import { useGameHeaderStatus } from '@repo/game-ui';
-import { HandStrip, PlayingCard } from '@repo/game-ui/card';
+import { PlayingCard } from '@repo/game-ui/card';
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { useGameLog } from '@repo/game-ui/log';
 import type { BoardProps } from '@repo/shared';
@@ -12,7 +12,12 @@ import {
   COLORS,
   type PlayerView,
   UNO_COLORS,
+  UNO_FAN_MD,
+  UNO_FAN_MD_MOBILE,
   type UnoColor,
+  type UnoFanConfig,
+  computeUnoFanDimensions,
+  computeUnoFanSlot,
   deserializeCard,
   getCardAriaLabel,
 } from './shared';
@@ -173,6 +178,94 @@ function describeCard(serialized: string, t: (k: string) => string): string {
   return `${colorLabel} ${label}`;
 }
 
+// ---- UnoHandFan ----
+//
+// Absolute-positioned fan. Each slot's transform is derived purely from
+// (index, count) via `computeUnoFanSlot`, so hovering or selecting a single
+// card never repositions its neighbors. When a card is played or drawn,
+// remaining slots translate smoothly to their new positions via CSS transition.
+//
+// Hover lift is applied on a wrapper div (not on the card itself), and is
+// suppressed while the card is selected. Selected cards lift to a tall
+// position and claim top z-index; clicking a selected card deselects it.
+
+function UnoHandFan({
+  cards,
+  selectedIndex,
+  onCardClick,
+  isMyTurn,
+  config,
+  emptyLabel,
+}: {
+  cards: string[];
+  selectedIndex: number | null;
+  onCardClick: (idx: number) => void;
+  isMyTurn: boolean;
+  config: UnoFanConfig;
+  emptyLabel?: React.ReactNode;
+}) {
+  const count = cards.length;
+  const { width, height } = computeUnoFanDimensions(count, config);
+
+  if (count === 0) {
+    return (
+      <div className="flex justify-center items-center min-h-[4rem] text-xs text-muted-foreground">
+        {emptyLabel ?? null}
+      </div>
+    );
+  }
+
+  return (
+    <div
+      data-testid="uno-hand-fan"
+      data-count={count}
+      className="relative mx-auto"
+      style={{ width, height }}
+    >
+      {cards.map((serialized, i) => {
+        const slot = computeUnoFanSlot(i, count, config);
+        const selected = selectedIndex === i;
+        const slotTransform = `translate(-50%, 0) translate(${slot.translateX}px, ${slot.translateY}px) rotate(${slot.rotate}deg)`;
+        return (
+          <div
+            // UNO hands can contain duplicate cards (e.g. two red_5), so the
+            // index is the only fully disambiguating part of the key. Slots
+            // are absolutely positioned and state-less, so index-based keys
+            // do not hurt reconciliation here.
+            // biome-ignore lint/suspicious/noArrayIndexKey: see above
+            key={`${serialized}|${i}`}
+            data-slot-index={i}
+            data-selected={selected}
+            className="absolute bottom-0 left-1/2"
+            style={{
+              transformOrigin: '50% 100%',
+              transform: slotTransform,
+              transition: 'transform 200ms ease',
+              zIndex: selected ? 100 : i,
+            }}
+          >
+            <div
+              className={
+                selected
+                  ? '-translate-y-7 transition-transform duration-200'
+                  : 'hover:-translate-y-3 transition-transform duration-150'
+              }
+            >
+              <UnoCardFace
+                serialized={serialized}
+                size="normal"
+                selected={false}
+                disabled={!isMyTurn}
+                onClick={() => onCardClick(i)}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ---- Main Board ----
 
 export function Board({
@@ -203,7 +296,6 @@ export function Board({
 
   const topCard = state.topCard;
   const topCardIsWild = topCard === 'wild' || topCard === 'wild_draw_four';
-  const selectedKey = selectedCardIndex !== null ? `${selectedCardIndex}` : null;
 
   const prev = useRef<PlayerView | null>(null);
   const loggedWinner = useRef<string | null>(null);
@@ -467,47 +559,23 @@ export function Board({
             </div>
           </div>
           <span className="sm:hidden">
-            <HandStrip
-              cards={state.myHand.map((serialized, idx) => ({ serialized, idx }))}
-              getKey={(c) => String(c.idx)}
-              selectedKey={selectedKey}
-              onSelect={(_k, c) => handleCardClick(c.idx)}
-              isDisabled={() => !isMyTurn}
-              overlapThreshold={6}
-              maxOverlap={14}
-              cardWidth={56}
-              minTapWidth={44}
+            <UnoHandFan
+              cards={state.myHand}
+              selectedIndex={selectedCardIndex}
+              onCardClick={handleCardClick}
+              isMyTurn={isMyTurn}
+              config={UNO_FAN_MD_MOBILE}
               emptyLabel={t('noCards')}
-              renderCard={(c, { selected, disabled, onSelect }) => (
-                <UnoCardFace
-                  serialized={c.serialized}
-                  size="normal"
-                  selected={selected}
-                  disabled={disabled}
-                  onClick={onSelect}
-                />
-              )}
             />
           </span>
           <span className="hidden sm:block">
-            <HandStrip
-              cards={state.myHand.map((serialized, idx) => ({ serialized, idx }))}
-              getKey={(c) => String(c.idx)}
-              selectedKey={selectedKey}
-              onSelect={(_k, c) => handleCardClick(c.idx)}
-              isDisabled={() => !isMyTurn}
-              overlapThreshold={11}
-              maxOverlap={28}
+            <UnoHandFan
+              cards={state.myHand}
+              selectedIndex={selectedCardIndex}
+              onCardClick={handleCardClick}
+              isMyTurn={isMyTurn}
+              config={UNO_FAN_MD}
               emptyLabel={t('noCards')}
-              renderCard={(c, { selected, disabled, onSelect }) => (
-                <UnoCardFace
-                  serialized={c.serialized}
-                  size="normal"
-                  selected={selected}
-                  disabled={disabled}
-                  onClick={onSelect}
-                />
-              )}
             />
           </span>
 

@@ -94,6 +94,74 @@ export const INITIAL_HAND_SIZE = 7;
 export const DRAW_TWO_COUNT = 2;
 export const WILD_DRAW_FOUR_COUNT = 4;
 
+// ---- Hand fan layout ----
+// Deterministic fan formula for the UNO hand. Slots are computed purely from
+// (index, count) so each card's position is stable for a given hand snapshot,
+// and neighbors do not shift when a single card is hovered (cards are
+// absolutely positioned in the consuming Board).
+
+export interface UnoFanConfig {
+  cardW: number;
+  cardH: number;
+  spreadX: number;
+  rotStep: number;
+  arcStep: number;
+  liftHeadroom: number;
+}
+
+export const UNO_FAN_MD: UnoFanConfig = {
+  cardW: 56,
+  cardH: 80,
+  spreadX: 30,
+  rotStep: 5,
+  arcStep: 3,
+  liftHeadroom: 32,
+};
+
+export const UNO_FAN_MD_MOBILE: UnoFanConfig = {
+  cardW: 56,
+  cardH: 80,
+  spreadX: 22,
+  rotStep: 5,
+  arcStep: 3,
+  liftHeadroom: 32,
+};
+
+export interface UnoFanSlot {
+  rotate: number;
+  translateX: number;
+  translateY: number;
+}
+
+export function computeUnoFanSlot(
+  index: number,
+  count: number,
+  cfg: UnoFanConfig = UNO_FAN_MD,
+): UnoFanSlot {
+  if (count <= 1) return { rotate: 0, translateX: 0, translateY: 0 };
+  const center = (count - 1) / 2;
+  const offset = index - center;
+  return {
+    rotate: offset * cfg.rotStep,
+    translateX: offset * cfg.spreadX,
+    translateY: Math.abs(offset) * cfg.arcStep,
+  };
+}
+
+export function computeUnoFanDimensions(
+  count: number,
+  cfg: UnoFanConfig = UNO_FAN_MD,
+): { width: number; height: number } {
+  if (count <= 1) return { width: cfg.cardW, height: cfg.cardH + cfg.liftHeadroom };
+  const center = (count - 1) / 2;
+  const spreadX = center * cfg.spreadX;
+  const arcY = center * cfg.arcStep;
+  return {
+    width: Math.round(cfg.cardW + 2 * spreadX),
+    height: Math.round(cfg.cardH + arcY + cfg.liftHeadroom),
+  };
+}
+
 // ---- Serialization ----
 
 export function serializeCard(card: UnoCard): string {

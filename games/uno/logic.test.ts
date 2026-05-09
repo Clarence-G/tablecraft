@@ -3,6 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { logic } from './logic';
 import type { Action, PlayerView } from './shared';
 import { deserializeCard, getCardAriaLabel } from './shared';
+import {
+  UNO_FAN_MD,
+  UNO_FAN_MD_MOBILE,
+  computeUnoFanDimensions,
+  computeUnoFanSlot,
+} from './shared';
 
 type Harness = GameTestHarness<any, Action, PlayerView>;
 
@@ -373,5 +379,48 @@ describe('getCardAriaLabel', () => {
       const label = getCardAriaLabel(card, mockT);
       expect(label).toMatch(/红色|蓝色|绿色|黄色|变色牌/);
     }
+  });
+});
+
+describe('UNO hand fan layout', () => {
+  it('empty or single hand centers a single slot with zero offset', () => {
+    expect(computeUnoFanSlot(0, 0)).toEqual({ rotate: 0, translateX: 0, translateY: 0 });
+    expect(computeUnoFanSlot(0, 1)).toEqual({ rotate: 0, translateX: 0, translateY: 0 });
+  });
+
+  it('two-card hand mirrors slots across the center', () => {
+    const left = computeUnoFanSlot(0, 2);
+    const right = computeUnoFanSlot(1, 2);
+    expect(left.translateX).toBe(-right.translateX);
+    expect(left.rotate).toBe(-right.rotate);
+    expect(left.translateY).toBe(right.translateY); // symmetric arc
+  });
+
+  it('the middle card in an odd-count hand stays centered', () => {
+    const mid = computeUnoFanSlot(2, 5);
+    expect(mid).toEqual({ rotate: 0, translateX: 0, translateY: 0 });
+  });
+
+  it('slots are purely a function of (index, count) and never depend on neighbors', () => {
+    // The invariant underpinning the "only-hovered-card-translates" UX: a slot
+    // transform for index 3 in a 7-card hand is identical every render.
+    const snapshot = computeUnoFanSlot(3, 7);
+    for (let i = 0; i < 5; i++) expect(computeUnoFanSlot(3, 7)).toEqual(snapshot);
+  });
+
+  it('hand dimensions grow with card count and include lift headroom', () => {
+    const one = computeUnoFanDimensions(1);
+    const seven = computeUnoFanDimensions(7);
+    expect(seven.width).toBeGreaterThan(one.width);
+    expect(seven.height).toBeGreaterThan(one.height);
+    // Height always reserves vertical space for the selected-card lift so the
+    // surrounding hand panel doesn't clip the lifted card.
+    expect(one.height - UNO_FAN_MD.cardH).toBeGreaterThanOrEqual(UNO_FAN_MD.liftHeadroom);
+  });
+
+  it('mobile config spreads narrower than desktop config for the same count', () => {
+    const desktop = computeUnoFanDimensions(7, UNO_FAN_MD);
+    const mobile = computeUnoFanDimensions(7, UNO_FAN_MD_MOBILE);
+    expect(mobile.width).toBeLessThan(desktop.width);
   });
 });
