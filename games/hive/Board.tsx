@@ -320,7 +320,7 @@ export function Board({
       )}
 
       {/* Hex board */}
-      <div className="bg-foreground/5 border-2 border-foreground/40 rounded-[12px] overflow-hidden w-full max-w-lg shadow-[4px_4px_0px_0px_rgba(26,17,8,0.35)]">
+      <div className="bg-card border-thick border-foreground rounded-[16px] overflow-hidden w-full max-w-lg shadow-[4px_4px_0px_0px_hsl(var(--shadow))]">
         {/* biome-ignore lint/a11y/noSvgWithoutTitle: game board SVG */}
         <svg
           viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`}

@@ -563,3 +563,29 @@ Total stories: 46
   - To reach a HIVE/connect/strategy room mid-play in an agent-browser session: `POST http://localhost:3001/api/admin/token` {"botName":"anything"} returns `{token,userId}`; then `TABLECRAFT_TOKEN=<token> tsx packages/cli/src/index.ts rooms join <code>` makes the bot auto-ready. Host sees the "开始游戏" button appear and can click to start. Rooms fail-open to an error boundary if the socket disconnects — reload the `/rooms/<code>` URL to recover.
   - Adding a new Tailwind color utility requires BOTH an entry in `:root` AND `--color-<name>` alias in `@theme inline` (already codified in Codebase Patterns). Verified: `bg-hand-bg-light` worked immediately without a server restart.
 ---
+
+## 2026-05-09 - US-033
+- Expanded HIVE `rules` in games/hive/i18n/en.json and zh.json: placement summary + 5 numbered piece-movement bullets (Queen 1, Beetle 1+stack, Spider 3, Ant any, Grasshopper jump) + One-Hive + No-Gate rules
+- No Board.tsx change — `packages/client/src/pages/Room.tsx` already renders `gameRules` inside a `<p class="whitespace-pre-line">`, so `\n` in the JSON string becomes a visible line break
+- Files changed:
+  - games/hive/i18n/en.json
+  - games/hive/i18n/zh.json
+- **Learnings for future iterations:**
+  - `Room.tsx` uses `whitespace-pre-line` on the rules paragraph (line 181) — any game can break rules into paragraphs/numbered lists with plain `\n` in its i18n rules string. No markdown parser or layout tweak required.
+  - The `meta.rules` fallback in `shared.ts` is only used when i18n is missing — prefer editing i18n files for localized rule text and leave `meta.rules` as a short one-liner fallback.
+  - `pnpm biome check <file>` accepts JSON files directly; fast sanity check before committing i18n edits.
+---
+
+## 2026-05-09 - US-034
+- Swapped HIVE `Board.tsx` board container from `bg-foreground/5 border-2 border-foreground/40 rounded-[12px] shadow-[4px_4px_0px_0px_rgba(26,17,8,0.35)]` to `bg-card border-thick border-foreground rounded-[16px] shadow-[4px_4px_0px_0px_hsl(var(--shadow))]` — DESIGN.md-compliant skeuomorphic board surface.
+- Page background remains unchanged (no body/container touch); only the inner playing surface was restyled.
+- All colors are tokens (`bg-card`, `border-foreground`, `hsl(var(--shadow))`); no hardcoded hex.
+- Files changed:
+  - games/hive/Board.tsx (1-line className swap on board container div)
+- Screenshots: .ralph-screenshots/us-034-hive-before-after-default-mobile.png (375px) and .ralph-screenshots/us-034-hive-before-after-default-desktop.png (1440px). Side-by-side before/after preview; after has visibly crisper edges against the cream page background.
+- Browser verification: synthetic preview only (no live socket hive room setup in this iteration). The change is a pure className swap — no runtime/state touched — so the screenshot preview faithfully represents the rendered board surface.
+- **Learnings for future iterations:**
+  - `.border-thick` is a utility class defined in `packages/client/src/index.css` under `@layer utilities` — 2.5px per DESIGN.md §4. Use it instead of `border-2` for main panel/board surfaces.
+  - `hsl(var(--shadow))` is the canonical way to refer to the `--shadow: #1a1108` token in arbitrary Tailwind shadow utilities. Already used by yahtzee, texas-holdem, gomoku — stay consistent.
+  - When migrating board backgrounds away from `bg-foreground/5` tints, `bg-card` (pure white) is the DESIGN.md-prescribed surface for "paper-white" playing areas. The earlier tint blended into the `bg-background` cream because both derive from the foreground brown.
+---
