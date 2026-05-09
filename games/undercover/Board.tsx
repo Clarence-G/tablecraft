@@ -1,9 +1,15 @@
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Action, PlayerInfo, PlayerView } from './shared';
+
+interface RevealState {
+  name: string;
+  role: 'civilian' | 'undercover';
+  roleLabel: string;
+}
 
 export function Board({
   state,
@@ -20,28 +26,32 @@ export function Board({
 }: BoardProps<PlayerView, Action>) {
   const { t } = useTranslation('undercover');
   const [descText, setDescText] = useState('');
-  const [eliminationBanner, setEliminationBanner] = useState<{ name: string; role: string } | null>(
-    null,
-  );
+  const [reveal, setReveal] = useState<RevealState | null>(null);
+  const [revealFlipped, setRevealFlipped] = useState(false);
   const prevElimCount = useRef(state.players.filter((p) => !p.alive).length);
 
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
   const safeSend = isSending ? () => {} : sendAction;
 
-  // Show elimination banner when a new player gets eliminated
+  // Show reveal card when a new player gets eliminated (card flip + 3s hold)
   useEffect(() => {
     const elimCount = state.players.filter((p) => !p.alive).length;
     if (elimCount > prevElimCount.current) {
-      const justEliminated = state.players.find((p) => !p.alive && p.role !== null);
-      if (justEliminated) {
-        const roleKey = justEliminated.role === 'undercover' ? 'undercover' : 'civilian';
-        setEliminationBanner({
+      const justEliminated = [...state.players].filter((p) => !p.alive && p.role !== null).at(-1);
+      if (justEliminated?.role) {
+        setReveal({
           name: playerNames[justEliminated.id] ?? justEliminated.id,
-          role: t(roleKey),
+          role: justEliminated.role,
+          roleLabel: t(justEliminated.role),
         });
-        const timer = setTimeout(() => setEliminationBanner(null), 3000);
+        setRevealFlipped(false);
+        const flipTimer = setTimeout(() => setRevealFlipped(true), 80);
+        const hideTimer = setTimeout(() => setReveal(null), 3000);
         prevElimCount.current = elimCount;
-        return () => clearTimeout(timer);
+        return () => {
+          clearTimeout(flipTimer);
+          clearTimeout(hideTimer);
+        };
       }
     }
     prevElimCount.current = elimCount;
@@ -52,6 +62,23 @@ export function Board({
 
   const canVote =
     state.phase === 'vote' && state.myAlive && !state.players.find((p) => p.id === myId)?.hasVoted;
+
+  // Live vote tally per candidate
+  const voteTally = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const v of state.votes) {
+      counts[v.targetId] = (counts[v.targetId] ?? 0) + 1;
+    }
+    const totalAlive = state.players.filter((p) => p.alive).length;
+    return state.players
+      .filter((p) => p.alive)
+      .map((p) => ({
+        id: p.id,
+        count: counts[p.id] ?? 0,
+        pct: totalAlive > 0 ? ((counts[p.id] ?? 0) / totalAlive) * 100 : 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [state.votes, state.players]);
 
   function handleDescribe() {
     const trimmed = descText.trim();
@@ -68,10 +95,51 @@ export function Board({
 
   return (
     <div className="flex-1 text-foreground flex flex-col p-3 sm:p-4 max-w-3xl lg:max-w-5xl mx-auto w-full gap-3">
-      {/* Elimination banner */}
-      {eliminationBanner && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-destructive text-destructive-foreground px-5 py-3 rounded-xl shadow-lg text-center text-sm font-semibold">
-          {t('eliminatedWithRole', { name: eliminationBanner.name, role: eliminationBanner.role })}
+      {/* Reveal card (centered with flip animation) */}
+      {reveal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-none"
+          aria-live="polite"
+          aria-label={t('eliminatedWithRole', { name: reveal.name, role: reveal.roleLabel })}
+        >
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-44 h-60 sm:w-52 sm:h-72" style={{ perspective: '1200px' }}>
+              <div
+                className="relative w-full h-full transition-transform duration-700 ease-in-out"
+                style={{
+                  transformStyle: 'preserve-3d',
+                  transform: revealFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                }}
+              >
+                {/* Card back */}
+                <div
+                  className="absolute inset-0 rounded-2xl bg-card border-4 border-ring/50 flex items-center justify-center shadow-2xl"
+                  style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                >
+                  <span className="text-6xl font-bold text-muted-foreground">?</span>
+                </div>
+                {/* Card front (role revealed) */}
+                <div
+                  className={`absolute inset-0 rounded-2xl border-4 flex flex-col items-center justify-center gap-2 shadow-2xl ${
+                    reveal.role === 'undercover'
+                      ? 'bg-destructive text-destructive-foreground border-destructive'
+                      : 'bg-primary text-primary-foreground border-primary'
+                  }`}
+                  style={{
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
+                    transform: 'rotateY(180deg)',
+                  }}
+                >
+                  <span className="text-xs uppercase tracking-widest opacity-80">
+                    {reveal.roleLabel}
+                  </span>
+                  <span className="text-2xl font-bold text-center px-2">{reveal.name}</span>
+                  <span className="text-xs opacity-80 mt-1">{t('eliminated')}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -85,15 +153,20 @@ export function Board({
       </div>
 
       {/* Phase + Round header */}
-      <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span className="font-medium">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium text-muted-foreground">
           {state.phase === 'describe'
             ? t('phase_describe')
             : state.phase === 'vote'
               ? t('phase_vote')
               : t('gameOver')}
         </span>
-        <span>{t('round', { round: state.round })}</span>
+        <span
+          className="inline-flex items-center px-3 py-1 rounded-full bg-primary/15 text-primary border border-primary/30 text-xs font-semibold tracking-wide"
+          aria-label={t('round', { round: state.round })}
+        >
+          {t('round', { round: state.round })}
+        </span>
       </div>
 
       {/* Tie notice */}
@@ -113,7 +186,9 @@ export function Board({
             <div
               key={p.id}
               className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all ${
-                isSpeaker ? 'bg-primary/20 ring-1 ring-primary' : 'bg-card/40'
+                isSpeaker
+                  ? 'bg-primary/25 ring-2 ring-primary shadow-md animate-pulse'
+                  : 'bg-card/40'
               } ${isEliminated ? 'opacity-50' : ''}`}
             >
               <PlayerBadge player={p} isCurrentTurn={isSpeaker} isMe={p.id === myId} />
@@ -124,7 +199,7 @@ export function Board({
                     {info?.role ? ` (${t(info.role)})` : ''}
                   </span>
                 ) : isSpeaker ? (
-                  <span className="text-primary">
+                  <span className="text-primary font-semibold">
                     {t('currentSpeaker', { name: '' }).replace(': ', '')}
                   </span>
                 ) : null}
@@ -198,8 +273,9 @@ export function Board({
 
       {/* Vote phase */}
       {state.phase === 'vote' && (
-        <div className="bg-card/60 rounded-xl ring-1 ring-foreground/15 p-3">
-          <div className="text-sm font-medium mb-2">{t('voteTitle')}</div>
+        <div className="bg-card/60 rounded-xl ring-1 ring-foreground/15 p-3 flex flex-col gap-3">
+          <div className="text-sm font-medium">{t('voteTitle')}</div>
+
           {canVote ? (
             <div className="grid grid-cols-2 gap-2">
               {state.players
@@ -222,14 +298,23 @@ export function Board({
             </div>
           )}
 
-          {/* Show votes after all voted */}
-          {state.votes.length > 0 && (
-            <div className="mt-3 space-y-1">
-              {state.votes.map((v, i) => (
-                <div key={i} className="text-xs text-muted-foreground flex gap-1">
-                  <span className="font-medium">{playerNames[v.voterId] ?? v.voterId}</span>
-                  <span>→</span>
-                  <span>{playerNames[v.targetId] ?? v.targetId}</span>
+          {/* Live vote tally bar */}
+          {voteTally.some((v) => v.count > 0) && (
+            <div className="space-y-1.5" aria-label={t('voteTitle')} data-testid="vote-tally">
+              {voteTally.map((v) => (
+                <div key={v.id} className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground w-20 sm:w-24 truncate shrink-0">
+                    {playerNames[v.id] ?? v.id}
+                  </span>
+                  <div className="flex-1 h-3 rounded-full bg-background/60 border border-foreground/10 overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all duration-300"
+                      style={{ width: `${v.pct}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground w-6 text-right shrink-0">
+                    {v.count}
+                  </span>
                 </div>
               ))}
             </div>
