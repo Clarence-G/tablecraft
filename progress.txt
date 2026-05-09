@@ -779,3 +779,15 @@ Total stories: 46
   - Skip detection for UNO is purely a seat-order/direction math problem: if `((to - from) * step + n) % n === 2`, the seat at `(from + step + n) % n` was skipped. Works for skip cards AND draw_two/+4 (the target loses their turn too). Put this in a pure helper in shared.ts so `environment:'node'` tests can cover it without touching React/framer-motion.
   - `useReducedMotion()` returns a boolean ref-ish value from framer-motion; fold it into every `animate={}` prop AND every keyed re-fire (`initial={reduced ? false : {...}}`) so prefers-reduced-motion really turns off every motion path. Setting `initial={false}` alone still lets `animate` arrays run.
 ---
+
+## 2026-05-09 - US-046
+- Dropped the `repeating-linear-gradient(180deg, ...)` horizontal rules layer from `paperStyle` in games/yahtzee/Board.tsx. The score rows each carry their own 1px border, so the notebook-style ruling underneath was creating a visible moire/mis-aligned second set of lines. Cream color, red left margin line, and the subtle paper grain radial are retained.
+- Also updated the `backgroundRepeat` tuple from 3 tokens to 2 (one per remaining layer) and refreshed the doc comment.
+- Files changed:
+  - games/yahtzee/Board.tsx (8 lines net, style-only)
+- Browser verification: built a standalone HTML preview (`.ralph-screenshots/us-046-yahtzee-preview.html`) replicating the new paperStyle + a sample scoresheet, captured at 375px mobile and 1024px tablet. Screenshots confirm the row borders are the only horizontal separators — no clash.
+- Screenshots: `.ralph-screenshots/us-046-yahtzee-default-mobile.png`, `.ralph-screenshots/us-046-yahtzee-tablet-default-1024w.png`
+- **Learnings for future iterations:**
+  - CSS `backgroundImage` multi-layer tuples must keep the `backgroundRepeat` list in lock-step count — dropping a layer in `backgroundImage` without shortening `backgroundRepeat` silently shifts every remaining layer's repeat mode.
+  - Yahtzee's `paperStyle` is used in TWO places (own scorecard AND opponent scorecard dialog body). A single constant update affects both surfaces — no duplicate edit needed.
+---
