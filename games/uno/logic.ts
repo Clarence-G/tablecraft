@@ -10,7 +10,10 @@ import {
   type PlayerView,
   type UnoCard,
   type UnoColor,
+  WILD_DRAW_FOUR_CHALLENGE_MS,
+  WILD_DRAW_FOUR_CHALLENGE_PENALTY,
   WILD_DRAW_FOUR_COUNT,
+  WILD_DRAW_FOUR_TIMER,
   deserializeCard,
   serializeCard,
 } from './shared';
@@ -28,6 +31,18 @@ interface UnoState {
   winner: string | null;
   hasDrawnThisTurn: boolean;
   players: string[];
+  /** Set when a wild_draw_four has been played and the challenger has not yet
+   * resolved. While non-null, the game blocks every action except
+   * challenge_draw_four / accept_draw_four from `challenger`. */
+  awaitingChallenge: AwaitingChallenge | null;
+}
+
+interface AwaitingChallenge {
+  challenger: string;
+  playedBy: string;
+  /** Did playedBy hold any card matching the pile color BEFORE playing the +4?
+   * Private: resolution reads it, view strips it. */
+  playedByHadMatchingColor: boolean;
 }
 
 // ---- Pure helpers (use ctx.random instead of Math.random) ----
@@ -102,6 +117,79 @@ function drawCards(state: UnoState, playerId: string, count: number, ctx: GameCo
       ...s.hands,
       [playerId]: [...(s.hands[playerId] ?? []), ...validDrawn],
     },
+  };
+}
+
+/** Challenge succeeds: playedBy cheated, they draw 4; challenger plays next
+ * turn normally. Challenge fails: challenger draws 6 and is skipped. */
+function resolveChallenge(state: UnoState, ctx: GameContext): ActionResult<UnoState> {
+  const pending = state.awaitingChallenge;
+  if (!pending) return { ok: false, reason: '没有待质疑的 +4' };
+  const challengerIdx = state.players.indexOf(pending.challenger);
+  if (challengerIdx < 0) return { ok: false, reason: '找不到质疑者' };
+
+  const events: EngineEvent[] = [{ type: 'CLEAR_TIMER', name: WILD_DRAW_FOUR_TIMER }];
+  let next: UnoState = { ...state, awaitingChallenge: null, hasDrawnThisTurn: false };
+
+  if (pending.playedByHadMatchingColor) {
+    next = drawCards(next, pending.playedBy, WILD_DRAW_FOUR_COUNT, ctx);
+    next = { ...next, currentPlayerIdx: challengerIdx };
+    events.push(
+      logSystem('log.drawMany', {
+        actorId: pending.playedBy,
+        messageParams: { count: WILD_DRAW_FOUR_COUNT },
+      }),
+    );
+  } else {
+    const penalty = WILD_DRAW_FOUR_COUNT + WILD_DRAW_FOUR_CHALLENGE_PENALTY;
+    next = drawCards(next, pending.challenger, penalty, ctx);
+    const afterChallengerIdx = getNextPlayerIdx(
+      challengerIdx,
+      state.direction,
+      state.players.length,
+      0,
+    );
+    next = { ...next, currentPlayerIdx: afterChallengerIdx };
+    events.push(
+      logSystem('log.drawMany', {
+        actorId: pending.challenger,
+        messageParams: { count: penalty },
+      }),
+    );
+  }
+  return { ok: true, state: next, events };
+}
+
+/** Challenger accepts (or timer expired): challenger draws 4 and is skipped. */
+function resolveAccept(state: UnoState, ctx: GameContext): ActionResult<UnoState> {
+  const pending = state.awaitingChallenge;
+  if (!pending) return { ok: false, reason: '没有待接受的 +4' };
+  const challengerIdx = state.players.indexOf(pending.challenger);
+  if (challengerIdx < 0) return { ok: false, reason: '找不到质疑者' };
+
+  let next = drawCards(state, pending.challenger, WILD_DRAW_FOUR_COUNT, ctx);
+  const afterChallengerIdx = getNextPlayerIdx(
+    challengerIdx,
+    state.direction,
+    state.players.length,
+    0,
+  );
+  next = {
+    ...next,
+    currentPlayerIdx: afterChallengerIdx,
+    awaitingChallenge: null,
+    hasDrawnThisTurn: false,
+  };
+  return {
+    ok: true,
+    state: next,
+    events: [
+      { type: 'CLEAR_TIMER', name: WILD_DRAW_FOUR_TIMER },
+      logSystem('log.drawMany', {
+        actorId: pending.challenger,
+        messageParams: { count: WILD_DRAW_FOUR_COUNT },
+      }),
+    ],
   };
 }
 
@@ -181,12 +269,33 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
       winner: null,
       hasDrawnThisTurn: false,
       players: ctx.players,
+      awaitingChallenge: null,
     };
   },
 
   onAction(state, action, playerID, ctx): ActionResult<UnoState> {
     if (state.phase === 'finished') {
       return { ok: false, reason: '游戏已结束' };
+    }
+
+    // While a +4 challenge is pending, only the challenger may act, and only
+    // via challenge_draw_four / accept_draw_four. Everything else is rejected
+    // so normal turn-order resumes only after the challenge resolves.
+    if (state.awaitingChallenge) {
+      if (action.type !== 'challenge_draw_four' && action.type !== 'accept_draw_four') {
+        return { ok: false, reason: '需要先决定是否质疑 +4' };
+      }
+      if (playerID !== state.awaitingChallenge.challenger) {
+        return { ok: false, reason: '只有被指定的玩家可以质疑/接受' };
+      }
+      if (action.type === 'challenge_draw_four') {
+        return resolveChallenge(state, ctx);
+      }
+      return resolveAccept(state, ctx);
+    }
+
+    if (action.type === 'challenge_draw_four' || action.type === 'accept_draw_four') {
+      return { ok: false, reason: '当前没有 +4 需要决定' };
     }
 
     const currentPlayer = state.players[state.currentPlayerIdx];
@@ -278,6 +387,9 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
     let newActiveColor: UnoColor = state.activeColor;
     let skipCount = 0;
     let drawCount = 0;
+    /** Set when wild_draw_four triggers a challenge window; defers draw/skip
+     * until the challenger resolves. */
+    let pendingChallenge: AwaitingChallenge | null = null;
 
     if (card.type === 'number') {
       newActiveColor = card.color;
@@ -298,9 +410,47 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
     } else if (card.type === 'wild') {
       newActiveColor = action.chosenColor ?? state.activeColor;
       if (card.action === 'wild_draw_four') {
-        drawCount = WILD_DRAW_FOUR_COUNT;
-        skipCount = 1;
+        const challengerIdx = getNextPlayerIdx(
+          state.currentPlayerIdx,
+          state.direction,
+          state.players.length,
+          0,
+        );
+        const challengerId = state.players[challengerIdx];
+        if (challengerId !== undefined) {
+          // `hand` is the player's hand before play_card ran; check if any card
+          // there matched the pile color (the +4 card itself is wild/non-matching).
+          const prevColor = state.activeColor;
+          const playedByHadMatchingColor = hand.some((serialized, idx) => {
+            if (idx === action.cardIndex) return false;
+            const c = deserializeCard(serialized);
+            return c.type !== 'wild' && c.color === prevColor;
+          });
+          pendingChallenge = {
+            challenger: challengerId,
+            playedBy: playerID,
+            playedByHadMatchingColor,
+          };
+        }
       }
+    }
+
+    // +4 triggers a challenge window — freeze turn on the player who played
+    // it; the challenger decides before any draw or skip is applied.
+    if (pendingChallenge) {
+      newState = {
+        ...newState,
+        activeColor: newActiveColor,
+        awaitingChallenge: pendingChallenge,
+      };
+      events.push(playLog);
+      events.push(logAction(playerID, 'log.wild', { color: newActiveColor }));
+      events.push({
+        type: 'SET_TIMER',
+        name: WILD_DRAW_FOUR_TIMER,
+        ms: WILD_DRAW_FOUR_CHALLENGE_MS,
+      });
+      return { ok: true, state: newState, events };
     }
 
     // Draw target is the immediate next player
@@ -375,6 +525,7 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
       phase: state.phase,
       winner: state.winner,
       hasDrawnThisTurn: state.hasDrawnThisTurn,
+      awaitingChallenge: publicAwaitingChallenge(state.awaitingChallenge),
     };
   },
 
@@ -395,6 +546,20 @@ export const logic: GameLogic<UnoState, Action, PlayerView> = {
       phase: state.phase,
       winner: state.winner,
       hasDrawnThisTurn: state.hasDrawnThisTurn,
+      awaitingChallenge: publicAwaitingChallenge(state.awaitingChallenge),
     };
   },
+
+  onTimer(state, timerName, ctx): ActionResult<UnoState> {
+    if (timerName !== WILD_DRAW_FOUR_TIMER) return { ok: false, reason: 'unknown timer' };
+    if (!state.awaitingChallenge) return { ok: false, reason: 'no pending challenge' };
+    return resolveAccept(state, ctx);
+  },
 };
+
+function publicAwaitingChallenge(
+  challenge: AwaitingChallenge | null,
+): PlayerView['awaitingChallenge'] {
+  if (!challenge) return null;
+  return { challenger: challenge.challenger, playedBy: challenge.playedBy };
+}

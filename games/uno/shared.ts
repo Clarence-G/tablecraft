@@ -22,6 +22,8 @@ Actions:
     — cardIndex: 0-based index into myHand. chosenColor: required only for wild/wild_draw_four cards.
   { "type": "draw_card" }  — draw one card from pile (when you can't or don't want to play)
   { "type": "pass" }       — pass turn (only after drawing a card this turn, if drawn card can't be played)
+  { "type": "challenge_draw_four" } — only valid while awaitingChallenge is set and you are awaitingChallenge.challenger. If playedBy had a card matching the pile color before playing +4, they draw 4 and you play next. Otherwise you draw 6 and are skipped.
+  { "type": "accept_draw_four" }    — only valid while awaitingChallenge is set and you are awaitingChallenge.challenger. You draw 4 and are skipped. Auto-fires after a short timeout.
 
 PlayerView fields:
   myHand: string[] — your cards (serialized format)
@@ -34,6 +36,7 @@ PlayerView fields:
   phase: "playing"|"finished"
   hasDrawnThisTurn: boolean — true if you already drew this turn
   winner: string|null
+  awaitingChallenge: { challenger, playedBy } | null — set after a +4 is played, until the challenger challenges, accepts, or the timer runs out.
 
 Play rules: card must match activeColor or top card's value. Wild can always be played. Skip/Reverse/Draw Two have special effects.
 Invalid: playing a card that doesn't match, passing without drawing first.`,
@@ -93,6 +96,12 @@ export const UNO_COLORS = {
 export const INITIAL_HAND_SIZE = 7;
 export const DRAW_TWO_COUNT = 2;
 export const WILD_DRAW_FOUR_COUNT = 4;
+/** Extra penalty a failed challenger pays on top of the original +4 draw. */
+export const WILD_DRAW_FOUR_CHALLENGE_PENALTY = 2;
+/** Seconds the challenger has to decide before auto-accept kicks in. */
+export const WILD_DRAW_FOUR_CHALLENGE_MS = 10000;
+/** Timer name used with SET_TIMER/CLEAR_TIMER for the +4 challenge window. */
+export const WILD_DRAW_FOUR_TIMER = 'uno-challenge';
 
 // ---- Hand fan layout ----
 // Deterministic fan formula for the UNO hand. Slots are computed purely from
@@ -235,6 +244,12 @@ export const ActionSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('pass'),
   }),
+  z.object({
+    type: z.literal('challenge_draw_four'),
+  }),
+  z.object({
+    type: z.literal('accept_draw_four'),
+  }),
 ]);
 
 export type Action = z.infer<typeof ActionSchema>;
@@ -258,4 +273,10 @@ export interface PlayerView {
   phase: 'playing' | 'finished';
   winner: string | null;
   hasDrawnThisTurn: boolean;
+  /** Present while a wild_draw_four is awaiting challenge/accept. Secret
+   * state (`playedByHadMatchingColor`) is never exposed to the client. */
+  awaitingChallenge: {
+    challenger: string;
+    playedBy: string;
+  } | null;
 }

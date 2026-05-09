@@ -323,6 +323,141 @@ describe('UNO Logic', () => {
       }
     });
   });
+
+  describe('wild_draw_four challenge', () => {
+    it('opens a challenge window on +4 — no draw/skip yet, SET_TIMER emitted', () => {
+      const h = create2p();
+      setCurrentPlayerIdx(h, 0);
+      setTopCard(h, 'red_5', 'red');
+      setHand(h, 'Alice', ['wild_draw_four', 'blue_3']);
+      const bobBefore = (h.rawState as any).hands.Bob.length;
+
+      const result = h.action('Alice', {
+        type: 'play_card',
+        cardIndex: 0,
+        chosenColor: 'green',
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.state.awaitingChallenge).toEqual({
+        challenger: 'Bob',
+        playedBy: 'Alice',
+        playedByHadMatchingColor: false,
+      });
+      // Bob has not drawn, turn has not advanced past Alice.
+      expect(result.state.hands.Bob.length).toBe(bobBefore);
+      expect(result.state.currentPlayerIdx).toBe(0);
+      expect(result.state.activeColor).toBe('green');
+      const timer = result.events?.find((e) => e.type === 'SET_TIMER');
+      expect(timer).toMatchObject({ type: 'SET_TIMER', name: 'uno-challenge', ms: 10000 });
+    });
+
+    it('public view strips playedByHadMatchingColor', () => {
+      const h = create2p();
+      setCurrentPlayerIdx(h, 0);
+      setTopCard(h, 'red_5', 'red');
+      setHand(h, 'Alice', ['wild_draw_four', 'red_3']);
+      h.action('Alice', { type: 'play_card', cardIndex: 0, chosenColor: 'blue' });
+
+      for (const viewer of ['Alice', 'Bob'] as const) {
+        const view = h.view(viewer);
+        expect(view.awaitingChallenge).toEqual({ challenger: 'Bob', playedBy: 'Alice' });
+      }
+    });
+
+    it('challenge succeeds when playedBy had a matching color — playedBy draws 4, challenger plays next', () => {
+      const h = create2p();
+      setCurrentPlayerIdx(h, 0);
+      setTopCard(h, 'red_5', 'red');
+      // Alice cheats: she held red_3 but played the +4
+      setHand(h, 'Alice', ['wild_draw_four', 'red_3']);
+      const aliceBefore = (h.rawState as any).hands.Alice.length; // 2
+      const bobBefore = (h.rawState as any).hands.Bob.length;
+
+      const play = h.action('Alice', {
+        type: 'play_card',
+        cardIndex: 0,
+        chosenColor: 'blue',
+      });
+      expect(play.ok).toBe(true);
+
+      const result = h.action('Bob', { type: 'challenge_draw_four' });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      // Alice drew 4 (lost 1 card to play, so aliceBefore - 1 + 4)
+      expect(result.state.hands.Alice.length).toBe(aliceBefore - 1 + 4);
+      // Bob untouched
+      expect(result.state.hands.Bob.length).toBe(bobBefore);
+      // Turn now at Bob (challenger plays)
+      expect(result.state.currentPlayerIdx).toBe(1);
+      expect(result.state.awaitingChallenge).toBeNull();
+      expect(result.events?.some((e) => e.type === 'CLEAR_TIMER')).toBe(true);
+    });
+
+    it('challenge fails when playedBy had no matching color — challenger draws 6 and is skipped', () => {
+      const h = create2p();
+      setCurrentPlayerIdx(h, 0);
+      setTopCard(h, 'red_5', 'red');
+      // Alice only has wilds + off-color — playing +4 was legal
+      setHand(h, 'Alice', ['wild_draw_four', 'blue_3']);
+      const bobBefore = (h.rawState as any).hands.Bob.length;
+
+      h.action('Alice', { type: 'play_card', cardIndex: 0, chosenColor: 'yellow' });
+      const result = h.action('Bob', { type: 'challenge_draw_four' });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.state.hands.Bob.length).toBe(bobBefore + 6);
+      expect(result.state.awaitingChallenge).toBeNull();
+      // 2-player: skipping Bob wraps back to Alice
+      expect(result.state.currentPlayerIdx).toBe(0);
+    });
+
+    it('accept_draw_four draws 4 for challenger and skips them', () => {
+      const h = create2p();
+      setCurrentPlayerIdx(h, 0);
+      setTopCard(h, 'red_5', 'red');
+      setHand(h, 'Alice', ['wild_draw_four', 'blue_3']);
+      const bobBefore = (h.rawState as any).hands.Bob.length;
+
+      h.action('Alice', { type: 'play_card', cardIndex: 0, chosenColor: 'green' });
+      const result = h.action('Bob', { type: 'accept_draw_four' });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.state.hands.Bob.length).toBe(bobBefore + 4);
+      expect(result.state.awaitingChallenge).toBeNull();
+      expect(result.state.currentPlayerIdx).toBe(0);
+    });
+
+    it('timer auto-accepts: challenger draws 4 and is skipped', () => {
+      const h = create2p();
+      setCurrentPlayerIdx(h, 0);
+      setTopCard(h, 'red_5', 'red');
+      setHand(h, 'Alice', ['wild_draw_four', 'blue_3']);
+      const bobBefore = (h.rawState as any).hands.Bob.length;
+
+      h.action('Alice', { type: 'play_card', cardIndex: 0, chosenColor: 'red' });
+      const result = h.timer('uno-challenge');
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.state.hands.Bob.length).toBe(bobBefore + 4);
+      expect(result.state.awaitingChallenge).toBeNull();
+      expect(result.state.currentPlayerIdx).toBe(0);
+    });
+
+    it('only the challenger can challenge/accept — other actions rejected while pending', () => {
+      const h = createGame(['Alice', 'Bob', 'Carol']);
+      setCurrentPlayerIdx(h, 0);
+      setTopCard(h, 'red_5', 'red');
+      setHand(h, 'Alice', ['wild_draw_four', 'blue_3']);
+      setHand(h, 'Carol', ['red_3']);
+
+      h.action('Alice', { type: 'play_card', cardIndex: 0, chosenColor: 'red' });
+      const byCarol = h.action('Carol', { type: 'challenge_draw_four' });
+      expect(byCarol.ok).toBe(false);
+      const normalPlay = h.action('Bob', { type: 'play_card', cardIndex: 0 });
+      expect(normalPlay.ok).toBe(false);
+    });
+  });
 });
 
 // ---- Aria label tests ----
