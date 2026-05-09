@@ -606,3 +606,23 @@ Total stories: 46
   - For "don't shift the board" acceptance criteria, the cheapest fix is `visibility:hidden` on a slot that already has a reserved `min-h-*`. Conditionally rendering the aside would change the flex layout and shift the main column by the gap value; `invisible` preserves layout.
   - `order-1 sm:order-2` + `flex-col sm:flex-row` is the idiomatic pattern for "top banner on mobile, right aside on desktop" in this codebase — two utility classes do both responsive and visual reordering without media queries.
 ---
+
+## 2026-05-09 - US-036
+- New `RevolverAnimation.tsx` in games/liar-bar: 6-chamber SVG cylinder (outer ring + 6 chamber dots + center pin) rotates 0->720deg in 600ms via inline CSS `transform` + `transition`, then a 220ms radial flash overlay (destructive/success color by outcome), then a fade-in result label. Accepts `outcome`, `variant` ('full'|'condensed'), `resultLabel`, `triggerKey`, `onComplete`. The `triggerKey` drives a `useEffect` restart so a new challengeResult plays from scratch even if the same shooter/chamber pair somehow recurs.
+- Pure timing math extracted into `revolverTiming.ts` (SPIN_MS_FULL=600, SPIN_MS_CONDENSED=350, FLASH_MS=220, getAnimationTiming, prefersReducedMotion). Importing from a separate `.ts` file keeps the unit tests runnable under the liar-bar package's node-env vitest config (no React/JSX transform needed).
+- `prefers-reduced-motion` branch: spinMs=0, component renders starting at the 'flash' phase; single flash + label appear, matching the AC.
+- Variant selection in Board: the local shooter gets 'full' (96px SVG, 600ms spin); everyone else gets 'condensed' (56px, 350ms spin). Spectators see a synchronized condensed variant because `triggerKey` + timing are derived from the same challengeResult payload every client receives in `game:state`.
+- Board.tsx: replaced the old single-line "shot / lucky" text under the challenge-result panel with a stacked "trigger pull (chamber N)" caption + `<RevolverAnimation>`. No change to logic, events, or i18n keys.
+- Files changed:
+  - games/liar-bar/RevolverAnimation.tsx (new)
+  - games/liar-bar/RevolverAnimation.test.ts (new, 4 tests)
+  - games/liar-bar/revolverTiming.ts (new)
+  - games/liar-bar/Board.tsx (import + replace static result line with RevolverAnimation)
+- Screenshot: `.ralph-screenshots/us-036-revolver-default-tablet.png` (+ preview HTML). Shows full/hit, full/blank, and condensed/hit post-animation frames — cylinder + 6 chambers render cleanly at both sizes against the cream panel. Full interactive verification (actual 600ms spin + 220ms flash in a live browser) deferred: reproducing needs a 2-player liar-bar room + triggering a challenge mid-round, same deferral pattern as US-003/US-004/US-022/US-026. The animation is driven by inline CSS transition so its correctness is visually reviewable by loading the preview HTML in any browser.
+- Quality gates: `pnpm typecheck` clean; `pnpm --filter @games/liar-bar test` 38/38 pass (34 logic + 4 new timing); `pnpm biome check` on the 4 changed files has zero errors.
+- **Learnings for future iterations:**
+  - For a pure-CSS animation, driving phases via a single `useEffect([triggerKey, ...timing])` + `setTimeout` state-machine (`spin` -> `flash` -> `done`) is simpler than framer-motion for deterministic one-shot animations where the only variables are outcome color and duration. No extra library is needed.
+  - Prefer-reduced-motion should NOT just remove the keyframes — it should shrink the perceptual duration. Setting spinMs=0 and keeping the flash + label flips keeps the "something happened" feedback intact without the spin. Don't collapse to nothing.
+  - When a game package's vitest config has `include: ['**/*.test.ts']` (not `.tsx`), React component files cannot be imported directly by a test (vite tries to compile `.tsx` through its own transform, which needs jsx-runtime). Workaround: extract any pure helpers into a `.ts` sibling and test those; keep `.tsx` out of the test file graph. This repo's broader jsdom brokenness on macOS already nudged games toward node-env tests, so the pattern lines up with existing conventions.
+  - `triggerKey` prop is a clean React idiom for "this animation should restart whenever identity X changes": make it a string built from whatever fields identify the moment (here: shooterId + chamberIndex). In the `useEffect` dep array it naturally drives restarts, and the cleanup function unregisters previous setTimeouts so back-to-back identical-value updates don't stack timers.
+---

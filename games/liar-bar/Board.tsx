@@ -12,6 +12,7 @@ import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { RevolverAnimation } from './RevolverAnimation';
 import { type Action, type Card, type PlayerView, SUIT_COLORS } from './shared';
 
 // Cosmetic suit assignment for the three liar-bar ranks so they render
@@ -151,15 +152,17 @@ export function Board({
                 );
               })}
             </div>
-            <div className="text-xs text-muted-foreground">
-              {playerNames[cr.shooterId] ?? cr.shooterId}{' '}
-              {t('triggerPull', { n: cr.shotChamberIndex + 1 })}
-              {' — '}
-              {cr.shotDied ? (
-                <span className="text-destructive font-semibold">{t('shotEliminated')}</span>
-              ) : (
-                <span className="text-success font-semibold">{t('luckyAlive')}</span>
-              )}
+            <div className="flex flex-col items-center gap-2 mt-3">
+              <div className="text-xs text-muted-foreground">
+                {playerNames[cr.shooterId] ?? cr.shooterId}{' '}
+                {t('triggerPull', { n: cr.shotChamberIndex + 1 })}
+              </div>
+              <RevolverAnimation
+                outcome={cr.shotDied ? 'hit' : 'blank'}
+                variant={cr.shooterId === myId ? 'full' : 'condensed'}
+                resultLabel={cr.shotDied ? t('shotEliminated') : t('luckyAlive')}
+                triggerKey={`${cr.shooterId}:${cr.shotChamberIndex}`}
+              />
             </div>
           </div>
         )}

@@ -593,8 +593,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 36,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "RevolverAnimation component renders a 6-chamber SVG cylinder that rotates 720deg over 600ms (350ms condensed for non-triggering players), followed by a 220ms radial flash (destructive red on hit, success green on blank), then a fade-in result label. prefers-reduced-motion shrinks the animation to just the flash + label (spinMs=0). Board.tsx triggers the animation off challengeResult (triggerKey=shooterId:chamberIndex so restarts work). Timing math extracted into revolverTiming.ts so it can be unit-tested under node env."
     },
     {
       "id": "US-037",
