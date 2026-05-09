@@ -55,6 +55,10 @@
   --color-crown: #7c3aed;
   --color-coral: #e8556d;
 
+  /* Connect Four piece tokens — exposed for bg-piece-red / bg-piece-yellow */
+  --color-piece-red: var(--piece-red);
+  --color-piece-yellow: var(--piece-yellow);
+
   /* Radius - skeuomorphic rounded corners */
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -110,6 +114,10 @@
   /* Gomoku board */
   --board: #d4a056;
   --board-line: #6b5744;
+
+  /* Connect Four piece colors — solid fills used as the radial gradient base */
+  --piece-red: #d94040;
+  --piece-yellow: #d97706;
 
   /* Skeuomorphic shadow offset — slightly darker than --foreground so the
      4px/4px/0/0 drop-shadows on boards, cards, and buttons read as punchy

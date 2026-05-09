@@ -513,8 +513,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 31,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "DiscBoard gets layered CSS wood-grain background (repeating-linear-gradients + ellipse radial highlights); holes have inset shadow; pieces use radial gradients from --piece-red/--piece-yellow tokens + inner specular highlight. drop animation preserved."
     },
     {
       "id": "US-032",

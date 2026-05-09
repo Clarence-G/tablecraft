@@ -1,20 +1,31 @@
 /**
  * DiscBoard — a column-drop grid board (Connect Four style).
- * Renders a grid of circular cells with hover-preview and drop animation.
- * Player colors are passed via the PLAYER_DISC_COLORS token array.
+ * Renders a wood-grain grid of inset holes; filled holes show a glossy piece
+ * (radial gradient + specular highlight) using --piece-red / --piece-yellow tokens.
  */
 
 import { useMemo, useState } from 'react';
 
 /** Two-player color tokens from the design system */
-export const PLAYER_DISC_COLORS: [string, string] = [
-  '#d94040', // Dice Red — player 0
-  '#d97706', // Amber Gold — player 1
+export const PLAYER_DISC_COLORS: [string, string] = ['var(--piece-red)', 'var(--piece-yellow)'];
+
+export const PLAYER_DISC_BG: [string, string] = ['bg-piece-red', 'bg-piece-yellow'];
+
+export const PLAYER_DISC_BG_GHOST: [string, string] = ['bg-piece-red/40', 'bg-piece-yellow/40'];
+
+/** Radial-gradient fills used by pieces inside the board. The light highlight
+ *  is biased to the top-left to read as a specular reflection. */
+const PLAYER_DISC_FILL: [string, string] = [
+  'radial-gradient(circle at 30% 30%, #ff8a8a 0%, var(--piece-red) 45%, #8c1e1e 100%)',
+  'radial-gradient(circle at 30% 30%, #ffd78a 0%, var(--piece-yellow) 45%, #7a4006 100%)',
 ];
 
-export const PLAYER_DISC_BG: [string, string] = ['bg-[#d94040]', 'bg-[#d97706]'];
-
-export const PLAYER_DISC_BG_GHOST: [string, string] = ['bg-[#d94040]/40', 'bg-[#d97706]/40'];
+/** Ghost (hover preview) uses a softer, less saturated fill so it reads as a
+ *  preview rather than a placed piece. */
+const PLAYER_DISC_GHOST_FILL: [string, string] = [
+  'radial-gradient(circle at 30% 30%, rgba(255,138,138,0.6) 0%, rgba(217,64,64,0.4) 60%, rgba(140,30,30,0.4) 100%)',
+  'radial-gradient(circle at 30% 30%, rgba(255,215,138,0.6) 0%, rgba(217,119,6,0.4) 60%, rgba(122,64,6,0.4) 100%)',
+];
 
 interface DiscBoardProps {
   rows: number;
@@ -61,7 +72,7 @@ export function DiscBoard({
 
   return (
     <div
-      className="bg-card border-2 border-foreground rounded-[12px] p-2 shadow-[4px_4px_0px_0px_#3d2e1e] select-none"
+      className="disc-board border-2 border-foreground rounded-[12px] p-2 shadow-[4px_4px_0px_0px_#3d2e1e] select-none"
       onMouseLeave={() => setHoverCol(null)}
     >
       {Array.from({ length: rows }, (_, row) => (
@@ -78,24 +89,29 @@ export function DiscBoard({
             const isGhost = ghostRow === row && hoverCol === col && isEmpty;
             const isWinning = winningCells?.has(idx);
 
+            let discStyle: React.CSSProperties | undefined;
             let discClass = '';
-            if (cellValue === 1) {
-              discClass = `${PLAYER_DISC_BG[0]}${isWinning ? ' ring-2 ring-foreground' : ''}`;
-            } else if (cellValue === 2) {
-              discClass = `${PLAYER_DISC_BG[1]}${isWinning ? ' ring-2 ring-foreground' : ''}`;
+            if (cellValue === 1 || cellValue === 2) {
+              discStyle = { background: PLAYER_DISC_FILL[cellValue - 1] };
+              discClass = isWinning ? 'ring-2 ring-foreground' : '';
             } else if (isGhost) {
-              discClass = PLAYER_DISC_BG_GHOST[myPlayerIndex];
+              discStyle = { background: PLAYER_DISC_GHOST_FILL[myPlayerIndex] };
             }
 
-            const discContent = (cellValue !== 0 || isGhost) && (
+            const hasDisc = cellValue !== 0 || isGhost;
+            const discContent = hasDisc && (
               <div
-                className={`w-8 h-8 rounded-full transition-colors ${discClass}`}
-                style={cellValue !== 0 ? { animation: 'discDrop 0.2s ease-out' } : undefined}
+                className={`disc-piece ${discClass}`}
+                style={{
+                  ...discStyle,
+                  ...(cellValue !== 0 ? { animation: 'discDrop 0.2s ease-out' } : undefined),
+                }}
               />
             );
 
+            // Holes are recessed into the board — darker fill + inset shadow.
             const baseClass =
-              'w-[clamp(44px,6vw,64px)] aspect-square rounded-full bg-muted border border-border flex items-center justify-center';
+              'disc-hole w-[clamp(44px,6vw,64px)] aspect-square rounded-full flex items-center justify-center';
 
             if (isPlayable) {
               return (
@@ -123,6 +139,39 @@ export function DiscBoard({
       ))}
 
       <style>{`
+        .disc-board {
+          background-color: #9a6b3a;
+          background-image:
+            repeating-linear-gradient(
+              92deg,
+              rgba(255, 236, 200, 0.08) 0 1px,
+              transparent 1px 3px,
+              rgba(61, 30, 10, 0.10) 3px 4px,
+              transparent 4px 9px
+            ),
+            repeating-linear-gradient(
+              88deg,
+              rgba(0, 0, 0, 0.06) 0 2px,
+              transparent 2px 14px
+            ),
+            radial-gradient(ellipse at 30% 20%, rgba(255, 220, 170, 0.18), transparent 60%),
+            radial-gradient(ellipse at 70% 80%, rgba(40, 20, 5, 0.22), transparent 65%);
+        }
+        .disc-hole {
+          background: #6b4a26;
+          box-shadow:
+            inset 2px 2px 3px rgba(0, 0, 0, 0.55),
+            inset -1px -1px 2px rgba(255, 220, 170, 0.12);
+        }
+        .disc-piece {
+          width: 95%;
+          height: 95%;
+          border-radius: 9999px;
+          box-shadow:
+            inset -2px -2px 4px rgba(0, 0, 0, 0.35),
+            inset 2px 2px 4px rgba(255, 255, 255, 0.25),
+            0 1px 2px rgba(0, 0, 0, 0.4);
+        }
         @keyframes discDrop {
           from { transform: translateY(-200%); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }

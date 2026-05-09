@@ -17,6 +17,7 @@ Total stories: 46
 - `GameRoom.ledger.test.ts` uses `createTestDb()` and `vi.doMock('../db/index.js', ...)` pattern — integration tests against a real postgres. Poll the ledger (~20ms intervals, 50 iterations) since `recordPoints` is fire-and-forget.
 - In pure game-logic changes (e.g. games/liar-bar/logic.ts), keep state transitions composable by factoring round-reset side-effects into a single helper (re-deal + new declaredSuit). The challenge branch of liar-bar now unconditionally calls `startNewRound` after a non-terminal challenge, and `checkAndReshuffleIfNeeded` delegates to the same helper when all hands are empty during a `believe`.
 - For presentational React components, `renderToStaticMarkup` from `react-dom/server` is a zero-setup unit-test path that avoids the macOS jsdom `html-encoding-sniffer` bug. Works under `environment: 'node'` — assert on the HTML string for class/attr/aria-label checks. Use jsdom only when interaction (fireEvent, useEffect side-effects) is actually under test.
+- To add a new Tailwind color utility (`bg-<token>`, `text-<token>`) in `packages/client/src/index.css`, declare BOTH the raw variable in `:root` (e.g. `--piece-red: #d94040;`) AND its `--color-*` alias inside the `@theme inline` block (e.g. `--color-piece-red: var(--piece-red);`). Only one of the two won't make the utility work.
 
 ## 2026-05-08 - US-001
 - Added `GameStore.resetForRoom()` that zeroes all snapshot fields and clears pending timers
@@ -529,4 +530,22 @@ Total stories: 46
   - For a "preview must never reflow" slot, pick a single viewBox that contains every possible shape and let the SVG scale. Centering inside the fixed N×N (via `offR=(N-rows)/2` etc.) means short shapes don't hug the corner — visually reads like the shape is anchored in the preview frame. This is strictly better than the previous `inline-grid` approach, which sized its grid columns to the shape's current bbox and therefore DID resize on rotate/swap (a silent US-030 acceptance-criterion regression in the old code).
   - React `useEffect` keyboard listeners need both dependencies in the array (`placementActive`, `shipSelected`) so the handler re-binds when the player selects a different ship — otherwise stale closures can capture an old `setRotation` setter (functional setState avoids this most of the time, but React StrictMode still double-invokes effects and would double-add listeners without a clean dep list).
   - Biome's `useArrayIndexKey` rule allows synthesized string keys like `${r}-${c}` without a suppression comment — only `key={idx}` where idx is a plain array index needs the `// biome-ignore` prefix. Dropping stale suppression comments turns warnings into clean passes.
+---
+
+## 2026-05-09 - US-031
+- Added `--piece-red` / `--piece-yellow` CSS variables to `packages/client/src/index.css` :root and exposed them as Tailwind color tokens (`bg-piece-red`, `bg-piece-yellow`) via `@theme inline`.
+- Rebuilt `packages/game-ui/src/board/DiscBoard.tsx`: layered CSS wood-grain background (two `repeating-linear-gradient` stripes + two ellipse radial highlights for bright/shadowed corners), recessed holes with inner shadow, glossy pieces with `radial-gradient` fill (`#ff8a8a` → `--piece-red` → `#8c1e1e`, mirror for yellow) plus an inset highlight box-shadow for the specular pop. Piece width bumped from 32px to 95% of the hole so it actually fills the well. Drop animation (`@keyframes discDrop`) preserved untouched.
+- `PLAYER_DISC_COLORS` now points at `var(--piece-red)` / `var(--piece-yellow)` instead of hex literals. `PLAYER_DISC_BG` / `PLAYER_DISC_BG_GHOST` moved to the token names — existing importers (Connect Four Board's turn pill) keep working because Tailwind resolves `bg-piece-red` through the `@theme inline` declarations.
+- Files changed:
+  - packages/client/src/index.css (+8: `--color-piece-*` in @theme, `--piece-*` in :root)
+  - packages/game-ui/src/board/DiscBoard.tsx (piece gradients, hole/board CSS, 95% piece size)
+- Preview + screenshots:
+  - `.ralph-screenshots/us-031-connect-four-preview.html`
+  - `.ralph-screenshots/us-031-connect-four-default-mobile.png` (375px)
+  - `.ralph-screenshots/us-031-connect-four-desktop-default-1024w.png` (1024px)
+- Quality gates: `pnpm typecheck` OK; `pnpm --filter @games/connect-four test` 16/16 pass; game-ui vitest passes 7/7 tests (14 unhandled jsdom errors are pre-existing macOS-only; DiscBoard.test.tsx does not collect locally, CI will run it). `pnpm biome check` on changed files: DiscBoard.tsx passes (3 pre-existing warnings: noArrayIndexKey, unchanged by this story); no new errors. index.css is not parsed by biome.
+- **Learnings for future iterations:**
+  - Tailwind's `@theme inline` block in `packages/client/src/index.css` is where you add new color tokens so `bg-<token>`/`text-<token>` utilities light up. To add `bg-piece-red`, declare BOTH `--color-piece-red: var(--piece-red);` under `@theme inline` AND `--piece-red: #d94040;` under `:root`. One without the other leaves tailwind with no utility or the utility pointing nowhere.
+  - Good "wood" backgrounds on warm skeuomorphic surfaces come from layering two very thin `repeating-linear-gradient` stripes (slightly-off-90deg angles simulate cross-grain wobble) plus one or two low-opacity `radial-gradient`s that add highlight/shadow "sheen". Pure SVG filters look synthetic; PNG assets bloat the repo. Keep it in CSS.
+  - `PLAYER_DISC_COLORS` is imported by one caller only (connect-four Board turn pill uses `PLAYER_DISC_BG`), but changing the constant shape (string bg class → radial gradient URL) will silently break anyone who wrote `style={{ background: PLAYER_DISC_COLORS[0] }}` expecting a hex. Keep the array shape as string[2] and let CSS handle the rendering.
 ---
