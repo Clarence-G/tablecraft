@@ -11,6 +11,11 @@
   "fleetDeployed": "Fleet Deployed",
   "waitingOpponent": "Waiting for opponent to deploy...",
   "yourTurnFire": "Your turn — click enemy waters to fire",
+  "shotsRemaining": "Shots remaining: {{count}}",
+  "endTurn": "End turn",
+  "options": {
+    "fastMode": "Fast mode (5 shots per turn)"
+  },
   "sunk": "Sunk",
   "ourLosses": "Our Losses",
   "enemyWaters": "Enemy Waters",
@@ -29,6 +34,7 @@
     "placeShips": "deployed their fleet",
     "hit": "fired at ({{row}}, {{col}}) — hit!",
     "miss": "fired at ({{row}}, {{col}}) — miss",
+    "endTurn": "ended their turn",
     "win": "sank all ships — wins!"
   }
 }

@@ -2,12 +2,12 @@ import { GameTestHarness } from '@repo/shared/testing';
 import { describe, expect, it } from 'vitest';
 import { logic } from './logic';
 import type { Action, PlayerView, ShipPlacement } from './shared';
-import { CLASSIC_SHIPS, GRID_SIZE } from './shared';
+import { CLASSIC_SHIPS, FAST_MODE_SHOTS_PER_TURN, GRID_SIZE } from './shared';
 
 type Harness = GameTestHarness<any, Action, PlayerView>;
 
-function createGame(seed = 'test') {
-  const h = new GameTestHarness(logic, { players: ['Alice', 'Bob'], seed });
+function createGame(seed = 'test', config?: unknown) {
+  const h = new GameTestHarness(logic, { players: ['Alice', 'Bob'], seed, config });
   h.setup();
   return h;
 }
@@ -302,6 +302,74 @@ describe('Battleship Logic', () => {
         actorId: 'Alice',
         kind: 'system',
       });
+    });
+  });
+
+  describe('fastMode (5 shots per turn)', () => {
+    it('defaults fastMode=false and passes turn after 1 shot', () => {
+      const h = createGame();
+      placeBoth(h);
+      expect(h.view('Alice').fastMode).toBe(false);
+      expect(h.view('Alice').shotsRemaining).toBe(1);
+      h.action('Alice', { type: 'fire', row: 9, col: 9 });
+      expect(h.view('Alice').currentPlayer).toBe('Bob');
+    });
+
+    it('with fastMode=true Alice keeps turn for 5 shots then auto-passes', () => {
+      const h = createGame('test', { fastMode: true });
+      placeBoth(h);
+      expect(h.view('Alice').fastMode).toBe(true);
+      expect(h.view('Alice').shotsRemaining).toBe(FAST_MODE_SHOTS_PER_TURN);
+
+      for (let i = 0; i < FAST_MODE_SHOTS_PER_TURN - 1; i++) {
+        h.action('Alice', { type: 'fire', row: 9, col: i });
+        expect(h.view('Alice').currentPlayer).toBe('Alice');
+        expect(h.view('Alice').shotsRemaining).toBe(FAST_MODE_SHOTS_PER_TURN - (i + 1));
+      }
+
+      // 5th shot auto-passes
+      h.action('Alice', { type: 'fire', row: 9, col: FAST_MODE_SHOTS_PER_TURN - 1 });
+      expect(h.view('Alice').currentPlayer).toBe('Bob');
+      expect(h.view('Alice').shotsRemaining).toBe(FAST_MODE_SHOTS_PER_TURN);
+    });
+
+    it('end_turn action passes turn mid-turn in fastMode', () => {
+      const h = createGame('test', { fastMode: true });
+      placeBoth(h);
+      h.action('Alice', { type: 'fire', row: 9, col: 9 });
+      h.action('Alice', { type: 'fire', row: 9, col: 8 });
+      expect(h.view('Alice').shotsRemaining).toBe(FAST_MODE_SHOTS_PER_TURN - 2);
+      const result = h.action('Alice', { type: 'end_turn' });
+      expect(result.ok).toBe(true);
+      expect(h.view('Alice').currentPlayer).toBe('Bob');
+      expect(h.view('Alice').shotsRemaining).toBe(FAST_MODE_SHOTS_PER_TURN);
+    });
+
+    it('end_turn rejected when fastMode is off', () => {
+      const h = createGame();
+      placeBoth(h);
+      const result = h.action('Alice', { type: 'end_turn' });
+      expect(result.ok).toBe(false);
+    });
+
+    it('end_turn rejected from non-current player', () => {
+      const h = createGame('test', { fastMode: true });
+      placeBoth(h);
+      const result = h.action('Bob', { type: 'end_turn' });
+      expect(result.ok).toBe(false);
+    });
+
+    it('end_turn rejected before firing phase', () => {
+      const h = createGame('test', { fastMode: true });
+      const result = h.action('Alice', { type: 'end_turn' });
+      expect(result.ok).toBe(false);
+    });
+
+    it('invalid config falls back to classic mode', () => {
+      const h = createGame('test', { fastMode: 'oops' });
+      placeBoth(h);
+      expect(h.view('Alice').fastMode).toBe(false);
+      expect(h.view('Alice').shotsRemaining).toBe(1);
     });
   });
 });

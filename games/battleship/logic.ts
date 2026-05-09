@@ -8,7 +8,11 @@ import {
 import {
   type Action,
   ActionSchema,
+  BATTLESHIP_DEFAULT_CONFIG,
+  type BattleshipConfig,
+  BattleshipConfigSchema,
   CLASSIC_SHIPS,
+  FAST_MODE_SHOTS_PER_TURN,
   GRID_SIZE,
   type Phase,
   type PlayerView,
@@ -31,6 +35,9 @@ interface BattleshipState {
   players: [PlayerBattleState, PlayerBattleState];
   phase: Phase;
   currentPlayerIdx: number;
+  /** Shots fired by the current player so far this turn (for fastMode). */
+  shotsThisTurn: number;
+  fastMode: boolean;
   winner: string | null;
 }
 
@@ -43,14 +50,26 @@ function emptyPlayerState(id: string): PlayerBattleState {
   };
 }
 
+function parseConfig(raw: unknown): BattleshipConfig {
+  const result = BattleshipConfigSchema.safeParse(raw);
+  return result.success ? result.data : BATTLESHIP_DEFAULT_CONFIG;
+}
+
+function shotsPerTurn(fastMode: boolean): number {
+  return fastMode ? FAST_MODE_SHOTS_PER_TURN : 1;
+}
+
 export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
   actions: ActionSchema,
 
-  setup(ctx: GameContext): BattleshipState {
+  setup(ctx: GameContext, config?: unknown): BattleshipState {
+    const parsed = parseConfig(config ?? ctx.config);
     return {
       players: [emptyPlayerState(ctx.players[0]), emptyPlayerState(ctx.players[1])],
       phase: 'placement',
       currentPlayerIdx: 0,
+      shotsThisTurn: 0,
+      fastMode: parsed.fastMode,
       winner: null,
     };
   },
@@ -85,6 +104,28 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
         ok: true,
         state: { ...state, players: newPlayers, phase: newPhase },
         events: [logAction(playerID, 'log.placeShips')],
+      };
+    }
+
+    if (action.type === 'end_turn') {
+      if (state.phase !== 'playing') {
+        return { ok: false, reason: '战斗尚未开始' };
+      }
+      if (!state.fastMode) {
+        return { ok: false, reason: '非快速模式，无法提前结束回合' };
+      }
+      const attackerIdx = state.players.findIndex((p) => p.id === playerID);
+      if (attackerIdx === -1) return { ok: false, reason: '非游戏玩家' };
+      if (attackerIdx !== state.currentPlayerIdx) return { ok: false, reason: '还没轮到你' };
+
+      return {
+        ok: true,
+        state: {
+          ...state,
+          currentPlayerIdx: 1 - attackerIdx,
+          shotsThisTurn: 0,
+        },
+        events: [logAction(playerID, 'log.endTurn')],
       };
     }
 
@@ -134,6 +175,7 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
             phase: 'finished',
             winner: playerID,
             currentPlayerIdx: attackerIdx,
+            shotsThisTurn: state.shotsThisTurn + 1,
           },
           events: [
             fireLog,
@@ -143,12 +185,16 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
         };
       }
 
+      const newShotsThisTurn = state.shotsThisTurn + 1;
+      const turnDone = newShotsThisTurn >= shotsPerTurn(state.fastMode);
+
       return {
         ok: true,
         state: {
           ...state,
           players: newPlayers,
-          currentPlayerIdx: defenderIdx,
+          currentPlayerIdx: turnDone ? defenderIdx : attackerIdx,
+          shotsThisTurn: turnDone ? 0 : newShotsThisTurn,
         },
         events: [fireLog],
       };
@@ -160,6 +206,7 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
   getPlayerView(state, playerID): PlayerView {
     const myIdx = state.players.findIndex((p) => p.id === playerID);
     const opponentIdx = 1 - myIdx;
+    const remaining = shotsPerTurn(state.fastMode) - state.shotsThisTurn;
 
     if (myIdx === -1) {
       return {
@@ -173,6 +220,8 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
         myPlaced: false,
         opponentPlaced: false,
         winner: state.winner,
+        shotsRemaining: remaining,
+        fastMode: state.fastMode,
       };
     }
 
@@ -195,6 +244,8 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
       myPlaced: me.placed,
       opponentPlaced: opponent.placed,
       winner: state.winner,
+      shotsRemaining: remaining,
+      fastMode: state.fastMode,
     };
   },
 
@@ -212,6 +263,8 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
       myPlaced: p0.placed,
       opponentPlaced: p1.placed,
       winner: state.winner,
+      shotsRemaining: shotsPerTurn(state.fastMode) - state.shotsThisTurn,
+      fastMode: state.fastMode,
     };
   },
 };

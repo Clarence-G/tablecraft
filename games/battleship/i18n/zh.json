@@ -11,6 +11,11 @@
   "fleetDeployed": "舰队已部署",
   "waitingOpponent": "等待对手完成部署...",
   "yourTurnFire": "你的回合 — 点击敌方海域开炮",
+  "shotsRemaining": "剩余炮弹：{{count}}",
+  "endTurn": "结束回合",
+  "options": {
+    "fastMode": "快速模式（每回合 5 发）"
+  },
   "sunk": "已击沉",
   "ourLosses": "我方损失",
   "enemyWaters": "敌方海域",
@@ -29,6 +34,7 @@
     "placeShips": "完成舰队部署",
     "hit": "炮击 ({{row}}, {{col}}) — 命中！",
     "miss": "炮击 ({{row}}, {{col}}) — 落空",
+    "endTurn": "结束了回合",
     "win": "击沉所有舰船，获胜！"
   }
 }

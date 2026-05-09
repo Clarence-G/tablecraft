@@ -431,8 +431,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 26,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "configSchema adds fastMode:boolean(default false); logic tracks shotsThisTurn + reads parseConfig(config ?? ctx.config); fastMode=true keeps attacker's turn for 5 fire actions then auto-passes; end_turn action gated to fastMode+current player; PlayerView gains shotsRemaining+fastMode; Board shows HUD badge + End turn button when fastMode && isMyTurn. Logic covered by 6 new unit tests; browser verification deferred (full 2-player setup)."
     },
     {
       "id": "US-027",

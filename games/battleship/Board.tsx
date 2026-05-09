@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import {
   type Action,
   CLASSIC_SHIPS,
+  FAST_MODE_SHOTS_PER_TURN,
   GRID_SIZE,
   type PlayerView,
   SHIP_COLORS,
@@ -507,6 +508,23 @@ export function Board({
               />
             </div>
 
+            {/* Fast-mode HUD: shots remaining + end-turn early */}
+            {state.fastMode && isMyTurn && !gameOver && (
+              <div className="flex items-center gap-3 text-xs font-medium text-primary-foreground">
+                <span className="px-2 py-1 rounded border border-card/40 bg-card/10">
+                  {t('shotsRemaining', { count: state.shotsRemaining })}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => sendAction({ type: 'end_turn' })}
+                  disabled={state.shotsRemaining === FAST_MODE_SHOTS_PER_TURN}
+                  className="px-3 py-1 text-xs font-semibold rounded border-2 border-foreground bg-primary text-primary-foreground shadow-[2px_2px_0px_0px_hsl(var(--shadow))] hover:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+                >
+                  {t('endTurn')}
+                </button>
+              </div>
+            )}
+
             {/* Grids */}
             <div className="flex flex-wrap gap-4 justify-center">
               <BattleGrid
@@ -520,10 +538,17 @@ export function Board({
                   const opponent = players.find((p) => p.id !== myId);
                   const nextShots = [...state.myShots];
                   nextShots[toIndex(row, col)] = 2;
+                  const turnDone = state.shotsRemaining <= 1;
+                  const nextRemaining = turnDone
+                    ? state.fastMode
+                      ? FAST_MODE_SHOTS_PER_TURN
+                      : 1
+                    : state.shotsRemaining - 1;
                   const optimistic: PlayerView = {
                     ...state,
                     myShots: nextShots,
-                    currentPlayer: opponent ? opponent.id : state.currentPlayer,
+                    currentPlayer: turnDone && opponent ? opponent.id : state.currentPlayer,
+                    shotsRemaining: nextRemaining,
                   };
                   sendAction({ type: 'fire', row, col }, optimistic);
                 }}

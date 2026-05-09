@@ -1,6 +1,13 @@
 import type { GameMeta } from '@repo/shared';
 import { z } from 'zod';
 
+export const BattleshipConfigSchema = z.object({
+  fastMode: z.boolean().default(false),
+});
+export type BattleshipConfig = z.infer<typeof BattleshipConfigSchema>;
+export const BATTLESHIP_DEFAULT_CONFIG: BattleshipConfig = { fastMode: false };
+export const FAST_MODE_SHOTS_PER_TURN = 5;
+
 export const meta: GameMeta = {
   id: 'battleship',
   name: '战舰',
@@ -10,6 +17,8 @@ export const meta: GameMeta = {
   tags: ['策略', '休闲'],
   icon: 'battleship',
   estimatedMinutes: 25,
+  configSchema: BattleshipConfigSchema,
+  defaultConfig: BATTLESHIP_DEFAULT_CONFIG,
   scene: {
     surface: { color: '#1b3a5c', texture: 'paper', accent: '#8bb8d8' },
     ambience: { type: 'ambient', warmth: 'cool', intensity: 0.28 },
@@ -28,10 +37,13 @@ Actions:
 
   Firing phase:
     { "type": "fire", "row": <int 0-9>, "col": <int 0-9> }
+    { "type": "end_turn" } — only in fastMode; pass turn early before using all shots.
 
 PlayerView fields:
   phase: "placement"|"playing"|"finished"
   currentPlayer: string
+  shotsRemaining: number — shots left this turn (1 in classic, up to 5 in fastMode)
+  fastMode: boolean — whether fast mode (5 shots per turn) is active
   myGrid: number[] — 100 cells, 0=water, 1-5=ship index
   myShots: number[] — your shots on opponent grid, 0=unknown, 1=miss, 2=hit
   opponentShots: number[] — opponent's shots on your grid
@@ -43,7 +55,7 @@ PlayerView fields:
 
 Grid indexing: index = row * 10 + col.
 Win condition: sink all 5 opponent ships.
-Invalid moves: firing a cell already fired at, firing when not your turn.`,
+Invalid moves: firing a cell already fired at, firing when not your turn, end_turn when fastMode is off.`,
 };
 
 export const GRID_SIZE = 10;
@@ -241,6 +253,10 @@ export interface PlayerView {
   myPlaced: boolean;
   opponentPlaced: boolean;
   winner: string | null;
+  /** Shots the current player still has this turn (1 in classic, 1..5 in fastMode). */
+  shotsRemaining: number;
+  /** Whether the room was started with the fastMode option. */
+  fastMode: boolean;
 }
 
 const ShipPlacementSchema = z.object({
@@ -259,6 +275,9 @@ export const ActionSchema = z.discriminatedUnion('type', [
     type: z.literal('fire'),
     row: z.number().int().min(0).max(9),
     col: z.number().int().min(0).max(9),
+  }),
+  z.object({
+    type: z.literal('end_turn'),
   }),
 ]);
 
