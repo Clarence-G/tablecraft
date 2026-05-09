@@ -638,8 +638,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 39,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Wrapped played-card and hand-card lists in ll-card-play / ll-card-draw spans with CSS keyframe animations (400ms + 350ms, cubic-bezier(0.2,0.8,0.3,1)) in a <style> block inside Board.tsx; prefers-reduced-motion disables both."
     },
     {
       "id": "US-040",

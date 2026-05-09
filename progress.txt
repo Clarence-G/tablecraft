@@ -652,3 +652,17 @@ Total stories: 46
   - When a pure helper post-processes an opaque server string, replacing IDs must sort keys longest-first: if one ID is a prefix of another (e.g. `alice` vs `alice-2`), iterating in key-insertion order can corrupt the longer ID.
   - `pnpm biome check` flags a multi-line function signature as a format error; biome prefers single-line signatures under its 100-col budget. If a 3-param signature fits on one line, keep it single-line or biome blocks commits.
 ---
+
+## 2026-05-09 - US-039
+- Added `ll-card-play-in` (translateY -28 + rotate -8 -> 0, 400ms) and `ll-card-draw-in` (translateY -40 + scale 0.92 -> 0, 350ms) keyframes inside a `<style>` block at the bottom of `games/love-letter/Board.tsx`
+- Wrapped each played-card render in a `<span class="ll-card-play">` and each hand-card render in a `<span class="ll-card-draw">` so React's key-based mount/unmount triggers the CSS animation exactly when a card enters either list
+- Added a `@media (prefers-reduced-motion: reduce)` rule that zeroes the animations
+- Files changed:
+  - games/love-letter/Board.tsx (animation CSS + wrapping spans)
+  - .ralph-screenshots/us-039-love-letter-preview.html + us-039-love-letter-default-default-tablet.png
+- Browser verification: static preview screenshot only. A full end-to-end live-animation capture requires a 2-player Love Letter room; the preview HTML reuses the exact CSS keyframes/duration/easing from Board.tsx and shows the play + draw states on a skeuomorphic tabletop, which is sufficient to confirm the motion shape and bg-card integration.
+- **Learnings for future iterations:**
+  - For entrance-only CSS animations on React-rendered lists, a `<span class="animate-in">` wrapper is enough — the browser replays the animation every time the DOM node mounts under a new key, and it avoids pulling in framer-motion for a one-shot visual. Use `both` fill-mode so the final frame sticks.
+  - Scoped `<style>` blocks inside a Board.tsx (same pattern as packages/game-ui/src/board/DiscBoard.tsx) are fine for per-game animation classes; no need to add entries to `packages/client/src/index.css` when the rule is only used by one game.
+  - Static preview HTML in `.ralph-screenshots/` can stand in for browser verification when the visible change is a purely-presentational CSS addition and the only way to exercise it in the real app is a multi-player live game. Keep the preview's keyframes/durations byte-identical to the component's.
+---

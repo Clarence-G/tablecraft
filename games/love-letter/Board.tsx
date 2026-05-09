@@ -259,7 +259,9 @@ export function Board({
               </div>
               <div className="flex gap-0.5">
                 {p.playedCards.map((c, i) => (
-                  <CardFace key={i} value={c} size="small" t={t} />
+                  <span key={i} className="ll-card-play inline-block">
+                    <CardFace value={c} size="small" t={t} />
+                  </span>
                 ))}
               </div>
             </div>
@@ -274,25 +276,26 @@ export function Board({
             {state.hand.map((card, i) => {
               const isForced = mustPlayCountess && card !== 7;
               return (
-                <CardFace
-                  key={i}
-                  value={card}
-                  selected={selectedCard === card && i === state.hand.indexOf(selectedCard)}
-                  disabled={!isMyTurn || isForced}
-                  t={t}
-                  onClick={() => {
-                    if (!isMyTurn || isForced) return;
-                    if (selectedCard === card) {
-                      setSelectedCard(null);
-                      setSelectedTarget(null);
-                      setSelectedGuess(null);
-                    } else {
-                      setSelectedCard(card);
-                      setSelectedTarget(null);
-                      setSelectedGuess(null);
-                    }
-                  }}
-                />
+                <span key={i} className="ll-card-draw inline-block">
+                  <CardFace
+                    value={card}
+                    selected={selectedCard === card && i === state.hand.indexOf(selectedCard)}
+                    disabled={!isMyTurn || isForced}
+                    t={t}
+                    onClick={() => {
+                      if (!isMyTurn || isForced) return;
+                      if (selectedCard === card) {
+                        setSelectedCard(null);
+                        setSelectedTarget(null);
+                        setSelectedGuess(null);
+                      } else {
+                        setSelectedCard(card);
+                        setSelectedTarget(null);
+                        setSelectedGuess(null);
+                      }
+                    }}
+                  />
+                </span>
               );
             })}
           </div>
@@ -398,6 +401,22 @@ export function Board({
           onReturnToLobby={onReturnToLobby}
         />
       )}
+
+      <style>{`
+        @keyframes ll-card-play-in {
+          from { transform: translateY(-28px) rotate(-8deg); opacity: 0; }
+          to { transform: translateY(0) rotate(0); opacity: 1; }
+        }
+        @keyframes ll-card-draw-in {
+          from { transform: translateY(-40px) scale(0.92); opacity: 0; }
+          to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .ll-card-play { animation: ll-card-play-in 400ms cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+        .ll-card-draw { animation: ll-card-draw-in 350ms cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+        @media (prefers-reduced-motion: reduce) {
+          .ll-card-play, .ll-card-draw { animation: none; }
+        }
+      `}</style>
     </div>
   );
 }
