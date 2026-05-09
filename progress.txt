@@ -684,3 +684,17 @@ Total stories: 46
   - `biome check games/undercover` returned 3 pre-existing warnings (Board.tsx noArrayIndexKey x2, logic.ts noNonNullAssertion on line 240) — all untouched by this story. Exit code 0 is treated as passing per CLAUDE.md §quality-gate; leaving them as-is (scope drift).
   - Semantics chosen for round cap: when `maxRounds` reached without a standard win, undercovers win (they evaded detection). PRD's "mirrors existing win conditions" is ambiguous here; this matches classic social-deduction tabletop rules. If future stories surface a different expectation, the branch is a single-line change.
 ---
+
+## 2026-05-09 - US-041
+- Polished Undercover Board UI: added animated pulsing ring + shadow around the active speaker, a 3s card-flip reveal overlay (shown after elimination) that renders the role word on a tinted card, live per-candidate vote tally with horizontal bars, and a pill-shaped round counter badge in the header.
+- Files changed:
+  - games/undercover/Board.tsx
+  - .ralph-screenshots/us-041-undercover-preview.html (new)
+  - .ralph-screenshots/us-041-undercover-mobile-default-375w.png (new, 375px)
+  - .ralph-screenshots/us-041-undercover-desktop-default-1024w.png (new, 1024px)
+- **Learnings for future iterations:**
+  - Undercover has only two roles (`civilian` / `undercover`) despite the original US-041 description mentioning "white" — the shared.ts Role type is fixed, so the reveal card handles only those two variants.
+  - Card flip is implemented inline with CSS `perspective` + `transform-style: preserve-3d` + `backfaceVisibility: hidden` — no framer-motion needed. Toggle between `rotateY(0)` (back) and `rotateY(180deg)` (front) with a `transition-transform duration-700` class.
+  - `setTimeout` pair works cleanly for flip-then-hide: 80ms to start the flip animation (so the back face renders first), 3000ms to clear the reveal entirely.
+  - Vote tally percentage divisor = alive player count (not total vote count), so a bar at 100% means every alive player voted for that candidate.
+---
