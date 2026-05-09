@@ -32,12 +32,13 @@ function cellClass(kind: CellKind): string {
     case 'miss':
       return 'bg-card/40 border-card/30';
     case 'preview':
-      // Preview accent uses SHIP_COLORS.hull.hex at 80% alpha + a light
-      // highlight border (#93c5fd = pale hull tint, preview-only identity).
-      return 'bg-[#2563eb]/80 border-2 border-[#93c5fd] shadow-[0_0_8px_rgba(37,99,235,0.6)]';
+      // Preview accent uses the royal-blue token (same value as SHIP_COLORS.hull)
+      // with 80% alpha + a light highlight border (#93c5fd = pale hull tint,
+      // preview-only identity with no token analog).
+      return 'bg-royal-blue/80 border-2 border-[#93c5fd] shadow-[0_0_8px_rgba(37,99,235,0.6)]';
     case 'preview-invalid':
       // Pale hit-red tint for invalid placement preview (#fca5a5 = pale hit).
-      return 'bg-[#d94040]/60 border-2 border-[#fca5a5] animate-pulse';
+      return 'bg-destructive/60 border-2 border-[#fca5a5] animate-pulse';
     default:
       return 'bg-card/10 border-card/20';
   }
@@ -119,7 +120,7 @@ interface BattleGridProps {
 function BattleGrid({ label, shipGrid, shotsGrid, clickable, onCellClick }: BattleGridProps) {
   return (
     <div className="flex flex-col items-center gap-1">
-      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+      <div className="text-xs font-semibold text-primary-foreground/80 uppercase tracking-wide">
         {label}
       </div>
       <div
@@ -219,7 +220,7 @@ function SunkIndicator({
 }) {
   const { t } = useTranslation('battleship');
   return (
-    <div className="text-xs text-muted-foreground">
+    <div className="text-xs text-primary-foreground/80">
       <span className="font-medium mr-1">{label}:</span>
       {sunkList.map((sunk, i) => (
         <span
@@ -390,8 +391,8 @@ export function Board({
 
         {/* Phase: Placement */}
         {state.phase === 'placement' && !state.myPlaced && (
-          <div className="flex flex-col items-center gap-3 w-full max-w-sm">
-            <div className="text-sm font-semibold text-foreground">{t('deployFleet')}</div>
+          <div className="flex flex-col items-center gap-3 w-full max-w-sm sm:max-w-none">
+            <div className="text-sm font-semibold text-primary-foreground">{t('deployFleet')}</div>
 
             {/* Ship Selector */}
             <ShipSelector
@@ -402,9 +403,23 @@ export function Board({
               }}
             />
 
-            {/* Rotation + Preview */}
-            {selectedShipIdx !== null && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {/* Rotation + Preview: fixed side-slot so the grid does not shift.
+                On mobile (<sm) the preview stacks BELOW the grid with a min-height
+                reservation; on desktop it sits to the RIGHT of the grid. */}
+            <div className="flex flex-col sm:flex-row gap-3 items-center sm:items-start justify-center">
+              <PlacementGrid
+                grid={localGrid}
+                previewCells={previewCells}
+                previewValid={previewValid}
+                onCellClick={handlePlacementClick}
+                hoverCell={hoverCell}
+                setHoverCell={setHoverCell}
+              />
+              <div
+                className="flex flex-row sm:flex-col items-center gap-2 text-xs text-primary-foreground/80 min-h-[72px] sm:min-h-0 sm:min-w-[120px] sm:pt-1"
+                style={{ visibility: selectedShipIdx !== null ? 'visible' : 'hidden' }}
+                aria-hidden={selectedShipIdx === null}
+              >
                 <span>{t('direction')}</span>
                 {rotatedOffsets.length > 0 && (
                   <div
@@ -431,21 +446,12 @@ export function Board({
                 <button
                   type="button"
                   onClick={() => setRotation((r) => (r + 1) % 4)}
-                  className="px-2 py-0.5 text-xs bg-secondary border border-border rounded hover:border-foreground/60 transition-colors"
+                  className="px-2 py-0.5 text-xs bg-secondary text-secondary-foreground border border-border rounded hover:border-foreground/60 transition-colors"
                 >
                   {t('rotate')}
                 </button>
               </div>
-            )}
-
-            <PlacementGrid
-              grid={localGrid}
-              previewCells={previewCells}
-              previewValid={previewValid}
-              onCellClick={handlePlacementClick}
-              hoverCell={hoverCell}
-              setHoverCell={setHoverCell}
-            />
+            </div>
 
             {/* Controls */}
             <div className="flex gap-2">

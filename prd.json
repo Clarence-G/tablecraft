@@ -412,8 +412,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 25,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Replaced text-muted-foreground/text-foreground on the navy board with text-primary-foreground. Preview slot moved to a reserved side position (sm:row → right-of-grid; mobile → below-grid) with visibility:hidden when no ship selected so grid does not shift."
     },
     {
       "id": "US-026",
