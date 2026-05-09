@@ -549,3 +549,17 @@ Total stories: 46
   - Good "wood" backgrounds on warm skeuomorphic surfaces come from layering two very thin `repeating-linear-gradient` stripes (slightly-off-90deg angles simulate cross-grain wobble) plus one or two low-opacity `radial-gradient`s that add highlight/shadow "sheen". Pure SVG filters look synthetic; PNG assets bloat the repo. Keep it in CSS.
   - `PLAYER_DISC_COLORS` is imported by one caller only (connect-four Board turn pill uses `PLAYER_DISC_BG`), but changing the constant shape (string bg class → radial gradient URL) will silently break anyone who wrote `style={{ background: PLAYER_DISC_COLORS[0] }}` expecting a hex. Keep the array shape as string[2] and let CSS handle the rendering.
 ---
+
+## 2026-05-09 - US-032
+- Removed two inline "Deselect"/"Deselect piece" underline buttons in games/hive/Board.tsx — these were the confusing "cancel-selection popup" PRD referenced. Selection now clears by clicking the selected piece/tile again (added toggle-off branch in handleTileClick) or auto-clears after any placement/move action.
+- Fixed white-on-white contrast for white-player hand tray: added --hand-bg-light (#d6c8af) token in packages/client/src/index.css (both :root and @theme inline → bg-hand-bg-light utility). Hand inventory panel now uses bg-hand-bg-light instead of bg-card/85, giving white piece icons a darker cream-wood background.
+- Corrected reversed icon filter: white player's hand now shows white piece silhouettes (invert(1) + two drop-shadow layers for dark glow / hairline outline → readable on the cream tray). Black player unchanged (raw black SVG on cream).
+- Files changed:
+  - games/hive/Board.tsx (removed 2 deselect buttons, added click-same-tile-to-deselect, updated hand panel bg + icon filter)
+  - packages/client/src/index.css (added --hand-bg-light token + its --color-hand-bg-light alias)
+- Browser verification: started dev server + joined room A12X3Z with a bot via `POST /api/admin/token` + `tablecraft rooms join`. Captured mobile (375px) + desktop (1440px) + mobile-with-queen-selected screenshots. Confirmed no deselect popup appears after selecting a piece and that white icons are visible on the darker hand tray.
+- **Learnings for future iterations:**
+  - For any `white-player` rendering of hive piece icons, the SVGs in `packages/client/public/game-icons/hive/*.svg` are `fill="#000"` — so `filter: invert(1)` yields pure white. Pure white on any cream/card background fails WCAG; pair the invert with SVG drop-shadow filters (`drop-shadow(0 0 3px rgba(26,17,8,0.9)) drop-shadow(0 0 1px rgba(26,17,8,1))`) to synthesize a dark outline/glow without touching the SVG asset.
+  - To reach a HIVE/connect/strategy room mid-play in an agent-browser session: `POST http://localhost:3001/api/admin/token` {"botName":"anything"} returns `{token,userId}`; then `TABLECRAFT_TOKEN=<token> tsx packages/cli/src/index.ts rooms join <code>` makes the bot auto-ready. Host sees the "开始游戏" button appear and can click to start. Rooms fail-open to an error boundary if the socket disconnects — reload the `/rooms/<code>` URL to recover.
+  - Adding a new Tailwind color utility requires BOTH an entry in `:root` AND `--color-<name>` alias in `@theme inline` (already codified in Codebase Patterns). Verified: `bg-hand-bg-light` worked immediately without a server restart.
+---
