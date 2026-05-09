@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>US-030 Battleship Irregular Placement UI</title>
+<style>
+  :root {
+    --bg: #0f1e33;
+    --panel: linear-gradient(to bottom right, #1e3a5f, #0f1e33);
+    --hull: #2563eb;
+    --text: #ffffff;
+    --text-dim: rgba(255,255,255,0.8);
+    --border-dim: rgba(255,255,255,0.25);
+    --border: rgba(255,255,255,0.35);
+    --secondary-bg: #4a3a28;
+    --foreground: #1f1710;
+    --muted: #7a6a55;
+  }
+  body { margin: 0; background: #1a0f07; color: var(--text); font-family: system-ui, sans-serif; padding: 16px; }
+  .board-panel {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--panel);
+    border: 2px solid var(--foreground);
+    box-shadow: 6px 6px 0 0 #2a1a0a;
+  }
+  h2 { font-size: 14px; margin: 0 0 12px; text-align: center; color: var(--text); }
+  .row { display: flex; gap: 12px; justify-content: center; align-items: flex-start; flex-wrap: wrap; margin-bottom: 16px; }
+  .ship-tile {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    color: var(--text-dim); font-size: 11px;
+  }
+  .ship-tile .name { font-weight: 500; color: var(--text); }
+  .ship-tile .ctrl {
+    margin-top: 2px; display: flex; flex-direction: column; gap: 3px;
+  }
+  .btn {
+    padding: 2px 8px; font-size: 11px; border-radius: 4px;
+    background: var(--secondary-bg); color: #f4ebd8;
+    border: 1px solid var(--border-dim); cursor: pointer;
+  }
+  .btn.active {
+    background: var(--hull); color: var(--text);
+    border-color: var(--foreground);
+  }
+  svg.preview { width: 64px; height: 64px; background: rgba(255,255,255,0.05); border-radius: 4px; }
+  rect { fill: var(--hull); }
+  .grid {
+    display: inline-grid; grid-template-columns: repeat(10, 22px);
+    border: 2px solid rgba(255,255,255,0.25); box-shadow: 4px 4px 0 0 #2a1a0a;
+  }
+  .cell { width: 22px; height: 22px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); box-sizing: border-box; }
+  .cell.preview { background: rgba(37,99,235,0.8); border: 2px solid #93c5fd; box-shadow: 0 0 8px rgba(37,99,235,0.6); }
+  .cell.preview-invalid { background: rgba(217,64,64,0.6); border: 2px solid #fca5a5; }
+  .grid-row { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; justify-content: center; }
+  .side-slot {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    min-width: 140px;
+    color: var(--text-dim); font-size: 11px;
+  }
+  @media (max-width: 640px) {
+    .grid-row { flex-direction: column; }
+    .side-slot { flex-direction: row; min-height: 96px; }
+  }
+</style>
+</head>
+<body>
+  <div class="board-panel">
+    <h2>Deploy Your Fleet - Irregular Ships Preview (US-030)</h2>
+    <div class="row">
+      <div class="ship-tile">
+        <div class="name">U-Hull (5)</div>
+        <svg class="preview" viewBox="0 0 5 5" role="img">
+          <rect x="1.05" y="1.55" width="0.9" height="0.9" rx="0.1"/>
+          <rect x="3.05" y="1.55" width="0.9" height="0.9" rx="0.1"/>
+          <rect x="1.05" y="2.55" width="0.9" height="0.9" rx="0.1"/>
+          <rect x="2.05" y="2.55" width="0.9" height="0.9" rx="0.1"/>
+          <rect x="3.05" y="2.55" width="0.9" height="0.9" rx="0.1"/>
+        </svg>
+        <div class="ctrl">
+          <button class="btn">Rotate (R)</button>
+          <button class="btn">Mirror (F)</button>
+        </div>
+      </div>
+      <div class="ship-tile">
+        <div class="name">L-Frigate (rot 90)</div>
+        <svg class="preview" viewBox="0 0 5 5" role="img">
+          <rect x="1.05" y="1.55" width="0.9" height="0.9" rx="0.1"/>
+          <rect x="2.05" y="1.55" width="0.9" height="0.9" rx="0.1"/>
+          <rect x="3.05" y="1.55" width="0.9" height="0.9" rx="0.1"/>
+          <rect x="1.05" y="2.55" width="0.9" height="0.9" rx="0.1"/>
+        </svg>
+        <div class="ctrl">
+          <button class="btn">Rotate (R)</button>
+          <button class="btn">Mirror (F)</button>
+        </div>
+      </div>
+      <div class="ship-tile">
+        <div class="name">L-Frigate (mirrored)</div>
+        <svg class="preview" viewBox="0 0 5 5" role="img">
+          <rect x="2.05" y="1.05" width="0.9" height="0.9" rx="0.1"/>
+          <rect x="2.05" y="2.05" width="0.9" height="0.9" rx="0.1"/>
+          <rect x="1.05" y="3.05" width="0.9" height="0.9" rx="0.1"/>
+          <rect x="2.05" y="3.05" width="0.9" height="0.9" rx="0.1"/>
+        </svg>
+        <div class="ctrl">
+          <button class="btn">Rotate (R)</button>
+          <button class="btn active">Mirror (F)</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-row">
+      <div class="grid" id="grid"></div>
+      <div class="side-slot">
+        <span>Direction:</span>
+        <svg class="preview" viewBox="0 0 5 5" role="img">
+          <rect x="1.05" y="1.55" width="0.9" height="0.9" rx="0.1"/>
+          <rect x="3.05" y="1.55" width="0.9" height="0.9" rx="0.1"/>
+          <rect x="1.05" y="2.55" width="0.9" height="0.9" rx="0.1"/>
+          <rect x="2.05" y="2.55" width="0.9" height="0.9" rx="0.1"/>
+          <rect x="3.05" y="2.55" width="0.9" height="0.9" rx="0.1"/>
+        </svg>
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <button class="btn">Rotate (R)</button>
+          <button class="btn active">Mirror (F)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const grid = document.getElementById('grid');
+// Preview U-shape at row 2, col 2 (valid)
+const previewCells = new Set([20+2, 20+4, 30+2, 30+3, 30+4]);
+for (let i = 0; i < 100; i++) {
+  const div = document.createElement('div');
+  div.className = 'cell' + (previewCells.has(i) ? ' preview' : '');
+  grid.appendChild(div);
+}
+</script>
+</body>
+</html>

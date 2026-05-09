@@ -2,17 +2,18 @@ import { useGameHeaderStatus } from '@repo/game-ui';
 import { GameOverModal } from '@repo/game-ui/feedback';
 import { PlayerBadge } from '@repo/game-ui/player';
 import type { BoardProps } from '@repo/shared';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   type Action,
-  CLASSIC_SHIPS,
   FAST_MODE_SHOTS_PER_TURN,
   GRID_SIZE,
   type PlayerView,
   SHIP_COLORS,
   SHIP_NAME_KEYS,
+  type ShipDefinition,
   type ShipPlacement,
+  buildFleet,
   getAbsolutePositions,
   rotateOffsets,
   toIndex,
@@ -170,11 +171,20 @@ function BattleGrid({ label, shipGrid, shotsGrid, clickable, onCellClick }: Batt
 
 // ---- Ship Selector ----
 
+function shipLabelKey(fleet: ShipDefinition[], i: number, irregular: boolean): string {
+  if (irregular) return `ships.shape.${fleet[i]?.name ?? i}`;
+  return SHIP_NAME_KEYS[i] ?? `ships.${fleet[i]?.name ?? i}`;
+}
+
 function ShipSelector({
+  fleet,
+  irregular,
   selectedShipIdx,
   placedShips,
   onSelect,
 }: {
+  fleet: ShipDefinition[];
+  irregular: boolean;
   selectedShipIdx: number | null;
   placedShips: Set<number>;
   onSelect: (idx: number) => void;
@@ -182,7 +192,7 @@ function ShipSelector({
   const { t } = useTranslation('battleship');
   return (
     <div className="flex flex-wrap gap-1.5 justify-center">
-      {CLASSIC_SHIPS.map((ship, i) => {
+      {fleet.map((ship, i) => {
         const placed = placedShips.has(i);
         const selected = selectedShipIdx === i;
         return (
@@ -198,11 +208,54 @@ function ShipSelector({
               ${!selected && !placed ? 'border-border bg-card text-foreground hover:border-foreground/60' : ''}
             `}
           >
-            {t(SHIP_NAME_KEYS[i]!)} ({ship.offsets.length})
+            {t(shipLabelKey(fleet, i, irregular), { defaultValue: ship.name })} (
+            {ship.offsets.length})
           </button>
         );
       })}
     </div>
+  );
+}
+
+// ---- Shape SVG Preview ----
+
+/** Fixed size (in cells) so the preview slot never changes dimensions when
+ * the user cycles ships. Any shape in the library fits inside 5x5.
+ */
+export const SHAPE_PREVIEW_CELLS = 5;
+
+/** Render a ship's rotated + optionally mirrored offsets as SVG cells inside a
+ * fixed {@link SHAPE_PREVIEW_CELLS}x{@link SHAPE_PREVIEW_CELLS} viewBox. */
+function ShapePreview({
+  offsets,
+  rotation,
+  mirror,
+}: {
+  offsets: [number, number][];
+  rotation: number;
+  mirror: boolean;
+}) {
+  const cells = rotateOffsets(offsets, rotation, mirror);
+  const rows = cells.length > 0 ? Math.max(...cells.map(([r]) => r)) + 1 : 0;
+  const cols = cells.length > 0 ? Math.max(...cells.map(([, c]) => c)) + 1 : 0;
+  const N = SHAPE_PREVIEW_CELLS;
+  // Center the shape inside the fixed viewBox so short ships don't hug the corner.
+  const offR = Math.floor((N - rows) / 2);
+  const offC = Math.floor((N - cols) / 2);
+  return (
+    <svg viewBox={`0 0 ${N} ${N}`} className="w-16 h-16" role="img" aria-label="ship preview">
+      {cells.map(([r, c]) => (
+        <rect
+          key={`${r}-${c}`}
+          x={offC + c + 0.05}
+          y={offR + r + 0.05}
+          width={0.9}
+          height={0.9}
+          fill={SHIP_COLORS.hull.hex}
+          rx={0.1}
+        />
+      ))}
+    </svg>
   );
 }
 
@@ -219,7 +272,6 @@ function SunkIndicator({
   destroyedLabel: string;
   aliveLabel: string;
 }) {
-  const { t } = useTranslation('battleship');
   return (
     <div className="text-xs text-primary-foreground/80">
       <span className="font-medium mr-1">{label}:</span>
@@ -228,7 +280,7 @@ function SunkIndicator({
           // biome-ignore lint/suspicious/noArrayIndexKey: ship index is stable
           key={i}
           className={`inline-block w-2 h-2 rounded-full mr-0.5 ${sunk ? SHIP_COLORS.hit.bgClass : SHIP_COLORS.hull.bgClass}`}
-          title={`${t(SHIP_NAME_KEYS[i]!)} ${sunk ? destroyedLabel : aliveLabel}`}
+          title={sunk ? destroyedLabel : aliveLabel}
         />
       ))}
     </div>
@@ -250,20 +302,24 @@ export function Board({
   onReturnToLobby,
 }: BoardProps<PlayerView, Action>) {
   const sendAction = isSending ? () => {} : rawSendAction;
+  const fleet = useMemo(() => buildFleet(state.irregularShips), [state.irregularShips]);
   const [selectedShipIdx, setSelectedShipIdx] = useState<number | null>(null);
   const [rotation, setRotation] = useState(0);
+  const [mirror, setMirror] = useState(false);
   const [hoverCell, setHoverCell] = useState<{ row: number; col: number } | null>(null);
   const [localGrid, setLocalGrid] = useState<number[]>(() =>
     new Array(GRID_SIZE * GRID_SIZE).fill(0),
   );
   const [placedShips, setPlacedShips] = useState<Set<number>>(new Set());
   /**
-   * Per-ship rotation used when it was placed on the local grid. Needed so
-   * handleConfirmPlacement can rebuild a faithful ShipPlacement[] with the
-   * rotation the player actually chose, instead of always sending rotation=0
-   * (which made `GET /api/rooms/:id` return bogus rotations for agents).
+   * Per-ship rotation + mirror used when the ship was placed on the local
+   * grid, so handleConfirmPlacement can rebuild a faithful ShipPlacement[]
+   * with the exact orientation the player chose (including horizontal flip
+   * for chiral irregular shapes).
    */
-  const [shipRotations, setShipRotations] = useState<Map<number, number>>(new Map());
+  const [shipOrientations, setShipOrientations] = useState<
+    Map<number, { rotation: number; mirror: boolean }>
+  >(new Map());
   const { t } = useTranslation('battleship');
 
   const playerNames = Object.fromEntries(players.map((p) => [p.id, p.name]));
@@ -271,17 +327,40 @@ export function Board({
   const gameOver = state.phase === 'finished';
   useGameHeaderStatus(gameOver ? undefined : state.currentPlayer, state.phase);
 
+  // Keyboard shortcuts during placement: R cycles rotation, F toggles mirror.
+  // Gated on placement phase + a ship actually selected so we don't swallow
+  // keystrokes while the player is typing in a chat/input.
+  const placementActive = state.phase === 'placement' && !state.myPlaced;
+  const shipSelected = selectedShipIdx !== null;
+  useEffect(() => {
+    if (!placementActive || !shipSelected) return;
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        setRotation((r) => (r + 1) % 4);
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        setMirror((m) => !m);
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [placementActive, shipSelected]);
+
   // Compute preview cells for placement grid
   const previewCells = new Set<number>();
   let previewValid = false;
 
   if (state.phase === 'placement' && !state.myPlaced && selectedShipIdx !== null && hoverCell) {
-    const ship = CLASSIC_SHIPS[selectedShipIdx];
+    const ship = fleet[selectedShipIdx];
     if (ship) {
       const positions = getAbsolutePositions(ship, {
         row: hoverCell.row,
         col: hoverCell.col,
         rotation,
+        mirror,
       });
       const inBounds = positions.every(
         ([r, c]) => r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE,
@@ -298,10 +377,10 @@ export function Board({
 
   function handlePlacementClick(row: number, col: number) {
     if (selectedShipIdx === null) return;
-    const ship = CLASSIC_SHIPS[selectedShipIdx];
+    const ship = fleet[selectedShipIdx];
     if (!ship) return;
 
-    const positions = getAbsolutePositions(ship, { row, col, rotation });
+    const positions = getAbsolutePositions(ship, { row, col, rotation, mirror });
     const inBounds = positions.every(
       ([r, c]) => r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE,
     );
@@ -318,24 +397,22 @@ export function Board({
     const newPlaced = new Set(placedShips);
     newPlaced.add(selectedShipIdx);
     setPlacedShips(newPlaced);
-    const newRotations = new Map(shipRotations);
-    newRotations.set(selectedShipIdx, rotation);
-    setShipRotations(newRotations);
+    const newOrientations = new Map(shipOrientations);
+    newOrientations.set(selectedShipIdx, { rotation, mirror });
+    setShipOrientations(newOrientations);
     setSelectedShipIdx(null);
+    // Reset orientation for the next selection — a fresh ship starts upright.
+    setRotation(0);
+    setMirror(false);
   }
 
   function handleConfirmPlacement() {
-    if (placedShips.size !== CLASSIC_SHIPS.length) return;
+    if (placedShips.size !== fleet.length) return;
 
-    // Reconstruct placements from localGrid.
-    // We stored shipValue = shipIndex+1 in the grid; the anchor is the FIRST
-    // grid cell (in row-major scan order) matching that ship's value. But:
-    // the anchor cell must correspond to offset (0, 0) of the ship AFTER
-    // rotation normalization. Since rotateOffsets() in shared.ts normalizes
-    // so that (minR, minC) = (0, 0), the top-left bounding cell in localGrid
-    // IS the anchor for that rotation. So a naive "first occurrence in
-    // row-major order" scan correctly finds the anchor, provided we use the
-    // rotation that was applied at placement time.
+    // Reconstruct placements from localGrid. rotateOffsets normalizes to
+    // (minR, minC) = (0, 0), so the top-left bounding cell in localGrid IS
+    // the anchor for the chosen rotation+mirror combination. Scan in
+    // row-major order to find the first occurrence.
     const placementMap = new Map<number, ShipPlacement>();
     for (let idx = 0; idx < localGrid.length; idx++) {
       const v = localGrid[idx];
@@ -343,11 +420,15 @@ export function Board({
         const row = Math.floor(idx / GRID_SIZE);
         const col = idx % GRID_SIZE;
         const shipIndex = v - 1;
-        // shipRotations is guaranteed populated because handlePlacementClick
-        // writes to it on every successful placement, and placedShips.size
-        // check above ensures every ship was placed.
-        const shipRotation = shipRotations.get(shipIndex) ?? 0;
-        placementMap.set(v, { shipIndex, row, col, rotation: shipRotation });
+        const orient = shipOrientations.get(shipIndex) ?? { rotation: 0, mirror: false };
+        const placement: ShipPlacement = {
+          shipIndex,
+          row,
+          col,
+          rotation: orient.rotation,
+        };
+        if (orient.mirror) placement.mirror = true;
+        placementMap.set(v, placement);
       }
     }
 
@@ -358,19 +439,15 @@ export function Board({
   function handleReset() {
     setLocalGrid(new Array(GRID_SIZE * GRID_SIZE).fill(0));
     setPlacedShips(new Set());
-    setShipRotations(new Map());
+    setShipOrientations(new Map());
     setSelectedShipIdx(null);
+    setRotation(0);
+    setMirror(false);
   }
 
-  // Rotation preview dimensions
-  const rotatedOffsets =
-    selectedShipIdx !== null && CLASSIC_SHIPS[selectedShipIdx]
-      ? rotateOffsets(CLASSIC_SHIPS[selectedShipIdx].offsets, rotation)
-      : [];
-  const shipPreviewRows =
-    rotatedOffsets.length > 0 ? Math.max(...rotatedOffsets.map(([r]) => r)) + 1 : 0;
-  const shipPreviewCols =
-    rotatedOffsets.length > 0 ? Math.max(...rotatedOffsets.map(([, c]) => c)) + 1 : 0;
+  // Offsets for the currently selected ship (used by the SVG preview).
+  const selectedShipOffsets =
+    selectedShipIdx !== null && fleet[selectedShipIdx] ? fleet[selectedShipIdx].offsets : null;
 
   return (
     <div className="mx-auto max-w-4xl p-4 sm:p-6 rounded-2xl border-2 border-shadow bg-gradient-to-br from-[#1e3a5f] to-[#0f1e33] shadow-[6px_6px_0px_0px_hsl(var(--shadow))]">
@@ -397,10 +474,17 @@ export function Board({
 
             {/* Ship Selector */}
             <ShipSelector
+              fleet={fleet}
+              irregular={state.irregularShips}
               selectedShipIdx={selectedShipIdx}
               placedShips={placedShips}
               onSelect={(idx) => {
-                setSelectedShipIdx(idx === selectedShipIdx ? null : idx);
+                const selecting = idx !== selectedShipIdx;
+                setSelectedShipIdx(selecting ? idx : null);
+                // Resetting orientation on (de)select keeps the UX predictable —
+                // every new selection starts upright, no inherited rotation.
+                setRotation(0);
+                setMirror(false);
               }}
             />
 
@@ -417,40 +501,37 @@ export function Board({
                 setHoverCell={setHoverCell}
               />
               <div
-                className="flex flex-row sm:flex-col items-center gap-2 text-xs text-primary-foreground/80 min-h-[72px] sm:min-h-0 sm:min-w-[120px] sm:pt-1"
+                className="flex flex-row sm:flex-col items-center gap-2 text-xs text-primary-foreground/80 min-h-[96px] sm:min-h-0 sm:min-w-[140px] sm:pt-1"
                 style={{ visibility: selectedShipIdx !== null ? 'visible' : 'hidden' }}
                 aria-hidden={selectedShipIdx === null}
               >
                 <span>{t('direction')}</span>
-                {rotatedOffsets.length > 0 && (
-                  <div
-                    className="inline-grid gap-px"
-                    style={{
-                      gridTemplateRows: `repeat(${shipPreviewRows}, 8px)`,
-                      gridTemplateColumns: `repeat(${shipPreviewCols}, 8px)`,
-                    }}
-                  >
-                    {Array.from({ length: shipPreviewRows * shipPreviewCols }).map((_, idx) => {
-                      const r = Math.floor(idx / shipPreviewCols);
-                      const c = idx % shipPreviewCols;
-                      const filled = rotatedOffsets.some(([or, oc]) => or === r && oc === c);
-                      return (
-                        <div
-                          // biome-ignore lint/suspicious/noArrayIndexKey: preview cells use stable index
-                          key={idx}
-                          className={filled ? `${SHIP_COLORS.hull.bgClass} rounded-sm` : ''}
-                        />
-                      );
-                    })}
-                  </div>
+                {selectedShipOffsets && (
+                  <ShapePreview offsets={selectedShipOffsets} rotation={rotation} mirror={mirror} />
                 )}
-                <button
-                  type="button"
-                  onClick={() => setRotation((r) => (r + 1) % 4)}
-                  className="px-2 py-0.5 text-xs bg-secondary text-secondary-foreground border border-border rounded hover:border-foreground/60 transition-colors"
-                >
-                  {t('rotate')}
-                </button>
+                <div className="flex flex-row sm:flex-col gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setRotation((r) => (r + 1) % 4)}
+                    className="px-2 py-0.5 text-xs bg-secondary text-secondary-foreground border border-border rounded hover:border-foreground/60 transition-colors"
+                    title={t('rotateHint')}
+                  >
+                    {t('rotate')} (R)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMirror((m) => !m)}
+                    aria-pressed={mirror}
+                    className={`px-2 py-0.5 text-xs border rounded transition-colors ${
+                      mirror
+                        ? 'bg-primary text-primary-foreground border-foreground'
+                        : 'bg-secondary text-secondary-foreground border-border hover:border-foreground/60'
+                    }`}
+                    title={t('mirrorHint')}
+                  >
+                    {t('mirror')} (F)
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -465,17 +546,17 @@ export function Board({
               </button>
               <button
                 type="button"
-                disabled={placedShips.size !== CLASSIC_SHIPS.length}
+                disabled={placedShips.size !== fleet.length}
                 onClick={handleConfirmPlacement}
                 className={`px-4 py-1.5 text-xs font-semibold rounded border-2 shadow-[2px_2px_0px_0px_hsl(var(--foreground))] transition-colors
                 ${
-                  placedShips.size === CLASSIC_SHIPS.length
+                  placedShips.size === fleet.length
                     ? 'bg-primary text-primary-foreground border-foreground hover:opacity-80'
                     : 'bg-muted text-muted-foreground border-border cursor-not-allowed'
                 }
               `}
               >
-                {t('confirmDeploy')} ({placedShips.size}/{CLASSIC_SHIPS.length})
+                {t('confirmDeploy')} ({placedShips.size}/{fleet.length})
               </button>
             </div>
           </div>

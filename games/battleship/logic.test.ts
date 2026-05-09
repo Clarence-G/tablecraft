@@ -419,6 +419,18 @@ describe('Battleship Logic', () => {
       const fleet = h.rawState.fleet as ShipDefinition[];
       expect(fleet).toBe(CLASSIC_SHIPS);
     });
+
+    it('PlayerView exposes irregularShips flag', () => {
+      const classic = createGame('test', { irregularShips: false });
+      expect(classic.view('Alice').irregularShips).toBe(false);
+      const spectatorClassic = logic.getSpectatorView?.(classic.rawState as never);
+      expect(spectatorClassic?.irregularShips).toBe(false);
+
+      const irregular = createGame('test', { irregularShips: true });
+      expect(irregular.view('Alice').irregularShips).toBe(true);
+      const spectatorIrregular = logic.getSpectatorView?.(irregular.rawState as never);
+      expect(spectatorIrregular?.irregularShips).toBe(true);
+    });
   });
 
   describe('irregularShips place + fire', () => {

@@ -6,6 +6,9 @@
   "deployFleet": "Deploy Your Fleet",
   "direction": "Direction:",
   "rotate": "Rotate",
+  "rotateHint": "Press R to rotate 90°",
+  "mirror": "Mirror",
+  "mirrorHint": "Press F to flip horizontally",
   "reset": "Reset",
   "confirmDeploy": "Confirm Deploy",
   "fleetDeployed": "Fleet Deployed",
@@ -29,7 +32,15 @@
     "battleship": "Battleship",
     "cruiser": "Cruiser",
     "submarine": "Submarine",
-    "destroyer": "Destroyer"
+    "destroyer": "Destroyer",
+    "shape": {
+      "U": "U-Hull",
+      "Z": "Z-Cruiser",
+      "L": "L-Frigate",
+      "T": "T-Cutter",
+      "plus": "Cross-Hull",
+      "S": "S-Cutter"
+    }
   },
   "log": {
     "placeShips": "deployed their fleet",

@@ -308,6 +308,8 @@ export interface PlayerView {
   shotsRemaining: number;
   /** Whether the room was started with the fastMode option. */
   fastMode: boolean;
+  /** Whether the room was started with the irregularShips option. */
+  irregularShips: boolean;
 }
 
 const ShipPlacementSchema = z.object({

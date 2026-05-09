@@ -496,8 +496,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 30,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Board.tsx derives active fleet via buildFleet(state.irregularShips); new mirror state + per-ship orientation map replaces shipRotations; R/F keyboard shortcuts + Mirror toggle button; fixed-size 5x5 SVG ShapePreview replaces the inline-grid preview so the slot never reflows on ship swap. PlayerView now carries irregularShips so the client does not need room.config."
     },
     {
       "id": "US-031",

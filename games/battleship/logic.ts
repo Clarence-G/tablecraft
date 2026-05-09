@@ -39,6 +39,8 @@ interface BattleshipState {
   /** Shots fired by the current player so far this turn (for fastMode). */
   shotsThisTurn: number;
   fastMode: boolean;
+  /** Whether the room was started with the irregularShips option. */
+  irregularShips: boolean;
   /** Fleet definition for this match (classic or irregular, chosen from config). */
   fleet: ShipDefinition[];
   winner: string | null;
@@ -73,6 +75,7 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
       currentPlayerIdx: 0,
       shotsThisTurn: 0,
       fastMode: parsed.fastMode,
+      irregularShips: parsed.irregularShips,
       fleet: buildFleet(parsed.irregularShips),
       winner: null,
     };
@@ -226,6 +229,7 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
         winner: state.winner,
         shotsRemaining: remaining,
         fastMode: state.fastMode,
+        irregularShips: state.irregularShips,
       };
     }
 
@@ -250,6 +254,7 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
       winner: state.winner,
       shotsRemaining: remaining,
       fastMode: state.fastMode,
+      irregularShips: state.irregularShips,
     };
   },
 
@@ -269,6 +274,7 @@ export const logic: GameLogic<BattleshipState, Action, PlayerView> = {
       winner: state.winner,
       shotsRemaining: shotsPerTurn(state.fastMode) - state.shotsThisTurn,
       fastMode: state.fastMode,
+      irregularShips: state.irregularShips,
     };
   },
 };
