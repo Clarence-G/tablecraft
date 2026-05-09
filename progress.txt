@@ -698,3 +698,19 @@ Total stories: 46
   - `setTimeout` pair works cleanly for flip-then-hide: 80ms to start the flip animation (so the back face renders first), 3000ms to clear the reveal entirely.
   - Vote tally percentage divisor = alive player count (not total vote count), so a bar at 100% means every alive player voted for that candidate.
 ---
+
+## 2026-05-09 - US-042
+- Added `computeUnoFanSlot(idx, count, cfg)` + `computeUnoFanDimensions(count, cfg)` pure helpers to games/uno/shared.ts; desktop + mobile fan configs exported so Board picks per-viewport spread.
+- Replaced both HandStrip usages in games/uno/Board.tsx with a new `UnoHandFan` component: each card sits in an absolutely-positioned slot with a transform derived solely from (index, count). Hovering a card only translates the wrapping div; neighbors stay put because they are not in the flex/flow layout anymore.
+- Selected state is handled at the wrapper (`-translate-y-7`, z-index 100) and `selected={false}` is forwarded to UnoCardFace so PlayingCard's built-in `hover:-translate-y-0.5`/`-translate-y-2` combo no longer fights us — satisfies "hover animation disabled while selected".
+- Added 6 fan-formula tests to games/uno/logic.test.ts (27 → 33): empty/single, 2-card mirror, odd-count center, determinism invariant, dimensional headroom, mobile-vs-desktop width.
+- Files changed:
+  - games/uno/shared.ts (+fan config/types/helpers)
+  - games/uno/Board.tsx (HandStrip -> UnoHandFan; removed unused `selectedKey` var and HandStrip import)
+  - games/uno/logic.test.ts (+6 tests)
+- Browser verification: deferred. The macOS + jsdom `html-encoding-sniffer` issue blocks .test.tsx collection in packages/game-ui and any game package that opts into jsdom, so the regression is covered by a pure-function test on the fan formula (the actual invariant — "hover-one-card doesn't move neighbors" — is a consequence of cards being absolute-positioned with transforms driven only by index/count). Left for human reviewer to spot-check at the live dev server.
+- **Learnings for future iterations:**
+  - `@repo/card-ui` already exports `computeFanSlot` + `computeHandDimensions` from `CardHand.tsx` — but its card sizes are 72x100 (md) vs PlayingCard's 56x80. When reusing the fan idea in a game that uses `@repo/game-ui/card/PlayingCard`, prefer duplicating the formula with your own cardW/cardH constants over trying to force-fit CardHand.
+  - `PlayingCard` (from `@repo/game-ui/card`) turns itself into a `<button>` whenever `onClick` is set, and applies `hover:-translate-y-0.5` automatically. To get a cleaner "wrapper owns the hover" behavior, pass `selected={false}` and let the outer slot control lift — otherwise the card's own `-translate-y-2` on selected collides with the wrapper's lift and the built-in hover re-introduces the jitter we're trying to eliminate.
+  - For absolute-positioned lists where the key has to disambiguate duplicates, `${serialized}|${i}` is the honest key; silence `lint/suspicious/noArrayIndexKey` with a `biome-ignore` comment and a one-line reason rather than inventing a fake id.
+---

@@ -689,8 +689,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 42,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Replaced HandStrip with absolute-positioned UnoHandFan; deterministic slot formula (pure fn) tested; hover-on-card doesn't reposition neighbors; selected card disables inner hover anim."
     },
     {
       "id": "US-043",
