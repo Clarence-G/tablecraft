@@ -731,3 +731,24 @@ Total stories: 46
   - When an onAction branch produces an engine-scheduled follow-up (SET_TIMER), pair it with an explicit `CLEAR_TIMER` on every path that resolves the same state — otherwise a manual resolve leaves a dangling timer that will re-fire into empty state. `resolveChallenge` / `resolveAccept` both emit CLEAR_TIMER as their first event.
   - Pre-existing biome warnings in games/uno/logic.ts (`noExplicitAny` on deck construction lines 55-56) are part of the baseline; don't refactor them unless a story touches those lines.
 ---
+
+## 2026-05-09 - US-044
+- Added `lastChallengeReveal: { playedBy, revealedHand, hadMatchingColor } | null` to UnoState, PlayerView, and spectator view. Populated by `resolveChallenge` with a snapshot of playedBy's hand taken BEFORE the draw-4 penalty; cleared at the start of the next non-challenge action so the reveal is a one-shot. `resolveAccept` leaves it null — only actual challenges trigger the reveal.
+- Board renders `ChallengeModal` (Accept `+4` / Challenge) whenever `awaitingChallenge.challenger === myId` and `lastChallengeReveal === null`. Buttons emit `accept_draw_four` / `challenge_draw_four`; both respect the existing `isSending` gate via the wrapped `sendAction`.
+- After the challenge resolves, an `AnimatePresence`-keyed `ChallengeRevealOverlay` flips in via framer-motion (rotateY 180->0, 600ms), shows the recorded hand as small `UnoCardFace` tiles, and auto-dismisses after 3.2s. A `consumedReveal` ref keyed on `playedBy|hand|hadMatchingColor` prevents re-animating on unrelated re-renders.
+- i18n: added `challenge.{title,prompt,accept,challenge,revealTitleSuccess,revealTitleFail,revealBody,cheatHint,cleanHint}` keys in en.json + zh.json.
+- Files changed:
+  - games/uno/shared.ts (+lastChallengeReveal on PlayerView)
+  - games/uno/logic.ts (+state field + reveal capture in resolveChallenge + clear on next action + view exposure)
+  - games/uno/Board.tsx (+ChallengeModal, ChallengeRevealOverlay, state/effect wiring)
+  - games/uno/i18n/en.json, zh.json (+challenge.* keys)
+  - games/uno/logic.test.ts (44 tests; +4 new: success reveal payload, failure reveal payload, accept leaves reveal null, reveal cleared on next action, reveal exposed on all views)
+- Screenshots: .ralph-screenshots/us-044-uno-challenge-default-tablet.png (static HTML preview showing both the challenge modal and the success-reveal card, side-by-side on the UNO burgundy scene).
+- Browser verification: static preview only. Reproducing the interactive flow requires a 2-player UNO room with a forced +4 play — same deferral rationale as prior UNO iterations (US-042, US-043). The modal rendering is a direct function of `awaitingChallenge.challenger === myId`, and the reveal overlay is driven by `lastChallengeReveal`, both of which are covered by the new logic tests.
+- Quality gates: `pnpm typecheck` clean; `cd games/uno && npx vitest run` 44/44 pass; `pnpm biome check games/uno` reports only the two pre-existing `any`-cast warnings on lines 63-64 of logic.ts (untouched by this story).
+- **Learnings for future iterations:**
+  - For a reveal-after-action UX, stash a one-shot payload on state (`lastChallengeReveal`) and clear it at the start of the next non-challenge action. This is simpler than an EngineEvent + client-side queue and works identically for reconnecting players since it lives in the view payload.
+  - When using `useEffect` to drive a one-shot animation, key off a stable identity string (here `${playedBy}|${hand.join(',')}|${hadMatchingColor}`) stored in a ref. Otherwise React's rerenders on unrelated state changes will retrigger the setTimeout and stack dismissals.
+  - Biome's `noParameterAssign` rule fires even on re-binding a GameLogic onAction's `state` param. The idiomatic workaround is to accept a differently-named parameter (`stateIn`) and shadow it with a local `let state = stateIn` — keeps call-site ergonomics identical to the rest of the function body while satisfying the lint.
+  - The widget-screenshot tool requires the root element to have `id="app"` — a missing id produces a silent 30s timeout at `waitForSelector`. For plain static preview HTML (not Alpine), adding `id="app"` to the outer container is the quickest fix.
+---

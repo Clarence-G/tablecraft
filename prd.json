@@ -722,8 +722,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 44,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Server now exposes lastChallengeReveal (playedBy, revealedHand, hadMatchingColor) for one post-challenge snapshot; Board renders ChallengeModal (Accept/Challenge) for challenger and a flip-in reveal overlay that auto-dismisses after 3.2s."
     },
     {
       "id": "US-045",
